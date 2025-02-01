@@ -1,0 +1,483 @@
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.translation import gettext_lazy as _
+
+class SoftDeleteModel(models.Model):
+    is_active = models.BooleanField(default=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+class Season(TimeStampedModel):
+    class Status(models.TextChoices):
+        UPCOMING = 'UPCOMING', _('Upcoming')
+        ONGOING = 'ONGOING', _('Ongoing')
+        COMPLETED = 'COMPLETED', _('Completed')
+        CANCELLED = 'CANCELLED', _('Cancelled')
+
+    year = models.IntegerField(unique=True)
+    name = models.CharField(max_length=100)  # e.g. "TATA IPL 2024"
+    start_date = models.DateField()
+    end_date = models.DateField()
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.UPCOMING
+    )
+
+    class Meta:
+        ordering = ['-year']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['start_date']),
+        ]
+
+    def __str__(self):
+        return f"IPL {self.year}"
+
+class IPLTeam(SoftDeleteModel, TimeStampedModel):
+    name = models.CharField(max_length=100)
+    short_name = models.CharField(max_length=5)  # e.g. "RCB", "CSK"
+    home_ground = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    primary_color = models.CharField(max_length=7)  # hex color
+    secondary_color = models.CharField(max_length=7)  # hex color
+    logo = models.ImageField(upload_to='ipl_teams/', null=True, blank=True)
+    other_names = models.JSONField(default=list)  # historical names
+
+    # M2M relationship with seasons through an intermediate table
+    seasons = models.ManyToManyField(
+        Season,
+        through='TeamSeason',
+        related_name='teams'
+    )
+
+    class Meta:
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['short_name']),
+            models.Index(fields=['is_active']),
+        ]
+
+    def __str__(self):
+        return self.name
+
+class TeamSeason(TimeStampedModel):
+    team = models.ForeignKey(IPLTeam, on_delete=models.CASCADE)
+    season = models.ForeignKey(Season, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ['team', 'season']
+
+class IPLPlayer(SoftDeleteModel, TimeStampedModel):
+    class Role(models.TextChoices):
+        BATSMAN = 'BAT', _('Batter')
+        BOWLER = 'BOWL', _('Bowler')
+        ALL_ROUNDER = 'ALL', _('All-Rounder')
+        WICKET_KEEPER = 'WK', _('Wicket Keeper')
+
+    class BattingStyle(models.TextChoices):
+        RIGHT = 'RIGHT', _('Right Handed')
+        LEFT = 'LEFT', _('Left Handed')
+
+    class BowlingStyle(models.TextChoices):
+        FAST = 'FAST', _('Fast')
+        MEDIUM_FAST = 'MED_FAST', _('Medium Fast')
+        MEDIUM = 'MEDIUM', _('Medium')
+        SPIN = 'SPIN', _('Spin')
+        NA = 'NA', _('Not Applicable')
+
+    name = models.CharField(max_length=100)
+    nationality = models.CharField(max_length=100, blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
+    role = models.CharField(
+        max_length=4,
+        choices=Role.choices,
+        blank=True, null=True
+    )
+    batting_style = models.CharField(
+        max_length=5,
+        choices=BattingStyle.choices,
+        blank=True, null=True
+    )
+    bowling_style = models.CharField(
+        max_length=10,
+        choices=BowlingStyle.choices,
+        default=BowlingStyle.NA,
+        blank=True, null=True
+    )
+    img = models.ImageField(upload_to='players/', null=True, blank=True)
+
+    # Current team relationship handled through PlayerTeamHistory
+    teams = models.ManyToManyField(
+        IPLTeam,
+        through='PlayerTeamHistory',
+        related_name='players'
+    )
+
+    class Meta:
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['role']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['nationality']),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def current_team(self):
+        return self.playerteamhistory_set.filter(
+            season__status__in=[Season.Status.UPCOMING, Season.Status.ONGOING]
+        ).first()
+
+class PlayerTeamHistory(TimeStampedModel):
+    player = models.ForeignKey(IPLPlayer, on_delete=models.CASCADE)
+    team = models.ForeignKey(IPLTeam, on_delete=models.CASCADE)
+    season = models.ForeignKey(Season, on_delete=models.CASCADE)
+    points = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        unique_together = ['player', 'season']
+        ordering = ['-season__year']
+        indexes = [
+            models.Index(fields=['player', 'season']),
+        ]
+
+class IPLMatch(TimeStampedModel):
+    class Status(models.TextChoices):
+        SCHEDULED = 'SCHEDULED', _('Scheduled')
+        LIVE = 'LIVE', _('Live')
+        COMPLETED = 'COMPLETED', _('Completed')
+        NO_RESULT = 'NO_RESULT', _('No Result')
+        ABANDONED = 'ABANDONED', _('Abandoned')
+
+    class Stage(models.TextChoices):
+        LEAGUE = 'LEAGUE', _('League')
+        QUALIFIER = 'QUALIFIER', _('Qualifier')
+        ELIMINATOR = 'ELIMINATOR', _('Eliminator')
+        SEMI_FINAL = 'SEMI_FINAL', _('Semi Final')
+        THIRD_PLACE = 'THIRD_PLACE', _('Third Place')
+        FINAL = 'FINAL', _('Final')
+
+    class TossDecision(models.TextChoices):
+        BAT = 'BAT', _('Bat')
+        BOWL = 'BOWL', _('Bowl')
+
+    class WinType(models.TextChoices):
+        RUNS = 'RUNS', _('Runs')
+        WICKETS = 'WICKETS', _('Wickets')
+        TIE = 'TIE', _('Tie')
+        SUPER_OVER = 'SUPER_OVER', _('Super Over')
+        NO_RESULT = 'NO_RESULT', _('No Result')
+
+    season = models.ForeignKey(Season, on_delete=models.CASCADE)
+    match_number = models.IntegerField()
+    stage = models.CharField(
+        max_length=20,
+        choices=Stage.choices,
+        default=Stage.LEAGUE
+    )
+    team_1 = models.ForeignKey(
+        IPLTeam,
+        on_delete=models.CASCADE,
+        related_name='home_matches'
+    )
+    team_2 = models.ForeignKey(
+        IPLTeam,
+        on_delete=models.CASCADE,
+        related_name='away_matches'
+    )
+    date = models.DateField()
+    venue = models.CharField(max_length=100)
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.SCHEDULED
+    )
+    toss_winner = models.ForeignKey(
+        IPLTeam,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='toss_wins'
+    )
+    toss_decision = models.CharField(
+        max_length=4,
+        choices=TossDecision.choices,
+        null=True,
+        blank=True
+    )
+    winner = models.ForeignKey(
+        IPLTeam,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='match_wins'
+    )
+    win_margin = models.IntegerField(null=True, blank=True)
+    win_type = models.CharField(
+        max_length=10,
+        choices=WinType.choices,
+        null=True,
+        blank=True
+    )
+
+    player_of_match = models.ForeignKey(
+        IPLPlayer,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='player_of_match'
+    )
+
+    inns_1_runs = models.IntegerField(null=True, blank=True)
+    inns_1_wickets = models.IntegerField(null=True, blank=True)
+    inns_1_overs = models.FloatField(null=True, blank=True)
+
+    inns_2_runs = models.IntegerField(null=True, blank=True)
+    inns_2_wickets = models.IntegerField(null=True, blank=True)
+    inns_2_overs = models.FloatField(null=True, blank=True)
+
+
+    class Meta:
+        unique_together = ['season', 'match_number']
+        ordering = ['season', 'match_number']
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.team_1} vs {self.team_2} - Match {self.match_number}, {self.season}"
+
+from django.db import models
+from django.core.validators import MinValueValidator
+from decimal import Decimal
+
+class IPLPlayerEvent(models.Model):
+    # Foreign Key Relationships
+    player = models.ForeignKey('IPLPlayer', on_delete=models.CASCADE)
+    match = models.ForeignKey('IPLMatch', on_delete=models.CASCADE)
+    for_team = models.ForeignKey('IPLTeam', on_delete=models.CASCADE, related_name='home_events')
+    vs_team = models.ForeignKey('IPLTeam', on_delete=models.CASCADE, related_name='away_events')
+    
+    # Batting Stats
+    bat_runs = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    bat_balls = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    bat_fours = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    bat_sixes = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    bat_not_out = models.BooleanField(default=False, blank=True, null=True)
+    bat_innings = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    
+    # Bowling Stats
+    bowl_balls = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    bowl_maidens = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    bowl_runs = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    bowl_wickets = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    bowl_innings = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    
+    # Fielding Stats
+    field_catch = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    wk_catch = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    wk_stumping = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    run_out_solo = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    run_out_collab = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
+    
+    # Other
+    player_of_match = models.BooleanField(default=False, blank=True, null=True)
+
+    # Point breakdown fields
+    batting_points_total = models.IntegerField(default=0)
+    bowling_points_total = models.IntegerField(default=0)  
+    fielding_points_total = models.IntegerField(default=0)
+    other_points_total = models.IntegerField(default=0)
+    total_points_all = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        self.batting_points_total = self.bat_points
+        self.bowling_points_total = self.bowl_points
+        self.fielding_points_total = self.field_points
+        self.other_points_total = self.other_points
+        self.total_points_all = self.base_points
+        super().save(*args, **kwargs)
+    
+    # Calculated Fields
+    @property
+    def bat_strike_rate(self):
+        """Calculate batting strike rate"""
+        if self.bat_runs is None or self.bat_balls is None or self.bat_balls == 0:
+            return None
+        return Decimal(str(round((self.bat_runs / self.bat_balls) * 100, 1)))
+    
+    @property
+    def bowl_economy(self):
+        """Calculate bowling economy rate"""
+        if self.bowl_runs is None or self.bowl_balls is None or self.bowl_balls == 0:
+            return None
+        overs = self.bowl_balls / 6
+        return Decimal(str(round(self.bowl_runs / overs, 2)))
+    
+    def _calculate_sr_bonus(self):
+        """Calculate strike rate bonus/penalty"""
+        if self.bat_balls < 6:  # Minimum 6 balls required
+            return 0
+            
+        sr = self.bat_strike_rate
+        if sr >= 200:
+            return 6
+        elif sr >= 175:
+            return 4
+        elif sr >= 150:
+            return 2
+        elif sr <= 50:
+            return -6
+        elif sr <= 75:
+            return -4
+        elif sr <= 100:
+            return -2
+        return 0
+    
+    def _calculate_economy_bonus(self):
+        """Calculate economy rate bonus/penalty"""
+        if self.bowl_balls < 10:  # Minimum 10 balls required
+            return 0
+            
+        economy = self.bowl_economy
+        if economy <= 5:
+            return 6
+        elif economy <= 6:
+            return 4
+        elif economy <= 7:
+            return 2
+        elif economy >= 12:
+            return -6
+        elif economy >= 11:
+            return -4
+        elif economy >= 10:
+            return -2
+        return 0
+
+    @property
+    def bat_points(self):
+        """Calculate total batting points"""
+        if self.bat_runs is None:
+            return 0
+            
+        points = 0
+        points += self.bat_runs  # Runs
+        points += (self.bat_fours or 0)  # Boundaries
+        points += (2 * (self.bat_sixes or 0))  # Six bonus
+        points += (8 if self.bat_runs >= 50 else 0)  # 50+ bonus
+        points += (16 if self.bat_runs >= 100 else 0)  # 100+ bonus
+        points += self._calculate_sr_bonus()  # Strike rate bonus/penalty
+        
+        # Duck penalty for non-bowlers
+        if (self.bat_runs == 0 and not self.bat_not_out and 
+            getattr(self.player, 'role', None) != 'BOWL'):
+            points -= 2
+            
+        return points
+    
+    @property
+    def bowl_points(self):
+        """Calculate total bowling points"""
+        if self.bowl_wickets is None and self.bowl_maidens is None:
+            return 0
+            
+        points = 0
+        points += ((self.bowl_wickets or 0) * 25)  # Wickets
+        points += ((self.bowl_maidens or 0) * 8)  # Maidens
+        points += (8 if (self.bowl_wickets or 0) >= 4 else 0)  # 4+ wickets bonus
+        points += (16 if (self.bowl_wickets or 0) >= 5 else 0)  # 5+ wickets bonus
+        points += self._calculate_economy_bonus()  # Economy bonus/penalty
+        return points
+    
+    @property
+    def field_points(self):
+        """Calculate total fielding points"""
+        if all(v is None for v in [self.wk_stumping, self.field_catch, self.wk_catch, self.run_out_solo, self.run_out_collab]):
+            return 0
+            
+        return (
+            ((self.wk_stumping or 0) * 12) +  # Stumpings
+            ((self.field_catch or 0) * 8) +  # Catches
+            ((self.wk_catch or 0) * 8) +  # Keeper catches
+            ((self.run_out_solo or 0) * 8) +  # Solo run outs
+            ((self.run_out_collab or 0) * 4)  # Collaborative run outs
+        )
+    
+    @property
+    def other_points(self):
+        """Calculate other points (POTM + playing)"""
+        return (50 if self.player_of_match else 0) + 4  # POTM + participation
+    
+    @property
+    def base_points(self):
+        """Calculate total base points"""
+        return (
+            self.bat_points +
+            self.bowl_points +
+            self.field_points +
+            self.other_points
+        )
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['player', 'match']),
+            models.Index(fields=['for_team', 'vs_team']),
+        ]
+        
+    def __str__(self):
+        return f"{self.player.name} - {self.match}"
+    
+
+#    Fantasy Models
+
+class FantasyLeague(models.Model):
+    name = models.CharField(max_length=100)
+    logo = models.ImageField(upload_to='league_logos/', null=True, blank=True)
+    color = models.CharField(max_length=7)  # Hex color code
+    max_teams = models.IntegerField(default=10)
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_leagues')
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, blank=True, null=True)
+    league_code = models.CharField(max_length=6, unique=True, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['admin']),
+            models.Index(fields=['season']),
+        ]
+
+    def __str__(self):
+        return self.name
+
+class FantasySquad(models.Model):
+    name = models.CharField(max_length=100)
+    logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
+    color = models.CharField(max_length=7)  # Hex color code
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fantasy_teams')
+    league = models.ForeignKey(FantasyLeague, on_delete=models.CASCADE, related_name='teams')
+    total_points = models.IntegerField(default=0)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['league']),
+            models.Index(fields=['total_points']),
+        ]
+        unique_together = [['user', 'league']]  # One team per user per league
+
+    def __str__(self):
+        return f"{self.name} ({self.league.name})"
