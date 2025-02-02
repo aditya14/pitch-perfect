@@ -1,0 +1,12 @@
+/* Base transition class */
+.theme-transition {
+    @apply transition-colors duration-300 ease-in-out;
+  }
+  
+  /* Apply transitions to specific elements */
+  .theme-transition,
+  .theme-transition * {
+    transition-property: background-color, border-color, color, fill;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }

@@ -126,15 +126,34 @@ class CreateLeagueRequestSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class LeagueDetailSerializer(serializers.ModelSerializer):
-    teams_count = serializers.SerializerMethodField()
-
+    squads_count = serializers.SerializerMethodField()
+    my_squad = serializers.SerializerMethodField()
+    season = serializers.SerializerMethodField()
+    
     class Meta:
         model = FantasyLeague
         fields = ['id', 'name', 'color', 'max_teams', 'season', 
-                 'league_code', 'teams_count', 'created_at']
+                 'league_code', 'squads_count', 'my_squad', 'created_at']
 
-    def get_teams_count(self, obj):
+    def get_squads_count(self, obj):
         return obj.teams.count()
+    
+    def get_my_squad(self, obj):
+        request = self.context.get('request')
+        if request:
+            squad = obj.teams.filter(user=request.user).first()
+            if squad:
+                return {
+                    'id': squad.id,
+                    'name': squad.name,
+                    'color': squad.color,
+                    'logo': squad.logo.url if squad.logo else None,
+                    'total_points': squad.total_points
+                }
+        return None
+    
+    def get_season(self, obj):
+        return obj.season.name
 
 class CreateSquadSerializer(serializers.ModelSerializer):
     class Meta:
@@ -142,7 +161,7 @@ class CreateSquadSerializer(serializers.ModelSerializer):
         fields = ['name', 'color', 'league']
 
     def validate_league(self, value):
-        if value.squads.count() >= value.max_teams:
+        if value.teams.count() >= value.max_teams:
             raise serializers.ValidationError("This league is full")
         return value
 

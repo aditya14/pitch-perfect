@@ -117,6 +117,7 @@ DATABASES = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Next.js development server
+    "https://88a8-2601-41-c680-8510-482a-780d-3625-b5c0.ngrok-free.app",  # Ngrok HTTPS tunnel
 ]
 CORS_ALLOW_CREDENTIALS = True
 

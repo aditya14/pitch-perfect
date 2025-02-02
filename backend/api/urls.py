@@ -19,4 +19,5 @@ urlpatterns = [
     path('verify-token/', views.verify_token, name='verify-token'),
     path('register/', views.register_user, name='register'),
     path('user/', views.get_user_details, name='user-details'),
+    path('user/preferences/', views.update_preferences, name='user-preferences'),
 ]

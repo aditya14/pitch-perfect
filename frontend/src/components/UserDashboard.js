@@ -35,18 +35,18 @@ class UserDashboard extends Component {
 
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">My Leagues</h1>
-          <div className="space-x-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+          <h1 className="text-2xl font-bold dark:text-white">My Leagues</h1>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <Link
               to="/leagues/create"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-center"
             >
               Create League
             </Link>
             <Link
               to="/leagues/join"
-              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-center"
             >
               Join League
             </Link>
@@ -54,43 +54,65 @@ class UserDashboard extends Component {
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
         {leagues.length === 0 ? (
-          <div className="text-center py-8 bg-gray-50 rounded">
-            <p className="text-gray-600">You haven't joined any leagues yet.</p>
-            <p className="text-gray-500 mt-2">Create or join a league to get started!</p>
+          <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded">
+            <p className="text-gray-600 dark:text-gray-300">You haven't joined any leagues yet.</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">Create or join a league to get started!</p>
           </div>
         ) : (
-          <div className="bg-white shadow overflow-hidden rounded-lg">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">League Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Your Squad</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teams</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Season</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {leagues.map(league => (
-                  <tr key={league.id}
-                      style={{borderLeft: `4px solid ${league.color}`}}>
-                    <td className="px-6 py-4 whitespace-nowrap">{league.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {league.teams?.find(team => team.user === league.user_id)?.name || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {league.teams?.length || 0}/{league.max_teams}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{league.season?.name || '-'}</td>
+          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden rounded-lg">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      League Name
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      Your Squad
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      Squads
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                      Season
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {leagues.map(league => (
+                    <tr key={league.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                        style={{borderLeft: `4px solid ${league.color}`}}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                        {league.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                        {league.my_squad ? (
+                          <div className="flex items-center">
+                            <span className="inline-block h-4 w-4 rounded-full mr-2" style={{backgroundColor: league.my_squad.color}}></span>
+                            <span>{league.my_squad.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                        {league.squads_count}/{league.max_teams}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                        {league.season || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

@@ -1,7 +1,9 @@
 from django.contrib import admin, messages
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.shortcuts import render
 from django.urls import path
-from .models import Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, IPLPlayerEvent, FantasyLeague, FantasySquad
+from .models import Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile
 
 from .forms import CSVUploadForm
 import csv
@@ -425,6 +427,28 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
         return render(request, 'admin/upload_csv.html', {'form': form})
 
 admin.site.register(IPLPlayerEvent, IPLPlayerEventAdmin)
+
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+    verbose_name_plural = 'profile'
+
+class UserAdmin(BaseUserAdmin):
+    inlines = (UserProfileInline,)
+    list_display = ('email', 'get_theme', 'is_active', 'date_joined')
+    
+    def get_theme(self, obj):
+        return obj.profile.theme if hasattr(obj, 'profile') else '-'
+    get_theme.short_description = 'Theme'
+
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'theme')
+    list_filter = ('theme',)
+    search_fields = ('user__email',)
 
 @admin.register(FantasyLeague)
 class FantasyLeagueAdmin(admin.ModelAdmin):

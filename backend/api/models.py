@@ -441,6 +441,13 @@ class IPLPlayerEvent(models.Model):
     def __str__(self):
         return f"{self.player.name} - {self.match}"
     
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    theme = models.CharField(max_length=10, choices=[('light', 'Light'), ('dark', 'Dark')], default='light')
+    
+    def __str__(self):
+        return f"{self.user.email}'s profile"
+    
 
 #    Fantasy Models
 

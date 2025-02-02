@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
     Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, 
-    IPLMatch, FantasyLeague, FantasySquad
+    IPLMatch, FantasyLeague, FantasySquad, UserProfile
 )
 from .serializers import (
     SeasonSerializer, IPLTeamSerializer, TeamSeasonSerializer,
@@ -235,7 +235,33 @@ def verify_token(request):
         return Response({'message': 'Token is valid', 'token': token})
     except Exception as e:
         return Response({'error': str(e)}, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_preferences(request):
+    """Update user preferences including theme"""
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
     
+    if 'theme' in request.data:
+        profile.theme = request.data['theme']
+        profile.save()
+    
+    return Response({'theme': profile.theme})
+
+# Update your get_user_details view to include theme
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_details(request):
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    return Response({
+        'id': request.user.id,
+        'email': request.user.email,
+        'profile': {
+            'theme': profile.theme
+        }
+    })  
+
 class LeagueViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
@@ -243,9 +269,11 @@ class LeagueViewSet(viewsets.ModelViewSet):
     search_fields = ['name']
     
     def get_queryset(self):
-        user = self.request.user
+        if self.action == 'retrieve':  # Add this condition
+            return FantasyLeague.objects.all()
+        # For other actions, keep existing filter
         return FantasyLeague.objects.filter(
-            teams__user=user  # Changed from squads__user to teams__user
+            teams__user=self.request.user
         ).distinct()
 
     def get_serializer_class(self):
@@ -259,16 +287,8 @@ class LeagueViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_leagues(self, request):
-        """Get all leagues user is part of"""
-        print("\n=== My Leagues Debug ===")
-        print("User:", request.user)
-        print("Headers:", dict(request.headers))
-        print("Auth:", request.auth)
-        print("=========================\n")
-        
         leagues = self.get_queryset()
-        print("Query:", leagues.query)
-        serializer = LeagueDetailSerializer(leagues, many=True)
+        serializer = LeagueDetailSerializer(leagues, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
@@ -295,14 +315,17 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 )
                 
             # Check if league is full
-            if league.squads.count() >= league.max_teams:
+            if league.teams.count() >= league.max_teams:
                 return Response(
                     {'error': 'League is full'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
             return Response({
-                'league': LeagueDetailSerializer(league).data
+                'league': LeagueDetailSerializer(
+                    league,
+                    context={'request': request}
+                ).data
             })
             
         except FantasyLeague.DoesNotExist:
@@ -315,12 +338,12 @@ class LeagueViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         league = serializer.save(admin=request.user)
-        response_data = LeagueDetailSerializer(league).data
+        response_data = LeagueDetailSerializer(league, context={'request': request}).data
         return Response(response_data, status=status.HTTP_201_CREATED)
     
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance)
+        serializer = self.get_serializer(instance, context={'request': request})
         return Response(serializer.data)
 
 class FantasySquadViewSet(viewsets.ModelViewSet):
