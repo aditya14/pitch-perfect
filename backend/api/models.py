@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
+from multiselectfield import MultiSelectField
 
 class SoftDeleteModel(models.Model):
     is_active = models.BooleanField(default=True)
@@ -33,6 +34,7 @@ class Season(TimeStampedModel):
         choices=Status.choices,
         default=Status.UPCOMING
     )
+    default_draft_order = models.JSONField(default=list)
 
     class Meta:
         ordering = ['-year']
@@ -198,7 +200,7 @@ class IPLMatch(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name='away_matches'
     )
-    date = models.DateField()
+    date = models.DateTimeField()
     venue = models.CharField(max_length=100)
     status = models.CharField(
         max_length=10,
@@ -459,6 +461,7 @@ class FantasyLeague(models.Model):
     admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_leagues')
     season = models.ForeignKey(Season, on_delete=models.CASCADE, blank=True, null=True)
     league_code = models.CharField(max_length=6, unique=True, blank=True, null=True)
+    draft_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
@@ -470,12 +473,16 @@ class FantasyLeague(models.Model):
     def __str__(self):
         return self.name
 
-class FantasySquad(models.Model):
+class FantasySquad(TimeStampedModel):
     name = models.CharField(max_length=100)
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
     color = models.CharField(max_length=7)  # Hex color code
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fantasy_teams')
     league = models.ForeignKey(FantasyLeague, on_delete=models.CASCADE, related_name='teams')
+    current_squad = models.JSONField(default=list, blank=True, null=True)
+    current_core_squad = models.JSONField(default=list, blank=True, null=True)
+    future_core_squad = models.JSONField(default=list, blank=True, null=True)
+
     total_points = models.IntegerField(default=0)
 
     class Meta:
@@ -488,3 +495,64 @@ class FantasySquad(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.league.name})"
+    
+class FantasyDraft(models.Model):
+    league = models.ForeignKey(FantasyLeague, on_delete=models.CASCADE, related_name='draft_order')
+    squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='draft_order')
+    type = models.CharField(max_length=10, choices=[('Pre-Season', 'Pre-Season'), ('Mid-Season', 'Mid-Season')])
+    order = models.JSONField(default=list)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['league']),
+            models.Index(fields=['squad']),
+            models.Index(fields=['type']),
+        ]
+
+    def __str__(self):
+        return f"{self.squad.name} - {self.type} Draft Order"
+    
+class FantasyBoostRole(models.Model):
+    multiplier_options = [(1.0, '1x'), (1.5, '1.5x'), (2.0, '2x')]
+
+    label = models.CharField(max_length=20)
+    role = MultiSelectField(choices=IPLPlayer.Role.choices, max_length=50)
+    multiplier_runs = models.FloatField(choices=multiplier_options)
+    multiplier_fours = models.FloatField(choices=multiplier_options)
+    multiplier_sixes = models.FloatField(choices=multiplier_options)
+    multiplier_sr = models.FloatField(choices=multiplier_options)
+    multiplier_bat_milestones = models.FloatField(choices=multiplier_options)
+    multiplier_wickets = models.FloatField(choices=multiplier_options)
+    multiplier_maidens = models.FloatField(choices=multiplier_options)
+    multiplier_economy = models.FloatField(choices=multiplier_options)
+    multiplier_bowl_milestones = models.FloatField(choices=multiplier_options)
+    multiplier_catches = models.FloatField(choices=multiplier_options)
+    multiplier_stumpings = models.FloatField(choices=multiplier_options)
+    multiplier_run_outs = models.FloatField(choices=multiplier_options)
+    multiplier_potm = models.FloatField(choices=multiplier_options)
+    multiplier_playing = models.FloatField(choices=multiplier_options)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['role']),
+        ]
+
+    def __str__(self):
+        return self.label
+    
+class FantasyPlayerEvent(models.Model):
+    match_event = models.ForeignKey(IPLPlayerEvent, on_delete=models.CASCADE)
+    fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='player_events')
+    boost = models.ForeignKey(FantasyBoostRole, on_delete=models.CASCADE)
+    total_points = models.FloatField(default=0)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['match_event']),
+            models.Index(fields=['fantasy_squad']),
+            models.Index(fields=['total_points']),
+        ]
+
+    def __str__(self):
+        return f"{self.fantasy_squad.name} - {self.match_event.player.name} - {self.match_event.match}"
+    

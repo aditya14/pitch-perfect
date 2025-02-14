@@ -58,7 +58,7 @@ class IPLPlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = IPLPlayer
         fields = [
-            'id', 'name', 'ipl_id', 'nationality', 'dob', 'role',
+            'id', 'name', 'nationality', 'dob', 'role',
             'batting_style', 'bowling_style', 'img', 'current_team',
             'is_active'
         ]
@@ -79,18 +79,21 @@ class PlayerTeamHistorySerializer(serializers.ModelSerializer):
         fields = ['id', 'player', 'team', 'season', 'price']
 
 class IPLMatchSerializer(serializers.ModelSerializer):
-    team_1 = IPLTeamSerializer(read_only=True)
-    team_2 = IPLTeamSerializer(read_only=True)
-    toss_winner = IPLTeamSerializer(read_only=True)
-    winner = IPLTeamSerializer(read_only=True)
-    season = SeasonSerializer(read_only=True)
+    team_1 = IPLTeamSerializer()
+    team_2 = IPLTeamSerializer()
+    winner = IPLTeamSerializer()
+    toss_winner = IPLTeamSerializer()
+    player_of_match = IPLPlayerSerializer()
 
     class Meta:
         model = IPLMatch
         fields = [
-            'id', 'season', 'match_number', 'team_1', 'team_2',
-            'date', 'venue', 'status', 'toss_winner', 'toss_decision',
-            'winner', 'win_margin', 'win_type'
+            'id', 'season', 'match_number', 'stage', 
+            'team_1', 'team_2', 'date', 'venue', 'status',
+            'toss_winner', 'toss_decision', 'winner',
+            'win_margin', 'win_type', 'player_of_match',
+            'inns_1_runs', 'inns_1_wickets', 'inns_1_overs',
+            'inns_2_runs', 'inns_2_wickets', 'inns_2_overs'
         ]
 
 class IPLMatchCreateUpdateSerializer(serializers.ModelSerializer):
@@ -101,7 +104,7 @@ class IPLMatchCreateUpdateSerializer(serializers.ModelSerializer):
 class FantasySquadSerializer(serializers.ModelSerializer):
     class Meta:
         model = FantasySquad
-        fields = ('name', 'color', 'logo')
+        fields = ['id', 'name', 'color', 'total_points', 'user']
 
 class CreateLeagueRequestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -126,14 +129,18 @@ class CreateLeagueRequestSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class LeagueDetailSerializer(serializers.ModelSerializer):
-    squads_count = serializers.SerializerMethodField()
+    season = SeasonSerializer(read_only=True)
+    squads = FantasySquadSerializer(source='teams', many=True, read_only=True)
     my_squad = serializers.SerializerMethodField()
-    season = serializers.SerializerMethodField()
+    squads_count = serializers.SerializerMethodField()
     
     class Meta:
         model = FantasyLeague
-        fields = ['id', 'name', 'color', 'max_teams', 'season', 
-                 'league_code', 'squads_count', 'my_squad', 'created_at']
+        fields = [
+            'id', 'name', 'color', 'max_teams', 'season',
+            'league_code', 'squads_count', 'my_squad',
+            'created_at', 'squads', 'draft_completed'
+        ]
 
     def get_squads_count(self, obj):
         return obj.teams.count()
@@ -141,7 +148,9 @@ class LeagueDetailSerializer(serializers.ModelSerializer):
     def get_my_squad(self, obj):
         request = self.context.get('request')
         if request:
+            print("User:", request.user)
             squad = obj.teams.filter(user=request.user).first()
+            print("Squad:", squad)
             if squad:
                 return {
                     'id': squad.id,
@@ -170,5 +179,67 @@ class SquadDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FantasySquad
-        fields = ['id', 'name', 'color', 'league', 'league_name', 
-                 'total_points', 'created_at']
+        fields = [
+            'id', 
+            'name', 
+            'color', 
+            'league', 
+            'league_name', 
+            'total_points',
+            'current_core_squad',
+            'future_core_squad'
+        ]
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Handle JSONField data
+        if instance.current_core_squad:
+            ret['current_core_squad'] = instance.current_core_squad
+        if instance.future_core_squad:
+            ret['future_core_squad'] = instance.future_core_squad
+        return ret
+        
+class CoreSquadUpdateSerializer(serializers.Serializer):
+    """
+    Serializer for updating core squad assignments
+    Expects format: {"future_core_squad": [{"boost_id": 1, "player_id": 2}, ...]}
+    """
+    class CoreSquadAssignmentSerializer(serializers.Serializer):
+        boost_id = serializers.IntegerField()
+        player_id = serializers.IntegerField()
+
+    future_core_squad = CoreSquadAssignmentSerializer(many=True)
+
+    def validate(self, data):
+        assignments = data['future_core_squad']
+        
+        # Validate we have exactly 8 assignments
+        if len(assignments) != 8:
+            raise serializers.ValidationError(
+                "Must provide exactly 8 core squad assignments"
+            )
+        
+        return data
+
+class SquadSerializer(serializers.ModelSerializer):
+    league = LeagueDetailSerializer(read_only=True)
+    
+    class Meta:
+        model = FantasySquad
+        fields = [
+            'id', 
+            'name', 
+            'league',
+            'current_squad',  # List of player IDs
+            'current_core_squad',  # List of {boost_id, player_id} dicts
+            'future_core_squad'  # List of {boost_id, player_id} dicts
+        ]
+
+    def to_representation(self, instance):
+        # Convert JSONField data to Python objects
+        ret = super().to_representation(instance)
+        if instance.current_core_squad:
+            ret['current_core_squad'] = instance.current_core_squad
+        if instance.future_core_squad:
+            ret['future_core_squad'] = instance.future_core_squad
+        return ret

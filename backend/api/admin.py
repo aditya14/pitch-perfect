@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.shortcuts import render
 from django.urls import path
-from .models import Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile
+from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, 
+                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole)
 
 from .forms import CSVUploadForm
 import csv
@@ -14,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 @admin.register(Season)
 class SeasonAdmin(admin.ModelAdmin):
-    list_display = ('year', 'name', 'start_date', 'end_date', 'status')
+    list_display = ('year', 'name', 'start_date', 'end_date', 'status', 'default_draft_order')
     list_filter = ('status',)
     search_fields = ('name', 'year')
 
@@ -463,3 +464,97 @@ class FantasySquadAdmin(admin.ModelAdmin):
     list_filter = ('league',)
     search_fields = ('name', 'user__username', 'league__name')
     raw_id_fields = ('user', 'league')
+
+@admin.register(FantasyDraft)
+class FantasyDraftAdmin(admin.ModelAdmin):
+    list_display = ('league', 'squad', 'type')
+    list_filter = ('league', 'type')
+    search_fields = ('league__name', 'squad__name')
+
+@admin.register(FantasyBoostRole)
+class FantasyBoostRoleAdmin(admin.ModelAdmin):
+    list_display = ('label', 'get_roles', 'get_batting_multipliers', 'get_bowling_multipliers')
+    list_filter = ('role',)
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('label', 'role')
+        }),
+        ('Batting Multipliers', {
+            'fields': (
+                'multiplier_runs',
+                'multiplier_fours',
+                'multiplier_sixes',
+                'multiplier_sr',
+                'multiplier_bat_milestones'
+            ),
+            'classes': ('wide',)
+        }),
+        ('Bowling Multipliers', {
+            'fields': (
+                'multiplier_wickets',
+                'multiplier_maidens',
+                'multiplier_economy',
+                'multiplier_bowl_milestones'
+            ),
+            'classes': ('wide',)
+        }),
+        ('Fielding Multipliers', {
+            'fields': (
+                'multiplier_catches',
+                'multiplier_stumpings',
+                'multiplier_run_outs'
+            ),
+            'classes': ('wide',)
+        }),
+        ('Other Multipliers', {
+            'fields': (
+                'multiplier_potm',
+                'multiplier_playing'
+            ),
+            'classes': ('wide',)
+        }),
+    )
+    search_fields = ('label',)
+
+    def get_roles(self, obj):
+        return ", ".join(obj.role)
+    get_roles.short_description = 'Roles'
+
+    def get_batting_multipliers(self, obj):
+        return f"Runs: {obj.multiplier_runs}x, SR: {obj.multiplier_sr}x"
+    get_batting_multipliers.short_description = 'Batting'
+
+    def get_bowling_multipliers(self, obj):
+        return f"Wickets: {obj.multiplier_wickets}x, Econ: {obj.multiplier_economy}x"
+    get_bowling_multipliers.short_description = 'Bowling'
+
+@admin.register(FantasyPlayerEvent)
+class FantasyPlayerEventAdmin(admin.ModelAdmin):
+    list_display = ('fantasy_squad', 'get_player', 'get_match', 'boost', 'total_points')
+    list_filter = ('fantasy_squad', 'boost', 'match_event__match')
+    search_fields = (
+        'fantasy_squad__name', 
+        'match_event__player__name',
+        'match_event__match__match_number'
+    )
+    raw_id_fields = ('match_event', 'fantasy_squad', 'boost')
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'fantasy_squad',
+            'match_event',
+            'match_event__player',
+            'match_event__match',
+            'boost'
+        )
+
+    def get_player(self, obj):
+        return obj.match_event.player.name
+    get_player.short_description = 'Player'
+    get_player.admin_order_field = 'match_event__player__name'
+
+    def get_match(self, obj):
+        match = obj.match_event.match
+        return f"Match {match.match_number}: {match.team_1.short_name} vs {match.team_2.short_name}"
+    get_match.short_description = 'Match'
+    get_match.admin_order_field = 'match_event__match__match_number'

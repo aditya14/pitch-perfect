@@ -16,6 +16,7 @@ class UserDashboard extends Component {
   fetchLeagues = async () => {
     try {
       const response = await api.get('/leagues/my_leagues/');
+      console.log('Leagues:', response.data);
       this.setState({ leagues: response.data, loading: false });
     } catch (error) {
       console.error('Error fetching leagues:', error);
@@ -89,8 +90,13 @@ class UserDashboard extends Component {
                     <tr key={league.id}
                         className="hover:bg-gray-50 dark:hover:bg-gray-700"
                         style={{borderLeft: `4px solid ${league.color}`}}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                        {league.name}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Link 
+                          to={`/leagues/${league.id}`} 
+                          className="text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
+                        >
+                          {league.name}
+                        </Link>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                         {league.my_squad ? (
@@ -106,7 +112,7 @@ class UserDashboard extends Component {
                         {league.squads_count}/{league.max_teams}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                        {league.season || '-'}
+                        {league.season?.name || '-'}
                       </td>
                     </tr>
                   ))}

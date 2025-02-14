@@ -1,89 +1,83 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { PlayerModalProvider } from './context/PlayerModalContext';
 import Login from './components/auth/Login';
 import UserDashboard from './components/UserDashboard';
 import CreateLeague from './components/leagues/CreateLeague';
 import JoinLeague from './components/leagues/JoinLeague';
 import CreateSquad from './components/squads/CreateSquad';
+import LeagueView from './components/leagues/LeagueView';
+import RosterView from './components/leagues/RosterView';
 import api from './utils/axios';
 import Header from './components/Header';
 import './styles/transitions.css';
+import SquadView from './components/squads/SquadView';
 
-class App extends Component {
-  state = {
-    isAuthenticated: false,
-    isLoading: true,
-    theme: localStorage.getItem('theme') || 'light'
-  };
+const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
-  componentDidMount() {
-    this.initializeAuth();
-    this.applyTheme();
-  }
+  useEffect(() => {
+    initializeAuth();
+    applyTheme();
+  }, []);
 
-  initializeAuth = async () => {
+  const initializeAuth = async () => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       try {
-        // Get user details including theme preference
         const response = await api.get('/user/');
-        this.setState({ 
-          isAuthenticated: true, 
-          isLoading: false,
-          theme: response.data.profile?.theme || this.state.theme 
-        });
+        setIsAuthenticated(true);
+        setTheme(response.data.profile?.theme || theme);
       } catch (error) {
-        this.setState({ isLoading: false });
+        console.error('Auth error:', error);
       }
-    } else {
-      this.setState({ isLoading: false });
     }
+    setIsLoading(false);
   };
 
-  applyTheme = () => {
-    if (this.state.theme === 'dark') {
+  const applyTheme = () => {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
   };
 
-  setAuthenticated = (value) => {
-    this.setState({ isAuthenticated: value });
-  };
-
-  handleThemeChange = async (newTheme) => {
-    this.setState({ theme: newTheme }, () => {
-      this.applyTheme();
-      localStorage.setItem('theme', newTheme);
-      
-      // Update theme preference in backend
-      if (this.state.isAuthenticated) {
-        api.post('/user/preferences/', { theme: newTheme })
-          .catch(error => console.error('Failed to update theme preference:', error));
+  const handleThemeChange = async (newTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    applyTheme();
+    
+    if (isAuthenticated) {
+      try {
+        await api.post('/user/preferences/', { theme: newTheme });
+      } catch (error) {
+        console.error('Failed to update theme preference:', error);
       }
-    });
+    }
   };
 
-  render() {
-    if (this.state.isLoading) {
-      return <div>Loading...</div>;
-    }
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-    return (
-      <Router>
+  return (
+    <Router>
+      <PlayerModalProvider>
         <div className={`
           min-h-screen 
           theme-transition
           bg-white dark:bg-gray-900 
           text-gray-900 dark:text-white
         `}>
-          {this.state.isAuthenticated && (
+          {isAuthenticated && (
             <Header 
-              setAuthenticated={this.setAuthenticated}
-              theme={this.state.theme}
-              onThemeChange={this.handleThemeChange}
+              setAuthenticated={setIsAuthenticated}
+              theme={theme}
+              onThemeChange={handleThemeChange}
             />
           )}
           <div className="theme-transition dark:bg-gray-900">
@@ -91,15 +85,15 @@ class App extends Component {
               <Route 
                 path="/login" 
                 element={
-                  !this.state.isAuthenticated ? 
-                  <Login setAuthenticated={this.setAuthenticated} /> : 
+                  !isAuthenticated ? 
+                  <Login setAuthenticated={setIsAuthenticated} /> : 
                   <Navigate to="/dashboard" />
                 }
               />
               <Route 
                 path="/dashboard" 
                 element={
-                  this.state.isAuthenticated ? 
+                  isAuthenticated ? 
                   <UserDashboard /> : 
                   <Navigate to="/login" />
                 }
@@ -107,7 +101,7 @@ class App extends Component {
               <Route 
                 path="/leagues/create" 
                 element={
-                  this.state.isAuthenticated ? 
+                  isAuthenticated ? 
                   <CreateLeague /> : 
                   <Navigate to="/login" />
                 }
@@ -115,7 +109,7 @@ class App extends Component {
               <Route 
                 path="/leagues/join" 
                 element={
-                  this.state.isAuthenticated ? 
+                  isAuthenticated ? 
                   <JoinLeague /> : 
                   <Navigate to="/login" />
                 }
@@ -123,8 +117,32 @@ class App extends Component {
               <Route 
                 path="/squads/create" 
                 element={
-                  this.state.isAuthenticated ? 
+                  isAuthenticated ? 
                   <CreateSquad /> : 
+                  <Navigate to="/login" />
+                }
+              />
+              <Route 
+                path="/leagues/:leagueId" 
+                element={
+                  isAuthenticated ? 
+                  <LeagueView /> : 
+                  <Navigate to="/login" />
+                }
+              />
+              <Route 
+                path="/leagues/:leagueId/roster" 
+                element={
+                  isAuthenticated ? 
+                  <RosterView /> : 
+                  <Navigate to="/login" />
+                }
+              />
+              <Route 
+                path="/squads/:squadId"
+                element={
+                  isAuthenticated ? 
+                  <SquadView /> : 
                   <Navigate to="/login" />
                 }
               />
@@ -132,9 +150,9 @@ class App extends Component {
             </Routes>
           </div>
         </div>
-      </Router>
-    );
-  }
-}
+      </PlayerModalProvider>
+    </Router>
+  );
+};
 
 export default App;
