@@ -17,10 +17,11 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { usePlayerModal } from '../../context/PlayerModalContext';
 
 const BREAKDOWN_OPTIONS = [20, 30, 40, 50];
 
-const SortableRow = ({ player, index }) => {
+const SortableRow = ({ player, index, leagueId }) => {
   const {
     attributes,
     listeners,
@@ -35,6 +36,7 @@ const SortableRow = ({ player, index }) => {
     transition,
     zIndex: isDragging ? 1 : 0,
   };
+  const { openPlayerModal } = usePlayerModal();
 
   return (
     <tr
@@ -63,7 +65,12 @@ const SortableRow = ({ player, index }) => {
         {index + 1}
       </td>
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-        {player.name}
+        <button 
+          onClick={() => openPlayerModal(player.id, leagueId)}
+          className="text-blue-600 hover:underline"
+        >
+          {player.name}
+        </button>
       </td>
       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
         {player.team}

@@ -1,6 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getTextColorForBackground } from '../../utils/colorUtils';
 
-const LeagueDashboard = ({ league }) => {
+const LeagueDashboard = ({ league, currentUserId }) => {
+  const navigate = useNavigate();
+
+  const handleSquadClick = (squadId) => {
+    navigate(`/squads/${squadId}`);
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -26,17 +34,23 @@ const LeagueDashboard = ({ league }) => {
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {league.squads?.sort((a, b) => b.total_points - a.total_points)
               .map((squad, index) => (
-              <tr key={squad.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              <tr 
+                key={squad.id} 
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                onClick={() => handleSquadClick(squad.id)}
+              >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                   {index + 1}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div 
-                      className="h-8 w-8 rounded-full mr-3"
-                      style={{ backgroundColor: squad.color }}
-                    />
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    <span 
+                      className="text-sm font-medium px-2 py-1 rounded-md inline-flex items-center hover:opacity-90 transition-opacity cursor-pointer"
+                      style={{ 
+                        backgroundColor: squad.color,
+                        color: getTextColorForBackground(squad.color)
+                      }}
+                    >
                       {squad.name}
                     </span>
                   </div>

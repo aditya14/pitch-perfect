@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { usePlayerModal } from '../../context/PlayerModalContext';
+import { getTextColorForBackground } from '../../utils/colorUtils';
 
-const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles }) => {
+const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, leagueId, squadColor }) => {
+  console.log('PlayerListTab:', players, playerEvents, currentCoreSquad, boostRoles, leagueId, squadColor); // Added this log
   const [sortConfig, setSortConfig] = useState({
     key: 'total_points',
     direction: 'desc'
   });
+  const { openPlayerModal } = usePlayerModal();
 
   const getPlayerStats = (playerId) => {
     const events = playerEvents[playerId] || {
@@ -151,11 +155,17 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles }) 
               <tr key={player.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="px-6 py-4">
                   <div className="flex flex-col">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                    <div 
+                      className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400"
+                      onClick={() => openPlayerModal(player.id, leagueId)}
+                    >
                       {player.name}
                     </div>
                     {coreRole && (
-                      <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200" style={{width:'fit-content'}}>
+                      <span 
+                        className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                        style={{width:'fit-content', backgroundColor: squadColor, color: getTextColorForBackground(squadColor)}}
+                      >
                         {coreRole}
                       </span>
                     )}

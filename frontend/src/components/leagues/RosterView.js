@@ -54,6 +54,7 @@ const RosterView = () => {
         const playersResponse = await api.get(
           `/leagues/${leagueId}/players?season=${leagueResponse.data.season.id}`
         );
+        console.log('Players:', playersResponse.data);
         setPlayers(playersResponse.data);
         await fetchDraftOrder();
       } catch (err) {
@@ -135,6 +136,7 @@ const RosterView = () => {
           players={players}
           draftOrder={draftOrder}
           onSaveOrder={saveDraftOrder}
+          leagueId={leagueId}
         />
       ) : (
         <RosterList 

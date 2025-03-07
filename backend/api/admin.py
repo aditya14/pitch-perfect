@@ -1,14 +1,17 @@
 from django.contrib import admin, messages
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.html import format_html
+from django.utils import timezone
 from django.shortcuts import render
-from django.urls import path
+from django.urls import path, reverse
 from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, 
-                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole)
+                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade)
 
 from .forms import CSVUploadForm
 import csv
 from io import TextIOWrapper
+from django.db.models import Q
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -92,19 +95,86 @@ class PlayerTeamHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(IPLMatch)
 class IPLMatchAdmin(admin.ModelAdmin):
-    list_display = ('formatted_match', 'match_number', 'season', 'date', 'status')
+    list_display = ('formatted_match', 'match_number', 'season', 'date', 'status', 'player_of_match')
     list_filter = ('season', 'status', 'team_1', 'team_2')
     search_fields = ('team_1__name', 'team_2__name', 'venue')
     date_hierarchy = 'date'
+    
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('season', 'match_number', 'stage', 'date', 'venue', 'status')
+        }),
+        ('Teams', {
+            'fields': ('team_1', 'team_2')
+        }),
+        ('Match Details', {
+            'fields': (
+                'toss_winner',
+                'toss_decision',
+                'winner',
+                'win_type',
+                'win_margin',
+                'player_of_match'
+            )
+        }),
+        ('Innings Details', {
+            'fields': (
+                'inns_1_runs',
+                'inns_1_wickets',
+                'inns_1_overs',
+                'inns_2_runs',
+                'inns_2_wickets',
+                'inns_2_overs'
+            )
+        }),
+        ('Other', {
+            'fields': ('cricdata_id',)
+        })
+    )
 
     def formatted_match(self, obj):
         if obj.stage == "LEAGUE":
             return f"Match {obj.match_number} - {obj.team_1} vs {obj.team_2}"
         else:
-            return f"{obj.stage} - {obj.team_1} vs {obj.team_2}"
-
-    # Set the column's label in the admin panel
+            team_1 = obj.team_1.short_name if obj.team_1 else "TBD"
+            team_2 = obj.team_2.short_name if obj.team_2 else "TBD"
+            return f"{obj.stage} - {team_1} vs {team_2}"
     formatted_match.short_description = "Match"
+
+    def save_model(self, request, obj, form, change):
+        # Track the old player_of_match value before saving
+        if change:  # if this is an edit
+            old_obj = IPLMatch.objects.get(pk=obj.pk)
+            old_potm = old_obj.player_of_match
+        else:
+            old_potm = None
+
+        # Save the match object first
+        super().save_model(request, obj, form, change)
+
+        # Handle player_of_match updates
+        if obj.player_of_match != old_potm:
+            # If there was a previous POTM, set their event's player_of_match to False
+            if old_potm:
+                IPLPlayerEvent.objects.filter(
+                    match=obj,
+                    player=old_potm
+                ).update(player_of_match=False)
+
+            # If there's a new POTM, set their event's player_of_match to True
+            if obj.player_of_match:
+                IPLPlayerEvent.objects.filter(
+                    match=obj,
+                    player=obj.player_of_match
+                ).update(player_of_match=True)
+
+                # Recalculate points for affected events
+                affected_events = IPLPlayerEvent.objects.filter(
+                    Q(match=obj, player=obj.player_of_match) |
+                    (Q(match=obj, player=old_potm) if old_potm else Q())
+                )
+                for event in affected_events:
+                    event.save()
 
 class IPLPlayerEventAdmin(admin.ModelAdmin):
     list_display = [
@@ -558,3 +628,221 @@ class FantasyPlayerEventAdmin(admin.ModelAdmin):
         return f"Match {match.match_number}: {match.team_1.short_name} vs {match.team_2.short_name}"
     get_match.short_description = 'Match'
     get_match.admin_order_field = 'match_event__match__match_number'
+
+@admin.register(FantasyTrade)
+class FantasyTradeAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 
+        'trade_teams', 
+        'player_summary', 
+        'status', 
+        'created_at', 
+        'updated_at',
+        'trade_actions'
+    ]
+    list_filter = ['status', 'created_at']
+    search_fields = ['initiator__name', 'receiver__name']
+    readonly_fields = ['created_at', 'updated_at']
+    fieldsets = [
+        (None, {
+            'fields': ['initiator', 'receiver', 'status']
+        }),
+        ('Trade Details', {
+            'fields': ['players_given', 'players_received']
+        }),
+        ('Timestamps', {
+            'fields': ['created_at', 'updated_at'],
+            'classes': ['collapse']
+        })
+    ]
+    
+    def trade_teams(self, obj):
+        """Display initiator and receiver teams with links"""
+        initiator_url = reverse('admin:api_fantasysquad_change', args=[obj.initiator.id])
+        receiver_url = reverse('admin:api_fantasysquad_change', args=[obj.receiver.id])
+        
+        return format_html(
+            '<strong>{}</strong> → <strong>{}</strong>',
+            format_html('<a href="{}">{}</a>', initiator_url, obj.initiator.name),
+            format_html('<a href="{}">{}</a>', receiver_url, obj.receiver.name)
+        )
+    trade_teams.short_description = 'Trade Teams'
+    
+    def player_summary(self, obj):
+        """Display a summary of players involved in the trade"""
+        try:
+            # Get player names
+            initiator_players = []
+            for player_id in obj.players_given:
+                try:
+                    player = IPLPlayer.objects.get(id=player_id)
+                    initiator_players.append(player.name)
+                except IPLPlayer.DoesNotExist:
+                    initiator_players.append(f"Unknown ({player_id})")
+                    
+            receiver_players = []
+            for player_id in obj.players_received:
+                try:
+                    player = IPLPlayer.objects.get(id=player_id)
+                    receiver_players.append(player.name)
+                except IPLPlayer.DoesNotExist:
+                    receiver_players.append(f"Unknown ({player_id})")
+            
+            # Format as initiator's players → receiver's players
+            return format_html(
+                '<div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">{} → {}</div>',
+                ", ".join(initiator_players) or "None",
+                ", ".join(receiver_players) or "None"
+            )
+        except Exception as e:
+            return f"Error: {str(e)}"
+    player_summary.short_description = 'Players Traded'
+    
+    def trade_actions(self, obj):
+        """Custom buttons for trade actions"""
+        if obj.status == 'Pending':
+            accept_url = reverse('admin:accept_trade', args=[obj.pk])
+            reject_url = reverse('admin:reject_trade', args=[obj.pk])
+            
+            return format_html(
+                '<a class="button" href="{}">Accept</a>&nbsp;'
+                '<a class="button" style="background: #d9534f;" href="{}">Reject</a>',
+                accept_url, reject_url
+            )
+        elif obj.status == 'Accepted':
+            process_url = reverse('admin:process_trade', args=[obj.pk])
+            return format_html(
+                '<a class="button" href="{}">Process Now</a>',
+                process_url
+            )
+        return "-"
+    trade_actions.short_description = 'Actions'
+    
+    def get_urls(self):
+        from django.urls import path
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<path:object_id>/accept/',
+                self.admin_site.admin_view(self.accept_trade),
+                name='accept_trade',
+            ),
+            path(
+                '<path:object_id>/reject/',
+                self.admin_site.admin_view(self.reject_trade),
+                name='reject_trade',
+            ),
+            path(
+                '<path:object_id>/process/',
+                self.admin_site.admin_view(self.process_trade),
+                name='process_trade',
+            ),
+        ]
+        return custom_urls + urls
+    
+    def accept_trade(self, request, object_id):
+        from django.shortcuts import redirect
+        from django.contrib import messages
+        
+        trade = self.get_object(request, object_id)
+        trade.status = 'Accepted'
+        trade.updated_at = timezone.now()
+        trade.save()
+        
+        messages.success(request, f"Trade #{trade.id} has been accepted")
+        return redirect('admin:api_fantasytrade_changelist')
+    
+    def reject_trade(self, request, object_id):
+        from django.shortcuts import redirect
+        from django.contrib import messages
+        
+        trade = self.get_object(request, object_id)
+        trade.status = 'Rejected'
+        trade.updated_at = timezone.now()
+        trade.save()
+        
+        messages.success(request, f"Trade #{trade.id} has been rejected")
+        return redirect('admin:api_fantasytrade_changelist')
+    
+    def process_trade(self, request, object_id):
+        from django.shortcuts import redirect
+        from django.contrib import messages
+        
+        trade = self.get_object(request, object_id)
+        
+        # Only process if status is Accepted
+        if trade.status != 'Accepted':
+            messages.error(request, f"Cannot process trade #{trade.id} with status {trade.status}")
+            return redirect('admin:api_fantasytrade_changelist')
+        
+        # Process the trade by swapping players
+        try:
+            initiator = trade.initiator
+            receiver = trade.receiver
+            
+            # Update initiator's squad
+            for player_id in trade.players_received:
+                if player_id in receiver.current_squad:
+                    receiver.current_squad.remove(player_id)
+                    initiator.current_squad.append(player_id)
+            
+            # Update receiver's squad
+            for player_id in trade.players_given:
+                if player_id in initiator.current_squad:
+                    initiator.current_squad.remove(player_id)
+                    receiver.current_squad.append(player_id)
+            
+            # Save changes
+            initiator.save()
+            receiver.save()
+            
+            # Update core squads if needed
+            self._update_core_squad_after_trade(initiator, trade.players_given, trade.players_received)
+            self._update_core_squad_after_trade(receiver, trade.players_received, trade.players_given)
+            
+            # Mark trade as closed
+            trade.status = 'Closed'
+            trade.updated_at = timezone.now()
+            trade.save()
+            
+            messages.success(request, f"Trade #{trade.id} has been processed successfully")
+        except Exception as e:
+            messages.error(request, f"Error processing trade #{trade.id}: {str(e)}")
+        
+        return redirect('admin:api_fantasytrade_changelist')
+    
+    def _update_core_squad_after_trade(self, squad, players_removed, players_added):
+        """Update core squad roles when players are traded"""
+        if not hasattr(squad, 'current_core_squad') or not squad.current_core_squad:
+            return
+            
+        core_squad = squad.current_core_squad
+        
+        # Find any core roles assigned to traded players
+        for i, assignment in enumerate(core_squad):
+            if assignment.get('player_id') in players_removed:
+                # Check if we received a player that can take this role
+                for new_player_id in players_added:
+                    try:
+                        player = IPLPlayer.objects.get(id=new_player_id)
+                        role_id = assignment.get('boost_id')
+                        
+                        from .models import FantasyBoostRole
+                        role = FantasyBoostRole.objects.get(id=role_id)
+                        
+                        # If player role matches the boost role requirements
+                        if player.role in role.role:
+                            # Assign the new player to this role
+                            core_squad[i]['player_id'] = new_player_id
+                            break
+                    except Exception:
+                        # If any error occurs during reassignment, just skip
+                        continue
+                        
+        squad.current_core_squad = core_squad
+        squad.save()
+    
+    class Media:
+        css = {
+            'all': ('admin/css/vendor/buttons.css',)
+        }

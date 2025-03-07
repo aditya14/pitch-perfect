@@ -7,30 +7,32 @@ const FantasyPlayerView = ({ player, leagueId }) => {
   const tabs = ['Current Season', 'Historical Data'];
 
   return (
-    <div className="w-full py-4">
+    <div className="w-full">
       {/* Tabs */}
-      <div className="flex space-x-1 rounded-xl bg-gray-100 p-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-medium leading-5 ${
-              activeTab === tab
-                ? 'bg-white text-blue-700 shadow'
-                : 'text-gray-700 hover:bg-white/[0.12] hover:text-gray-900'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 mb-4">
+        <div className="flex space-x-1 rounded-xl bg-gray-100 dark:bg-gray-700 p-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 rounded-lg py-2.5 text-sm font-medium leading-5 
+                ${activeTab === tab
+                  ? 'bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-400 shadow'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-white/[0.12] dark:hover:bg-gray-600'
+                }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Content */}
-      <div className="mt-4">
+      <div>
         {activeTab === 'Current Season' ? (
-          <FantasyPlayerSeason player={player} />
+          <FantasyPlayerSeason player={player} leagueId={leagueId} />
         ) : (
-          <FantasyPlayerHistory player={player} leagueId={leagueId} />
+          <FantasyPlayerHistory player={player} />
         )}
       </div>
     </div>

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 import api from '../../utils/axios';
+import { getTextColorForBackground } from '../../utils/colorUtils';
 
 const MatchList = ({ league }) => {
+  const navigate = useNavigate();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all', 'upcoming', 'completed'
@@ -33,6 +36,18 @@ const MatchList = ({ league }) => {
       return matches.filter(match => ['COMPLETED', 'NO_RESULT', 'ABANDONED'].includes(match.status));
     }
     return matches;
+  };
+
+  const handleMatchClick = (match) => {
+    if (!['COMPLETED', 'NO_RESULT', 'ABANDONED'].includes(match.status)) {
+      return;
+    }
+    
+    if (league) {
+      navigate(`/leagues/${league.id}/matches/${match.id}`);
+    } else {
+      navigate(`/matches/${match.id}`);
+    }
   };
 
   const getMatchSummary = (match) => {
@@ -166,7 +181,12 @@ const MatchList = ({ league }) => {
         {getFilteredMatches().map((match) => (
           <div 
             key={match.id} 
-            className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            onClick={() => handleMatchClick(match)}
+            className={`p-6 ${
+              ['COMPLETED', 'NO_RESULT', 'ABANDONED'].includes(match.status)
+                ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700'
+                : ''
+            } transition-colors`}
           >
             <div className="flex justify-between items-start mb-2">
               <div>
@@ -190,22 +210,38 @@ const MatchList = ({ league }) => {
             <div className="flex justify-between items-center mt-4">
               <div className="flex-1">
                 <div className="flex items-center">
-                  <div 
-                    className="h-8 w-8 rounded-full mr-3"
-                    style={{ backgroundColor: match.team_1.primary_color }}
-                  />
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  {match.team_1 ?
+                  <span 
+                    className="text-sm font-medium px-2 py-1 rounded-md inline-flex items-center"
+                    style={{ 
+                      backgroundColor: '#' + match.team_1.primary_color,
+                      color: getTextColorForBackground(match.team_1.primary_color)
+                    }}
+                  >
                     {match.team_1.name}
                   </span>
+                  :
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    TBD
+                  </span>
+                  }
                 </div>
                 <div className="flex items-center mt-2">
-                  <div 
-                    className="h-8 w-8 rounded-full mr-3"
-                    style={{ backgroundColor: match.team_2.primary_color }}
-                  />
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {match.team_2.name}
-                  </span>
+                  {match.team_2 ?
+                    <span 
+                      className="text-sm font-medium px-2 py-1 rounded-md inline-flex items-center"
+                      style={{ 
+                        backgroundColor: '#' + match.team_2.primary_color,
+                        color: getTextColorForBackground(match.team_2.primary_color)
+                      }}
+                    >
+                      {match.team_2.name}
+                    </span>
+                    :
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      TBD
+                    </span>
+                  }
                 </div>
               </div>
 

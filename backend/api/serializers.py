@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, FantasySquad, FantasyLeague
+from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, FantasySquad, FantasyLeague, 
+                     FantasyPlayerEvent, IPLPlayerEvent, FantasyTrade)
 from django.contrib.auth.models import User
 import random
 import string
@@ -176,6 +177,8 @@ class CreateSquadSerializer(serializers.ModelSerializer):
 
 class SquadDetailSerializer(serializers.ModelSerializer):
     league_name = serializers.CharField(source='league.name')
+    league_id = serializers.IntegerField(source='league.id')  # Add this line
+    user_id = serializers.IntegerField(source='user.id')      # Add this line
 
     class Meta:
         model = FantasySquad
@@ -184,7 +187,9 @@ class SquadDetailSerializer(serializers.ModelSerializer):
             'name', 
             'color', 
             'league', 
+            'league_id',    # Add this
             'league_name', 
+            'user_id',      # Add this
             'total_points',
             'current_core_squad',
             'future_core_squad'
@@ -243,3 +248,107 @@ class SquadSerializer(serializers.ModelSerializer):
         if instance.future_core_squad:
             ret['future_core_squad'] = instance.future_core_squad
         return ret
+    
+class IPLPlayerEventSerializer(serializers.ModelSerializer):
+    player_name = serializers.CharField(source='player.name')
+    team_name = serializers.CharField(source='for_team.short_name')
+    team_color = serializers.CharField(source='for_team.primary_color')
+    
+    class Meta:
+        model = IPLPlayerEvent
+        fields = [
+            'id', 'player_name', 'team_name', 'team_color',
+            # Batting
+            'bat_runs', 'bat_balls', 'bat_strike_rate', 'bat_fours', 'bat_sixes',
+            'batting_points_total',
+            # Bowling
+            'bowl_balls', 'bowl_maidens', 'bowl_runs', 'bowl_wickets', 'bowl_economy',
+            'bowling_points_total',
+            # Fielding
+            'field_catch', 'wk_catch', 'wk_stumping', 'run_out_solo', 'run_out_collab',
+            'fielding_points_total',
+            # Other
+            'player_of_match', 'other_points_total', 'total_points_all'
+        ]
+
+class FantasyPlayerEventSerializer(serializers.ModelSerializer):
+    player_name = serializers.CharField(source='match_event.player.name')
+    team_name = serializers.CharField(source='match_event.for_team.short_name')
+    team_color = serializers.CharField(source='match_event.for_team.primary_color')
+    squad_name = serializers.CharField(source='fantasy_squad.name')
+    base_stats = IPLPlayerEventSerializer(source='match_event')
+    
+    class Meta:
+        model = FantasyPlayerEvent
+        fields = [
+            'id', 'player_name', 'team_name', 'team_color', 'squad_name',
+            'base_stats', 'total_points'
+        ]
+
+class FantasyTradeSerializer(serializers.ModelSerializer):
+    initiator_name = serializers.SerializerMethodField()
+    receiver_name = serializers.SerializerMethodField()
+    players_given_details = serializers.SerializerMethodField()
+    players_received_details = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FantasyTrade
+        fields = [
+            'id', 'initiator', 'initiator_name', 'receiver', 
+            'receiver_name', 'players_given', 'players_received', 
+            'players_given_details', 'players_received_details',
+            'status', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['status', 'created_at', 'updated_at']
+    
+    def get_initiator_name(self, obj):
+        return obj.initiator.name if obj.initiator else None
+    
+    def get_receiver_name(self, obj):
+        return obj.receiver.name if obj.receiver else None
+    
+    def get_players_given_details(self, obj):
+        """Return details for players being given by initiator"""
+        players = []
+        
+        if not obj.players_given:
+            return players
+            
+        for player_id in obj.players_given:
+            try:
+                player = IPLPlayer.objects.get(id=player_id)
+                players.append({
+                    'id': player.id,
+                    'name': player.name,
+                    'role': player.role,
+                    'team': player.current_team.team.short_name if player.current_team else None,
+                    'img': player.img.url if player.img else None
+                })
+            except IPLPlayer.DoesNotExist:
+                # Include just the ID if player not found
+                players.append({'id': player_id, 'name': f'Unknown Player (ID: {player_id})'})
+                
+        return players
+    
+    def get_players_received_details(self, obj):
+        """Return details for players being received by initiator"""
+        players = []
+        
+        if not obj.players_received:
+            return players
+            
+        for player_id in obj.players_received:
+            try:
+                player = IPLPlayer.objects.get(id=player_id)
+                players.append({
+                    'id': player.id,
+                    'name': player.name,
+                    'role': player.role,
+                    'team': player.current_team.team.short_name if player.current_team else None,
+                    'img': player.img.url if player.img else None
+                })
+            except IPLPlayer.DoesNotExist:
+                # Include just the ID if player not found
+                players.append({'id': player_id, 'name': f'Unknown Player (ID: {player_id})'})
+                
+        return players

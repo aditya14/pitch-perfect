@@ -118,6 +118,7 @@ class IPLPlayer(SoftDeleteModel, TimeStampedModel):
         blank=True, null=True
     )
     img = models.ImageField(upload_to='players/', null=True, blank=True)
+    cricdata_id = models.CharField(max_length=60, blank=True, null=True)
 
     # Current team relationship handled through PlayerTeamHistory
     teams = models.ManyToManyField(
@@ -193,12 +194,14 @@ class IPLMatch(TimeStampedModel):
     team_1 = models.ForeignKey(
         IPLTeam,
         on_delete=models.CASCADE,
-        related_name='home_matches'
+        related_name='home_matches',
+        null=True, blank=True
     )
     team_2 = models.ForeignKey(
         IPLTeam,
         on_delete=models.CASCADE,
-        related_name='away_matches'
+        related_name='away_matches',
+        null=True, blank=True
     )
     date = models.DateTimeField()
     venue = models.CharField(max_length=100)
@@ -251,6 +254,8 @@ class IPLMatch(TimeStampedModel):
     inns_2_wickets = models.IntegerField(null=True, blank=True)
     inns_2_overs = models.FloatField(null=True, blank=True)
 
+    cricdata_id = models.CharField(max_length=60, blank=True, null=True)
+
 
     class Meta:
         unique_together = ['season', 'match_number']
@@ -261,7 +266,17 @@ class IPLMatch(TimeStampedModel):
         ]
 
     def __str__(self):
-        return f"{self.team_1} vs {self.team_2} - Match {self.match_number}, {self.season}"
+        if self.team_1:
+            team_1 = self.team_1.short_name
+        else:
+            team_1 = "TBD"
+        
+        if self.team_2:
+            team_2 = self.team_2.short_name
+        else:
+            team_2 = "TBD"
+        
+        return f"{team_1} vs {team_2} - Match {self.match_number}, {self.season}"
 
 from django.db import models
 from django.core.validators import MinValueValidator
@@ -556,3 +571,25 @@ class FantasyPlayerEvent(models.Model):
     def __str__(self):
         return f"{self.fantasy_squad.name} - {self.match_event.player.name} - {self.match_event.match}"
     
+class FantasyTrade(models.Model):
+    initiator = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='initiated_trades')
+    receiver = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='received_trades')
+    players_given = models.JSONField(default=list, blank=True, null=True)
+    players_received = models.JSONField(default=list, blank=True, null=True)
+    status = models.CharField(
+        max_length=10, 
+        choices=[('Pending', 'Pending'), ('Rejected', 'Rejected'), ('Accepted', 'Accepted'), ('Closed', 'Closed')],
+        default='Pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['initiator']),
+            models.Index(fields=['receiver']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.initiator.name} -> {self.receiver.name}"

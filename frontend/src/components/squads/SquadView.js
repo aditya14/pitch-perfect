@@ -3,9 +3,12 @@ import { useParams } from 'react-router-dom';
 import api from '../../utils/axios';
 import PlayerListTab from './PlayerListTab';
 import CoreSquadTab from './CoreSquadTab';
+import { useAuth } from '../../context/AuthContext';
+import { getTextColorForBackground } from '../../utils/colorUtils';
 
 const SquadView = () => {
   const { squadId } = useParams();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('players');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,6 +16,7 @@ const SquadView = () => {
   const [players, setPlayers] = useState([]);
   const [boostRoles, setBoostRoles] = useState([]);
   const [playerEvents, setPlayerEvents] = useState({});
+  const [isOwnSquad, setIsOwnSquad] = useState(false);
 
   useEffect(() => {
     const fetchSquadData = async () => {
@@ -20,11 +24,14 @@ const SquadView = () => {
         setLoading(true);
         
         const squadResponse = await api.get(`/squads/${squadId}/`);
-        console.log(squadResponse.data);
-        setSquadData(squadResponse.data);
+        console.log('Squad Response:', squadResponse.data); // Added this log
+        const squadData = squadResponse.data;
+        setSquadData(squadData);
+        
+        // Check if this is the user's own squad
+        setIsOwnSquad(squadData.user_id === user?.id);
 
         const playersResponse = await api.get(`/squads/${squadId}/players/`);
-        console.log(playersResponse.data);
         setPlayers(playersResponse.data);
 
         const rolesResponse = await api.get('/fantasy/boost-roles/');
@@ -48,9 +55,11 @@ const SquadView = () => {
     };
 
     fetchSquadData();
-  }, [squadId]);
+  }, [squadId, user]);
 
   const updateFutureCoreSquad = async (boost_id, player_id) => {
+    if (!isOwnSquad) return; // Prevent updates for other users' squads
+    
     try {
       await api.patch(`/squads/${squadId}/core-squad/`, {
         boost_id,
@@ -81,10 +90,26 @@ const SquadView = () => {
     );
   }
 
+  console.log('Rendering SquadView with data:', { 
+    squadData,
+    leagueId: squadData.league_id,
+    players: players.length
+  }); // Added this log
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold dark:text-white mb-2">{squadData.name}</h1>
+        <h1 className="text-2xl font-bold mb-2">
+          <span 
+            className="px-3 py-1 rounded-md inline-block"
+            style={{ 
+              backgroundColor: squadData.color,
+              color: getTextColorForBackground(squadData.color)
+            }}
+          >
+            {squadData.name}
+          </span>
+        </h1>
         <p className="text-gray-600 dark:text-gray-400">
           {squadData.league_name}
         </p>
@@ -124,6 +149,8 @@ const SquadView = () => {
             playerEvents={playerEvents}
             currentCoreSquad={squadData.current_core_squad}
             boostRoles={boostRoles}
+            leagueId={squadData.league_id}
+            squadColor={squadData.color}
           />
         ) : (
           <CoreSquadTab
@@ -132,6 +159,8 @@ const SquadView = () => {
             currentCoreSquad={squadData.current_core_squad}
             futureCoreSquad={squadData.future_core_squad}
             onUpdateRole={updateFutureCoreSquad}
+            isOwnSquad={isOwnSquad}
+            leagueId={squadData.league_id}
           />
         )}
       </div>

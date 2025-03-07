@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const Header = ({ setAuthenticated, theme, onThemeChange }) => {
-  const navigate = useNavigate();
+const Header = ({ theme, onThemeChange }) => {
+  const { logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -23,7 +24,7 @@ const Header = ({ setAuthenticated, theme, onThemeChange }) => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     }
-  }, []);
+  }, [theme]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -31,15 +32,9 @@ const Header = ({ setAuthenticated, theme, onThemeChange }) => {
     setIsDropdownOpen(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    setAuthenticated(false);
-    navigate('/login');
-  };
-
   return (
     <header className="sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-gray-800 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4">
+      <div className="mx-auto px-4 sm:px-6 lg:px-4">
         <div className="flex justify-between h-16">
           {/* Left side - Logo */}
           <div className="flex items-center">
@@ -146,7 +141,7 @@ const Header = ({ setAuthenticated, theme, onThemeChange }) => {
                   <div className="border-t border-gray-100 dark:border-gray-700"></div>
                   
                   <button
-                    onClick={handleLogout}
+                    onClick={logout}
                     className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center w-full hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     <svg 

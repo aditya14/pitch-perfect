@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
     Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, 
-    IPLMatch, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, IPLPlayerEvent
+    IPLMatch, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, IPLPlayerEvent, FantasyTrade
 )
 from .serializers import (
     SeasonSerializer, IPLTeamSerializer, TeamSeasonSerializer,
@@ -20,11 +20,15 @@ from .serializers import (
     IPLMatchCreateUpdateSerializer, RegisterSerializer, UserSerializer,
     CreateLeagueRequestSerializer, LeagueDetailSerializer,
     FantasySquadSerializer, CreateSquadSerializer, SquadDetailSerializer,
-    CoreSquadUpdateSerializer
+    CoreSquadUpdateSerializer, FantasyPlayerEventSerializer, IPLPlayerEventSerializer,
+    FantasyTradeSerializer
 )
 from .roster_serializers import PlayerRosterSerializer
 from .draft_serializers import FantasyDraftSerializer
 from django.db.models import Q, Prefetch, Count, Avg, Sum
+from functools import reduce
+from operator import or_
+from django.utils import timezone
 
 class SeasonViewSet(viewsets.ModelViewSet):
     queryset = Season.objects.all()
@@ -194,7 +198,8 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
                     {
                         'match': {
                             'date': event.match.date,
-                            'season': {'year': event.match.season.year}
+                            'season': {'year': event.match.season.year},
+                            'id': event.match.id
                         },
                         'opponent': event.vs_team.short_name,
                         'for_team': event.for_team.short_name,
@@ -284,6 +289,89 @@ class IPLMatchViewSet(viewsets.ModelViewSet):
         matches = self.get_queryset().filter(season_id=season_id)
         serializer = self.get_serializer(matches, many=True)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def events(self, request, pk=None):
+        """Get all player events for a specific match"""
+        try:
+            match = self.get_object()
+            league_id = request.query_params.get('league_id')
+            
+            if league_id:
+                # Get fantasy events if they exist
+                fantasy_events = FantasyPlayerEvent.objects.filter(
+                    match_event__match=match,
+                    fantasy_squad__league_id=league_id
+                ).select_related(
+                    'match_event',
+                    'match_event__player',
+                    'match_event__for_team',
+                    'fantasy_squad'
+                )
+                
+                if fantasy_events.exists():
+                    serializer = FantasyPlayerEventSerializer(fantasy_events, many=True)
+                    return Response(serializer.data)
+            
+            # If no league_id or no fantasy events, return IPL events
+            ipl_events = IPLPlayerEvent.objects.filter(
+                match=match
+            ).select_related(
+                'player',
+                'for_team'
+            )
+            
+            serializer = IPLPlayerEventSerializer(ipl_events, many=True)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            print(f"Error in match events: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def league_match_events(request, league_id, match_id):
+    """Get all player events for a specific match in a league context"""
+    try:
+        # First check if any fantasy events exist
+        fantasy_events = FantasyPlayerEvent.objects.filter(
+            match_event__match_id=match_id,
+            fantasy_squad__league_id=league_id
+        ).select_related(
+            'match_event',
+            'match_event__player',
+            'match_event__for_team',
+            'fantasy_squad'
+        )
+        
+        if fantasy_events.exists():
+            serializer = FantasyPlayerEventSerializer(fantasy_events, many=True)
+            return Response(serializer.data)
+        
+        # If no fantasy events, return IPL events
+        ipl_events = IPLPlayerEvent.objects.filter(
+            match_id=match_id
+        ).select_related(
+            'player',
+            'for_team'
+        )
+        
+        serializer = IPLPlayerEventSerializer(ipl_events, many=True)
+        return Response(serializer.data)
+            
+    except Exception as e:
+        print(f"Error in league match events: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -598,12 +686,157 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 {'error': str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+    @action(detail=True, methods=['get'], url_path='players/(?P<player_id>[^/.]+)/performance')
+    def player_performance(self, request, pk=None, player_id=None):
+        """Get fantasy stats for a player in this league"""
+        try:
+            league = self.get_object()
+            player = get_object_or_404(IPLPlayer, id=player_id)
+            
+            # Get all fantasy events for this player in this league
+            events = FantasyPlayerEvent.objects.filter(
+                match_event__player=player,
+                fantasy_squad__league=league
+            ).select_related(
+                'match_event',
+                'match_event__match',
+                'fantasy_squad',
+                'match_event__player',
+                'match_event__match__team_1',
+                'match_event__match__team_2'
+            ).order_by('-match_event__match__date')
+
+            # Calculate season stats per squad
+            squad_stats = {}
+            match_details = []
+
+            for event in events:
+                # Update squad stats
+                squad_id = event.fantasy_squad_id
+                if squad_id not in squad_stats:
+                    squad_stats[squad_id] = {
+                        'squad': event.fantasy_squad.name,
+                        'matches': 0,
+                        'basePoints': 0,
+                        'boostPoints': 0,
+                        'totalPoints': 0
+                    }
+                
+                match_event = event.match_event
+                base_points = (
+                    match_event.batting_points_total +
+                    match_event.bowling_points_total +
+                    match_event.fielding_points_total +
+                    match_event.other_points_total
+                )
+                boost_points = event.total_points - base_points
+
+                stats = squad_stats[squad_id]
+                stats['matches'] += 1
+                stats['basePoints'] += base_points
+                stats['boostPoints'] += boost_points
+                stats['totalPoints'] += event.total_points
+
+                # Add match detail
+                match_detail = {
+                    'match': {
+                        'id': match_event.match.id,
+                        'date': match_event.match.date,
+                    },
+                    'opponent': match_event.match.team_2.short_name if match_event.match.team_1 == match_event.for_team else match_event.match.team_1.short_name,
+                    'squad': event.fantasy_squad.name,
+                    'basePoints': base_points,
+                    'boostPoints': boost_points,
+                    'totalPoints': event.total_points
+                }
+
+                # Add batting details if exists
+                if match_event.bat_runs or match_event.bat_balls:
+                    match_detail['batting'] = {
+                        'runs': match_event.bat_runs,
+                        'balls': match_event.bat_balls,
+                        'fours': match_event.bat_fours,
+                        'sixes': match_event.bat_sixes,
+                        'not_out': match_event.bat_not_out,
+                        'strike_rate': match_event.bat_strike_rate,
+                        'points': match_event.batting_points_total
+                    }
+
+                # Add bowling details if exists
+                if match_event.bowl_balls:
+                    match_detail['bowling'] = {
+                        'overs': f"{match_event.bowl_balls // 6}.{match_event.bowl_balls % 6}",
+                        'maidens': match_event.bowl_maidens,
+                        'runs': match_event.bowl_runs,
+                        'wickets': match_event.bowl_wickets,
+                        'economy': match_event.bowl_economy,
+                        'points': match_event.bowling_points_total
+                    }
+
+                # Add fielding details if exists
+                if (match_event.field_catch or match_event.wk_catch or 
+                    match_event.wk_stumping or match_event.run_out_solo):
+                    match_detail['fielding'] = {
+                        'catches': (match_event.field_catch or 0) + (match_event.wk_catch or 0),
+                        'stumpings': match_event.wk_stumping,
+                        'runouts': (match_event.run_out_solo or 0) + (match_event.run_out_collab or 0),
+                        'points': match_event.fielding_points_total
+                    }
+
+                match_details.append(match_detail)
+
+            # Calculate overall stats
+            overall_stats = {
+                'squad': 'Overall',
+                'matches': sum(s['matches'] for s in squad_stats.values()),
+                'basePoints': sum(s['basePoints'] for s in squad_stats.values()),
+                'boostPoints': sum(s['boostPoints'] for s in squad_stats.values()),
+                'totalPoints': sum(s['totalPoints'] for s in squad_stats.values())
+            }
+
+            # Calculate averages for each squad
+            for stats in squad_stats.values():
+                stats['average'] = stats['totalPoints'] / stats['matches'] if stats['matches'] > 0 else 0
+
+            overall_stats['average'] = overall_stats['totalPoints'] / overall_stats['matches'] if overall_stats['matches'] > 0 else 0
+
+            # Get current team info
+            current_team = player.playerteamhistory_set.filter(
+                season=league.season
+            ).select_related('team').first()
+
+            response_data = {
+                'id': player.id,
+                'name': player.name,
+                'team': current_team.team.name if current_team else None,
+                'seasonStats': list(squad_stats.values()) + [overall_stats],
+                'matches': match_details
+            }
+
+            return Response(response_data)
+
+        except Exception as e:
+            print(f"Error in player_performance: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class FantasySquadViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        return FantasySquad.objects.filter(user=self.request.user)
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            # For modifications, only allow own squads
+            return FantasySquad.objects.filter(user=self.request.user)
+        
+        # For viewing (list/retrieve), allow viewing of all squads in leagues where user has a team
+        return FantasySquad.objects.filter(
+            league__teams__user=self.request.user
+        ).distinct()
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:
@@ -933,3 +1166,172 @@ def get_player_fantasy_stats(request, league_id, player_id):
             {'error': str(e)}, 
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+class FantasyTradeViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FantasyTradeSerializer
+    
+    def get_queryset(self):
+        queryset = FantasyTrade.objects.all()
+        
+        # Filter by league if provided
+        league_id = self.request.query_params.get('league')
+        if league_id:
+            queryset = queryset.filter(
+                Q(initiator__league_id=league_id) | Q(receiver__league_id=league_id)
+            )
+        
+        return queryset.select_related('initiator', 'receiver')
+    
+    @action(detail=True, methods=['patch'])
+    def accept(self, request, pk=None):
+        trade = self.get_object()
+        
+        # Check if user is the receiver
+        if trade.receiver.user != request.user:
+            return Response(
+                {"error": "Only the receiver can accept a trade"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Check if trade is pending
+        if trade.status != 'Pending':
+            return Response(
+                {"error": f"Cannot accept a trade with status: {trade.status}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get all players involved in this trade
+        involved_players = trade.players_given + trade.players_received
+        
+        # Create a query to find conflicting trades
+        conflicting_trades = []
+        
+        # Find all pending trades (excluding current one)
+        pending_trades = FantasyTrade.objects.filter(
+            status='Pending'
+        ).exclude(
+            id=trade.id
+        )
+        
+        # Check each trade to see if it involves any of the same players
+        for pending_trade in pending_trades:
+            pending_players = pending_trade.players_given + pending_trade.players_received
+            
+            # If any player in this trade is also in the accepted trade, it's a conflict
+            if any(player_id in involved_players for player_id in pending_players):
+                conflicting_trades.append(pending_trade)
+        
+        # Automatically reject conflicting trades
+        conflict_count = 0
+        for conflicting_trade in conflicting_trades:
+            conflicting_trade.status = 'Rejected'
+            conflicting_trade.updated_at = timezone.now()
+            conflicting_trade.save()
+            conflict_count += 1
+        
+        # Check if there's an ongoing match
+        live_match = IPLMatch.objects.filter(status='LIVE').exists()
+        
+        if live_match:
+            # Just mark as accepted, will be processed after match
+            trade.status = 'Accepted'
+            trade.updated_at = timezone.now()
+            trade.save()
+            return Response({
+                "status": "Trade accepted and will be processed after the current match",
+                "conflicts_resolved": conflict_count
+            })
+        else:
+            # Process trade immediately
+            process_trade(trade)
+            return Response({
+                "status": "Trade accepted and processed",
+                "conflicts_resolved": conflict_count
+            })
+    
+    @action(detail=True, methods=['patch'])
+    def reject(self, request, pk=None):
+        trade = self.get_object()
+        
+        # Only initiator or receiver can reject
+        if trade.receiver.user != request.user and trade.initiator.user != request.user:
+            return Response(
+                {"error": "Only trade participants can reject a trade"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Check if trade is pending
+        if trade.status != 'Pending':
+            return Response(
+                {"error": f"Cannot reject a trade with status: {trade.status}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        trade.status = 'Rejected'
+        trade.save()
+        return Response({"status": "Trade rejected"})
+    
+    @action(detail=False, methods=['get'])
+    def pending(self, request):
+        user = request.user
+        pending_trades = FantasyTrade.objects.filter(
+            receiver__user=user,
+            status='Pending'
+        ).select_related('initiator', 'receiver')
+        
+        serializer = self.get_serializer(pending_trades, many=True)
+        return Response(serializer.data)
+    
+def process_trade(trade):
+    """Process an accepted trade by swapping players between squads"""
+    from django.utils import timezone
+    
+    initiator = trade.initiator
+    receiver = trade.receiver
+    
+    # Update initiator's squad
+    for player_id in trade.players_received:
+        if player_id in receiver.current_squad:
+            receiver.current_squad.remove(player_id)
+            initiator.current_squad.append(player_id)
+    
+    # Update receiver's squad
+    for player_id in trade.players_given:
+        if player_id in initiator.current_squad:
+            initiator.current_squad.remove(player_id)
+            receiver.current_squad.append(player_id)
+    
+    # Update core squad if needed
+    if initiator.current_core_squad:
+        update_core_squad_after_trade(initiator, trade.players_given, trade.players_received)
+    
+    if receiver.current_core_squad:
+        update_core_squad_after_trade(receiver, trade.players_received, trade.players_given)
+    
+    # Save changes
+    initiator.save()
+    receiver.save()
+    
+    # Mark trade as closed
+    trade.status = 'Closed'
+    trade.updated_at = timezone.now()
+    trade.save()
+    
+def update_core_squad_after_trade(squad, players_removed, players_added):
+    """Update core squad roles when players are traded"""
+    core_squad = squad.current_core_squad
+    
+    # Find any core roles assigned to traded players
+    for i, assignment in enumerate(core_squad):
+        if assignment['player_id'] in players_removed:
+            # Check if we received a player that can take this role
+            for new_player_id in players_added:
+                player = IPLPlayer.objects.get(id=new_player_id)
+                role = FantasyBoostRole.objects.get(id=assignment['boost_id'])
+                
+                # If player role matches the boost role requirements
+                if player.role in role.role:
+                    # Assign the new player to this role
+                    core_squad[i]['player_id'] = new_player_id
+                    break

@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
+import { usePlayerModal } from '../../context/PlayerModalContext';
 
 // Display-only role card for current week
-const CurrentRoleCard = ({ role, player }) => (
-  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-    <div className="font-medium text-gray-900 dark:text-white mb-1">
-      {role.name}
+const CurrentRoleCard = ({ role, player, leagueId }) => {
+  const { openPlayerModal } = usePlayerModal();
+  
+  return (
+    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+      <div className="font-medium text-gray-900 dark:text-white mb-1">
+        {role.name}
+      </div>
+      <div className="text-sm text-gray-600 dark:text-gray-300">
+        {player ? (
+          <span
+            className="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400"
+            onClick={() => openPlayerModal(player.id, leagueId)}
+          >
+            {player.name}
+          </span>
+        ) : (
+          'No player assigned'
+        )}
+      </div>
     </div>
-    <div className="text-sm text-gray-600 dark:text-gray-300">
-      {player?.name || 'No player assigned'}
-    </div>
-  </div>
-);
+  );
+};
 
 // Interactive role card for next week planning
 const PlanningRoleCard = ({ role, player, isActive, onClick }) => {
@@ -106,7 +120,9 @@ const CoreSquadTab = ({
   boostRoles,
   currentCoreSquad,
   futureCoreSquad,
-  onUpdateRole
+  onUpdateRole,
+  isOwnSquad,
+  leagueId
 }) => {
   const [selectedRole, setSelectedRole] = useState(null);
   const [error, setError] = useState(null);
@@ -181,6 +197,7 @@ const CoreSquadTab = ({
                       key={role.id}
                       role={role}
                       player={player}
+                      leagueId={leagueId}
                     />
                   );
                 })}
@@ -195,65 +212,67 @@ const CoreSquadTab = ({
       </div>
 
       {/* Next Week Planning */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          Next Week Planning
-        </h2>
-        
-        {error && (
-          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
+      {isOwnSquad && (
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            Next Week Planning
+          </h2>
+          
+          {error && (
+            <div className="mb-4 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
 
-        {/* Role Selection */}
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            1. Select Role
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {boostRoles.map(role => {
-              const assignment = futureCoreSquad?.find(a => a.boost_id === role.id);
-              const player = assignment ? getPlayerById(assignment.player_id) : null;
-
-              return (
-                <PlanningRoleCard
-                  key={role.id}
-                  role={role}
-                  player={player}
-                  isActive={selectedRole === role.id}
-                  onClick={() => setSelectedRole(selectedRole === role.id ? null : role.id)}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Player Selection */}
-        {selectedRole && (
-          <div>
+          {/* Role Selection */}
+          <div className="mb-6">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              2. Select Player for {getRoleById(selectedRole)?.name}
+              1. Select Role
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {players.map(player => {
-                const canAssign = canAssignPlayerToRole(player, selectedRole);
-                const isAssigned = isPlayerAssigned(player.id);
-                
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {boostRoles.map(role => {
+                const assignment = futureCoreSquad?.find(a => a.boost_id === role.id);
+                const player = assignment ? getPlayerById(assignment.player_id) : null;
+
                 return (
-                  <PlayerCard
-                    key={player.id}
+                  <PlanningRoleCard
+                    key={role.id}
+                    role={role}
                     player={player}
-                    canAssign={canAssign}
-                    isAssigned={isAssigned}
-                    onClick={() => canAssign && !isAssigned && handlePlayerSelect(player.id)}
+                    isActive={selectedRole === role.id}
+                    onClick={() => setSelectedRole(selectedRole === role.id ? null : role.id)}
                   />
                 );
               })}
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Player Selection */}
+          {selectedRole && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                2. Select Player for {getRoleById(selectedRole)?.name}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {players.map(player => {
+                  const canAssign = canAssignPlayerToRole(player, selectedRole);
+                  const isAssigned = isPlayerAssigned(player.id);
+                  
+                  return (
+                    <PlayerCard
+                      key={player.id}
+                      player={player}
+                      canAssign={canAssign}
+                      isAssigned={isAssigned}
+                      onClick={() => canAssign && !isAssigned && handlePlayerSelect(player.id)}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

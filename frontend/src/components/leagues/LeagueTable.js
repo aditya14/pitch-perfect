@@ -33,7 +33,7 @@ const LeagueTable = ({ league }) => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div 
-                      className="h-8 w-8 rounded-full mr-3"
+                      className="h-4 w-1 mr-1 rounded-sm"
                       style={{ backgroundColor: squad.color }}
                     />
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
