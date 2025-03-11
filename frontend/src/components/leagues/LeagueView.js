@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Trophy, Users, ChevronRight } from 'lucide-react';
+import { Trophy, Users, ChevronRight, RefreshCw } from 'lucide-react';
 import api from '../../utils/axios';
 
 // Import tab components
@@ -9,6 +9,7 @@ import MatchList from './MatchList';
 import LeagueTable from './LeagueTable';
 import TradeList from './TradeList';
 import LeagueStats from './LeagueStats';
+import UpdatePointsButton from '../UpdatePointsButton';
 
 const LeagueView = () => {
   const { leagueId } = useParams();
@@ -16,9 +17,11 @@ const LeagueView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetchLeagueData();
+    // checkAdminStatus();
   }, [leagueId]);
 
   const fetchLeagueData = async () => {
@@ -37,6 +40,17 @@ const LeagueView = () => {
       setLoading(false);
     }
   };
+
+  // const checkAdminStatus = async () => {
+  //   try {
+  //     const response = await api.get('/users/me/');
+  //     // Check if the current user is a staff member or superuser
+  //     setIsAdmin(response.data.is_staff || response.data.is_superuser);
+  //   } catch (err) {
+  //     console.error('Failed to check admin status:', err);
+  //     setIsAdmin(false);
+  //   }
+  // };
 
   if (loading) {
     return (
@@ -95,6 +109,10 @@ const LeagueView = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             )}
+            
+            {/* Update Points Button */}
+            <UpdatePointsButton />
+            
             <Link 
               to={league?.my_squad && isDraftCompleted ? `/squads/${league.my_squad.id}` : '#'}
               className={`inline-flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium

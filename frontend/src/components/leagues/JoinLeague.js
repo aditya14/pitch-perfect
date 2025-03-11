@@ -1,208 +1,184 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import api from '../../utils/axios';
+import { Shield, Users, AlertCircle } from 'lucide-react';
+import { SquadForm } from '../squads/CreateSquad';
 
-class JoinLeague extends Component {
-  state = {
-    leagueCode: '',
+const JoinLeague = () => {
+  const [leagueCode, setLeagueCode] = useState('');
+  const [status, setStatus] = useState({
     error: null,
     isCreatingSquad: false,
-    squadName: '',
-    squadColor: '#000000',
     leagueDetails: null,
     redirect: false,
-    squadId: null
-  };
+    isSubmitting: false
+  });
 
-  handleJoinSubmit = async (e) => {
+  const handleJoinSubmit = async (e) => {
     e.preventDefault();
-    this.setState({ error: null });
+    setStatus(prev => ({ ...prev, error: null, isSubmitting: true }));
 
     try {
+      // Use the original endpoint from the old JoinLeague component
       const response = await api.post('/leagues/join/', {
-        league_code: this.state.leagueCode.toUpperCase()
+        league_code: leagueCode.toUpperCase()
       });
 
-      this.setState({ 
+      setStatus(prev => ({ 
+        ...prev, 
         isCreatingSquad: true,
-        leagueDetails: response.data.league
-      });
+        leagueDetails: response.data.league,
+        isSubmitting: false
+      }));
     } catch (error) {
-      this.setState({ 
-        error: error.response?.data?.error || 'Failed to join league'
-      });
+      console.error('Error joining league:', error);
+      setStatus(prev => ({ 
+        ...prev,
+        error: error.response?.data?.error || 'Failed to join league',
+        isSubmitting: false
+      }));
     }
   };
 
-  handleSquadSubmit = async (e) => {
-    e.preventDefault();
-    this.setState({ error: null });
+  const handleSquadSubmit = async (formData) => {
+    setStatus(prev => ({ ...prev, error: null, isSubmitting: true }));
 
     try {
-      console.log('Creating squad with data:', {
-        name: this.state.squadName,
-        color: this.state.squadColor,
-        league: this.state.leagueDetails.id
+      // Create the squad using the league ID from leagueDetails
+      await api.post('/squads/', {
+        name: formData.name,
+        color: formData.color,
+        league: status.leagueDetails.id
       });
-
-      const response = await api.post('/squads/', {
-        name: this.state.squadName,
-        color: this.state.squadColor,
-        league: this.state.leagueDetails.id
-      });
-
-      console.log('Squad created successfully:', response.data);
       
-      this.setState({ 
-        redirect: true
-      }, () => {
-        console.log('State updated, redirect:', this.state.redirect);
-      });
+      // Redirect on success
+      setStatus(prev => ({ ...prev, redirect: true }));
     } catch (error) {
       console.error('Error creating squad:', error);
-      this.setState({ 
-        error: error.response?.data?.error || 'Failed to create squad'
-      });
+      setStatus(prev => ({ 
+        ...prev,
+        error: error.response?.data?.error || 'Failed to create squad',
+        isSubmitting: false
+      }));
     }
   };
 
-  renderJoinForm() {
-    return (
-      <form className="mt-8 space-y-6" onSubmit={this.handleJoinSubmit}>
-        <div>
-          <label htmlFor="leagueCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            League Code
-          </label>
-          <input
-            id="leagueCode"
-            type="text"
-            required
-            maxLength="6"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-              theme-transition
-              bg-white dark:bg-gray-700 
-              text-gray-900 dark:text-white
-              focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 
-              dark:border-gray-600"
-            placeholder="Enter 6-character code"
-            value={this.state.leagueCode}
-            onChange={(e) => this.setState({ leagueCode: e.target.value.toUpperCase() })}
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium 
-                   text-white bg-indigo-600 hover:bg-indigo-700 
-                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900"
-        >
-          Join League
-        </button>
-      </form>
-    );
+  // Handle redirect
+  if (status.redirect) {
+    return <Navigate to="/dashboard" />;
   }
 
-  renderSquadForm() {
-    return (
-      <form className="mt-8 space-y-6" onSubmit={this.handleSquadSubmit}>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="squadName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Squad Name
-            </label>
-            <input
-              id="squadName"
-              type="text"
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                theme-transition
-                bg-white dark:bg-gray-700 
-                text-gray-900 dark:text-white
-                focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 
-                dark:border-gray-600"
-              placeholder="Enter squad name"
-              value={this.state.squadName}
-              onChange={(e) => this.setState({ squadName: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="squadColor" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Squad Color
-            </label>
-            <input
-              id="squadColor"
-              type="color"
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                theme-transition
-                bg-white dark:bg-gray-700 
-                text-gray-900 dark:text-white
-                focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 
-                dark:border-gray-600"
-              value={this.state.squadColor}
-              onChange={(e) => this.setState({ squadColor: e.target.value })}
-            />
-          </div>
-        </div>
-
-        <div className="flex space-x-4">
-          <button
-            type="button"
-            className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium 
-                     text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 
-                     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900"
-            onClick={() => this.setState({ isCreatingSquad: false })}
-          >
-            Back
-          </button>
-          <button
-            type="submit"
-            className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium 
-                     text-white bg-indigo-600 hover:bg-indigo-700 
-                     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900"
-          >
-            Create Squad
-          </button>
-        </div>
-      </form>
-    );
-  }
-
-  render() {
-    if (this.state.redirect) {
-      return <Navigate to="/dashboard" />;
-    }
-
-    return (
-      <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full mx-auto space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-              {this.state.isCreatingSquad ? (
-                `Create Squad for ${this.state.leagueDetails?.name}`
-              ) : (
-                'Join a League'
-              )}
-            </h2>
-            {!this.state.isCreatingSquad && (
-              <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-                Enter the 6-character league code to join
-              </p>
+  return (
+    <div className="min-h-screen py-8 px-4 sm:py-12">
+      <div className="max-w-md w-full mx-auto">
+        <div className="text-center mb-8">
+          {status.isCreatingSquad ? (
+            <Shield className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
+          ) : (
+            <Users className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
+          )}
+          
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+            {status.isCreatingSquad ? (
+              `Create Squad for ${status.leagueDetails?.name || 'League'}`
+            ) : (
+              'Join a League'
             )}
-          </div>
-
-          {this.state.error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
-              {this.state.error}
+          </h2>
+          
+          {!status.isCreatingSquad && (
+            <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+              Enter the 6-character league code to join
+            </p>
+          )}
+        </div>
+        
+        {/* Main Card */}
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+          {/* Error Message */}
+          {status.error && (
+            <div className="mb-6 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900/50 dark:border-red-800 dark:text-red-300 px-4 py-3 rounded-md">
+              <div className="flex">
+                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+                <span>{status.error}</span>
+              </div>
             </div>
           )}
+          
+          {status.isCreatingSquad ? (
+            // Squad creation form
+            <SquadForm
+              leagueId={status.leagueDetails?.id}
+              leagueData={status.leagueDetails}
+              existingSquads={status.leagueDetails?.squads || []}
+              onSubmit={handleSquadSubmit}
+              submitLabel="Create Squad"
+              isProcessing={status.isSubmitting}
+            />
+          ) : (
+            // League code input form
+            <form onSubmit={handleJoinSubmit}>
+              <div>
+                <label htmlFor="leagueCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  League Code
+                </label>
+                <input
+                  id="leagueCode"
+                  type="text"
+                  required
+                  maxLength="6"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
+                    transition-colors duration-200
+                    bg-white dark:bg-gray-700 
+                    text-gray-900 dark:text-white
+                    focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 
+                    dark:border-gray-600"
+                  placeholder="Enter 6-character code"
+                  value={leagueCode}
+                  onChange={(e) => setLeagueCode(e.target.value.toUpperCase())}
+                />
+              </div>
 
-          {this.state.isCreatingSquad ? this.renderSquadForm() : this.renderJoinForm()}
+              <div className="mt-6">
+                <button
+                  type="submit"
+                  disabled={status.isSubmitting}
+                  className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium 
+                         text-white bg-indigo-600 hover:bg-indigo-700 
+                         dark:bg-indigo-700 dark:hover:bg-indigo-800
+                         transition-colors duration-200
+                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800
+                         disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {status.isSubmitting ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    'Join League'
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+          
+          {/* Back button when in squad creation mode */}
+          {status.isCreatingSquad && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setStatus(prev => ({ ...prev, isCreatingSquad: false }))}
+                className="w-full text-center text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+              >
+                ← Back to league code
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default JoinLeague;

@@ -273,18 +273,33 @@ class IPLPlayerEventSerializer(serializers.ModelSerializer):
 
 class FantasyPlayerEventSerializer(serializers.ModelSerializer):
     player_name = serializers.CharField(source='match_event.player.name')
+    player_id = serializers.IntegerField(source='match_event.player.id')
     team_name = serializers.CharField(source='match_event.for_team.short_name')
     team_color = serializers.CharField(source='match_event.for_team.primary_color')
     squad_name = serializers.CharField(source='fantasy_squad.name')
+    squad_color = serializers.CharField(source='fantasy_squad.color')
     base_stats = IPLPlayerEventSerializer(source='match_event')
+    total_points = serializers.SerializerMethodField()  # Changed to SerializerMethodField
+    boost_label = serializers.SerializerMethodField()
     
     class Meta:
         model = FantasyPlayerEvent
         fields = [
             'id', 'player_name', 'team_name', 'team_color', 'squad_name',
-            'base_stats', 'total_points'
+            'base_stats', 'boost_points', 'total_points', 'squad_color', 'boost_label', 'player_id'
         ]
-
+    
+    def get_total_points(self, obj):
+        """Calculate total points as base points + boost points"""
+        base_points = obj.match_event.total_points_all
+        boost_points = obj.boost_points
+        return base_points + boost_points
+    
+    def get_boost_label(self, obj):
+        if obj.boost:
+            return obj.boost.label
+        return None
+    
 class FantasyTradeSerializer(serializers.ModelSerializer):
     initiator_name = serializers.SerializerMethodField()
     receiver_name = serializers.SerializerMethodField()

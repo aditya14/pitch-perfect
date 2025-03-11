@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { PlayerModalProvider } from './context/PlayerModalContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/auth/Login';
+import Resigter from './components/auth/Register';
 import UserDashboard from './components/UserDashboard';
 import CreateLeague from './components/leagues/CreateLeague';
 import JoinLeague from './components/leagues/JoinLeague';
@@ -75,6 +76,14 @@ const AppContent = () => {
             element={
               !user ? 
               <Login /> : 
+              <Navigate to="/dashboard" />
+            }
+          />
+          <Route 
+            path="/register" 
+            element={
+              !user ? 
+              <Resigter /> : 
               <Navigate to="/dashboard" />
             }
           />

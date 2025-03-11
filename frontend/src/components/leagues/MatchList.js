@@ -39,7 +39,7 @@ const MatchList = ({ league }) => {
   };
 
   const handleMatchClick = (match) => {
-    if (!['COMPLETED', 'NO_RESULT', 'ABANDONED'].includes(match.status)) {
+    if (!['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status)) {
       return;
     }
     
@@ -183,7 +183,7 @@ const MatchList = ({ league }) => {
             key={match.id} 
             onClick={() => handleMatchClick(match)}
             className={`p-6 ${
-              ['COMPLETED', 'NO_RESULT', 'ABANDONED'].includes(match.status)
+              ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status)
                 ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700'
                 : ''
             } transition-colors`}

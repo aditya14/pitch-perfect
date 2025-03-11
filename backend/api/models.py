@@ -498,7 +498,7 @@ class FantasySquad(TimeStampedModel):
     current_core_squad = models.JSONField(default=list, blank=True, null=True)
     future_core_squad = models.JSONField(default=list, blank=True, null=True)
 
-    total_points = models.IntegerField(default=0)
+    total_points = models.DecimalField(max_digits=10, decimal_places=1, default=0)
 
     class Meta:
         indexes = [
@@ -558,14 +558,14 @@ class FantasyBoostRole(models.Model):
 class FantasyPlayerEvent(models.Model):
     match_event = models.ForeignKey(IPLPlayerEvent, on_delete=models.CASCADE)
     fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='player_events')
-    boost = models.ForeignKey(FantasyBoostRole, on_delete=models.CASCADE)
-    total_points = models.FloatField(default=0)
+    boost = models.ForeignKey(FantasyBoostRole, on_delete=models.CASCADE, null=True, blank=True)
+    boost_points = models.FloatField(default=0)
 
     class Meta:
         indexes = [
             models.Index(fields=['match_event']),
             models.Index(fields=['fantasy_squad']),
-            models.Index(fields=['total_points']),
+            models.Index(fields=['boost_points']),
         ]
 
     def __str__(self):

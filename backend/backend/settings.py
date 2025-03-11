@@ -219,3 +219,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #         },
 #     },
 # }
+
+# CRICKET_API_KEY = '3b70adad-ac33-4441-9c65-dc753ee58177'
+
+# BACKUP KEY
+# CRICKET_API_KEY = '21b0a85d-a45b-4ac6-8032-81f3070d406e'
+CRICKET_API_KEY = 'bef230e4-fcef-43bd-a5e1-11eb27ad3a40'

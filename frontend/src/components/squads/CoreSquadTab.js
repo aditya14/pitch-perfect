@@ -1,5 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePlayerModal } from '../../context/PlayerModalContext';
+
+// Countdown Timer Component
+const CountdownTimer = ({ onExpire }) => {
+  const [timeLeft, setTimeLeft] = useState({});
+  const lockDate = new Date('2025-03-22T04:00:00Z'); // March 22, 2025, 4am UTC
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = lockDate - new Date();
+      
+      if (difference <= 0) {
+        if (onExpire) onExpire();
+        return {
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          expired: true
+        };
+      }
+
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+        expired: false
+      };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    
+    const timer = setInterval(() => {
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [onExpire]);
+
+  if (timeLeft.expired) {
+    return (
+      <div className="rounded-lg bg-red-100 dark:bg-red-900 px-4 py-2 text-center inline-block">
+        <div className="text-sm font-bold text-red-700 dark:text-red-300">Lineup Locked</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg bg-indigo-50 dark:bg-indigo-900 px-4 py-3 inline-block">
+      <div className="text-xs text-indigo-600 dark:text-indigo-300 mb-1">Core Squad Locks In:</div>
+      <div className="flex space-x-2 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded px-2 py-1">
+          <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{timeLeft.days}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">days</div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded px-2 py-1">
+          <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{timeLeft.hours}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">hrs</div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded px-2 py-1">
+          <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{timeLeft.minutes}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">min</div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded px-2 py-1">
+          <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{timeLeft.seconds}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">sec</div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Display-only role card for current week
 const CurrentRoleCard = ({ role, player, leagueId }) => {
@@ -127,6 +199,14 @@ const CoreSquadTab = ({
   const [selectedRole, setSelectedRole] = useState(null);
   const [error, setError] = useState(null);
   const [showCurrent, setShowCurrent] = useState(true);
+  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false);
+
+  // Check if current time is past deadline
+  useEffect(() => {
+    const lockDate = new Date('2025-03-22T14:00:00Z'); // March 22, 2025, 2pm UTC
+    const currentTime = new Date();
+    setIsDeadlinePassed(currentTime >= lockDate);
+  }, []);
 
   // Helper to get player details by ID
   const getPlayerById = (playerId) => {
@@ -145,7 +225,7 @@ const CoreSquadTab = ({
 
   // Handle role assignment
   const handlePlayerSelect = async (playerId) => {
-    if (!selectedRole) return;
+    if (!selectedRole || isDeadlinePassed) return;
     
     try {
       await onUpdateRole(selectedRole, playerId);
@@ -214,9 +294,15 @@ const CoreSquadTab = ({
       {/* Next Week Planning */}
       {isOwnSquad && (
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Next Week Planning
-          </h2>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+              Week 1 (Mar 22 - Mar 28)
+            </h2>
+            {/* Countdown Timer */}
+            <div className="mb-4 max-w-md">
+              <CountdownTimer onExpire={() => setIsDeadlinePassed(true)} />
+            </div>
+          </div>
           
           {error && (
             <div className="mb-4 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
@@ -229,6 +315,13 @@ const CoreSquadTab = ({
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               1. Select Role
             </h3>
+            
+            {isDeadlinePassed ? (
+              <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 p-4 rounded-md mb-4">
+                <p className="text-sm">Role selections are locked for this week.</p>
+              </div>
+            ) : null}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {boostRoles.map(role => {
                 const assignment = futureCoreSquad?.find(a => a.boost_id === role.id);
@@ -240,7 +333,7 @@ const CoreSquadTab = ({
                     role={role}
                     player={player}
                     isActive={selectedRole === role.id}
-                    onClick={() => setSelectedRole(selectedRole === role.id ? null : role.id)}
+                    onClick={() => !isDeadlinePassed && setSelectedRole(selectedRole === role.id ? null : role.id)}
                   />
                 );
               })}

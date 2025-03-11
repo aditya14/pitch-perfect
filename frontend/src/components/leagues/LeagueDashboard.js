@@ -13,7 +13,7 @@ const LeagueDashboard = ({ league, currentUserId }) => {
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Dashboard
+          Table
         </h2>
       </div>
       <div className="overflow-x-auto">
@@ -44,12 +44,9 @@ const LeagueDashboard = ({ league, currentUserId }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
+                    <span className="inline-block h-4 w-1 mr-1 rounded-sm" style={{backgroundColor: squad.color}}></span>
                     <span 
                       className="text-sm font-medium px-2 py-1 rounded-md inline-flex items-center hover:opacity-90 transition-opacity cursor-pointer"
-                      style={{ 
-                        backgroundColor: squad.color,
-                        color: getTextColorForBackground(squad.color)
-                      }}
                     >
                       {squad.name}
                     </span>

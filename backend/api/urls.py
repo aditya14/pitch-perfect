@@ -28,5 +28,6 @@ urlpatterns = [
     path('squads/<int:squad_id>/core-squad/', views.update_core_squad),
     # Add the new endpoint
     path('leagues/<int:league_id>/players/<int:player_id>/', views.get_player_fantasy_stats),
-    path('leagues/<int:league_id>/matches/<int:match_id>/events/', views.league_match_events)
+    path('leagues/<int:league_id>/matches/<int:match_id>/events/', views.league_match_events),
+    path('update-match-points/', views.update_match_points, name='update-match-points'),
 ]

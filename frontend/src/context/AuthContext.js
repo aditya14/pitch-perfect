@@ -56,6 +56,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (userData) => {
+    try {
+      // Create the user account
+      const response = await api.post('/register/', userData);
+      
+      // Login after successful registration
+      await login(userData.username || userData.email, userData.password);
+      
+      return response.data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('accessToken');
     delete api.defaults.headers.common['Authorization'];
@@ -69,6 +84,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     isAuthenticated,
     login,
+    register,
     logout
   };
 

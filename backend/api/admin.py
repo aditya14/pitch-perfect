@@ -39,7 +39,7 @@ from django.db.models import Count, Sum, F, ExpressionWrapper, IntegerField, Cas
 
 @admin.register(IPLPlayer)
 class IPLPlayerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'role', 'get_current_team', 'get_match_count', 'get_total_points', 'get_average_points')
+    list_display = ('id', 'name', 'role', 'get_current_team', 'get_match_count', 'get_total_points', 'get_average_points')
     list_filter = (
         'role', 
         'is_active',
@@ -530,7 +530,7 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
 
 @admin.register(FantasySquad)
 class FantasySquadAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user', 'league', 'total_points')
+    list_display = ('name', 'user', 'league', 'total_points', 'color')
     list_filter = ('league',)
     search_fields = ('name', 'user__username', 'league__name')
     raw_id_fields = ('user', 'league')
@@ -600,7 +600,7 @@ class FantasyBoostRoleAdmin(admin.ModelAdmin):
 
 @admin.register(FantasyPlayerEvent)
 class FantasyPlayerEventAdmin(admin.ModelAdmin):
-    list_display = ('fantasy_squad', 'get_player', 'get_match', 'boost', 'total_points')
+    list_display = ('fantasy_squad', 'get_player', 'get_match', 'boost', 'boost_points')
     list_filter = ('fantasy_squad', 'boost', 'match_event__match')
     search_fields = (
         'fantasy_squad__name', 

@@ -29,6 +29,7 @@ from django.db.models import Q, Prefetch, Count, Avg, Sum
 from functools import reduce
 from operator import or_
 from django.utils import timezone
+from api.services.cricket_data_service import CricketDataService
 
 class SeasonViewSet(viewsets.ModelViewSet):
     queryset = Season.objects.all()
@@ -351,6 +352,7 @@ def league_match_events(request, league_id, match_id):
         
         if fantasy_events.exists():
             serializer = FantasyPlayerEventSerializer(fantasy_events, many=True)
+            print("Fantasy events found", serializer.data)
             return Response(serializer.data)
         
         # If no fantasy events, return IPL events
@@ -717,6 +719,7 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 if squad_id not in squad_stats:
                     squad_stats[squad_id] = {
                         'squad': event.fantasy_squad.name,
+                        'squad_color': event.fantasy_squad.color,
                         'matches': 0,
                         'basePoints': 0,
                         'boostPoints': 0,
@@ -724,19 +727,14 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     }
                 
                 match_event = event.match_event
-                base_points = (
-                    match_event.batting_points_total +
-                    match_event.bowling_points_total +
-                    match_event.fielding_points_total +
-                    match_event.other_points_total
-                )
-                boost_points = event.total_points - base_points
+                base_points = match_event.total_points_all
+                boost_points = event.boost_points  # UPDATED: Use boost_points directly
 
                 stats = squad_stats[squad_id]
                 stats['matches'] += 1
                 stats['basePoints'] += base_points
                 stats['boostPoints'] += boost_points
-                stats['totalPoints'] += event.total_points
+                stats['totalPoints'] += (base_points + boost_points)
 
                 # Add match detail
                 match_detail = {
@@ -746,9 +744,11 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     },
                     'opponent': match_event.match.team_2.short_name if match_event.match.team_1 == match_event.for_team else match_event.match.team_1.short_name,
                     'squad': event.fantasy_squad.name,
+                    'squad_color': event.fantasy_squad.color,
                     'basePoints': base_points,
                     'boostPoints': boost_points,
-                    'totalPoints': event.total_points
+                    'boost_label': event.boost.label if event.boost else None,
+                    'totalPoints': base_points + boost_points
                 }
 
                 # Add batting details if exists
@@ -910,22 +910,47 @@ class DraftViewSet(viewsets.ModelViewSet):
     
 @api_view(['GET'])
 def squad_players(request, squad_id):
-    """Get all players in a squad with their details"""
+    """Get all players in a squad with their details, including historical players"""
     squad = get_object_or_404(FantasySquad, id=squad_id)
     
     # Get players in current squad
-    players = IPLPlayer.objects.filter(id__in=squad.current_squad)
+    current_players = set(squad.current_squad or [])
     
-    # Include current team info through PlayerTeamHistory
-    serializer = IPLPlayerSerializer(players, many=True)
-    return Response(serializer.data)
+    # Get all players who have fantasy events for this squad (historical players)
+    historical_player_ids = set(FantasyPlayerEvent.objects.filter(
+        fantasy_squad_id=squad_id
+    ).values_list('match_event__player_id', flat=True).distinct())
+    
+    # Combine both sets to get all players we need to fetch
+    all_player_ids = current_players.union(historical_player_ids)
+    
+    # Get full player data
+    players = IPLPlayer.objects.filter(id__in=all_player_ids)
+    
+    # Create a custom response with player status (current or traded)
+    response_data = []
+    for player in players:
+        is_current = player.id in current_players
+        player_data = IPLPlayerSerializer(player).data
+        player_data['status'] = 'current' if is_current else 'traded'
+        response_data.append(player_data)
+    
+    return Response(response_data)
 
 @api_view(['GET'])
 def squad_player_events(request, squad_id):
-    """Get aggregated fantasy player events/stats for this squad"""
+    """Get aggregated fantasy player events/stats for this squad including traded players"""
     squad = get_object_or_404(FantasySquad, id=squad_id)
     
-    # Initialize stats for all players in current squad
+    # Get all unique player IDs that have ever had an event for this squad
+    player_ids_with_events = FantasyPlayerEvent.objects.filter(
+        fantasy_squad_id=squad_id
+    ).values_list('match_event__player_id', flat=True).distinct()
+    
+    # Add current squad players to ensure we include everyone
+    all_player_ids = set(list(player_ids_with_events) + (squad.current_squad or []))
+    
+    # Initialize stats for all players in current and historical squad
     stats_dict = {
         player_id: {
             'player_id': player_id,
@@ -933,30 +958,28 @@ def squad_player_events(request, squad_id):
             'base_points': 0,
             'boost_points': 0
         }
-        for player_id in squad.current_squad
+        for player_id in all_player_ids
     }
     
     # Get any existing event stats (if they exist)
     stats = FantasyPlayerEvent.objects.filter(
         fantasy_squad_id=squad_id,
-        match_event__player_id__in=squad.current_squad
+        match_event__player_id__in=all_player_ids
     ).values('match_event__player_id').annotate(
         matches_played=Count('match_event__match', distinct=True),
-        base_points=Sum('match_event__batting_points_total') + 
-                   Sum('match_event__bowling_points_total') + 
-                   Sum('match_event__fielding_points_total') + 
-                   Sum('match_event__other_points_total'),
-        boost_points=Sum('total_points')
+        base_points=Sum('match_event__total_points_all'),
+        boost_points=Sum('boost_points')
     )
     
     # Update stats for players that have events
     for stat in stats:
         player_id = stat['match_event__player_id']
-        stats_dict[player_id].update({
-            'matches_played': stat['matches_played'],
-            'base_points': float(stat['base_points']) if stat['base_points'] else 0,
-            'boost_points': float(stat['boost_points']) if stat['boost_points'] else 0
-        })
+        if player_id in stats_dict:  # This check is just a safeguard
+            stats_dict[player_id].update({
+                'matches_played': stat['matches_played'],
+                'base_points': float(stat['base_points']) if stat['base_points'] else 0,
+                'boost_points': float(stat['boost_points']) if stat['boost_points'] else 0
+            })
     
     return Response(stats_dict)
 
@@ -1063,15 +1086,11 @@ def get_player_fantasy_stats(request, league_id, player_id):
                 }
             
             squad_stats[squad_id]['matches'] += 1
-            base_points = (
-                event.match_event.batting_points_total +
-                event.match_event.bowling_points_total +
-                event.match_event.fielding_points_total +
-                event.match_event.other_points_total
-            )
+            base_points = event.match_event.total_points_all  # Use total_points_all from IPLPlayerEvent
             squad_stats[squad_id]['basePoints'] += base_points
-            squad_stats[squad_id]['boostPoints'] += (event.total_points - base_points)
-            squad_stats[squad_id]['totalPoints'] += event.total_points
+            boost_points = event.boost_points  # UPDATED: Changed from calculating to using boost_points directly
+            squad_stats[squad_id]['boostPoints'] += boost_points
+            squad_stats[squad_id]['totalPoints'] += (base_points + boost_points)
 
         # Calculate overall stats
         overall_stats = {
@@ -1088,52 +1107,48 @@ def get_player_fantasy_stats(request, league_id, player_id):
             match_event = event.match_event
             match = match_event.match
             
+            base_points = match_event.total_points_all  # Use total_points_all from IPLPlayerEvent
+            boost_points = event.boost_points  # UPDATED: Use boost_points directly
+            
             match_detail = {
-                'opponent': match.team_2.short_name if match.team_1 == player.current_team else match.team_1.short_name,
+                'opponent': match.team_2.short_name if match.team_1 == match_event.for_team else match.team_1.short_name,
                 'date': match.date.strftime('%d %b %Y'),
                 'squad': event.fantasy_squad.name,
-                'basePoints': (
-                    match_event.batting_points_total +
-                    match_event.bowling_points_total +
-                    match_event.fielding_points_total +
-                    match_event.other_points_total
-                ),
-                'boostPoints': event.total_points - (
-                    match_event.batting_points_total +
-                    match_event.bowling_points_total +
-                    match_event.fielding_points_total +
-                    match_event.other_points_total
-                ),
-                'totalPoints': event.total_points
+                'basePoints': base_points,
+                'boostPoints': boost_points,
+                'totalPoints': base_points + boost_points
             }
 
             # Add batting details if exists
-            if match_event.batting_points_total > 0:
+            if match_event.bat_runs or match_event.bat_balls:
                 match_detail['batting'] = {
-                    'score': match_event.runs_scored,
-                    'balls': match_event.balls_faced,
-                    'fours': match_event.fours,
-                    'sixes': match_event.sixes,
-                    'strikeRate': match_event.strike_rate,
+                    'runs': match_event.bat_runs,
+                    'balls': match_event.bat_balls,
+                    'fours': match_event.bat_fours,
+                    'sixes': match_event.bat_sixes,
+                    'not_out': match_event.bat_not_out,
+                    'strike_rate': match_event.bat_strike_rate,
                     'points': match_event.batting_points_total
                 }
 
             # Add bowling details if exists
-            if match_event.bowling_points_total > 0:
+            if match_event.bowl_balls:
                 match_detail['bowling'] = {
-                    'overs': match_event.overs_bowled,
-                    'maidens': match_event.maidens,
-                    'runs': match_event.runs_conceded,
-                    'wickets': match_event.wickets,
-                    'economy': match_event.economy_rate,
+                    'overs': f"{match_event.bowl_balls // 6}.{match_event.bowl_balls % 6}",
+                    'maidens': match_event.bowl_maidens,
+                    'runs': match_event.bowl_runs,
+                    'wickets': match_event.bowl_wickets,
+                    'economy': match_event.bowl_economy,
                     'points': match_event.bowling_points_total
                 }
 
             # Add fielding details if exists
-            if match_event.fielding_points_total > 0:
+            if (match_event.field_catch or match_event.wk_catch or 
+                match_event.wk_stumping or match_event.run_out_solo):
                 match_detail['fielding'] = {
-                    'catches': match_event.catches,
-                    'runouts': match_event.run_outs,
+                    'catches': (match_event.field_catch or 0) + (match_event.wk_catch or 0),
+                    'stumpings': match_event.wk_stumping,
+                    'runouts': (match_event.run_out_solo or 0) + (match_event.run_out_collab or 0),
                     'points': match_event.fielding_points_total
                 }
 
@@ -1144,7 +1159,7 @@ def get_player_fantasy_stats(request, league_id, player_id):
             season=league.season
         ).select_related('team').first()
 
-        # Update the response_data section
+        # Format the response data
         response_data = {
             'id': player.id,
             'name': player.name,
@@ -1160,7 +1175,7 @@ def get_player_fantasy_stats(request, league_id, player_id):
 
     except Exception as e:
         import traceback
-        print("Error in get_player_fantasy_stats: {str(e)}")
+        print(f"Error in get_player_fantasy_stats: {str(e)}")
         print(traceback.format_exc())
         return Response(
             {'error': str(e)}, 
@@ -1335,3 +1350,81 @@ def update_core_squad_after_trade(squad, players_removed, players_added):
                     # Assign the new player to this role
                     core_squad[i]['player_id'] = new_player_id
                     break
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def update_match_points(request):
+    """
+    Update fantasy points for a specific match or all live matches.
+    Only accessible to admin users.
+    """
+    service = CricketDataService()
+    
+    match_id = request.data.get('match_id')
+    update_all = request.data.get('update_all', False)
+    
+    if match_id:
+        # Update specific match
+        try:
+            match = IPLMatch.objects.get(cricdata_id=match_id)
+        except IPLMatch.DoesNotExist:
+            return Response(
+                {"error": f"Match not found with cricdata_id: {match_id}"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        result = service.update_match_points(match_id)
+        
+        if 'error' in result:
+            return Response(
+                {"error": result['error']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        return Response(
+            {
+                "success": True,
+                "match": match.id,
+                "player_events_updated": result['player_events_updated'],
+                "fantasy_events_updated": result['fantasy_events_updated'],
+                "fantasy_squads_updated": result['fantasy_squads_updated']
+            },
+            status=status.HTTP_200_OK
+        )
+        
+    elif update_all:
+        # Update all live matches
+        live_matches = IPLMatch.objects.filter(status='LIVE')
+        if not live_matches:
+            return Response(
+                {"message": "No live matches found"},
+                status=status.HTTP_200_OK
+            )
+            
+        results = service.update_all_live_matches()
+        
+        successful = [r for r in results if 'error' not in r]
+        failed = [r for r in results if 'error' in r]
+        
+        total_player_events = sum(r.get('player_events_updated', 0) for r in successful)
+        total_fantasy_events = sum(r.get('fantasy_events_updated', 0) for r in successful)
+        total_squads_updated = sum(r.get('fantasy_squads_updated', 0) for r in successful)
+        
+        return Response(
+            {
+                "success": True,
+                "matches_updated": len(successful),
+                "matches_failed": len(failed),
+                "player_events_updated": total_player_events,
+                "fantasy_events_updated": total_fantasy_events,
+                "fantasy_squads_updated": total_squads_updated,
+                "details": results
+            },
+            status=status.HTTP_200_OK
+        )
+        
+    else:
+        return Response(
+            {"error": "Either match_id or update_all must be provided"},
+            status=status.HTTP_400_BAD_REQUEST
+        )

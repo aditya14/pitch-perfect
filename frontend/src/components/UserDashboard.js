@@ -39,12 +39,12 @@ class UserDashboard extends Component {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
           <h1 className="text-2xl font-bold dark:text-white">My Leagues</h1>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-            <Link
+            {/* <Link
               to="/leagues/create"
               className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-center"
             >
               Create League
-            </Link>
+            </Link> */}
             <Link
               to="/leagues/join"
               className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-center"
@@ -72,7 +72,7 @@ class UserDashboard extends Component {
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
-                      League Name
+                      League
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
                       Your Squad
@@ -101,7 +101,7 @@ class UserDashboard extends Component {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                         {league.my_squad ? (
                           <div className="flex items-center">
-                            <span className="inline-block h-4 w-4 rounded-full mr-2" style={{backgroundColor: league.my_squad.color}}></span>
+                            <span className="inline-block h-4 w-1 mr-1 rounded-sm" style={{backgroundColor: league.my_squad.color}}></span>
                             <span>{league.my_squad.name}</span>
                           </div>
                         ) : (
