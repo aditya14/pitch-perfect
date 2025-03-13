@@ -477,6 +477,7 @@ class FantasyLeague(models.Model):
     season = models.ForeignKey(Season, on_delete=models.CASCADE, blank=True, null=True)
     league_code = models.CharField(max_length=6, unique=True, blank=True, null=True)
     draft_completed = models.BooleanField(default=False)
+    snake_draft_order = models.JSONField(default=list, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:

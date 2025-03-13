@@ -1428,3 +1428,174 @@ def update_match_points(request):
             {"error": "Either match_id or update_all must be provided"},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+# Updated match_fantasy_stats function for views.py
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def match_fantasy_stats(request, match_id, league_id=None):
+    """
+    Fetch top performers and top squads for a specific match.
+    This can be used in context of a league or globally.
+    
+    League ID can be provided either in the URL path or as a query parameter.
+    """
+    try:
+        match = get_object_or_404(IPLMatch, id=match_id)
+        
+        # Get league_id from URL parameter or query parameter
+        league_id = league_id or request.query_params.get('league_id')
+        
+        top_players = []
+        top_squads = []
+        
+        if league_id:
+            # Get stats in the context of a specific league
+            league = get_object_or_404(FantasyLeague, id=league_id)
+            
+            # Fetch all fantasy player events for this match in this league
+            fantasy_events = FantasyPlayerEvent.objects.filter(
+                match_event__match=match,
+                fantasy_squad__league=league
+            ).select_related(
+                'match_event', 
+                'match_event__player',
+                'match_event__for_team',
+                'fantasy_squad',
+                'boost'
+            )
+            
+            # Get top performing players
+            player_performances = {}
+            for event in fantasy_events:
+                player_id = event.match_event.player_id
+                
+                if player_id not in player_performances:
+                    player_performances[player_id] = {
+                        'player_id': player_id,
+                        'player_name': event.match_event.player.name,
+                        'base_points': event.match_event.total_points_all,
+                        'boost_points': event.boost_points,
+                        'fantasy_points': event.match_event.total_points_all + event.boost_points,
+                        'squad_id': event.fantasy_squad.id,
+                        'squad_name': event.fantasy_squad.name,
+                        'squad_color': event.fantasy_squad.color,
+                        'boost_label': event.boost.label if event.boost else None,
+                        'team_id': event.match_event.for_team.id,
+                        'team_name': event.match_event.for_team.name,
+                        'team_color': event.match_event.for_team.primary_color
+                    }
+                # If this event has higher points than what we've seen before, update it
+                elif (event.match_event.total_points_all + event.boost_points) > player_performances[player_id]['fantasy_points']:
+                    player_performances[player_id].update({
+                        'base_points': event.match_event.total_points_all,
+                        'boost_points': event.boost_points,
+                        'fantasy_points': event.match_event.total_points_all + event.boost_points,
+                        'squad_id': event.fantasy_squad.id,
+                        'squad_name': event.fantasy_squad.name,
+                        'squad_color': event.fantasy_squad.color,
+                        'boost_label': event.boost.label if event.boost else None
+                    })
+            
+            # Sort players by fantasy points and take top 5
+            top_players = sorted(
+                player_performances.values(),
+                key=lambda x: x['fantasy_points'],
+                reverse=True
+            )[:5]
+            
+            # Get top performing squads
+            squad_performances = {}
+            for event in fantasy_events:
+                squad_id = event.fantasy_squad_id
+                
+                if squad_id not in squad_performances:
+                    squad_performances[squad_id] = {
+                        'id': squad_id,
+                        'name': event.fantasy_squad.name,
+                        'color': event.fantasy_squad.color,
+                        'match_points': 0
+                    }
+                
+                # Add points to the squad's total
+                squad_performances[squad_id]['match_points'] += (
+                    event.match_event.total_points_all + event.boost_points
+                )
+            
+            # Sort squads by match points and take top 5
+            top_squads = sorted(
+                squad_performances.values(),
+                key=lambda x: x['match_points'],
+                reverse=True
+            )[:5]
+        
+        else:
+            # Get global stats (not specific to a league)
+            # This is simpler since we don't need to handle boosts
+            
+            # Get all IPL player events for this match
+            player_events = IPLPlayerEvent.objects.filter(
+                match=match
+            ).select_related(
+                'player',
+                'for_team'
+            ).order_by('-total_points_all')[:5]  # Get top 5 directly
+            
+            # Format player data
+            top_players = [
+                {
+                    'player_id': event.player_id,
+                    'player_name': event.player.name,
+                    'base_points': event.total_points_all,
+                    'boost_points': 0,  # No boosts in the global context
+                    'fantasy_points': event.total_points_all,
+                    'team_id': event.for_team.id,
+                    'team_name': event.for_team.name,
+                    'team_color': event.for_team.primary_color
+                }
+                for event in player_events
+            ]
+        
+        return Response({
+            'top_players': top_players,
+            'top_squads': top_squads
+        })
+    
+    except Exception as e:
+        print(f"Error in match_fantasy_stats: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def season_recent_matches(request, season_id):
+    """
+    Fetch recent matches for a season.
+    Returns both completed and live matches, sorted by recency.
+    """
+    try:
+        season = get_object_or_404(Season, id=season_id)
+        
+        # Get recent completed and live matches
+        recent_matches = IPLMatch.objects.filter(
+            season=season,
+            status__in=['COMPLETED', 'LIVE']
+        ).select_related(
+            'team_1', 'team_2', 'winner', 'player_of_match'
+        ).order_by('-date')[:2]  # Get 2 most recent matches
+        
+        serializer = IPLMatchSerializer(recent_matches, many=True)
+        return Response(serializer.data)
+    
+    except Exception as e:
+        print(f"Error in season_recent_matches: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )

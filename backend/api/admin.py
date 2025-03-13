@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.utils import timezone
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, 
                      IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade)
@@ -168,13 +168,62 @@ class IPLMatchAdmin(admin.ModelAdmin):
                     player=obj.player_of_match
                 ).update(player_of_match=True)
 
-                # Recalculate points for affected events
+                # Recalculate points for affected IPL events
                 affected_events = IPLPlayerEvent.objects.filter(
                     Q(match=obj, player=obj.player_of_match) |
                     (Q(match=obj, player=old_potm) if old_potm else Q())
                 )
                 for event in affected_events:
-                    event.save()
+                    event.save()  # This recalculates the base points
+
+                # Now also update the related FantasyPlayerEvents for POTM changes
+                # Get all fantasy events related to the affected IPL events
+                fantasy_events = FantasyPlayerEvent.objects.filter(
+                    match_event__in=affected_events
+                ).select_related('match_event', 'boost')
+
+                # Recalculate boost points for each fantasy event
+                for fantasy_event in fantasy_events:
+                    if fantasy_event.boost:
+                        # Recalculate boost points based on the updated IPL event
+                        ipl_event = fantasy_event.match_event
+                        boost = fantasy_event.boost
+                        
+                        # For Captain (2x) and Vice Captain (1.5x) roles that apply to all points
+                        if boost.label in ['Captain', 'Vice Captain']:
+                            # The boost is (multiplier - 1) * base_points
+                            multiplier = boost.multiplier_runs  # All multipliers are the same for these roles
+                            fantasy_event.boost_points = (multiplier - 1.0) * ipl_event.total_points_all
+                        # For POTM-specific boosts in other roles
+                        elif ipl_event.player_of_match:
+                            # Update POTM boost component
+                            potm_points = 50  # POTM gets 50 points
+                            potm_boost = potm_points * (boost.multiplier_potm - 1.0)
+                            # Add/Remove the POTM boost component
+                            current_boost = fantasy_event.boost_points
+                            if old_potm and ipl_event.player == obj.player_of_match:
+                                # Player just became POTM, add the boost
+                                fantasy_event.boost_points = current_boost + potm_boost
+                            elif not old_potm and ipl_event.player == old_potm:
+                                # Player just lost POTM, remove the boost
+                                fantasy_event.boost_points = current_boost - potm_boost
+                        
+                        fantasy_event.save()
+
+                # Update total points for affected fantasy squads
+                affected_squads = set(fantasy_events.values_list('fantasy_squad_id', flat=True))
+                for squad_id in affected_squads:
+                    squad = FantasySquad.objects.get(id=squad_id)
+                    # Calculate new total points
+                    total_points = sum(
+                        FantasyPlayerEvent.objects.filter(fantasy_squad=squad)
+                        .annotate(total=F('match_event__total_points_all') + F('boost_points'))
+                        .values_list('total', flat=True)
+                    )
+                    squad.total_points = total_points
+                    squad.save()
+
+                messages.success(request, f"Updated Player of the Match from {old_potm} to {obj.player_of_match}. Recalculated fantasy points for {len(fantasy_events)} fantasy events.")
 
 class IPLPlayerEventAdmin(admin.ModelAdmin):
     list_display = [
@@ -523,10 +572,157 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(FantasyLeague)
 class FantasyLeagueAdmin(admin.ModelAdmin):
-    list_display = ('name', 'admin', 'max_teams', 'season',)
-    list_filter = ('season',)
+    list_display = ('name', 'admin', 'max_teams', 'season', 'draft_status', 'draft_actions')
+    list_filter = ('season', 'draft_completed')
     search_fields = ('name', 'admin__username')
     raw_id_fields = ('admin',)
+    
+    def draft_status(self, obj):
+        if obj.draft_completed:
+            return format_html('<span style="color: green;">Complete</span>')
+        else:
+            return format_html('<span style="color: blue;">Not Started</span>')
+    draft_status.short_description = 'Draft Status'
+    
+    def draft_actions(self, obj):
+        """Custom buttons for draft actions"""
+        if obj.draft_completed:
+            return format_html('<span style="color: gray;">Draft Completed</span>')
+        
+        run_url = reverse('admin:run_fantasy_draft', args=[obj.pk])
+        simulate_url = reverse('admin:simulate_fantasy_draft', args=[obj.pk])
+            
+        return format_html(
+            '<a class="button" href="{}">Run Draft</a>&nbsp;'
+            '<a class="button" href="{}?dry_run=1">Simulate</a>',
+            run_url, simulate_url
+        )
+    draft_actions.short_description = 'Draft Actions'
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<path:object_id>/run-draft/',
+                self.admin_site.admin_view(self.run_draft),
+                name='run_fantasy_draft',
+            ),
+            path(
+                '<path:object_id>/simulate-draft/',
+                self.admin_site.admin_view(self.simulate_draft),
+                name='simulate_fantasy_draft',
+            ),
+        ]
+        return custom_urls + urls
+    
+    def run_draft(self, request, object_id):
+        """Run the fantasy draft for a league"""
+        try:
+            league = self.get_object(request, object_id)
+            dry_run = request.GET.get('dry_run', '0') == '1'
+            
+            # Call the draft function from admin_views
+            from .admin_views import run_draft_process
+            results = run_draft_process(league.id, dry_run)
+            
+            if dry_run:
+                messages.info(request, f"Draft simulation completed for {league.name}. No changes saved.")
+            else:
+                messages.success(request, f"Draft completed successfully for {league.name}!")
+            
+            # Add detailed results to the message
+            messages.info(request, f"Results: {results['squads']} squads, total players drafted: {results['total_players_drafted']}")
+            
+            for squad_id, count in results.get('squad_player_counts', {}).items():
+                squad = FantasySquad.objects.get(id=squad_id)
+                messages.info(request, f"Squad '{squad.name}': {count} players")
+            
+        except Exception as e:
+            messages.error(request, f"Error running draft: {str(e)}")
+            import traceback
+            print(traceback.format_exc())  # Print traceback for debugging
+            
+        return redirect('admin:api_fantasyleague_changelist')
+        
+    def simulate_draft(self, request, object_id):
+        """Simulate the fantasy draft without saving changes"""
+        try:
+            league = self.get_object(request, object_id)
+            
+            # Call the draft function with dry_run=True
+            from .admin_views import run_draft_process
+            results = run_draft_process(league.id, dry_run=True)
+            
+            # Run the draft simulation to see actual player assignments
+            draft_simulation = self._simulate_draft_assignments(league)
+            
+            # Render a detailed results page
+            context = {
+                'title': f'Draft Simulation for {league.name}',
+                'league': league,
+                'results': results,
+                'squad_assignments': draft_simulation,
+                'opts': self.model._meta,
+            }
+            
+            return render(request, 'admin/fantasy_draft_simulation.html', context)
+            
+        except Exception as e:
+            messages.error(request, f"Error simulating draft: {str(e)}")
+            return redirect('admin:api_fantasyleague_changelist')
+            
+    def _simulate_draft_assignments(self, league):
+        """Run a draft simulation and return detailed assignments"""
+        from .admin_views import ensure_draft_orders, generate_draft_order, run_complete_draft
+        
+        # Get all squads in the league
+        squads = FantasySquad.objects.filter(league=league)
+        
+        # Ensure all squads have a draft order
+        ensure_draft_orders(league, squads)
+        
+        # Use existing or generate new snake draft order
+        snake_order = league.snake_draft_order or generate_draft_order(squads)
+        
+        # Run the draft - now using the complete draft function that assigns all players
+        draft_results = run_complete_draft(
+            league=league,
+            squads=squads
+        )
+        
+        # Format the results with player details for display
+        formatted_results = []
+        for squad_id, player_ids in draft_results.items():
+            squad = FantasySquad.objects.get(id=squad_id)
+            players = []
+            
+            for player_id in player_ids:
+                try:
+                    player = IPLPlayer.objects.get(id=player_id)
+                    players.append({
+                        'id': player.id,
+                        'name': player.name,
+                        'role': player.get_role_display(),
+                        'team': player.current_team.team.name if player.current_team else 'Unknown'
+                    })
+                except IPLPlayer.DoesNotExist:
+                    players.append({
+                        'id': player_id,
+                        'name': f'Unknown Player (ID: {player_id})',
+                        'role': 'Unknown',
+                        'team': 'Unknown'
+                    })
+            
+            formatted_results.append({
+                'squad': {
+                    'id': squad.id,
+                    'name': squad.name,
+                    'user': squad.user.username
+                },
+                'players': players
+            })
+        
+        return formatted_results
 
 @admin.register(FantasySquad)
 class FantasySquadAdmin(admin.ModelAdmin):

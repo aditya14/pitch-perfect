@@ -190,7 +190,7 @@ const SquadView = () => {
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
-            Core Squad
+            Boosts
           </button>
         </nav>
       </div>
@@ -215,6 +215,7 @@ const SquadView = () => {
             onUpdateRole={updateFutureCoreSquad}
             isOwnSquad={isOwnSquad}
             leagueId={squadData.league_id}
+            squadColor={squadData.color}
           />
         )}
       </div>

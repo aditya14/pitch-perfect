@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
 import api from '../../utils/axios';
-import { getTextColorForBackground } from '../../utils/colorUtils';
+import MatchCard from '../matches/MatchCard';
 
 const MatchList = ({ league }) => {
-  const navigate = useNavigate();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all', 'upcoming', 'completed'
@@ -19,10 +16,13 @@ const MatchList = ({ league }) => {
 
   const fetchMatches = async () => {
     try {
+      setLoading(true);
       const response = await api.get(`/seasons/${league.season.id}/matches/`);
+      console.log('Fetched matches:', response.data);
       setMatches(response.data);
       setError(null);
     } catch (err) {
+      console.error('Failed to fetch matches:', err);
       setError('Failed to fetch matches');
     } finally {
       setLoading(false);
@@ -38,247 +38,103 @@ const MatchList = ({ league }) => {
     return matches;
   };
 
-  const handleMatchClick = (match) => {
-    if (!['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status)) {
-      return;
-    }
-    
-    if (league) {
-      navigate(`/leagues/${league.id}/matches/${match.id}`);
-    } else {
-      navigate(`/matches/${match.id}`);
-    }
-  };
-
-  const getMatchSummary = (match) => {
-    if (match.status === 'COMPLETED') {
-      let summary = `${match.winner.name} won`;
-      if (match.win_type === 'RUNS') {
-        summary += ` by ${match.win_margin} runs`;
-      } else if (match.win_type === 'WICKETS') {
-        summary += ` by ${match.win_margin} wickets`;
-      } else if (match.win_type === 'SUPER_OVER') {
-        summary += ' in Super Over';
-      }
-      return summary;
-    }
-    return match.status;
-  };
-
-  const getInningsSummary = (match) => {
-    if (!match.inns_1_runs && !match.inns_2_runs) return null;
-
-    const inns1 = match.inns_1_runs ? 
-      `${match.inns_1_runs}/${match.inns_1_wickets || 0} (${match.inns_1_overs} ov)` : '';
-    const inns2 = match.inns_2_runs ? 
-      `${match.inns_2_runs}/${match.inns_2_wickets || 0} (${match.inns_2_overs} ov)` : '';
-
-    return (
-      <div className="text-sm">
-        <div>{inns1}</div>
-        {inns2 && <div>{inns2}</div>}
-      </div>
-    );
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const getTimeUntil = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = date - now;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
-      if (diffHours <= 1) {
-        return 'Starting soon';
-      }
-      return `in ${diffHours} hours`;
-    } else if (diffDays === 1) {
-      return 'tomorrow';
-    } else if (diffDays > 1) {
-      return `in ${diffDays} days`;
-    }
-    return 'Live';
-  };
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-48">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Matches
+          </h2>
+          <div className="flex gap-2">
+            {['All', 'Upcoming', 'Completed'].map(label => (
+              <div key={label} className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+        <div className="p-6 space-y-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-40 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-100 text-red-700 rounded">
-        {error}
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Matches
+          </h2>
+        </div>
+        <div className="p-6">
+          <div className="p-4 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-md">
+            {error}
+          </div>
+        </div>
       </div>
     );
   }
 
+  const filteredMatches = getFilteredMatches();
+
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Matches
-          </h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
-                filter === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter('upcoming')}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
-                filter === 'upcoming'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              Upcoming
-            </button>
-            <button
-              onClick={() => setFilter('completed')}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
-                filter === 'completed'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              Completed
-            </button>
-          </div>
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          Matches
+        </h2>
+        <div className="flex gap-2 mt-2 sm:mt-0">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-3 py-1 rounded-md text-sm font-medium ${
+              filter === 'all'
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilter('upcoming')}
+            className={`px-3 py-1 rounded-md text-sm font-medium ${
+              filter === 'upcoming'
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            Upcoming
+          </button>
+          <button
+            onClick={() => setFilter('completed')}
+            className={`px-3 py-1 rounded-md text-sm font-medium ${
+              filter === 'completed'
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            Completed
+          </button>
         </div>
       </div>
       
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
-        {getFilteredMatches().map((match) => (
-          <div 
-            key={match.id} 
-            onClick={() => handleMatchClick(match)}
-            className={`p-6 ${
-              ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status)
-                ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700'
-                : ''
-            } transition-colors`}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                  Match {match.match_number} - {match.stage}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(match.date)} at {formatTime(match.date)}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {match.venue}
-                </div>
-              </div>
-              {match.status === 'LIVE' && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
-                  LIVE
-                </span>
-              )}
-            </div>
-
-            <div className="flex justify-between items-center mt-4">
-              <div className="flex-1">
-                <div className="flex items-center">
-                  {match.team_1 ?
-                  <span 
-                    className="text-sm font-medium px-2 py-1 rounded-md inline-flex items-center"
-                    style={{ 
-                      backgroundColor: '#' + match.team_1.primary_color,
-                      color: getTextColorForBackground(match.team_1.primary_color)
-                    }}
-                  >
-                    {match.team_1.name}
-                  </span>
-                  :
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    TBD
-                  </span>
-                  }
-                </div>
-                <div className="flex items-center mt-2">
-                  {match.team_2 ?
-                    <span 
-                      className="text-sm font-medium px-2 py-1 rounded-md inline-flex items-center"
-                      style={{ 
-                        backgroundColor: '#' + match.team_2.primary_color,
-                        color: getTextColorForBackground(match.team_2.primary_color)
-                      }}
-                    >
-                      {match.team_2.name}
-                    </span>
-                    :
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      TBD
-                    </span>
-                  }
-                </div>
-              </div>
-
-              {/* Match Result/Summary */}
-              <div className="flex-1 text-right">
-                {match.status === 'COMPLETED' && (
-                  <>
-                    {getInningsSummary(match)}
-                    <div className="flex items-center justify-end mt-2 text-gray-900 dark:text-white">
-                      {match.winner && (
-                        <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                      )}
-                      <span className="text-sm font-medium">
-                        {getMatchSummary(match)}
-                      </span>
-                    </div>
-                    {match.player_of_match && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Player of the Match: {match.player_of_match.name}
-                      </div>
-                    )}
-                  </>
-                )}
-                {match.status === 'SCHEDULED' && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {getTimeUntil(match.date)}
-                  </div>
-                )}
-                {match.status === 'LIVE' && getInningsSummary(match)}
-              </div>
-            </div>
+      <div className="p-2">
+        {filteredMatches.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+            {filteredMatches.map((match) => (
+              <MatchCard 
+                key={match.id}
+                match={match}
+                leagueId={league.id}
+              />
+            ))}
           </div>
-        ))}
-
-        {getFilteredMatches().length === 0 && (
-          <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-            No matches found
+        ) : (
+          <div className="py-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400">
+              No {filter !== 'all' ? filter : ''} matches found
+            </p>
           </div>
         )}
       </div>

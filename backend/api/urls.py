@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from . import views
+from . import admin_views
 
 router = DefaultRouter()
 router.register(r'seasons', views.SeasonViewSet)
@@ -26,8 +27,14 @@ urlpatterns = [
     path('squads/<int:squad_id>/player-events/', views.squad_player_events),
     path('fantasy/boost-roles/', views.fantasy_boost_roles),
     path('squads/<int:squad_id>/core-squad/', views.update_core_squad),
-    # Add the new endpoint
     path('leagues/<int:league_id>/players/<int:player_id>/', views.get_player_fantasy_stats),
     path('leagues/<int:league_id>/matches/<int:match_id>/events/', views.league_match_events),
     path('update-match-points/', views.update_match_points, name='update-match-points'),
+    path('seasons/<int:season_id>/matches/recent/', views.season_recent_matches),
+    path('matches/<int:match_id>/stats/', views.match_fantasy_stats),
+    path('leagues/<int:league_id>/matches/<int:match_id>/stats/', views.match_fantasy_stats),
+    
+    # Admin endpoints
+    path('admin/run-fantasy-draft/', admin_views.run_fantasy_draft, name='run-fantasy-draft'),
+    
 ]

@@ -303,6 +303,8 @@ class FantasyPlayerEventSerializer(serializers.ModelSerializer):
 class FantasyTradeSerializer(serializers.ModelSerializer):
     initiator_name = serializers.SerializerMethodField()
     receiver_name = serializers.SerializerMethodField()
+    initiator_color = serializers.SerializerMethodField()
+    receiver_color = serializers.SerializerMethodField()
     players_given_details = serializers.SerializerMethodField()
     players_received_details = serializers.SerializerMethodField()
     
@@ -312,7 +314,7 @@ class FantasyTradeSerializer(serializers.ModelSerializer):
             'id', 'initiator', 'initiator_name', 'receiver', 
             'receiver_name', 'players_given', 'players_received', 
             'players_given_details', 'players_received_details',
-            'status', 'created_at', 'updated_at'
+            'status', 'created_at', 'updated_at', 'initiator_color', 'receiver_color'
         ]
         read_only_fields = ['status', 'created_at', 'updated_at']
     
@@ -321,6 +323,12 @@ class FantasyTradeSerializer(serializers.ModelSerializer):
     
     def get_receiver_name(self, obj):
         return obj.receiver.name if obj.receiver else None
+
+    def get_initiator_color(self, obj):
+        return obj.initiator.color if obj.initiator else None
+    
+    def get_receiver_color(self, obj):
+        return obj.receiver.color if obj.receiver else None
     
     def get_players_given_details(self, obj):
         """Return details for players being given by initiator"""

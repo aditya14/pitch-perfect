@@ -22,26 +22,28 @@ const AppContent = () => {
 
   useEffect(() => {
     if (user) {
-      setTheme(user.profile?.theme || theme);
+      const userTheme = user.profile?.theme || theme;
+      setTheme(userTheme);
+      applyTheme(userTheme);
+    } else {
+      applyTheme(theme);
     }
-    applyTheme();
   }, [user]);
 
-  const applyTheme = () => {
-    if (theme === 'light') {
+  const applyTheme = (currentTheme) => {
+    if (currentTheme === 'dark') {
       document.documentElement.classList.add('dark');
-      console.log('Theme applied:', theme);
     } else {
       document.documentElement.classList.remove('dark');
-      console.log('Theme applied:', theme);
     }
+    console.log('Theme applied:', currentTheme);
   };
 
   const handleThemeChange = async (newTheme) => {
+    console.log('Theme changing to:', newTheme);
     setTheme(newTheme);
-    console.log('Theme changed to:', newTheme);
     localStorage.setItem('theme', newTheme);
-    applyTheme();
+    applyTheme(newTheme);
     
     if (user) {
       try {
@@ -119,14 +121,18 @@ const AppContent = () => {
               <Navigate to="/login" />
             }
           />
+          {/* League routes with nested tab routes */}
           <Route 
-            path="/leagues/:leagueId" 
-            element={
-              user ? 
-              <LeagueView /> : 
-              <Navigate to="/login" />
-            }
-          />
+            path="/leagues/:leagueId"
+            element={user ? <LeagueView /> : <Navigate to="/login" />}
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={null} />
+            <Route path="matches" element={null} />
+            <Route path="table" element={null} />
+            <Route path="trades" element={null} />
+            <Route path="stats" element={null} />
+          </Route>
           <Route 
             path="/leagues/:leagueId/roster" 
             element={

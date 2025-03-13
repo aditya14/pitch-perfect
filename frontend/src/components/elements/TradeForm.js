@@ -1,4 +1,4 @@
-// TradeForm.js - updated with league filtering and role validation
+// TradeForm.js - updated with cleaner squad indicators and improved UI
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/axios';
 import { X, CheckCircle, AlertCircle, ArrowRight, ShieldAlert } from 'lucide-react';
@@ -41,7 +41,8 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
   const [validationErrors, setValidationErrors] = useState({});
 
   // Get squad color from league props
-  const squadColor = league?.my_squad?.color || '#6366F1'; // Default to indigo if no color
+  const mySquadColor = league?.my_squad?.color || '#6366F1'; // Default to indigo if no color
+  const theirSquadColor = selectedSquad?.color || '#9333EA'; // Default to purple if no color
 
   // Helper function to determine appropriate text color for a background
   const getTextColorForBackground = (backgroundColor) => {
@@ -72,7 +73,6 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
   const fetchSquads = async () => {
     try {
       if (league && league.squads) {
-        console.log('League:', league);
         // Just filter out user's own squad - all teams in league.teams are already in the correct league
         const otherSquads = league.squads.filter(
           (squad) => squad.id !== league.my_squad.id
@@ -317,61 +317,62 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
     return playerList.find(player => player.id === id) || {};
   };
 
-  const renderPlayerCard = (player, isSelected, onSelect, disabled = false) => (
-    <div 
-      key={player.id}
-      onClick={() => !disabled && onSelect(player.id)}
-      className={`
-        flex items-center p-3 border rounded-lg transition-colors
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-        ${isSelected ? 
-          'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-400' : 
-          'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'}
-      `}
-    >
-      <div className="flex-shrink-0">
-        {player.img ? (
-          <img
-            className="h-10 w-10 rounded-full"
-            src={player.img}
-            alt={player.name}
-          />
-        ) : (
-          <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {player.name.substring(0, 2).toUpperCase()}
-            </span>
-          </div>
-        )}
-      </div>
-      <div className="ml-3 flex-grow">
-        <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-          {player.name}
-          {/* Core Squad Role Indicator with squad color */}
-          {coreSquadRoles[player.id] && (
-            <span 
-              className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-              style={{
-                width: 'fit-content', 
-                backgroundColor: squadColor, 
-                color: getTextColorForBackground(squadColor)
-              }}
-            >
-              {getBoostRoleName(coreSquadRoles[player.id])}
-            </span>
+  const renderPlayerCard = (player, isSelected, onSelect, disabled = false, side = 'myPlayer') => {
+    // Choose different styling based on whether it's my player or their player
+    const isMyPlayer = side === 'myPlayer';
+    const bgColorSelected = isMyPlayer 
+      ? 'bg-indigo-50 dark:bg-indigo-900/30' 
+      : 'bg-purple-50 dark:bg-purple-900/30';
+    const borderColorSelected = isMyPlayer 
+      ? 'border-indigo-500 dark:border-indigo-400' 
+      : 'border-purple-500 dark:border-purple-400';
+    const iconColor = isMyPlayer 
+      ? 'text-indigo-500 dark:text-indigo-400' 
+      : 'text-purple-500 dark:text-purple-400';
+    const badgeColor = isMyPlayer ? mySquadColor : theirSquadColor;
+    const badgeTextColor = getTextColorForBackground(badgeColor);
+    
+    return (
+      <div 
+        key={player.id}
+        onClick={() => !disabled && onSelect(player.id)}
+        className={`
+          flex items-center p-3 border rounded-lg transition-colors
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          ${isSelected ? 
+            `${borderColorSelected} ${bgColorSelected}` : 
+            'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'}
+        `}
+      >
+        <div className="ml-3 flex-grow">
+          <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
+            {player.name}
+            {/* Core Squad Role Indicator with squad color */}
+            {coreSquadRoles[player.id] && (
+              <span 
+                className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                style={{
+                  width: 'fit-content', 
+                  backgroundColor: badgeColor, 
+                  color: badgeTextColor
+                }}
+              >
+                {getBoostRoleName(coreSquadRoles[player.id])}
+              </span>
+            )}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {getPlayerRole(player)}
+          </p>
+        </div>
+        <div className="ml-auto">
+          {isSelected && (
+            <CheckCircle className={`h-5 w-5 ${iconColor}`} />
           )}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {getPlayerRole(player)}
-        </p>
+        </div>
       </div>
-      <div className="ml-auto">
-        {isSelected && (
-          <CheckCircle className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-auto bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
@@ -453,25 +454,15 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                           className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-indigo-500 dark:hover:border-indigo-400 cursor-pointer transition-colors"
                         >
                           <div className="flex items-center">
-                            {squad.logo ? (
-                              <img
-                                className="h-10 w-10 rounded-full"
-                                src={squad.logo}
-                                alt={squad.name}
-                              />
-                            ) : (
-                              <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                  {squad.name.substring(0, 2).toUpperCase()}
-                                </span>
-                              </div>
-                            )}
-                            <div className="ml-3">
+                            <div 
+                              className="w-2 h-6 rounded-md mr-3"
+                              style={{ 
+                                backgroundColor: squad.color || '#9333EA'
+                              }}
+                            ></div>
+                            <div>
                               <p className="text-md font-medium text-gray-900 dark:text-white">
                                 {squad.name}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Position: {squad.position || 'N/A'}
                               </p>
                             </div>
                           </div>
@@ -483,12 +474,23 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
               ) : (
                 <>
                   <div className="mb-6">
-                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-2">
-                      Trading with: {selectedSquad.name}
-                    </h4>
+                    <div className="flex items-center">
+                      <h4 className="text-md font-semibold text-gray-900 dark:text-white mr-2">
+                        Trading with:
+                      </h4>
+                      <div 
+                        className="w-1.5 h-4 rounded-md mr-2"
+                        style={{ 
+                          backgroundColor: selectedSquad.color || '#9333EA'
+                        }}
+                      ></div>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {selectedSquad.name}
+                      </span>
+                    </div>
                     <button
                       onClick={() => setSelectedSquad(null)}
-                      className="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                      className="mt-2 text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                     >
                       ← Back to team selection
                     </button>
@@ -497,23 +499,28 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                   {/* Trade Pairs */}
                   <div className="space-y-4 mb-6">
                     <div className="flex justify-between items-center mb-2">
-                      <h5 className="text-md font-medium text-gray-900 dark:text-white">Trade Pairs</h5>
+                      <div className="flex items-center">
+                        <h5 className="text-md font-medium text-gray-900 dark:text-white">Trade Pairs</h5>
+                        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                          ({tradePairs.length} {tradePairs.length === 1 ? 'pair' : 'pairs'})
+                        </span>
+                      </div>
                       <button 
                         onClick={handleAddTradePair}
-                        className="px-3 py-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md"
+                        className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md"
                       >
                         Add Pair
                       </button>
                     </div>
                     
                     {tradePairs.length === 0 ? (
-                      <div className="text-center py-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                      <div className="text-center py-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                         <p className="text-gray-500 dark:text-gray-400">
                           Click "Add Pair" to create a player trade pairing
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {tradePairs.map((pair, index) => (
                           <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                             <div className="flex justify-between items-center mb-3">
@@ -537,107 +544,143 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                               </div>
                             )}
                             
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                              <div className="md:col-span-2">
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your Player:</p>
-                                {pair.myPlayer ? (
-                                  renderPlayerCard(
-                                    getPlayerById(pair.myPlayer, 'myPlayer'),
-                                    true,
-                                    () => updateTradePair(index, 'myPlayer', null)
-                                  )
-                                ) : (
-                                  <div 
-                                    className="border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                                    onClick={() => {
-                                      // Open player selector
-                                      document.getElementById(`my-player-selector-${index}`).classList.remove('hidden');
-                                    }}
-                                  >
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                      Select your player
+                            <div className="grid grid-cols-1 md:grid-cols-7 gap-4 items-center">
+                              {/* My Player (You Give) */}
+                              <div className="md:col-span-3">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center mb-2">
+                                    <div 
+                                      className="w-1 h-4 rounded-sm mr-2"
+                                      style={{ 
+                                        backgroundColor: mySquadColor 
+                                      }}
+                                    ></div>
+                                    <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                                      You Give:
                                     </p>
                                   </div>
-                                )}
-                                
-                                <div id={`my-player-selector-${index}`} className="hidden mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                                  <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
-                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Select a player</p>
-                                    <button
+                                  
+                                  {pair.myPlayer ? (
+                                    renderPlayerCard(
+                                      getPlayerById(pair.myPlayer, 'myPlayer'),
+                                      true,
+                                      () => updateTradePair(index, 'myPlayer', null),
+                                      false,
+                                      'myPlayer'
+                                    )
+                                  ) : (
+                                    <div 
+                                      className="border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                                       onClick={() => {
-                                        document.getElementById(`my-player-selector-${index}`).classList.add('hidden');
+                                        // Open player selector
+                                        document.getElementById(`my-player-selector-${index}`).classList.remove('hidden');
                                       }}
-                                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                                     >
-                                      <X className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                  <div className="p-2 space-y-2">
-                                    {myPlayers.map((player) => (
-                                      renderPlayerCard(
-                                        player,
-                                        pair.myPlayer === player.id,
-                                        (playerId) => {
-                                          updateTradePair(index, 'myPlayer', playerId);
+                                      <p className="text-gray-500 dark:text-gray-400">
+                                        Select your player
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  <div id={`my-player-selector-${index}`} className="hidden mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Select a player from your team</p>
+                                      <button
+                                        onClick={() => {
                                           document.getElementById(`my-player-selector-${index}`).classList.add('hidden');
-                                        },
-                                        isPlayerSelected(player.id, 'myPlayer')
-                                      )
-                                    ))}
+                                        }}
+                                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                    <div className="p-2 space-y-2">
+                                      {myPlayers.map((player) => (
+                                        renderPlayerCard(
+                                          player,
+                                          pair.myPlayer === player.id,
+                                          (playerId) => {
+                                            updateTradePair(index, 'myPlayer', playerId);
+                                            document.getElementById(`my-player-selector-${index}`).classList.add('hidden');
+                                          },
+                                          isPlayerSelected(player.id, 'myPlayer'),
+                                          'myPlayer'
+                                        )
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
                               
-                              <div className="flex justify-center">
-                                <ArrowRight className="h-6 w-6 text-gray-400" />
+                              <div className="flex justify-center md:col-span-1">
+                                <div className="flex items-center">
+                                  <ArrowRight className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                                </div>
                               </div>
                               
-                              <div className="md:col-span-2">
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Their Player:</p>
-                                {pair.theirPlayer ? (
-                                  renderPlayerCard(
-                                    getPlayerById(pair.theirPlayer, 'theirPlayer'),
-                                    true,
-                                    () => updateTradePair(index, 'theirPlayer', null)
-                                  )
-                                ) : (
-                                  <div 
-                                    className="border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                                    onClick={() => {
-                                      // Open player selector
-                                      document.getElementById(`their-player-selector-${index}`).classList.remove('hidden');
-                                    }}
-                                  >
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                      Select their player
+                              {/* Their Player (You Receive) */}
+                              <div className="md:col-span-3">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center mb-2">
+                                    <div 
+                                      className="w-1 h-4 rounded-sm mr-2"
+                                      style={{ 
+                                        backgroundColor: theirSquadColor 
+                                      }}
+                                    ></div>
+                                    <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                                      You Receive:
                                     </p>
                                   </div>
-                                )}
-                                
-                                <div id={`their-player-selector-${index}`} className="hidden mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                                  <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
-                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Select a player</p>
-                                    <button
+                                  
+                                  {pair.theirPlayer ? (
+                                    renderPlayerCard(
+                                      getPlayerById(pair.theirPlayer, 'theirPlayer'),
+                                      true,
+                                      () => updateTradePair(index, 'theirPlayer', null),
+                                      false,
+                                      'theirPlayer'
+                                    )
+                                  ) : (
+                                    <div 
+                                      className="border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                                       onClick={() => {
-                                        document.getElementById(`their-player-selector-${index}`).classList.add('hidden');
+                                        // Open player selector
+                                        document.getElementById(`their-player-selector-${index}`).classList.remove('hidden');
                                       }}
-                                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                                     >
-                                      <X className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                  <div className="p-2 space-y-2">
-                                    {theirPlayers.map((player) => (
-                                      renderPlayerCard(
-                                        player,
-                                        pair.theirPlayer === player.id,
-                                        (playerId) => {
-                                          updateTradePair(index, 'theirPlayer', playerId);
+                                      <p className="text-gray-500 dark:text-gray-400">
+                                        Select their player
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  <div id={`their-player-selector-${index}`} className="hidden mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Select a player from {selectedSquad.name}</p>
+                                      <button
+                                        onClick={() => {
                                           document.getElementById(`their-player-selector-${index}`).classList.add('hidden');
-                                        },
-                                        isPlayerSelected(player.id, 'theirPlayer')
-                                      )
-                                    ))}
+                                        }}
+                                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                    <div className="p-2 space-y-2">
+                                      {theirPlayers.map((player) => (
+                                        renderPlayerCard(
+                                          player,
+                                          pair.theirPlayer === player.id,
+                                          (playerId) => {
+                                            updateTradePair(index, 'theirPlayer', playerId);
+                                            document.getElementById(`their-player-selector-${index}`).classList.add('hidden');
+                                          },
+                                          isPlayerSelected(player.id, 'theirPlayer'),
+                                          'theirPlayer'
+                                        )
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
