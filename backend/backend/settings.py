@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,24 +22,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#((pc=c3*o3q%a8uov$6pi2v)=!ov!9zvpi03_-bhpk_kxv6p='
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-#((pc=c3*o3q%a8uov$6pi2v)=!ov!9zvpi03_-bhpk_kxv6p=')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ["localhost", "10.0.0.119", "adityatest.ngrok.io", "adityatest2.ngrok.io"]
-# ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,railway.app,*.up.railway.app').split(',')
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://10.0.0.119:3000",
-    "https://adityatest.ngrok.io", "https://adityatest2.ngrok.io"
-]
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,https://pitch-perfect-frontend.up.railway.app').split(',')
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000", "http://10.0.0.119:3000", "https://adityatest2.ngrok.io"
-    "http://localhost:8000", "http://10.0.0.119:8000", "https://adityatest.ngrok.io"
-]
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,https://pitch-perfect-frontend.up.railway.app').split(',')
 
 # Application definition
 
@@ -59,14 +52,11 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
-
-from datetime import timedelta
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
@@ -81,14 +71,14 @@ SIMPLE_JWT = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add whitenoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS headers
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -115,16 +105,25 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pitch_perfect',
-        'USER': 'pitch_perfect_user',
-        'PASSWORD': 'userpassword',
-        'HOST': '127.0.0.1',
-        'PORT': '3307',  # Changed to match new port
+# Use MySQL when DATABASE_URL is set (Railway), else use SQLite
+if 'MYSQL_URL' in os.environ:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('MYSQLDB_DATABASE', 'pitch_perfect'),
+            'USER': os.environ.get('MYSQLDB_USER', 'pitch_perfect_user'),
+            'PASSWORD': os.environ.get('MYSQLDB_ROOT_PASSWORD', 'userpassword'),
+            'HOST': os.environ.get('MYSQLDB_HOST', 'localhost'),
+            'PORT': os.environ.get('MYSQLDB_PORT', '3306'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 CORS_ALLOW_CREDENTIALS = True
@@ -150,6 +149,7 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+# Updated REST Framework settings (merged both instances)
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -164,21 +164,6 @@ REST_FRAMEWORK = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
-# AUTH_PASSWORD_VALIDATORS = [
-#     {
-#         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-#     },
-#     {
-#         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-#     },
-#     {
-#         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-#     },
-#     {
-#         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-#     },
-# ]
 
 AUTH_PASSWORD_VALIDATORS = []
 
@@ -198,30 +183,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'handlers': {
-#         'console': {
-#             'class': 'logging.StreamHandler',
-#         },
-#     },
-#     'loggers': {
-#         'django.db.backends': {
-#             'handlers': ['console'],
-#             'level': 'DEBUG',
-#         },
-#     },
-# }
-
-# CRICKET_API_KEY = '3b70adad-ac33-4441-9c65-dc753ee58177'
-
-# BACKUP KEY
-# CRICKET_API_KEY = '21b0a85d-a45b-4ac6-8032-81f3070d406e'
-CRICKET_API_KEY = 'bef230e4-fcef-43bd-a5e1-11eb27ad3a40'
+# Cricket API Key
+CRICKET_API_KEY = os.environ.get('CRICKET_API_KEY', 'bef230e4-fcef-43bd-a5e1-11eb27ad3a40')
