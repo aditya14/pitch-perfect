@@ -219,7 +219,7 @@ const UserDashboard = () => {
       {leagues.length === 0 ? (
         <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded">
           <p className="text-gray-600 dark:text-gray-300">You haven't joined any leagues yet.</p>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">Create or join a league to get started!</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">Join a league to get started!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

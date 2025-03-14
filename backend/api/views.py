@@ -24,7 +24,7 @@ from .serializers import (
     FantasyTradeSerializer
 )
 from .roster_serializers import PlayerRosterSerializer
-from .draft_serializers import FantasyDraftSerializer
+from .draft_serializers import FantasyDraftSerializer, OptimizedFantasyDraftSerializer
 from django.db.models import Q, Prefetch, Count, Avg, Sum
 from functools import reduce
 from operator import or_
@@ -847,12 +847,21 @@ class FantasySquadViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 class DraftViewSet(viewsets.ModelViewSet):
-    serializer_class = FantasyDraftSerializer
+    # Instead of a fixed serializer_class, use get_serializer_class method
+    # serializer_class = FantasyDraftSerializer  # Remove/comment this line
     
     def get_queryset(self):
         return FantasyDraft.objects.filter(
             squad__user=self.request.user
         ).select_related('league', 'league__season', 'squad')
+
+    # Add this method to return the appropriate serializer
+    def get_serializer_class(self):
+        # Use optimized serializer for GET requests
+        if self.request and self.request.method == 'GET':
+            return OptimizedFantasyDraftSerializer
+        # Use standard serializer for other methods (POST, PATCH, etc.)
+        return FantasyDraftSerializer
 
     @action(detail=False, methods=['get'])
     def get_draft_order(self, request):
@@ -863,6 +872,7 @@ class DraftViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
+        # First check if the user already has a draft order for this league
         draft = FantasyDraft.objects.filter(
             league_id=league_id,
             squad__user=request.user,
@@ -870,41 +880,70 @@ class DraftViewSet(viewsets.ModelViewSet):
         ).first()
         
         if not draft:
-            # Create new draft order using default ranking
-            league = FantasyLeague.objects.get(id=league_id)
-            squad = FantasySquad.objects.get(league=league, user=request.user)
-            
-            # Get players in default rank order
-            players = IPLPlayer.objects.filter(
-                playerteamhistory__season=league.season
-            ).annotate(
-                matches=Count('iplplayerevent'),
-                avg_points=Avg('iplplayerevent__total_points_all')
-            ).order_by('-avg_points')
-            
-            draft = FantasyDraft.objects.create(
-                league=league,
-                squad=squad,
-                type='Pre-Season',
-                order=list(players.values_list('id', flat=True))
-            )
-            
+            # User doesn't have a draft order yet - create a new one
+            try:
+                league = FantasyLeague.objects.get(id=league_id)
+                squad = FantasySquad.objects.get(league=league, user=request.user)
+                
+                # Use the season's default_draft_order if available
+                if league.season and league.season.default_draft_order:
+                    # Make sure the default_draft_order is a list
+                    if isinstance(league.season.default_draft_order, list) and league.season.default_draft_order:
+                        print(f"Using default draft order from season with {len(league.season.default_draft_order)} players")
+                        draft = FantasyDraft.objects.create(
+                            league=league,
+                            squad=squad,
+                            type='Pre-Season',
+                            order=league.season.default_draft_order
+                        )
+                        serializer = self.get_serializer(draft)
+                        return Response(serializer.data)
+                
+                # If no default_draft_order available or it's empty, fallback to using avg_points
+                print("No default draft order available, using fallback method")
+                players = IPLPlayer.objects.filter(
+                    playerteamhistory__season=league.season
+                ).annotate(
+                    matches=Count('iplplayerevent'),
+                    avg_points=Avg('iplplayerevent__total_points_all')
+                ).order_by('-avg_points')
+                
+                draft = FantasyDraft.objects.create(
+                    league=league,
+                    squad=squad,
+                    type='Pre-Season',
+                    order=list(players.values_list('id', flat=True))
+                )
+                
+            except FantasyLeague.DoesNotExist:
+                return Response(
+                    {"error": "League not found"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except FantasySquad.DoesNotExist:
+                return Response(
+                    {"error": "You don't have a squad in this league"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except Exception as e:
+                print(f"Error creating draft order: {str(e)}")
+                return Response(
+                    {"error": str(e)}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
         serializer = self.get_serializer(draft)
         return Response(serializer.data)
 
     @action(detail=True, methods=['patch'])
     def update_order(self, request, pk=None):
-        print("Request data:", request.data)
         draft = self.get_object()
-        print("Draft order:", draft.order)
             
         serializer = self.get_serializer(
             draft, 
             data={"order": request.data.get("order")},
             partial=True
         )
-
-        print("Serializer data:", serializer.initial_data)
         
         if serializer.is_valid():
             serializer.save()
@@ -1433,8 +1472,6 @@ def update_match_points(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-# Updated match_fantasy_stats function for views.py
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def match_fantasy_stats(request, match_id, league_id=None):
