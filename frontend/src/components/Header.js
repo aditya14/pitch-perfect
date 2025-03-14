@@ -30,15 +30,17 @@ const Header = ({ theme, onThemeChange }) => {
       <div className="mx-auto px-4 sm:px-6 lg:px-4">
         <div className="flex justify-between h-16">
           {/* Left side - Logo */}
-          <div className="flex items-center">
-            <img src="/icon.png" alt="Logo" className="h-8 w-8 mr-3" />
-            <Link 
-              to="/dashboard" 
+          <Link 
+              to="/dashboard"
+              className="flex items-center"
+          >
+            <img src="/icon.png" alt="Logo" className="h-8 w-8 mr-3 rounded-lg" />
+            <div 
               className="text-xl font-bold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
             >
               Pitch Perfect
-            </Link>
-          </div>
+            </div>
+          </Link>
 
           {/* Right side - User Menu */}
           <div className="flex items-center">

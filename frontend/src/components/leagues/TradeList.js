@@ -128,11 +128,11 @@ const TradeList = ({ league }) => {
   };
   
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="px-6 py-3 border-b border-gray-00 dark:border-gray-700">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Trade Market
+            Trades
           </h2>
           <button
             onClick={() => setShowTradeForm(true)}

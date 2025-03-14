@@ -106,8 +106,8 @@ const LeagueView = () => {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
     { id: 'matches', label: 'Matches', component: MatchList },
-    { id: 'table', label: 'Table', component: LeagueTable },
-    { id: 'trades', label: 'Trade Market', component: TradeList },
+    // { id: 'table', label: 'Table', component: LeagueTable },
+    { id: 'trades', label: 'Trades', component: TradeList },
     { id: 'stats', label: 'Stats', component: LeagueStats },
   ];
 
