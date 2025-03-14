@@ -2,6 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// Add safe area support for mobile devices
+const safeTopStyle = `
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+`;
+
 const Header = ({ theme, onThemeChange }) => {
   const { logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -26,19 +33,22 @@ const Header = ({ theme, onThemeChange }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-gray-800 shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-gray-800 shadow-sm safe-top">
+      {/* Inject safe-area CSS */}
+      <style dangerouslySetInnerHTML={{ __html: safeTopStyle }} />
+      
       <div className="mx-auto px-4 sm:px-6 lg:px-4">
         <div className="flex justify-between h-16">
-          {/* Left side - Logo */}
+          {/* Left side - Logo with updated styling */}
           <Link 
               to="/dashboard"
               className="flex items-center"
           >
-            <img src="/icon.png" alt="Logo" className="h-8 w-8 mr-3 rounded-lg" />
+            <img src="/icon.png" alt="Logo" className="h-9 w-9 mr-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300" />
             <div 
-              className="text-xl font-bold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
+              className="text-xl font-extrabold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-300"
             >
-              Pitch Perfect
+              <span className="text-indigo-600 dark:text-indigo-400">Pitch</span>Perfect
             </div>
           </Link>
 
@@ -47,12 +57,12 @@ const Header = ({ theme, onThemeChange }) => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none"
+                className="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-full p-1"
               >
-                <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shadow-sm">
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5" 
+                    className="h-5 w-5 text-indigo-600 dark:text-indigo-400" 
                     viewBox="0 0 20 20" 
                     fill="currentColor"
                   >
