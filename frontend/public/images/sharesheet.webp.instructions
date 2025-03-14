@@ -1,0 +1,8 @@
+Place your WebP sharesheet image here with the following recommended specifications:
+
+Filename: sharesheet.webp
+Recommended size: 1200x630 pixels (standard Open Graph image size)
+Format: WebP (for better compression and quality)
+Content: Include your app logo, name, and possibly a tagline or visual that represents the fantasy cricket experience
+
+Note: While most platforms support WebP images, some older platforms might not. Consider also including sharesheet.jpg or sharesheet.png as fallbacks if needed.
