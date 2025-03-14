@@ -1,0 +1,178 @@
+[
+  {
+    "id": 1,
+    "label": "Captain",
+    "role": [
+      "BAT",
+      "BOWL",
+      "ALL",
+      "WK"
+    ],
+    "multiplier_runs": 2.0,
+    "multiplier_fours": 2.0,
+    "multiplier_sixes": 2.0,
+    "multiplier_sr": 2.0,
+    "multiplier_bat_milestones": 2.0,
+    "multiplier_wickets": 2.0,
+    "multiplier_maidens": 2.0,
+    "multiplier_economy": 2.0,
+    "multiplier_bowl_milestones": 2.0,
+    "multiplier_catches": 2.0,
+    "multiplier_stumpings": 2.0,
+    "multiplier_run_outs": 2.0,
+    "multiplier_potm": 2.0,
+    "multiplier_playing": 2.0
+  },
+  {
+    "id": 2,
+    "label": "Vice-Captain",
+    "role": [
+      "BAT",
+      "BOWL",
+      "ALL",
+      "WK"
+    ],
+    "multiplier_runs": 1.5,
+    "multiplier_fours": 1.5,
+    "multiplier_sixes": 1.5,
+    "multiplier_sr": 1.5,
+    "multiplier_bat_milestones": 1.5,
+    "multiplier_wickets": 1.5,
+    "multiplier_maidens": 1.5,
+    "multiplier_economy": 1.5,
+    "multiplier_bowl_milestones": 1.5,
+    "multiplier_catches": 1.5,
+    "multiplier_stumpings": 1.5,
+    "multiplier_run_outs": 1.5,
+    "multiplier_potm": 1.5,
+    "multiplier_playing": 1.5
+  },
+  {
+    "id": 3,
+    "label": "Slogger",
+    "role": [
+      "BAT",
+      "WK"
+    ],
+    "multiplier_runs": 1.5,
+    "multiplier_fours": 2.0,
+    "multiplier_sixes": 2.0,
+    "multiplier_sr": 2.0,
+    "multiplier_bat_milestones": 1.5,
+    "multiplier_wickets": 1.0,
+    "multiplier_maidens": 1.0,
+    "multiplier_economy": 1.0,
+    "multiplier_bowl_milestones": 1.0,
+    "multiplier_catches": 1.0,
+    "multiplier_stumpings": 1.0,
+    "multiplier_run_outs": 1.0,
+    "multiplier_potm": 1.0,
+    "multiplier_playing": 1.0
+  },
+  {
+    "id": 4,
+    "label": "Accumulator",
+    "role": [
+      "BAT",
+      "WK"
+    ],
+    "multiplier_runs": 2.0,
+    "multiplier_fours": 1.5,
+    "multiplier_sixes": 1.5,
+    "multiplier_sr": 1.5,
+    "multiplier_bat_milestones": 2.0,
+    "multiplier_wickets": 1.0,
+    "multiplier_maidens": 1.0,
+    "multiplier_economy": 1.0,
+    "multiplier_bowl_milestones": 1.0,
+    "multiplier_catches": 1.0,
+    "multiplier_stumpings": 1.0,
+    "multiplier_run_outs": 1.0,
+    "multiplier_potm": 1.0,
+    "multiplier_playing": 1.0
+  },
+  {
+    "id": 5,
+    "label": "Safe Hands",
+    "role": [
+      "WK"
+    ],
+    "multiplier_runs": 1.5,
+    "multiplier_fours": 1.0,
+    "multiplier_sixes": 1.0,
+    "multiplier_sr": 1.0,
+    "multiplier_bat_milestones": 1.5,
+    "multiplier_wickets": 1.0,
+    "multiplier_maidens": 1.0,
+    "multiplier_economy": 1.0,
+    "multiplier_bowl_milestones": 1.0,
+    "multiplier_catches": 2.0,
+    "multiplier_stumpings": 2.0,
+    "multiplier_run_outs": 2.0,
+    "multiplier_potm": 1.0,
+    "multiplier_playing": 1.0
+  },
+  {
+    "id": 6,
+    "label": "Rattler",
+    "role": [
+      "BOWL"
+    ],
+    "multiplier_runs": 1.0,
+    "multiplier_fours": 1.0,
+    "multiplier_sixes": 1.0,
+    "multiplier_sr": 1.0,
+    "multiplier_bat_milestones": 1.0,
+    "multiplier_wickets": 2.0,
+    "multiplier_maidens": 1.5,
+    "multiplier_economy": 1.5,
+    "multiplier_bowl_milestones": 2.0,
+    "multiplier_catches": 1.0,
+    "multiplier_stumpings": 1.0,
+    "multiplier_run_outs": 1.0,
+    "multiplier_potm": 1.0,
+    "multiplier_playing": 1.0
+  },
+  {
+    "id": 7,
+    "label": "Constrictor",
+    "role": [
+      "BOWL"
+    ],
+    "multiplier_runs": 1.0,
+    "multiplier_fours": 1.0,
+    "multiplier_sixes": 1.0,
+    "multiplier_sr": 1.0,
+    "multiplier_bat_milestones": 1.0,
+    "multiplier_wickets": 1.5,
+    "multiplier_maidens": 2.0,
+    "multiplier_economy": 2.0,
+    "multiplier_bowl_milestones": 1.5,
+    "multiplier_catches": 1.0,
+    "multiplier_stumpings": 1.0,
+    "multiplier_run_outs": 1.0,
+    "multiplier_potm": 1.0,
+    "multiplier_playing": 1.0
+  },
+  {
+    "id": 8,
+    "label": "Virtuoso",
+    "role": [
+      "ALL"
+    ],
+    "multiplier_runs": 1.5,
+    "multiplier_fours": 1.0,
+    "multiplier_sixes": 1.0,
+    "multiplier_sr": 1.5,
+    "multiplier_bat_milestones": 1.0,
+    "multiplier_wickets": 1.5,
+    "multiplier_maidens": 1.0,
+    "multiplier_economy": 1.5,
+    "multiplier_bowl_milestones": 1.0,
+    "multiplier_catches": 1.5,
+    "multiplier_stumpings": 1.5,
+    "multiplier_run_outs": 1.5,
+    "multiplier_potm": 1.0,
+    "multiplier_playing": 1.0
+  }
+]

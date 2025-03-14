@@ -1,0 +1,2054 @@
+[
+  {
+    "id": 1,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 569,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 2,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 682,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 3,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 530,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 4,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 168,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 5,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 735,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 6,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 627,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 7,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 614,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 8,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 538,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 9,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 26,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 10,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 532,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 11,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 606,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 12,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 736,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 13,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 418,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 14,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 425,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 15,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 50,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 16,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 728,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 17,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 571,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 18,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 737,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 19,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 652,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 20,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 738,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 21,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 698,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 22,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 415,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 23,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 739,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 24,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 740,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 25,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 483,
+    "team": 15,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 26,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 431,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 27,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 619,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 28,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 427,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 29,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 368,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 30,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 469,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 31,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 705,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 32,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-03-13T23:49:07.987Z",
+    "player": 785,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 33,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 719,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 34,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 742,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 35,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 743,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 36,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 744,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 37,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 745,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 38,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 746,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 39,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 747,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 40,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 542,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 41,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 184,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 42,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 71,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 43,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 748,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 44,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 680,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 45,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 668,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 46,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 615,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 47,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-03-13T23:47:50.053Z",
+    "player": 502,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 48,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 333,
+    "team": 1,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 49,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 524,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 50,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 629,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 51,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 539,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 52,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 387,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 53,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 660,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 54,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 601,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 55,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 704,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 56,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 611,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 57,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 500,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 58,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 340,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 59,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 562,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 60,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 117,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 61,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 616,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 62,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 710,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 63,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 110,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 64,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 645,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 65,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 558,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 66,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 362,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 67,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 635,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 68,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 504,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 69,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 749,
+    "team": 2,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 70,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 750,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 71,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 751,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 72,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 752,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 73,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 536,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 75,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 605,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 76,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 639,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 77,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 570,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 78,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 14,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 79,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 316,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 80,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 551,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 81,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 519,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 82,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 565,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 83,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 451,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 84,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 585,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 85,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 675,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 86,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 685,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 87,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 628,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 88,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 672,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 89,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 625,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 90,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 754,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 91,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 462,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 92,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 723,
+    "team": 3,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 93,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 663,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 94,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 622,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 95,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 327,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 96,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 730,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 97,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 720,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 98,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 662,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 99,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 755,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 100,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 756,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 101,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 367,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 102,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 632,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 103,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 478,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 104,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 757,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 105,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 407,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 106,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 670,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 107,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 380,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 108,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 699,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 109,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 714,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 110,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 383,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 111,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 406,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 112,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 758,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 113,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 651,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 114,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 759,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 115,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 449,
+    "team": 4,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 116,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 385,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 117,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 513,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 118,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 760,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 119,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 578,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 120,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 713,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 121,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 648,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 122,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 600,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 123,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 531,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 124,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 568,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 125,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 671,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 126,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 646,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 127,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 690,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 128,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 709,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 129,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 549,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 130,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 468,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 131,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 761,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 132,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 762,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 133,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 401,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 134,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 763,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 135,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 633,
+    "team": 5,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 136,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 420,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 137,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 764,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 138,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 393,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 139,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-03-13T23:51:03.789Z",
+    "player": 786,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 140,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 477,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 141,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 454,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 142,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 446,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 143,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 511,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 144,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 766,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 145,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 624,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 146,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 767,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 147,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 335,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 148,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 696,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 149,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 376,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 150,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 527,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 151,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 647,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 152,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 679,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 153,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 265,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 154,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 768,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 155,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 464,
+    "team": 6,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 156,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 423,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 157,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 769,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 158,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 770,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 159,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 771,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 160,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 554,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 161,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 390,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 162,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 583,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 163,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 485,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 164,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 772,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 165,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 773,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 166,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 584,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 167,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 774,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 168,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 330,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 169,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 703,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 170,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 637,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 171,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 775,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 172,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 552,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 173,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 776,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 174,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 560,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 175,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 634,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 176,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 444,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 177,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 669,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 178,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 479,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 179,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 665,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 180,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 677,
+    "team": 7,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 181,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 509,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 182,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 688,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 183,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 440,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 184,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 706,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 185,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 777,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 186,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 666,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 187,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 471,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 188,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 587,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 189,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 503,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 190,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 649,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 191,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 523,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 192,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 716,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 193,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 517,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 194,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 609,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 195,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 490,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 196,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 596,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 197,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 555,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 198,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 6,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 199,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 778,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 200,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 488,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 201,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 631,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 202,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 489,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 203,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 727,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 204,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 410,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 205,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 438,
+    "team": 8,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 206,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 457,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 207,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 580,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 208,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 621,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 209,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 563,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 210,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 779,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 211,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 780,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 212,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 617,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 213,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 657,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 214,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 498,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 215,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 623,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 216,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 725,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 217,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 722,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 218,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 781,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 219,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 602,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 220,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 268,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 221,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 348,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 222,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 537,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 223,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 573,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 224,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 712,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 225,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 610,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 226,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 782,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 227,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 783,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 228,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 711,
+    "team": 9,
+    "season": 17,
+    "points": null
+  },
+  {
+    "id": 229,
+    "created_at": "2025-01-26T00:00:00Z",
+    "updated_at": "2025-01-26T00:00:00Z",
+    "player": 784,
+    "team": 9,
+    "season": 17,
+    "points": null
+  }
+]
