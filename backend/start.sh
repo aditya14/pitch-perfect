@@ -3,9 +3,9 @@
 # Set environment variable to indicate we're on Railway
 export RAILWAY_ENVIRONMENT=true
 
-# Print environment for debugging
-echo "PORT: $PORT"
-echo "DATABASE_URL: ${DATABASE_URL:0:20}..." # Print first 20 chars for security
+# Print environment for debugging (redacted for security)
+echo "Running on port: $PORT"
+echo "Database connection available: $(if [ -n "$DATABASE_URL" ]; then echo "YES"; else echo "NO"; fi)"
 
 # Create the static directory if it doesn't exist
 mkdir -p staticfiles
@@ -20,4 +20,4 @@ python manage.py migrate --noinput
 
 # Start Gunicorn server
 echo "Starting Gunicorn server on port $PORT..."
-gunicorn --bind 0.0.0.0:$PORT backend.wsgi:application
+exec gunicorn --bind 0.0.0.0:$PORT backend.wsgi:application

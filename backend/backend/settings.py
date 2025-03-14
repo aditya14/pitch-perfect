@@ -80,7 +80,7 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# Simplify middleware for deployment
+# Middleware configuration
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Always include whitenoise
@@ -117,24 +117,39 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# Default to SQLite for local development if no DATABASE_URL
-default_db = {
-    'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-}
-
-# For Railway, use the DATABASE_URL environment variable
+# Check for DATABASE_URL first (Railway provides this)
 if os.environ.get('DATABASE_URL'):
     print("Using DATABASE_URL from environment")
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
             conn_max_age=600,
-            conn_health_checks=True,
+            ssl_require=False,  # Set to True if your database requires SSL
         )
     }
 else:
-    print(f"Using default database configuration: {default_db['NAME']}")
+    # For local development
+    try:
+        import MySQLdb
+        default_db = {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME', 'pitch_perfect'),
+            'USER': os.environ.get('DB_USER', 'pitch_perfect_user'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'userpassword'),
+            'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+            'PORT': os.environ.get('DB_PORT', '3307'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+        print("Using MySQL for local development")
+    except ImportError:
+        # Use SQLite as a fallback
+        default_db = {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+        print("Using SQLite for local development")
+    
     DATABASES = {
         'default': default_db
     }
