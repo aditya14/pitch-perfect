@@ -1,8 +1,8 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install -r requirements.txt && chmod +x runtime.sh"
+buildCommand = "pip install -r requirements.txt && chmod +x start.sh"
 
 [deploy]
-startCommand = "./runtime.sh"
-healthcheckPath = "/"
-healthcheckTimeout = 100
+startCommand = "./start.sh"
+restartPolicyType = "on-failure"
+healthcheckEnabled = false

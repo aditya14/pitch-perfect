@@ -31,9 +31,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-#((pc=c3*o3q%a8uov$6p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'  # Default to True for local development
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,10.0.0.119,*.up.railway.app').split(',')
-print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+# Allow all hosts in production for Railway
+ALLOWED_HOSTS = ['*']
 
+# Configure CORS settings
+CORS_ALLOW_ALL_ORIGINS = True  # Simplify for deployment
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 
                                      'http://localhost:3000,http://10.0.0.119:3000,https://*.up.railway.app').split(',')
 
@@ -78,9 +80,10 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# Determine which middleware to use - add WhiteNoise in production
+# Simplify middleware for deployment
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Always include whitenoise
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -89,11 +92,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-# Add WhiteNoise middleware in production
-if not DEBUG:
-    # Insert WhiteNoise after security middleware
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -119,20 +117,13 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# Default database configuration for local development
+# Default to SQLite for local development if no DATABASE_URL
 default_db = {
-    'ENGINE': 'django.db.backends.mysql',
-    'NAME': os.environ.get('DB_NAME', 'pitch_perfect'),
-    'USER': os.environ.get('DB_USER', 'pitch_perfect_user'),
-    'PASSWORD': os.environ.get('DB_PASSWORD', 'userpassword'),
-    'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-    'PORT': os.environ.get('DB_PORT', '3307'),
-    'OPTIONS': {
-        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-    },
+    'ENGINE': 'django.db.backends.sqlite3',
+    'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 }
 
-# Check if DATABASE_URL environment variable exists (for Railway)
+# For Railway, use the DATABASE_URL environment variable
 if os.environ.get('DATABASE_URL'):
     print("Using DATABASE_URL from environment")
     DATABASES = {
@@ -143,7 +134,7 @@ if os.environ.get('DATABASE_URL'):
         )
     }
 else:
-    print(f"Using default database configuration: {default_db['NAME']} on {default_db['HOST']}:{default_db['PORT']}")
+    print(f"Using default database configuration: {default_db['NAME']}")
     DATABASES = {
         'default': default_db
     }
@@ -158,10 +149,10 @@ STATICFILES_DIRS = [
 # Create static directory if it doesn't exist
 os.makedirs(os.path.join(BASE_DIR, 'static'), exist_ok=True)
 
-# Whitenoise settings for static files in production
-if not DEBUG:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Whitenoise settings for static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# CORS settings
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_METHODS = [
@@ -196,27 +187,18 @@ REST_FRAMEWORK = {
     ],
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = []
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Cricket API Key
