@@ -37,10 +37,10 @@ ALLOWED_HOSTS = ['*']
 # Configure CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  # Simplify for deployment
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 
-                                     'http://localhost:3000,http://10.0.0.119:3000,https://*.up.railway.app').split(',')
+                                     'http://localhost:3000,http://10.0.0.119:3000,https://pitchperfectcricket.com,https://www.pitchperfectcricket.com').split(',')
 
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 
-                                     'http://localhost:3000,http://10.0.0.119:3000,https://*.up.railway.app').split(',')
+                                     'http://localhost:3000,http://10.0.0.119:3000,https://www.pitchperfectcricket.com,https://api.pitchperfectcricket.com').split(',')
 
 # Application definition
 
