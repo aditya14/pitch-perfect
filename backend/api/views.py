@@ -894,13 +894,17 @@ class DraftViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'])
     def update_order(self, request, pk=None):
+        print("Request data:", request.data)
         draft = self.get_object()
+        print("Draft order:", draft.order)
             
         serializer = self.get_serializer(
             draft, 
             data={"order": request.data.get("order")},
             partial=True
         )
+
+        print("Serializer data:", serializer.initial_data)
         
         if serializer.is_valid():
             serializer.save()

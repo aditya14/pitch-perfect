@@ -13,16 +13,102 @@ from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, 
 from .forms import CSVUploadForm
 import csv
 from io import TextIOWrapper
-from django.db.models import Q
+from django.db.models import Q, Avg, F
 
 import logging
 _logger = logging.getLogger(__name__)
 
-@admin.register(Season)
+
+@admin.action(description="Update default draft order based on current roster and historical performance")
+def update_default_draft_order(modeladmin, request, queryset):
+    for season in queryset:
+        try:
+            # Get all players with a valid team history for this season
+            player_histories = PlayerTeamHistory.objects.filter(
+                season=season,
+                is_active=True  # Assuming there's a field to mark active mappings
+            ).select_related('player')
+            
+            # Get all relevant players
+            players = [history.player for history in player_histories]
+            player_ids = [player.id for player in players]
+            
+            # Calculate average points for each player (2021-2024)
+            # First, let's get relevant seasons for filtering
+            relevant_seasons = Season.objects.filter(
+                Q(name__icontains='2021') | 
+                Q(name__icontains='2022') | 
+                Q(name__icontains='2023') | 
+                Q(name__icontains='2024')
+            )
+            
+            # Dictionary to store player averages
+            player_averages = {}
+            
+            # For each player, calculate their average
+            for player_id in player_ids:
+                # Get all events for this player in 2021-2024 seasons
+                events = IPLPlayerEvent.objects.filter(
+                    player_id=player_id,
+                    match__season__in=relevant_seasons
+                )
+                
+                # If player has events, calculate average
+                if events.exists():
+                    avg_points = events.aggregate(avg_points=Avg('total_points'))['avg_points'] or 0
+                else:
+                    avg_points = 0
+                
+                player_averages[player_id] = avg_points
+            
+            # Sort player IDs by average points (highest first)
+            sorted_player_ids = sorted(
+                player_ids,
+                key=lambda pid: player_averages.get(pid, 0),
+                reverse=True
+            )
+            
+            # Update the season's default draft order
+            season.default_draft_order = sorted_player_ids
+            season.save()
+            
+            # Also update existing draft orders if needed
+            from .models import Draft
+            drafts = Draft.objects.filter(season=season, is_completed=False)
+            for draft in drafts:
+                draft.order = season.default_draft_order
+                draft.save()
+            
+            messages.success(
+                request, 
+                f"Successfully updated default draft order for {season.name} with {len(sorted_player_ids)} players."
+            )
+            
+            # Log detailed information for admin review
+            admin_message = f"Player rankings for {season.name}:\n"
+            for i, pid in enumerate(sorted_player_ids[:20], 1):
+                player = next((p for p in players if p.id == pid), None)
+                if player:
+                    admin_message += f"{i}. {player.name}: {player_averages[pid]:.2f} avg points\n"
+            admin_message += f"... and {len(sorted_player_ids) - 20} more players"
+            
+            messages.info(request, admin_message)
+            
+        except Exception as e:
+            messages.error(
+                request, 
+                f"Error updating default draft order for {season.name}: {str(e)}"
+            )
+
+
+# Register the action with the Season admin
 class SeasonAdmin(admin.ModelAdmin):
+    actions = [update_default_draft_order]
     list_display = ('year', 'name', 'start_date', 'end_date', 'status', 'default_draft_order')
     list_filter = ('status',)
     search_fields = ('name', 'year')
+
+admin.site.register(Season, SeasonAdmin)
 
 @admin.register(IPLTeam)
 class IPLTeamAdmin(admin.ModelAdmin):

@@ -21,30 +21,59 @@ import { usePlayerModal } from '../../../context/PlayerModalContext';
 
 const BREAKDOWN_OPTIONS = [20, 30, 40, 50];
 
+// Custom TouchSensor for better mobile support
+const CustomTouchSensor = (options) => {
+  return useSensor(TouchSensor, {
+    // Reduced delay time to make dragging more responsive
+    activationConstraint: {
+      delay: 150,
+      tolerance: 5,
+    },
+    ...options
+  });
+};
+
 const CountdownTimer = ({ deadline }) => {
-  const [timeLeft, setTimeLeft] = useState({});
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    expired: false
+  });
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const difference = new Date(deadline) - new Date();
-      
-      if (difference <= 0) {
+      try {
+        const difference = new Date(deadline) - new Date();
+        
+        if (difference <= 0) {
+          return {
+            days: 0,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            expired: true
+          };
+        }
+
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+          expired: false
+        };
+      } catch (error) {
+        console.error("Error calculating time left:", error);
         return {
           days: 0,
           hours: 0,
           minutes: 0,
           seconds: 0,
-          expired: true
+          expired: false
         };
       }
-
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-        expired: false
-      };
     };
 
     setTimeLeft(calculateTimeLeft());
@@ -66,30 +95,130 @@ const CountdownTimer = ({ deadline }) => {
     );
   }
 
+  // Function to safely format 2-digit numbers with leading zero
+  const formatNumber = (num) => {
+    if (num === undefined || num === null) return "00";
+    return num < 10 ? `0${num}` : `${num}`;
+  };
+
   return (
-    <div className="text-sm flex items-center gap-2 font-semibold">
+    <div className="text-sm flex items-center gap-2 font-semibold whitespace-nowrap">
       <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></span>
-      Draft order locks in:
+      <span className="whitespace-nowrap">Draft order locks in:</span>
       <div className="flex gap-2">
-        <div>
-          <span className="font-bold">{timeLeft.days}</span>
+        <div className="w-11 text-center">
+          <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(timeLeft.days)}</span>
           <span className="text-gray-500 text-xs ml-1">d</span>
         </div>
-        <div>
-          <span className="font-bold">{timeLeft.hours}</span>
+        <div className="w-11 text-center">
+          <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(timeLeft.hours)}</span>
           <span className="text-gray-500 text-xs ml-1">h</span>
         </div>
-        <div>
-          <span className="font-bold">{timeLeft.minutes}</span>
+        <div className="w-11 text-center">
+          <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(timeLeft.minutes)}</span>
           <span className="text-gray-500 text-xs ml-1">m</span>
         </div>
-        <div>
-          <span className="font-bold">{timeLeft.seconds}</span>
+        <div className="w-11 text-center">
+          <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(timeLeft.seconds)}</span>
           <span className="text-gray-500 text-xs ml-1">s</span>
         </div>
       </div>
     </div>
   );
+};
+
+// Compact countdown for smaller screens
+const CompactCountdownTimer = ({ deadline }) => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    expired: false
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      try {
+        const difference = new Date(deadline) - new Date();
+        
+        if (difference <= 0) {
+          return {
+            days: 0,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            expired: true
+          };
+        }
+
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+          expired: false
+        };
+      } catch (error) {
+        console.error("Error calculating time left:", error);
+        return {
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          expired: false
+        };
+      }
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    
+    const timer = setInterval(() => {
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [deadline]);
+
+  if (timeLeft.expired) {
+    return (
+      <div className="text-red-600 font-medium flex items-center">
+        <span className="h-2 w-2 bg-red-600 rounded-full animate-pulse mr-1.5"></span>
+        Locked
+      </div>
+    );
+  }
+
+  // Format time as days:hours:minutes:seconds safely
+  const formatTime = () => {
+    const pad = (num) => {
+      if (num === undefined || num === null) return "00";
+      return num < 10 ? `0${num}` : `${num}`;
+    };
+    return `${pad(timeLeft.days)}:${pad(timeLeft.hours)}:${pad(timeLeft.minutes)}:${pad(timeLeft.seconds)}`;
+  };
+
+  return (
+    <div className="text-sm flex items-center font-mono">
+      <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse mr-1.5"></span>
+      <span className="font-medium whitespace-nowrap">{formatTime()}</span>
+    </div>
+  );
+};
+
+// Helper function to safely get transform CSS
+const getTransformStyle = (transform) => {
+  try {
+    // Defensive checks to make sure all needed properties exist
+    if (transform && CSS && CSS.Transform && typeof CSS.Transform.toString === 'function') {
+      return CSS.Transform.toString(transform);
+    }
+    return '';
+  } catch (error) {
+    console.error('Error calculating transform:', error);
+    return '';
+  }
 };
 
 const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
@@ -103,10 +232,12 @@ const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
   } = useSortable({ id: player.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: getTransformStyle(transform),
     transition,
     zIndex: isDragging ? 1 : 0,
+    touchAction: 'none', // Prevent default touch behaviors
   };
+  
   const { openPlayerModal } = usePlayerModal();
 
   return (
@@ -117,24 +248,30 @@ const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
         isDragging ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
       } hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700`}
     >
-      <td className="w-10 pl-4 py-3 sticky left-0 bg-inherit z-10" {...attributes} {...listeners}>
+      <td 
+        className="w-10 pl-4 py-3 sticky left-0 bg-inherit z-10 touch-manipulation select-none" 
+        {...attributes} 
+        {...listeners}
+      >
         <div className="flex items-center justify-center">
-          <svg
-            className="w-4 h-4 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 8h16M4 16h16"
-            />
-          </svg>
+          <div className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 cursor-grab active:cursor-grabbing">
+            <svg
+              className="w-4 h-4 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 8h16M4 16h16"
+              />
+            </svg>
+          </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white sticky left-10 bg-inherit z-10">
+      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white sticky left-10 bg-inherit z-10 select-none">
         {index + 1}
       </td>
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
@@ -227,18 +364,13 @@ const DraftOrderModal = ({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Adjust this to make dragging more responsive on mobile
+        distance: 5, // Lower distance for faster activation
       }
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250, // This helps distinguish between a tap and a drag on mobile
-        tolerance: 5, // Slight tolerance for unintentional movement
-      }
-    })
+    CustomTouchSensor() // Use the custom touch sensor
   );
 
   // Get player by ID helper
@@ -254,15 +386,53 @@ const DraftOrderModal = ({
       return;
     }
 
-    const oldIndex = draftOrder.order.indexOf(active.id);
-    const newIndex = draftOrder.order.indexOf(over.id);
-    
-    if (oldIndex === -1 || newIndex === -1) {
-      return;
-    }
+    // Convert IDs to numbers if they're strings
+    const activeId = typeof active.id === 'string' ? parseInt(active.id, 10) : active.id;
+    const overId = typeof over.id === 'string' ? parseInt(over.id, 10) : over.id;
 
-    const newOrder = arrayMove(draftOrder.order, oldIndex, newIndex);
-    await saveDraftOrder(newOrder);
+    // Console log to debug
+    console.log("Dragged item:", activeId);
+    console.log("Dropped on:", overId);
+    
+    // Make sure the draftOrder.order array contains numbers, not strings
+    const currentOrder = draftOrder.order.map(id => 
+      typeof id === 'string' ? parseInt(id, 10) : id
+    );
+    
+    // Find the indexes in the current order
+    const oldIndex = currentOrder.indexOf(activeId);
+    const newIndex = currentOrder.indexOf(overId);
+    
+    console.log("Old index:", oldIndex);
+    console.log("New index:", newIndex);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      try {
+        // Create a new array by moving the item
+        const newOrder = [...currentOrder];
+        const [removed] = newOrder.splice(oldIndex, 1);
+        newOrder.splice(newIndex, 0, removed);
+        
+        console.log("Original order (first 5 items):", currentOrder.slice(0, 5));
+        console.log("New order (first 5 items):", newOrder.slice(0, 5));
+        
+        // Verify the arrays have the same length
+        if (newOrder.length !== currentOrder.length) {
+          console.error("Order length mismatch:", { 
+            originalLength: currentOrder.length,
+            newLength: newOrder.length
+          });
+          return;
+        }
+        
+        // Save the new order
+        await saveDraftOrder(newOrder);
+      } catch (error) {
+        console.error("Error updating draft order:", error);
+      }
+    } else {
+      console.error("Could not find indexes:", { oldIndex, newIndex });
+    }
   };
 
   // Toggle column visibility
@@ -380,8 +550,14 @@ const DraftOrderModal = ({
             Update Draft Order
           </h2>
           
-          <div className="flex items-center gap-4">
-            <CountdownTimer deadline={draftDeadline} />
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Show compact countdown on mobile, full countdown on larger screens */}
+            <div className="hidden sm:block">
+              <CountdownTimer deadline={draftDeadline} />
+            </div>
+            <div className="sm:hidden">
+              <CompactCountdownTimer deadline={draftDeadline} />
+            </div>
             
             <button
               onClick={onClose}
