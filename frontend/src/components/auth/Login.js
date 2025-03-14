@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { AlertCircle, Eye, EyeOff, Users, Award, TrendingUp, Zap, Activity } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Users, ArrowRightLeft, TrendingUp, Zap, Activity } from 'lucide-react';
 
 // Add this style to ensure safe top spacing on mobile browsers
 const safeTopStyle = `
@@ -40,12 +40,12 @@ const Login = () => {
       description: "Rank, draft, and build your dream squad from the official IPL player pool"
     },
     {
-      icon: <Award className="h-6 w-6" />,
-      title: "Core Squad Strategy",
+      icon: <TrendingUp className="h-6 w-6" />,
+      title: "Boost Strategy",
       description: "Assign specialized roles with unique point multipliers to maximize scoring"
     },
     {
-      icon: <TrendingUp className="h-6 w-6" />,
+      icon: <ArrowRightLeft className="h-6 w-6" />,
       title: "In-Season Trading",
       description: "Trade players with other managers to optimize your lineup strategy"
     },
