@@ -1,8 +1,8 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install -r requirements.txt"
+buildCommand = "pip install -r requirements.txt && chmod +x runtime.sh"
 
 [deploy]
-startCommand = "gunicorn backend.wsgi --log-file -"
-healthcheckPath = "/admin/login/"
+startCommand = "./runtime.sh"
+healthcheckPath = "/"
 healthcheckTimeout = 100
