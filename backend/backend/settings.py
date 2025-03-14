@@ -34,16 +34,34 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'  # Default to True for local d
 # Allow all hosts in production for Railway
 ALLOWED_HOSTS = ['*']
 
+# Hard-code domains to ensure they're always included
+TRUSTED_DOMAINS = [
+    'http://localhost:3000',
+    'http://10.0.0.119:3000',
+    'https://pitchperfectcricket.com',
+    'https://www.pitchperfectcricket.com',
+    'https://api.pitchperfectcricket.com',
+    'http://pitchperfectcricket.com',
+    'http://www.pitchperfectcricket.com',
+    'http://api.pitchperfectcricket.com',
+    'https://frontend-production-13c38.up.railway.app',
+    'https://backend-production-1610.up.railway.app',
+]
+
 # Configure CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  # Simplify for deployment
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 
-                                     'http://localhost:3000,http://10.0.0.119:3000,https://pitchperfectcricket.com,https://www.pitchperfectcricket.com').split(',')
+CORS_ALLOWED_ORIGINS = TRUSTED_DOMAINS
 
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 
-                                     'http://localhost:3000,http://10.0.0.119:3000,https://www.pitchperfectcricket.com,https://api.pitchperfectcricket.com').split(',')
+# CSRF trusted origins need the domain part only (with protocol)
+CSRF_TRUSTED_ORIGINS = TRUSTED_DOMAINS
+
+# Enable CSRF cookie for HTTPS only
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_USE_SESSIONS = True
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to access CSRF token
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -91,6 +109,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'api.middleware.CSRFFixMiddleware',  # Add custom CSRF middleware
 ]
 
 ROOT_URLCONF = 'backend.urls'
