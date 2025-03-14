@@ -3,6 +3,7 @@ import json
 import os
 import glob
 from django.core.management.base import BaseCommand
+from django.db.models import ForeignKey
 from api.models import (
     Season, IPLTeam, IPLPlayer, 
     FantasyBoostRole, IPLMatch, IPLPlayerEvent, 
@@ -57,7 +58,6 @@ class Command(BaseCommand):
             'player_team_history.json': PlayerTeamHistory,
             'ipl_matches.json': IPLMatch,
             'ipl_player_events.json': IPLPlayerEvent,
-            # Add other models as needed
         }
         
         # Import in specific order to handle dependencies
@@ -97,11 +97,34 @@ class Command(BaseCommand):
             
             self.stdout.write(f'Loaded {len(data)} records from {filepath}')
             
+            # Get model fields info
+            foreign_key_fields = {}
+            for field in model_class._meta.fields:
+                if isinstance(field, ForeignKey):
+                    foreign_key_fields[field.name] = field.related_model
+            
             # Import records
             count = 0
             errors = 0
             for item in data:
                 try:
+                    # Process foreign keys
+                    for field_name, related_model in foreign_key_fields.items():
+                        if field_name in item and item[field_name] is not None:
+                            # Get the ID value
+                            related_id = item[field_name]
+                            try:
+                                # Try to get the related object
+                                related_obj = related_model.objects.get(pk=related_id)
+                                # Replace the ID with the actual object
+                                item[field_name] = related_obj
+                            except related_model.DoesNotExist:
+                                self.stdout.write(self.style.WARNING(
+                                    f"Related {related_model.__name__} with ID {related_id} not found for {field_name}"
+                                ))
+                                # Set to None if related object doesn't exist
+                                item[field_name] = None
+                    
                     # Extract ID to check if record exists
                     record_id = item.get('id')
                     
@@ -111,7 +134,8 @@ class Command(BaseCommand):
                             obj = model_class.objects.get(id=record_id)
                             # Update fields
                             for field, value in item.items():
-                                setattr(obj, field, value)
+                                if field != 'id':  # Don't try to update ID
+                                    setattr(obj, field, value)
                             obj.save()
                         except model_class.DoesNotExist:
                             # Create new record
@@ -120,7 +144,7 @@ class Command(BaseCommand):
                         
                         count += 1
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'Error importing record: {str(e)}'))
+                    self.stdout.write(self.style.ERROR(f'Error importing record ID {item.get("id")}: {str(e)}'))
                     errors += 1
                     continue
             
