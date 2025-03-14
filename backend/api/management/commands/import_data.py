@@ -54,10 +54,10 @@ class Command(BaseCommand):
             'teams.json': IPLTeam,
             'players.json': IPLPlayer,
             'fantasy_boost_roles.json': FantasyBoostRole,
-            'team_seasons.json': TeamSeason,
-            'player_team_history.json': PlayerTeamHistory,
-            'ipl_matches.json': IPLMatch,
-            'ipl_player_events.json': IPLPlayerEvent,
+            # 'team_seasons.json': TeamSeason,
+            # 'player_team_history.json': PlayerTeamHistory,
+            # 'ipl_matches.json': IPLMatch,
+            # 'ipl_player_events.json': IPLPlayerEvent,
         }
         
         # Import in specific order to handle dependencies
@@ -66,10 +66,10 @@ class Command(BaseCommand):
             'teams.json', 
             'players.json',
             'fantasy_boost_roles.json',
-            'team_seasons.json',
-            'player_team_history.json',
-            'ipl_matches.json',
-            'ipl_player_events.json'
+            # 'team_seasons.json',
+            # 'player_team_history.json',
+            # 'ipl_matches.json',
+            # 'ipl_player_events.json'
         ]
         
         for filename in import_order:
