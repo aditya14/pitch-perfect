@@ -31,14 +31,14 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-#((pc=c3*o3q%a8uov$6p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'  # Default to True for local development
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,10.0.0.119').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,10.0.0.119,*.up.railway.app').split(',')
 print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 
-                                     'http://localhost:3000,http://10.0.0.119:3000').split(',')
+                                     'http://localhost:3000,http://10.0.0.119:3000,https://*.up.railway.app').split(',')
 
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 
-                                     'http://localhost:3000,http://10.0.0.119:3000').split(',')
+                                     'http://localhost:3000,http://10.0.0.119:3000,https://*.up.railway.app').split(',')
 
 # Application definition
 
@@ -78,6 +78,7 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
+# Determine which middleware to use - add WhiteNoise in production
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -88,6 +89,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Add WhiteNoise middleware in production
+if not DEBUG:
+    # Insert WhiteNoise after security middleware
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -151,6 +157,10 @@ STATICFILES_DIRS = [
 
 # Create static directory if it doesn't exist
 os.makedirs(os.path.join(BASE_DIR, 'static'), exist_ok=True)
+
+# Whitenoise settings for static files in production
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CORS_ALLOW_CREDENTIALS = True
 
