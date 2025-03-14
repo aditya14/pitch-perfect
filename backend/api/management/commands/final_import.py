@@ -3,9 +3,10 @@ import json
 import os
 from django.core.management.base import BaseCommand
 from django.db import connection
+from django.utils import timezone
 
 class Command(BaseCommand):
-    help = 'Final data import with correct field mapping'
+    help = 'Final data import with correct field mapping and handling of required fields'
 
     def handle(self, *args, **options):
         # Ensure Season 0 exists
@@ -48,13 +49,17 @@ class Command(BaseCommand):
             if not cursor.fetchone():
                 self.stdout.write("Season 0 does not exist. Creating it...")
                 
+                now = timezone.now().isoformat()
+                
                 with connection.cursor() as cursor:
                     cursor.execute("""
                         INSERT INTO api_season (
-                            id, year, name, start_date, end_date, status
-                        ) VALUES (%s, %s, %s, %s, %s, %s)
+                            id, created_at, updated_at, year, name, start_date, end_date, status
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """, [
                         0,  # id
+                        now,  # created_at
+                        now,  # updated_at
                         2008,  # year
                         'IPL 2008',  # name
                         '2008-04-18',  # start_date
@@ -67,7 +72,7 @@ class Command(BaseCommand):
                 self.stdout.write("Season 0 already exists")
     
     def import_matches(self, filepath):
-        """Import matches with correct field mapping"""
+        """Import matches with correct field mapping and required fields"""
         self.stdout.write(f"Importing matches from {filepath}")
         
         try:
@@ -84,6 +89,9 @@ class Command(BaseCommand):
             missing_data = [item for item in data if int(item.get('id')) not in existing_ids]
             self.stdout.write(f"Found {len(missing_data)} missing matches")
             
+            # Current timestamp for created_at/updated_at fields
+            now = timezone.now()
+            
             # Process records
             imported = 0
             errors = 0
@@ -92,18 +100,25 @@ class Command(BaseCommand):
                 try:
                     record_id = int(item.get('id'))
                     
-                    # Map JSON to DB fields
-                    season_id = item.get('season')
-                    team_1_id = item.get('team_1')
-                    team_2_id = item.get('team_2')
+                    # Use values from JSON or provide defaults
+                    # Get created_at/updated_at from JSON or use current time
+                    created_at = item.get('created_at') or now
+                    updated_at = item.get('updated_at') or now
+                    
+                    # Map other fields from JSON, providing defaults for required fields
+                    season_id = item.get('season') or 0
+                    team_1_id = item.get('team_1') or 1
+                    team_2_id = item.get('team_2') or 2
+                    match_number = item.get('match_number') or 1
+                    date = item.get('date') or '2008-04-18'
+                    venue = item.get('venue') or 'Unknown'
+                    status = item.get('status') or 'COMPLETED'
+                    stage = item.get('stage') or 'LEAGUE'
+                    
+                    # Optional fields
                     toss_winner_id = item.get('toss_winner')
                     winner_id = item.get('winner')
                     player_of_match_id = item.get('player_of_match')
-                    match_number = item.get('match_number')
-                    date = item.get('date')
-                    venue = item.get('venue')
-                    status = item.get('status')
-                    stage = item.get('stage', 'LEAGUE')  # Default to LEAGUE if missing
                     toss_decision = item.get('toss_decision')
                     win_margin = item.get('win_margin')
                     win_type = item.get('win_type')
@@ -119,21 +134,21 @@ class Command(BaseCommand):
                     with connection.cursor() as cursor:
                         cursor.execute("""
                             INSERT INTO api_iplmatch (
-                                id, match_number, date, venue, status, toss_decision, 
-                                win_margin, win_type, team_1_id, team_2_id, toss_winner_id, 
-                                winner_id, season_id, inns_1_overs, inns_1_runs, inns_1_wickets, 
-                                inns_2_overs, inns_2_runs, inns_2_wickets, player_of_match_id, 
-                                stage, cricdata_id
+                                id, created_at, updated_at, match_number, date, venue, 
+                                status, toss_decision, win_margin, win_type, team_1_id, 
+                                team_2_id, toss_winner_id, winner_id, season_id, inns_1_overs, 
+                                inns_1_runs, inns_1_wickets, inns_2_overs, inns_2_runs, 
+                                inns_2_wickets, player_of_match_id, stage, cricdata_id
                             ) VALUES (
-                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
                                 %s, %s, %s, %s, %s, %s, %s, %s, %s
                             )
                         """, [
-                            record_id, match_number, date, venue, status, toss_decision,
-                            win_margin, win_type, team_1_id, team_2_id, toss_winner_id,
-                            winner_id, season_id or 0, inns_1_overs, inns_1_runs, inns_1_wickets,
-                            inns_2_overs, inns_2_runs, inns_2_wickets, player_of_match_id,
-                            stage, cricdata_id
+                            record_id, created_at, updated_at, match_number, date, venue, 
+                            status, toss_decision, win_margin, win_type, team_1_id, 
+                            team_2_id, toss_winner_id, winner_id, season_id, inns_1_overs, 
+                            inns_1_runs, inns_1_wickets, inns_2_overs, inns_2_runs, 
+                            inns_2_wickets, player_of_match_id, stage, cricdata_id
                         ])
                     
                     imported += 1
@@ -164,9 +179,25 @@ class Command(BaseCommand):
                 cursor.execute("SELECT id FROM api_iplplayerevent")
                 existing_ids = {row[0] for row in cursor.fetchall()}
             
-            # Filter missing records
-            missing_data = [item for item in data if int(item.get('id')) not in existing_ids]
-            self.stdout.write(f"Found {len(missing_data)} missing events")
+            # Get valid match IDs
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT id FROM api_iplmatch")
+                valid_match_ids = {row[0] for row in cursor.fetchall()}
+            
+            # Filter missing records and validate match_id references
+            missing_data = []
+            for item in data:
+                record_id = int(item.get('id'))
+                match_id = item.get('match')
+                
+                if record_id not in existing_ids and match_id in valid_match_ids:
+                    missing_data.append(item)
+                elif record_id not in existing_ids:
+                    self.stdout.write(self.style.WARNING(
+                        f"Skipping event {record_id}: Match {match_id} not found in database"
+                    ))
+            
+            self.stdout.write(f"Found {len(missing_data)} missing events with valid match references")
             
             # Process in batches
             batch_size = 500
@@ -184,33 +215,33 @@ class Command(BaseCommand):
                     try:
                         record_id = int(item.get('id'))
                         
-                        # Map JSON to DB fields
-                        player_id = item.get('player')
-                        match_id = item.get('match')
-                        for_team_id = item.get('for_team')
-                        vs_team_id = item.get('vs_team')
-                        bat_runs = item.get('bat_runs')
-                        bat_balls = item.get('bat_balls')
-                        bat_fours = item.get('bat_fours')
-                        bat_sixes = item.get('bat_sixes')
-                        bat_not_out = item.get('bat_not_out')
+                        # Map JSON to DB fields with defaults for required fields
+                        player_id = item.get('player') or 1
+                        match_id = item.get('match')  # Already validated
+                        for_team_id = item.get('for_team') or 1
+                        vs_team_id = item.get('vs_team') or 2
+                        bat_runs = item.get('bat_runs') or 0
+                        bat_balls = item.get('bat_balls') or 0
+                        bat_fours = item.get('bat_fours') or 0
+                        bat_sixes = item.get('bat_sixes') or 0
+                        bat_not_out = item.get('bat_not_out', False)
                         bat_innings = item.get('bat_innings')
                         bowl_balls = item.get('bowl_balls')
-                        bowl_maidens = item.get('bowl_maidens')
+                        bowl_maidens = item.get('bowl_maidens') or 0
                         bowl_runs = item.get('bowl_runs')
-                        bowl_wickets = item.get('bowl_wickets')
+                        bowl_wickets = item.get('bowl_wickets') or 0
                         bowl_innings = item.get('bowl_innings')
-                        field_catch = item.get('field_catch')
-                        wk_catch = item.get('wk_catch')
-                        wk_stumping = item.get('wk_stumping')
+                        field_catch = item.get('field_catch') or 0
+                        wk_catch = item.get('wk_catch') or 0
+                        wk_stumping = item.get('wk_stumping') or 0
                         run_out_solo = item.get('run_out_solo')
                         run_out_collab = item.get('run_out_collab')
-                        player_of_match = item.get('player_of_match')
-                        batting_points_total = item.get('batting_points_total')
-                        bowling_points_total = item.get('bowling_points_total')
-                        fielding_points_total = item.get('fielding_points_total')
-                        other_points_total = item.get('other_points_total')
-                        total_points_all = item.get('total_points_all')
+                        player_of_match = item.get('player_of_match', False)
+                        batting_points_total = item.get('batting_points_total') or 0
+                        bowling_points_total = item.get('bowling_points_total') or 0
+                        fielding_points_total = item.get('fielding_points_total') or 0
+                        other_points_total = item.get('other_points_total') or 0
+                        total_points_all = item.get('total_points_all') or 0
                         
                         # Execute SQL
                         with connection.cursor() as cursor:
