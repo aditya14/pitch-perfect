@@ -3,7 +3,11 @@ import json
 import os
 from django.core.management.base import BaseCommand
 from django.core.serializers.json import DjangoJSONEncoder
-from api.models import Season, IPLTeam, IPLPlayer  # Add your other models here
+from api.models import (
+    Season, IPLTeam, IPLPlayer, 
+    FantasyBoostRole, IPLMatch, IPLPlayerEvent, 
+    PlayerTeamHistory, TeamSeason
+)  # Add your other models here
 
 class CustomJSONEncoder(DjangoJSONEncoder):
     def default(self, obj):
@@ -21,14 +25,15 @@ class Command(BaseCommand):
         if not os.path.exists('exports'):
             os.makedirs('exports')
         
-        # Export Season data
+        # Export data for each model
         self.export_model(Season, 'exports/seasons.json')
-        
-        # Export IPLTeam data
         self.export_model(IPLTeam, 'exports/teams.json')
-        
-        # Export IPLPlayer data
         self.export_model(IPLPlayer, 'exports/players.json')
+        self.export_model(FantasyBoostRole, 'exports/fantasy_boost_roles.json')
+        self.export_model(TeamSeason, 'exports/team_seasons.json')
+        self.export_model(PlayerTeamHistory, 'exports/player_team_history.json')
+        self.export_model(IPLMatch, 'exports/ipl_matches.json')
+        self.export_model(IPLPlayerEvent, 'exports/ipl_player_events.json')
         
         # Add other models as needed
         
