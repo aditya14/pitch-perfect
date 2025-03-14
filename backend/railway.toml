@@ -4,5 +4,4 @@ buildCommand = "pip install -r requirements.txt && chmod +x start.sh"
 
 [deploy]
 startCommand = "./start.sh"
-restartPolicyType = "on-failure"
 healthcheckEnabled = false
