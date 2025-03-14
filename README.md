@@ -16,7 +16,7 @@ PitchPerfect is a draft-based fantasy cricket app designed specifically for IPL 
    - `ALLOWED_HOSTS`: Include Railway domain (e.g., 'pitch-perfect-backend.up.railway.app')
    - `CORS_ALLOWED_ORIGINS`: Include your frontend URL (e.g., 'https://pitch-perfect-frontend.up.railway.app')
    - `CSRF_TRUSTED_ORIGINS`: Include your frontend URL (e.g., 'https://pitch-perfect-frontend.up.railway.app')
-   - `CRICKET_API_KEY`: Your Cricket API key
+   - `CRICDATA_API_KEY`: Your Cricket API key
    - Railway automatically sets `DATABASE_URL` for you
 6. Under the "Settings" tab:
    - Set the root directory to `/`

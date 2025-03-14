@@ -18,7 +18,7 @@ class CricketDataService:
     """
     
     def __init__(self, api_key=None):
-        self.api_key = api_key or settings.CRICKET_API_KEY
+        self.api_key = api_key or settings.CRICDATA_API_KEY
         self.base_url = "https://api.cricapi.com/v1"
         
     def fetch_match_scorecard(self, match_id: str) -> Dict:
