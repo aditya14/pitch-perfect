@@ -5,6 +5,14 @@ from django.core.management.base import BaseCommand
 from django.core.serializers.json import DjangoJSONEncoder
 from api.models import Season, IPLTeam, IPLPlayer  # Add your other models here
 
+class CustomJSONEncoder(DjangoJSONEncoder):
+    def default(self, obj):
+        # Skip non-serializable fields
+        from django.db.models.fields.files import FieldFile
+        if isinstance(obj, FieldFile):
+            return None
+        return super().default(obj)
+
 class Command(BaseCommand):
     help = 'Exports data model by model in a format suitable for PostgreSQL'
 
@@ -37,6 +45,11 @@ class Command(BaseCommand):
                 field_name = field.name
                 field_value = getattr(obj, field_name)
                 
+                # Skip file fields (images)
+                from django.db.models.fields.files import FieldFile
+                if isinstance(field_value, FieldFile):
+                    continue
+                
                 # Handle special field types if needed
                 item[field_name] = field_value
             
@@ -44,6 +57,6 @@ class Command(BaseCommand):
         
         # Save to file with proper encoding
         with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(data, f, cls=DjangoJSONEncoder, ensure_ascii=False, indent=2)
+            json.dump(data, f, cls=CustomJSONEncoder, ensure_ascii=False, indent=2)
         
         self.stdout.write(f'Exported {len(data)} {model.__name__} records to {filename}')
