@@ -1,1 +1,1 @@
-web: npm start
+web: if [ -x "$(command -v npm)" ]; then npm start; else serve -s build -l $PORT; fi

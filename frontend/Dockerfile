@@ -1,4 +1,4 @@
-# Use Node 18 as a base image
+# Build stage
 FROM node:18-alpine as build
 
 # Set working directory
@@ -16,17 +16,26 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Use nginx for serving the built app
-FROM nginx:alpine
+# Production stage - using Node instead of nginx for simplicity
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install serve
+RUN npm install -g serve
 
 # Copy built app from the build stage
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/build ./build
+COPY --from=build /app/start.sh ./start.sh
+COPY --from=build /app/server.js ./server.js
+COPY --from=build /app/package.json ./package.json
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Make start script executable
+RUN chmod +x start.sh
 
-# Expose port 80
-EXPOSE 80
+# Expose port based on environment or default to 3000
+EXPOSE ${PORT:-3000}
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start serve using our start script
+CMD ["./start.sh"]
