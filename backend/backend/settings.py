@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,24 +26,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#((pc=c3*o3q%a8uov$6pi2v)=!ov!9zvpi03_-bhpk_kxv6p='
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-#((pc=c3*o3q%a8uov$6pi2v)=!ov!9zvpi03_-bhpk_kxv6p=')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'  # Default to True for local development
 
-ALLOWED_HOSTS = ["localhost", "10.0.0.119", "adityatest.ngrok.io", "adityatest2.ngrok.io"]
-# ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,10.0.0.119').split(',')
+print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://10.0.0.119:3000",
-    "https://adityatest.ngrok.io", "https://adityatest2.ngrok.io"
-]
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 
+                                     'http://localhost:3000,http://10.0.0.119:3000').split(',')
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000", "http://10.0.0.119:3000", "https://adityatest2.ngrok.io"
-    "http://localhost:8000", "http://10.0.0.119:8000", "https://adityatest.ngrok.io"
-]
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 
+                                     'http://localhost:3000,http://10.0.0.119:3000').split(',')
 
 # Application definition
 
@@ -59,7 +59,6 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -82,13 +81,12 @@ SIMPLE_JWT = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -115,17 +113,44 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pitch_perfect',
-        'USER': 'pitch_perfect_user',
-        'PASSWORD': 'userpassword',
-        'HOST': '127.0.0.1',
-        'PORT': '3307',  # Changed to match new port
-    }
+# Default database configuration for local development
+default_db = {
+    'ENGINE': 'django.db.backends.mysql',
+    'NAME': os.environ.get('DB_NAME', 'pitch_perfect'),
+    'USER': os.environ.get('DB_USER', 'pitch_perfect_user'),
+    'PASSWORD': os.environ.get('DB_PASSWORD', 'userpassword'),
+    'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+    'PORT': os.environ.get('DB_PORT', '3307'),
+    'OPTIONS': {
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+    },
 }
 
+# Check if DATABASE_URL environment variable exists (for Railway)
+if os.environ.get('DATABASE_URL'):
+    print("Using DATABASE_URL from environment")
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    print(f"Using default database configuration: {default_db['NAME']} on {default_db['HOST']}:{default_db['PORT']}")
+    DATABASES = {
+        'default': default_db
+    }
+
+# Configure static files
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# Create static directory if it doesn't exist
+os.makedirs(os.path.join(BASE_DIR, 'static'), exist_ok=True)
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -165,21 +190,6 @@ REST_FRAMEWORK = {
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
-# AUTH_PASSWORD_VALIDATORS = [
-#     {
-#         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-#     },
-#     {
-#         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-#     },
-#     {
-#         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-#     },
-#     {
-#         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-#     },
-# ]
-
 AUTH_PASSWORD_VALIDATORS = []
 
 # Internationalization
@@ -194,34 +204,10 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'handlers': {
-#         'console': {
-#             'class': 'logging.StreamHandler',
-#         },
-#     },
-#     'loggers': {
-#         'django.db.backends': {
-#             'handlers': ['console'],
-#             'level': 'DEBUG',
-#         },
-#     },
-# }
-
-# CRICKET_API_KEY = '3b70adad-ac33-4441-9c65-dc753ee58177'
-
-# BACKUP KEY
-# CRICKET_API_KEY = '21b0a85d-a45b-4ac6-8032-81f3070d406e'
-CRICKET_API_KEY = 'bef230e4-fcef-43bd-a5e1-11eb27ad3a40'
+# Cricket API Key
+CRICKET_API_KEY = os.environ.get('CRICKET_API_KEY', 'bef230e4-fcef-43bd-a5e1-11eb27ad3a40')
