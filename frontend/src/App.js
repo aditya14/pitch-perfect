@@ -55,7 +55,7 @@ const AppContent = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen message="Logging in..." />;
   }
 
   return (
