@@ -15,6 +15,7 @@ import Header from './components/Header';
 import './styles/transitions.css';
 import SquadView from './components/squads/SquadView';
 import MatchView from './components/matches/MatchView';
+import LoadingScreen from './components/elements/LoadingScreen';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -55,7 +56,7 @@ const AppContent = () => {
   };
 
   if (loading) {
-    return <LoadingScreen message="Logging in..." />;
+    return <LoadingScreen message="Loading your leagues..." />;
   }
 
   return (

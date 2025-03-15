@@ -12,8 +12,8 @@ import TradeTutorial from './TradeTutorial';
 import LeagueStats from './LeagueStats';
 import DraftOrderModal from './modals/DraftOrderModal';
 
-// Constants
-const DRAFT_DEADLINE = new Date("2025-03-20T14:00:00Z"); // March 20, 2025, 2pm UTC
+// Constants 
+const DRAFT_DEADLINE = new Date("2025-03-21T04:30:00Z");  // March 21, 2025, 10am IST
 
 // Countdown component
 const DraftCountdown = () => {

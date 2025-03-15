@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/axios';
+import LoadingScreen from '../components/elements/LoadingScreen';
 
 const AuthContext = createContext(null);
 
@@ -89,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen message="Logging in..." />;
   }
 
   return (
