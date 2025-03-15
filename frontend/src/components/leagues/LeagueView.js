@@ -158,16 +158,15 @@ const LeagueView = () => {
 
   // Fetch draft order data
   const fetchDraftOrder = useCallback(async () => {
-    setDraftLoading(true);
     try {
       const response = await api.get(`/drafts/get_draft_order/?league_id=${leagueId}`);
       setDraftOrder(response.data);
       setDraftSaveError(null);
+      return response.data;
     } catch (err) {
       console.error('Error fetching draft order:', err);
       setDraftSaveError(err.response?.data?.detail || 'Failed to fetch draft order');
-    } finally {
-      setDraftLoading(false);
+      throw err;
     }
   }, [leagueId]);
 
@@ -175,30 +174,47 @@ const LeagueView = () => {
   const saveDraftOrder = async (newOrder) => {
     if (!draftOrder?.id) return;
     
-    setDraftLoading(true);
-    setDraftSaveError(null);
-    
     try {
       await api.patch(`/drafts/${draftOrder.id}/update_order/`, {
         order: newOrder
       });
       setDraftOrder(prev => ({...prev, order: newOrder}));
+      return true;
     } catch (err) {
       const errorMessage = err.response?.data?.detail || 'Failed to save draft order';
       setDraftSaveError(errorMessage);
       throw new Error(errorMessage);
-    } finally {
-      setDraftLoading(false);
     }
   };
+  
 
-  // Open draft modal handler with data loading
-  const handleDraftModalOpen = async () => {
-    if (players.length === 0) {
-      await fetchPlayerData();
-    }
-    await fetchDraftOrder();
+  const handleDraftModalOpen = () => {
+    // Open the modal immediately
     setIsDraftModalOpen(true);
+    
+    // Start loading data
+    setDraftLoading(true);
+    
+    // Load player data if needed, then fetch draft order
+    const loadData = async () => {
+      try {
+        // Load players if they're not loaded yet
+        if (players.length === 0) {
+          await fetchPlayerData();
+        }
+        
+        // Then fetch draft order
+        await fetchDraftOrder();
+      } catch (err) {
+        console.error("Error loading draft data:", err);
+        setDraftSaveError("Failed to load draft data. Please try again.");
+      } finally {
+        setDraftLoading(false);
+      }
+    };
+    
+    // Start the loading process
+    loadData();
   };
 
   // Handle tab change
