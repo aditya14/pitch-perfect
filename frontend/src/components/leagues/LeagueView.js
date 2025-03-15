@@ -8,6 +8,7 @@ import LeagueDashboard from './LeagueDashboard';
 import MatchList from './MatchList';
 import LeagueTable from './LeagueTable';
 import TradeList from './TradeList';
+import TradeTutorial from './TradeTutorial';
 import LeagueStats from './LeagueStats';
 import DraftOrderModal from './modals/DraftOrderModal';
 
@@ -87,6 +88,30 @@ const LeagueView = () => {
   const [draftSaveError, setDraftSaveError] = useState(null);
   const [isDraftDeadlinePassed, setIsDraftDeadlinePassed] = useState(false);
 
+  // Define the core tabs that are always available
+  const coreTabs = [
+    { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
+    { id: 'matches', label: 'Matches', component: MatchList },
+    { id: 'stats', label: 'Stats', component: LeagueStats },
+  ];
+
+  // Create tabs based on draft status
+  const getTabs = useCallback((isDraftCompleted) => {
+    const allTabs = [...coreTabs];
+    
+    // Add trades tab with the appropriate component based on draft status
+    if (isDraftCompleted) {
+      allTabs.push({ id: 'trades', label: 'Trades', component: TradeList });
+    } else {
+      allTabs.push({ id: 'trades', label: 'Trades', component: TradeTutorial });
+    }
+    
+    return allTabs;
+  }, []);
+
+  // Initialize tabs with empty draft status, will be updated after league data loads
+  const [tabs, setTabs] = useState(getTabs(false));
+
   // Get current active tab from URL path
   const getActiveTabFromPath = () => {
     const pathSegments = location.pathname.split('/');
@@ -101,15 +126,6 @@ const LeagueView = () => {
     // Default to dashboard if not found
     return 'dashboard';
   };
-
-  // Define tabs before using getActiveTabFromPath
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
-    { id: 'matches', label: 'Matches', component: MatchList },
-    // { id: 'table', label: 'Table', component: LeagueTable },
-    { id: 'trades', label: 'Trades', component: TradeList },
-    { id: 'stats', label: 'Stats', component: LeagueStats },
-  ];
 
   // Check if draft deadline has passed
   useEffect(() => {
@@ -130,6 +146,10 @@ const LeagueView = () => {
       const response = await api.get(`/leagues/${leagueId}/`);
       console.log('League:', response.data);
       setLeague(response.data);
+      
+      // Update tabs based on draft status
+      setTabs(getTabs(response.data.draft_completed));
+      
       setError(null);
     } catch (err) {
       if (err.response?.status === 403) {
