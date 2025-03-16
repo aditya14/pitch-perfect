@@ -23,7 +23,7 @@ const TimelineComponent = () => {
     },
     {
       title: "Squad Management",
-      description: "Assign player boosts and (optional) make pre-season trades",
+      description: "Assign player boosts and get ready for the season",
       deadline: dates.boostSetupEnd,
       icon: <Clock className="text-yellow-400" size={20} />
     },

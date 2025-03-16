@@ -16,18 +16,18 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { X, Info, RefreshCw, Search, Eye, EyeOff, Check } from 'lucide-react';
+import { X, Info, RefreshCw, Search, Eye, EyeOff, Check, GripVertical } from 'lucide-react';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
 
 const BREAKDOWN_OPTIONS = [20, 30, 40, 50];
 
-// Custom TouchSensor for better mobile support
+// Custom TouchSensor for better mobile support - with custom activation area
 const CustomTouchSensor = (options) => {
   return useSensor(TouchSensor, {
-    // Reduced delay time to make dragging more responsive
     activationConstraint: {
-      delay: 150,
+      delay: 200, // Slight delay to differentiate from taps
       tolerance: 5,
+      activationMode: 'lock', // Important: once dragging starts, it's locked in
     },
     ...options
   });
@@ -229,13 +229,21 @@ const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: player.id });
+  } = useSortable({ 
+    id: player.id,
+    activationConstraint: {
+      delay: 150,
+      tolerance: 5,
+    }
+  });
 
   const style = {
     transform: getTransformStyle(transform),
     transition,
-    zIndex: isDragging ? 1 : 0,
-    touchAction: 'none', // Prevent default touch behaviors
+    zIndex: isDragging ? 10 : 0,
+    WebkitTapHighlightColor: 'transparent',
+    WebkitTouchCallout: 'none',
+    boxShadow: isDragging ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none',
   };
   
   const { openPlayerModal } = usePlayerModal();
@@ -245,56 +253,46 @@ const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
       ref={setNodeRef}
       style={style}
       className={`${
-        isDragging ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
-      } hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700`}
+        isDragging 
+          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 z-50' 
+          : 'bg-white dark:bg-gray-800'
+      } hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 select-none touch-manipulation text-xs sm:text-sm`}
     >
       <td 
-        className="w-10 pl-4 py-3 sticky left-0 bg-inherit z-10 touch-manipulation select-none" 
+        className="w-8 sm:w-10 pl-2 sm:pl-4 py-2 sm:py-3 sticky left-0 bg-inherit z-10 select-none" 
         {...attributes} 
         {...listeners}
       >
         <div className="flex items-center justify-center">
-          <div className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 cursor-grab active:cursor-grabbing">
-            <svg
-              className="w-4 h-4 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 8h16M4 16h16"
-              />
-            </svg>
+          <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 cursor-grab active:cursor-grabbing">
+            <GripVertical className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white sticky left-10 bg-inherit z-10 select-none">
+      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 dark:text-white sticky left-8 sm:left-10 bg-inherit z-10 select-none text-left">
         {index + 1}
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-900 dark:text-white select-none text-left">
         <button 
           onClick={() => openPlayerModal(player.id, leagueId)}
-          className="text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-blue-600 dark:text-blue-400 hover:underline select-none"
         >
           {player.name}
         </button>
       </td>
+      {columnVisibility.avgPoints && (
+        <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 dark:text-white text-left sm:text-right select-none">
+          {player.avg_points?.toFixed(1) ?? '-'}
+        </td>
+      )}
       {columnVisibility.team && (
-        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+        <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 dark:text-white text-left select-none">
           {player.team}
         </td>
       )}
       {columnVisibility.role && (
-        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-          {roleMap[player.role] || player.role}
-        </td>
-      )}
-      {columnVisibility.avgPoints && (
-        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white text-right">
-          {player.avg_points?.toFixed(1) ?? '-'}
+        <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 dark:text-white text-left select-none">
+          {player.role}
         </td>
       )}
     </tr>
@@ -381,15 +379,17 @@ const DraftOrderModal = ({
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const tableRef = useRef(null);
   const tableContainerRef = useRef(null);
   
   const draftDeadline = "2025-03-21T04:30:00Z";  // March 21, 2025 10:00 AM IST
 
+  // Configure sensors with modified behavior - modified for better scrolling
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // Lower distance for faster activation
+        distance: 8, // Increased distance to favor scrolling over dragging
       }
     }),
     useSensor(KeyboardSensor, {
@@ -403,8 +403,23 @@ const DraftOrderModal = ({
     return players.find(p => p.id === id);
   }, [players]);
 
+  // Handle drag start - disable scrolling
+  const handleDragStart = () => {
+    setIsDragging(true);
+    // When dragging starts, disable scrolling on table container
+    if (tableContainerRef.current) {
+      tableContainerRef.current.style.overflow = 'hidden';
+    }
+  };
+
   // Drag end handler
   const handleDragEnd = async (event) => {
+    setIsDragging(false);
+    // Re-enable scrolling when dragging ends
+    if (tableContainerRef.current) {
+      tableContainerRef.current.style.overflow = 'auto';
+    }
+    
     const { active, over } = event;
     
     if (!over || active.id === over.id) {
@@ -591,8 +606,8 @@ const DraftOrderModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
       <div className="relative w-full max-w-7xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+        <div className="flex justify-between items-center p-2 sm:p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
             Update Draft Order
           </h2>
           
@@ -625,7 +640,7 @@ const DraftOrderModal = ({
         </div>
         
         {/* Content */}
-        <div className="px-6 flex-1 overflow-y-auto">
+        <div className="px-2 flex-1 overflow-y-auto">
           {isLoading && !draftOrder ? (
             <LoadingPlaceholder />
           ) : (
@@ -645,6 +660,9 @@ const DraftOrderModal = ({
                       Drag and drop players to reorder them according to your preference. 
                       When the draft begins, the system will select the highest-ranked available player from your list.
                     </p>
+                    <p className="text-sm text-blue-700 dark:text-blue-200 mt-2 lg:hidden font-semibold">
+                      Web Interface Recommended for Reordering
+                    </p>
                   </div>
                 </div>
               </div>
@@ -653,7 +671,8 @@ const DraftOrderModal = ({
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left Column - Statistics Breakdown */}
                 <div className="lg:w-1/3 space-y-6">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden p-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden p-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-8rem)] lg:flex lg:flex-col">
+                    {/* Top section - controls */}
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Top Player Breakdown:
@@ -674,19 +693,22 @@ const DraftOrderModal = ({
                       <span>Auto-refreshes as you reorder</span>
                     </div>
 
+                    {/* Scrollable content area */}
                     {breakdownStats && (
-                      <div className="space-y-6">
-                        <BreakdownCard 
-                          title="Role Distribution" 
-                          items={breakdownStats.roles} 
-                          getPercentage={getPercentage} 
-                        />
-                        
-                        <BreakdownCard 
-                          title="Team Distribution" 
-                          items={breakdownStats.teams} 
-                          getPercentage={getPercentage} 
-                        />
+                      <div className="lg:overflow-y-auto lg:flex-1 lg:pb-4">
+                        <div className="space-y-6">
+                          <BreakdownCard 
+                            title="Role Distribution" 
+                            items={breakdownStats.roles} 
+                            getPercentage={getPercentage} 
+                          />
+                          
+                          <BreakdownCard 
+                            title="Team Distribution" 
+                            items={breakdownStats.teams} 
+                            getPercentage={getPercentage} 
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -785,44 +807,59 @@ const DraftOrderModal = ({
 
                   {/* Player List Table */}
                   <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow overflow-hidden">
-                    <div ref={tableContainerRef} className="overflow-x-auto lg:max-h-full">
+                    {/* Visual indicator for dragging mode */}
+                    {isDragging && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-2 text-xs flex items-center justify-center text-blue-700 dark:text-blue-300 border-b border-blue-200 dark:border-blue-800">
+                        <span>Reordering... release to drop player</span>
+                      </div>
+                    )}
+                    
+                    <div 
+                      ref={tableContainerRef} 
+                      className={`overflow-auto ${isDragging ? 'bg-gray-50 dark:bg-gray-900/40' : ''}`}
+                      style={{ 
+                        transition: 'background-color 0.2s ease',
+                        maxHeight: '60vh',
+                      }}
+                    >
                       <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                       >
                         <table className="w-full border-collapse" ref={tableRef}>
-                          <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">
+                          <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr className="border-b border-gray-200 dark:border-gray-600">
-                              <th className="w-10 sticky left-0 bg-gray-50 dark:bg-gray-700 z-10"></th>
-                              <th className="px-4 py-3 text-left sticky left-10 bg-gray-50 dark:bg-gray-700 z-10">
+                              <th className="w-8 sm:w-10 sticky left-0 bg-gray-50 dark:bg-gray-700 z-10"></th>
+                              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left sticky left-8 sm:left-10 bg-gray-50 dark:bg-gray-700 z-10">
                                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                   Rank
                                 </span>
                               </th>
-                              <th className="px-4 py-3 text-left">
+                              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left">
                                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                   Name
                                 </span>
                               </th>
+                              {columnVisibility.avgPoints && (
+                                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left sm:text-right">
+                                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                                    Avg Pts
+                                  </span>
+                                </th>
+                              )}
                               {columnVisibility.team && (
-                                <th className="px-4 py-3 text-left">
+                                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left">
                                   <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                     IPL Team
                                   </span>
                                 </th>
                               )}
                               {columnVisibility.role && (
-                                <th className="px-4 py-3 text-left">
+                                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left">
                                   <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                     Role
-                                  </span>
-                                </th>
-                              )}
-                              {columnVisibility.avgPoints && (
-                                <th className="px-4 py-3 text-right">
-                                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                                    2021-24 Avg
                                   </span>
                                 </th>
                               )}
