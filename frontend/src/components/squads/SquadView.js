@@ -6,6 +6,7 @@ import CoreSquadTab from './CoreSquadTab';
 import { useAuth } from '../../context/AuthContext';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import { ArrowLeft } from 'lucide-react';
+import LoadingScreen from '../elements/LoadingScreen';
 
 const SquadView = () => {
   const { squadId } = useParams();
@@ -104,11 +105,7 @@ const SquadView = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600 dark:text-gray-300">Loading squad data...</div>
-      </div>
-    );
+    return <LoadingScreen message="Loading Squad" description='One moment please' />;
   }
 
   if (error) {

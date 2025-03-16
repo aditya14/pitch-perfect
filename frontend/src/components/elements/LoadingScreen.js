@@ -1,6 +1,6 @@
 import React from 'react';
 
-const LoadingScreen = ({ message = "Loading..." }) => {
+const LoadingScreen = ({ message = "Loading...", description = "Preparing your cricketing experience"}) => {
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900 z-50">
       <div className="w-24 h-24 mb-4 relative">
@@ -21,7 +21,7 @@ const LoadingScreen = ({ message = "Loading..." }) => {
       <h2 className="text-xl font-bold text-gray-800 dark:text-white">{message}</h2>
       
       <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center max-w-xs">
-        <p>Preparing your cricketing experience</p>
+        <p>{description}</p>
       </div>
     </div>
   );
