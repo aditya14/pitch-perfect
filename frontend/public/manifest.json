@@ -10,15 +10,39 @@
     {
       "src": "icon.png",
       "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.png",
+      "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
+  "prefer_related_applications": false,
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff",
   "orientation": "portrait",
   "categories": ["sports", "entertainment", "games"],
-  "description": "Draft-based fantasy cricket app designed for IPL enthusiasts"
+  "description": "Draft-based fantasy cricket app designed for IPL enthusiasts",
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "View your leagues and squads"
+    }
+  ],
+  "related_applications": [],
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr"
 }
