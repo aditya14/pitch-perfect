@@ -178,6 +178,7 @@ const BoostGuideCard = ({ boostRoles, showGuide, setShowGuide, squadColor }) => 
                 </div>
                 <div>
                   <div className="font-medium text-sm text-gray-800 dark:text-gray-200 mb-1">{role.name}</div>
+                  {/* <div className="text-xs font-light mb-1">{role.description ? role.description : ''}</div> */}
                   <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                     {role.allowed_player_types.join(', ')}
                   </div>

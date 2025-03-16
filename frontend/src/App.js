@@ -16,6 +16,7 @@ import './styles/transitions.css';
 import SquadView from './components/squads/SquadView';
 import MatchView from './components/matches/MatchView';
 import LoadingScreen from './components/elements/LoadingScreen';
+import PullToRefresh from './components/elements/PullToRefresh';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -75,127 +76,133 @@ const AppContent = () => {
     };
   }, []);
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   if (loading) {
     return <LoadingScreen message="Loading your leagues..." />;
   }
 
   return (
-    <div className={`
-      min-h-screen 
-      theme-transition
-      bg-white dark:bg-gray-900 
-      text-gray-900 dark:text-white
-      relative
-    `}>
-      {user && (
-        <Header 
-          theme={theme}
-          onThemeChange={handleThemeChange}
-        />
-      )}
+    <PullToRefresh onRefresh={handleRefresh}>
       <div className={`
-        theme-transition 
-        dark:bg-gray-900
-        ${user ? 'pt-4' : ''}
+        min-h-screen 
+        theme-transition
+        bg-white dark:bg-gray-900 
+        text-gray-900 dark:text-white
+        relative
       `}>
-        <Routes>
-          <Route 
-            path="/login" 
-            element={
-              !user ? 
-              <Login /> : 
-              <Navigate to="/dashboard" />
-            }
+        {user && (
+          <Header 
+            theme={theme}
+            onThemeChange={handleThemeChange}
           />
-          <Route 
-            path="/register" 
-            element={
-              !user ? 
-              <Resigter /> : 
-              <Navigate to="/dashboard" />
-            }
-          />
-          <Route 
-            path="/dashboard" 
-            element={
-              user ? 
-              <UserDashboard /> : 
-              <Navigate to="/login" />
-            }
-          />
-          <Route 
-            path="/leagues/create" 
-            element={
-              user ? 
-              <CreateLeague /> : 
-              <Navigate to="/login" />
-            }
-          />
-          <Route 
-            path="/leagues/join" 
-            element={
-              user ? 
-              <JoinLeague /> : 
-              <Navigate to="/login" />
-            }
-          />
-          <Route 
-            path="/squads/create" 
-            element={
-              user ? 
-              <CreateSquad /> : 
-              <Navigate to="/login" />
-            }
-          />
-          {/* League routes with nested tab routes */}
-          <Route 
-            path="/leagues/:leagueId"
-            element={user ? <LeagueView /> : <Navigate to="/login" />}
-          >
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={null} />
-            <Route path="matches" element={null} />
-            <Route path="table" element={null} />
-            <Route path="trades" element={null} />
-            <Route path="stats" element={null} />
-          </Route>
-          <Route 
-            path="/leagues/:leagueId/roster" 
-            element={
-              user ? 
-              <RosterView /> : 
-              <Navigate to="/login" />
-            }
-          />
-          <Route 
-            path="/squads/:squadId"
-            element={
-              user ? 
-              <SquadView /> : 
-              <Navigate to="/login" />
-            }
-          />
+        )}
+        <div className={`
+          theme-transition 
+          dark:bg-gray-900
+          ${user ? 'pt-4' : ''}
+        `}>
+          <Routes>
+            <Route 
+              path="/login" 
+              element={
+                !user ? 
+                <Login /> : 
+                <Navigate to="/dashboard" />
+              }
+            />
+            <Route 
+              path="/register" 
+              element={
+                !user ? 
+                <Resigter /> : 
+                <Navigate to="/dashboard" />
+              }
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                user ? 
+                <UserDashboard /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/leagues/create" 
+              element={
+                user ? 
+                <CreateLeague /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/leagues/join" 
+              element={
+                user ? 
+                <JoinLeague /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/squads/create" 
+              element={
+                user ? 
+                <CreateSquad /> : 
+                <Navigate to="/login" />
+              }
+            />
+            {/* League routes with nested tab routes */}
+            <Route 
+              path="/leagues/:leagueId"
+              element={user ? <LeagueView /> : <Navigate to="/login" />}
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={null} />
+              <Route path="matches" element={null} />
+              <Route path="table" element={null} />
+              <Route path="trades" element={null} />
+              <Route path="stats" element={null} />
+            </Route>
+            <Route 
+              path="/leagues/:leagueId/roster" 
+              element={
+                user ? 
+                <RosterView /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/squads/:squadId"
+              element={
+                user ? 
+                <SquadView /> : 
+                <Navigate to="/login" />
+              }
+            />
 
-          <Route 
-            path="/matches/:matchId" 
-            element={
-              user ? 
-              <MatchView /> : 
-              <Navigate to="/login" />
-            }
-          />
-          <Route 
-            path="/leagues/:leagueId/matches/:matchId" 
-            element={
-              user ? 
-              <MatchView /> : 
-              <Navigate to="/login" />
-            }
-          />
-          <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
+            <Route 
+              path="/matches/:matchId" 
+              element={
+                user ? 
+                <MatchView /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/leagues/:leagueId/matches/:matchId" 
+              element={
+                user ? 
+                <MatchView /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route path="*" element={<Navigate to="/login" />} />
+          </Routes>
+        </div>
       </div>
-    </div>
+    </PullToRefresh>
   );
 };
 

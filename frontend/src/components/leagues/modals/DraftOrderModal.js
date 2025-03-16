@@ -625,13 +625,13 @@ const DraftOrderModal = ({
         </div>
         
         {/* Content */}
-        <div className="p-6 flex-1 overflow-y-auto">
+        <div className="px-6 flex-1 overflow-y-auto">
           {isLoading && !draftOrder ? (
             <LoadingPlaceholder />
           ) : (
             <>
               {/* Info Card */}
-              <div className="mb-6 bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
+              <div className="my-6 bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
                     <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
