@@ -382,8 +382,7 @@ const DraftOrderModal = ({
   const [isDragging, setIsDragging] = useState(false);
   const tableRef = useRef(null);
   const tableContainerRef = useRef(null);
-  
-  const draftDeadline = "2025-03-21T04:30:00Z";  // March 21, 2025 10:00 AM IST
+  const draftDeadline = new Date('2025-03-21T14:00:00Z'); // March 21, 2025 10:00 AM ET
 
   // Configure sensors with modified behavior - modified for better scrolling
   const sensors = useSensors(
