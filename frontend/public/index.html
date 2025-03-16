@@ -3,13 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="PitchPerfect - Draft-based fantasy cricket app designed for IPL enthusiasts"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <meta name="description" content="PitchPerfect - Draft-based fantasy cricket app designed for IPL enthusiasts" />
+    
+    <!-- Apple Touch Icon and other iOS/macOS specific tags -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/icon.png" />
+    <link rel="apple-touch-icon-precomposed" href="%PUBLIC_URL%/icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PitchPerfect" />
+    
+    <!-- Microsoft Tile -->
+    <meta name="msapplication-TileImage" content="%PUBLIC_URL%/icon.png" />
+    <meta name="msapplication-TileColor" content="#000000" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -17,13 +24,23 @@
     <meta property="og:title" content="PitchPerfect Cricket Fantasy" />
     <meta property="og:description" content="Join PitchPerfect, the premier draft-based fantasy cricket app for IPL fans. Build your team, make trades, and dominate your league!" />
     <meta property="og:image" content="%PUBLIC_URL%/images/sharesheet.webp" />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://pitchperfectcricket.com" />
-    <meta property="twitter:title" content="PitchPerfect Cricket Fantasy" />
-    <meta property="twitter:description" content="Join PitchPerfect, the premier draft-based fantasy cricket app for IPL fans. Build your team, make trades, and dominate your league!" />
-    <meta property="twitter:image" content="%PUBLIC_URL%/images/sharesheet.webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="PitchPerfect" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://pitchperfectcricket.com" />
+    <meta name="twitter:title" content="PitchPerfect Cricket Fantasy" />
+    <meta name="twitter:description" content="Join PitchPerfect, the premier draft-based fantasy cricket app for IPL fans. Build your team, make trades, and dominate your league!" />
+    <meta name="twitter:image" content="%PUBLIC_URL%/images/sharesheet.webp" />
+    <meta name="twitter:creator" content="@PitchPerfectApp" />
+    
+    <!-- App manifest and other PWA support -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pitchperfectcricket.com" />
     
     <title>PitchPerfect</title>
   </head>
