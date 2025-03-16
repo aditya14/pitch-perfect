@@ -2,13 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// Add safe area support for mobile devices
-const safeTopStyle = `
-  .safe-top {
-    padding-top: env(safe-area-inset-top, 0);
-  }
-`;
-
 const Header = ({ theme, onThemeChange }) => {
   const { logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -33,9 +26,9 @@ const Header = ({ theme, onThemeChange }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-gray-800 shadow-sm safe-top">
-      {/* Inject safe-area CSS */}
-      <style dangerouslySetInnerHTML={{ __html: safeTopStyle }} />
+    <header className="sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-gray-800 shadow-sm">
+      {/* Safe area padding to account for notch/status bar */}
+      <div className="w-full bg-white dark:bg-gray-800 safe-area-top"></div>
       
       <div className="mx-auto px-4 sm:px-6 lg:px-4">
         <div className="flex justify-between h-16">

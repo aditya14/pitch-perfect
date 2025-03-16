@@ -55,6 +55,26 @@ const AppContent = () => {
     }
   };
 
+  // Add a function to update the viewport height
+  useEffect(() => {
+    // Fix for iOS viewport height issues
+    const setAppHeight = () => {
+      document.documentElement.style.setProperty(
+        '--app-height', 
+        `${window.innerHeight}px`
+      );
+    };
+    
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', setAppHeight);
+    setAppHeight();
+    
+    return () => {
+      window.removeEventListener('resize', setAppHeight);
+      window.removeEventListener('orientationchange', setAppHeight);
+    };
+  }, []);
+
   if (loading) {
     return <LoadingScreen message="Loading your leagues..." />;
   }
@@ -65,6 +85,7 @@ const AppContent = () => {
       theme-transition
       bg-white dark:bg-gray-900 
       text-gray-900 dark:text-white
+      relative
     `}>
       {user && (
         <Header 
@@ -72,7 +93,11 @@ const AppContent = () => {
           onThemeChange={handleThemeChange}
         />
       )}
-      <div className="theme-transition dark:bg-gray-900">
+      <div className={`
+        theme-transition 
+        dark:bg-gray-900
+        ${user ? 'pt-4' : ''}
+      `}>
         <Routes>
           <Route 
             path="/login" 

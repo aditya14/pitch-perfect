@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* iOS Safe Area Utilities */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sar: env(safe-area-inset-right);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+}
+
+html {
+  /* Fix for iOS viewport height issues */
+  height: -webkit-fill-available;
+}
+
+body {
+  /* Prevent content from flowing under status bar */
+  padding-top: env(safe-area-inset-top, 0px);
+  min-height: -webkit-fill-available;
+  /* Prevent overscroll bounce effect */
+  overscroll-behavior-y: none;
+}
+
+/* Apply padding to handle notch area for fixed headers */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent content from flowing under fixed header */
+.header-offset {
+  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+}
+
+/* Adjust viewport height for iOS */
+.min-h-screen {
+  min-height: -webkit-fill-available;
+}
