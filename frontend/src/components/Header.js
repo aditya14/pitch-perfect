@@ -8,6 +8,7 @@ const Header = ({ theme, onThemeChange }) => {
   const dropdownRef = useRef(null);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
@@ -17,8 +18,13 @@ const Header = ({ theme, onThemeChange }) => {
     const isAndroidDevice = /android/i.test(userAgent);
     const isIOSDevice = /iphone|ipad|ipod/i.test(userAgent);
     
+    // Check if this is a mobile device
+    const isMobileDevice = isAndroidDevice || isIOSDevice || 
+                           /mobile|tablet|opera mini|blackberry/i.test(userAgent);
+    
     setIsAndroid(isAndroidDevice);
     setIsIOS(isIOSDevice);
+    setIsMobile(isMobileDevice);
     
     // Check if app is already installed/running in standalone mode
     const isRunningStandalone = window.matchMedia('(display-mode: standalone)').matches || 
@@ -85,7 +91,7 @@ const Header = ({ theme, onThemeChange }) => {
   
   // Helper function to show iOS installation instructions
   const showIOSInstallInstructions = () => {
-    // Display a modal with instructions specific to iOS
+    // Create simplified instructions for iOS
     const instructionsHTML = `
       <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" id="ios-install-modal">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
@@ -100,11 +106,10 @@ const Header = ({ theme, onThemeChange }) => {
           <div class="space-y-4">
             <p class="text-gray-700 dark:text-gray-300">To add PitchPerfect to your home screen:</p>
             <ol class="list-decimal pl-5 text-gray-700 dark:text-gray-300 space-y-2">
-              <li>Tap the Share button <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg> at the bottom of the screen</li>
-              <li>Scroll down and tap "Add to Home Screen"</li>
-              <li>Tap "Add" in the top-right corner</li>
+              <li>Tap the <strong>Share</strong> icon at the bottom of your screen</li>
+              <li>Select <strong>"Add to Home Screen"</strong> from the menu</li>
+              <li>Tap <strong>"Add"</strong> to confirm</li>
             </ol>
-            <p class="text-gray-700 dark:text-gray-300">You'll now have the app icon on your home screen for quick access!</p>
           </div>
           <div class="mt-6">
             <button class="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md focus:outline-none" id="confirm-modal">
@@ -135,11 +140,11 @@ const Header = ({ theme, onThemeChange }) => {
   };
 
   return (
-    <header className={`sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-gray-800 shadow-sm fix-fixed`}>
+    <header className="sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-gray-800 shadow-sm fix-fixed">
       {/* Safe area padding to account for notch/status bar */}
-      <div className={`w-full bg-white dark:bg-gray-800 safe-area-top ${isAndroid ? 'android-status-bar' : ''}`}></div>
+      <div className="w-full bg-white dark:bg-gray-800 safe-area-top"></div>
       
-      <div className="mx-auto px-4 sm:px-6 lg:px-4 safe-area-left safe-area-right">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Left side - Logo with updated styling */}
           <Link 
@@ -246,8 +251,8 @@ const Header = ({ theme, onThemeChange }) => {
                     )}
                   </button>
                   
-                  {/* Show "Add to Home Screen" button only if not already in standalone mode */}
-                  {!isStandalone && (
+                  {/* Show "Add to Home Screen" button only if on mobile and not already in standalone mode */}
+                  {isMobile && !isStandalone && (
                     <button
                       onClick={handleAddToHomeScreen}
                       className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center w-full hover:bg-gray-50 dark:hover:bg-gray-700"
