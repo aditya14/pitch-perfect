@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import UpdatePointsButton from './UpdatePointsButton';
+import TimelineComponent from './TimelineComponent';
 import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle } from 'lucide-react';
 import LoadingScreen from './elements/LoadingScreen';
 
@@ -324,6 +325,9 @@ const UserDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Timeline Component */}
+      <TimelineComponent />
+      
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <h1 className="text-2xl font-bold dark:text-white">My Leagues</h1>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">

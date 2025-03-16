@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (loading) {
-    return <LoadingScreen message="Logging in..." />;
+    return <LoadingScreen message="Connecting..." />;
   }
 
   return (
