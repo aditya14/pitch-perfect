@@ -251,7 +251,10 @@ const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
   return (
     <tr
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        pointerEvents: isDragging ? 'none' : undefined,
+      }}
       className={`${
         isDragging 
           ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 z-50' 
@@ -383,18 +386,26 @@ const DraftOrderModal = ({
   const tableRef = useRef(null);
   const tableContainerRef = useRef(null);
   const draftDeadline = new Date('2025-03-21T14:00:00Z'); // March 21, 2025 10:00 AM ET
+  const isMobile = useRef(window.innerWidth < 1024);
 
   // Configure sensors with modified behavior - modified for better scrolling
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Increased distance to favor scrolling over dragging
+        // Different settings based on device
+        distance: isMobile.current ? 8 : 4,
       }
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
-    CustomTouchSensor() // Use the custom touch sensor
+    CustomTouchSensor({
+      // Mobile-specific touch settings
+      activationConstraint: {
+        delay: isMobile.current ? 200 : 150,
+        tolerance: isMobile.current ? 8 : 5,
+      }
+    })
   );
 
   // Get player by ID helper
@@ -405,8 +416,8 @@ const DraftOrderModal = ({
   // Handle drag start - disable scrolling
   const handleDragStart = () => {
     setIsDragging(true);
-    // When dragging starts, disable scrolling on table container
-    if (tableContainerRef.current) {
+    // Only disable scrolling on mobile
+    if (isMobile.current && tableContainerRef.current) {
       tableContainerRef.current.style.overflow = 'hidden';
     }
   };
@@ -414,8 +425,8 @@ const DraftOrderModal = ({
   // Drag end handler
   const handleDragEnd = async (event) => {
     setIsDragging(false);
-    // Re-enable scrolling when dragging ends
-    if (tableContainerRef.current) {
+    // Only re-enable scrolling on mobile
+    if (isMobile.current && tableContainerRef.current) {
       tableContainerRef.current.style.overflow = 'auto';
     }
     
@@ -826,6 +837,14 @@ const DraftOrderModal = ({
                         collisionDetection={closestCenter}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
+                        autoScroll={{
+                          enabled: true,
+                          speed: 800,
+                          threshold: {
+                            x: 0,
+                            y: 0.2
+                          }
+                        }}
                       >
                         <table className="w-full border-collapse" ref={tableRef}>
                           <thead className="bg-gray-50 dark:bg-gray-700">

@@ -88,7 +88,7 @@ const JoinLeague = () => {
           
           {!status.isCreatingSquad && (
             <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-              Enter the 6-character league code to join
+              Enter the league code to join
             </p>
           )}
         </div>
@@ -133,7 +133,7 @@ const JoinLeague = () => {
                     text-gray-900 dark:text-white
                     focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 
                     dark:border-gray-600"
-                  placeholder="Enter 6-character code"
+                  placeholder="Enter league code"
                   value={leagueCode}
                   onChange={(e) => setLeagueCode(e.target.value.toUpperCase())}
                 />

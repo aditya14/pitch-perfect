@@ -79,11 +79,11 @@ const LeagueCard = ({ league }) => {
                   <Calendar className="h-5 w-5 text-blue-500 dark:text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                      Season starts {formatDate(league.season?.start_date)}
+                      Season starts Mar 22, 2025
                     </p>
                     {daysUntilStart !== null && (
                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                        {daysUntilStart <= 0 ? "Starting today!" : `${daysUntilStart} days until season starts`}
+                        {daysUntilStart <= 0 ? "Starting today!" : `${daysUntilStart + 1} days until season starts`}
                       </p>
                     )}
                   </div>
