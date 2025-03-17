@@ -13,7 +13,7 @@ import LeagueStats from './LeagueStats';
 import DraftOrderModal from './modals/DraftOrderModal';
 
 // Constants 
-const DRAFT_DEADLINE = new Date("2025-03-21T04:30:00Z");  // March 21, 2025, 10am IST
+const DRAFT_DEADLINE = new Date('2025-03-21T14:00:00Z'); // March 21, 2025 10:00 AM ET
 
 // Countdown component
 const DraftCountdown = () => {
@@ -61,7 +61,7 @@ const DraftCountdown = () => {
   }
 
   return (
-    <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+    <div className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1.5">
       <Clock className="h-4 w-4" />
       <span>
         Draft locks in: 

@@ -144,7 +144,7 @@ const Header = ({ theme, onThemeChange }) => {
       {/* Safe area padding to account for notch/status bar */}
       <div className="w-full bg-white dark:bg-gray-800 safe-area-top"></div>
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-2 sm:px-6 lg:px-3">
         <div className="flex justify-between h-16">
           {/* Left side - Logo with updated styling */}
           <Link 
