@@ -9,6 +9,24 @@
     <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
     <meta name="description" content="PitchPerfect - Draft-based fantasy cricket app designed for IPL enthusiasts" />
     
+    <!-- Prevent flash of white content during page refresh -->
+    <script>
+      (function() {
+        // Immediately check and apply theme before any content is rendered
+        var theme = localStorage.getItem('theme');
+        var prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (theme === 'dark' || (!theme && prefersDarkMode)) {
+          document.documentElement.classList.add('dark');
+          // Add a background color to the HTML element to prevent white flash
+          document.documentElement.style.backgroundColor = '#111827'; // Tailwind dark:bg-gray-900 color
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#ffffff'; // White background for light mode
+        }
+      })();
+    </script>
+    
     <!-- Apple Touch Icon and other iOS/macOS specific tags -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/icon.png" />
     <link rel="apple-touch-icon-precomposed" href="%PUBLIC_URL%/icon.png" />
@@ -59,6 +77,18 @@
     <link href="%PUBLIC_URL%/splashscreens/ipadpro2_splash.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
     
     <title>PitchPerfect</title>
+    
+    <style>
+      /* Ensure body has dark background when in dark mode */
+      body {
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+      }
+      
+      html.dark body {
+        background-color: #111827; /* Same as Tailwind's dark:bg-gray-900 */
+        color: #ffffff;
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

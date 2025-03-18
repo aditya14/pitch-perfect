@@ -16,7 +16,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { X, Info, RefreshCw, Search, Eye, EyeOff, Check, GripVertical } from 'lucide-react';
+import { X, Info, RefreshCw, Search, Eye, EyeOff, Check, GripVertical, CheckSquare, Square } from 'lucide-react';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
 
 const BREAKDOWN_OPTIONS = [20, 30, 40, 50];
@@ -221,7 +221,15 @@ const getTransformStyle = (transform) => {
   }
 };
 
-const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
+const SortableRow = ({ 
+  player, 
+  index, 
+  leagueId, 
+  columnVisibility, 
+  selectedPlayers, 
+  onSelectPlayer,
+  isMultiSelectMode
+}) => {
   const {
     attributes,
     listeners,
@@ -247,6 +255,10 @@ const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
   };
   
   const { openPlayerModal } = usePlayerModal();
+  const isSelected = selectedPlayers.includes(player.id);
+
+  // Only show checkboxes in multi-select mode
+  const showCheckbox = isMultiSelectMode;
 
   return (
     <tr
@@ -258,19 +270,34 @@ const SortableRow = ({ player, index, leagueId, columnVisibility }) => {
       className={`${
         isDragging 
           ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 z-50' 
-          : 'bg-white dark:bg-gray-800'
+          : isSelected 
+            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50'
+            : 'bg-white dark:bg-gray-800'
       } hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 select-none touch-manipulation text-xs sm:text-sm`}
     >
-      <td 
-        className="w-8 sm:w-10 pl-2 sm:pl-4 py-2 sm:py-3 sticky left-0 bg-inherit z-10 select-none" 
-        {...attributes} 
-        {...listeners}
-      >
-        <div className="flex items-center justify-center">
-          <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 cursor-grab active:cursor-grabbing">
-            <GripVertical className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-          </div>
+      <td className="pl-2 pr-2 sm:pr-0 py-2 sm:py-3 sticky left-0 bg-inherit z-10 select-none flex items-center gap-1">
+        {/* Grip handle */}
+        <div 
+          className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 cursor-grab active:cursor-grabbing"
+          {...attributes} 
+          {...listeners}
+        >
+          <GripVertical className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
         </div>
+        
+        {/* Checkbox (only shown in multi-select mode) */}
+        {showCheckbox && (
+          <button 
+            className="ml-1 flex items-center justify-center focus:outline-none"
+            onClick={() => onSelectPlayer(player.id)}
+          >
+            {isSelected ? (
+              <CheckSquare className="w-4 h-4 text-blue-500" />
+            ) : (
+              <Square className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+        )}
       </td>
       <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 dark:text-white sticky left-8 sm:left-10 bg-inherit z-10 select-none text-left">
         {index + 1}
@@ -383,6 +410,10 @@ const DraftOrderModal = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  // For multi-select feature
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  
   const tableRef = useRef(null);
   const tableContainerRef = useRef(null);
   const draftDeadline = new Date('2025-03-21T14:00:00Z'); // March 21, 2025 10:00 AM ET
@@ -413,8 +444,34 @@ const DraftOrderModal = ({
     return players.find(p => p.id === id);
   }, [players]);
 
+  // Handle selection of player for multi-select
+  const handleSelectPlayer = useCallback((playerId) => {
+    setSelectedPlayers(prev => {
+      // If player is already selected, remove them from selection
+      if (prev.includes(playerId)) {
+        return prev.filter(id => id !== playerId);
+      } 
+      // Otherwise add to selection
+      return [...prev, playerId];
+    });
+  }, []);
+
+  // Toggle multi-select mode
+  const toggleMultiSelectMode = () => {
+    setIsMultiSelectMode(prev => !prev);
+    // Clear selection when exiting multi-select mode
+    if (isMultiSelectMode) {
+      setSelectedPlayers([]);
+    }
+  };
+
+  // Handle clear all selections
+  const clearSelections = () => {
+    setSelectedPlayers([]);
+  };
+
   // Handle drag start - disable scrolling
-  const handleDragStart = () => {
+  const handleDragStart = (event) => {
     setIsDragging(true);
     // Only disable scrolling on mobile
     if (isMobile.current && tableContainerRef.current) {
@@ -445,41 +502,84 @@ const DraftOrderModal = ({
       typeof id === 'string' ? parseInt(id, 10) : id
     );
     
-    // Find the indexes in the current order
-    const oldIndex = currentOrder.indexOf(activeId);
-    const newIndex = currentOrder.indexOf(overId);
-    
-    if (oldIndex !== -1 && newIndex !== -1) {
-      try {
-        setIsSaving(true);
-        // Create a new array by moving the item
-        const newOrder = [...currentOrder];
-        const [removed] = newOrder.splice(oldIndex, 1);
-        newOrder.splice(newIndex, 0, removed);
+    try {
+      setIsSaving(true);
+      
+      let newOrder;
+      
+      if (selectedPlayers.length > 0 && selectedPlayers.includes(activeId)) {
+        // Multi-select drag logic
+        const selectedIds = selectedPlayers.map(id => 
+          typeof id === 'string' ? parseInt(id, 10) : id
+        );
         
-        // Verify the arrays have the same length
-        if (newOrder.length !== currentOrder.length) {
-          console.error("Order length mismatch:", { 
-            originalLength: currentOrder.length,
-            newLength: newOrder.length
-          });
+        // First, remove all selected items from the array
+        let orderWithoutSelected = currentOrder.filter(id => !selectedIds.includes(id));
+        
+        // Find the target position (where overId is now located in the filtered array)
+        const targetPosition = orderWithoutSelected.indexOf(overId);
+        
+        if (targetPosition === -1) {
+          console.error("Target position not found after filtering");
           setIsSaving(false);
           return;
         }
         
-        // Save the new order
-        await saveDraftOrder(newOrder);
+        // Insert all selected items at the target position
+        newOrder = [
+          ...orderWithoutSelected.slice(0, targetPosition + 1),
+          ...selectedIds,
+          ...orderWithoutSelected.slice(targetPosition + 1)
+        ];
         
-        // Show success message
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-        setIsSaving(false);
-      } catch (error) {
-        console.error("Error updating draft order:", error);
-        setIsSaving(false);
+        // If the overId is also in selectedIds, we need to remove its duplicate
+        if (selectedIds.includes(overId)) {
+          newOrder = newOrder.filter((id, index) => 
+            id !== overId || index === targetPosition
+          );
+        }
+      } else {
+        // Single item drag logic - original behavior
+        const oldIndex = currentOrder.indexOf(activeId);
+        const newIndex = currentOrder.indexOf(overId);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+          // Create a new array by moving the item
+          newOrder = [...currentOrder];
+          const [removed] = newOrder.splice(oldIndex, 1);
+          newOrder.splice(newIndex, 0, removed);
+        } else {
+          console.error("Could not find indexes:", { oldIndex, newIndex });
+          setIsSaving(false);
+          return;
+        }
       }
-    } else {
-      console.error("Could not find indexes:", { oldIndex, newIndex });
+      
+      // Verify the arrays have the same length
+      if (newOrder.length !== currentOrder.length) {
+        console.error("Order length mismatch:", { 
+          originalLength: currentOrder.length,
+          newLength: newOrder.length,
+          originalOrder: currentOrder,
+          newOrder: newOrder
+        });
+        setIsSaving(false);
+        return;
+      }
+      
+      // Save the new order
+      await saveDraftOrder(newOrder);
+      
+      // Clear selections after successful move
+      setSelectedPlayers([]);
+      
+      // Show success message
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      setIsSaving(false);
+    } catch (error) {
+      console.error("Error updating draft order:", error);
+      setIsSaving(false);
     }
   };
 
@@ -670,11 +770,53 @@ const DraftOrderModal = ({
                       Drag and drop players to reorder them according to your preference. 
                       When the draft begins, the system will select the highest-ranked available player from your list.
                     </p>
-                    <p className="text-sm text-blue-700 dark:text-blue-200 mt-2 lg:hidden font-semibold">
-                      Web Interface Recommended for Reordering
+                    <p className="text-sm text-blue-700 dark:text-blue-200 mt-2">
+                      <strong>New:</strong> You can now select multiple players using the checkboxes and move them together!
                     </p>
                   </div>
                 </div>
+              </div>
+              
+              {/* Multi-select controls */}
+              <div className="mb-6 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={toggleMultiSelectMode}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                    isMultiSelectMode 
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-300 dark:border-blue-700' 
+                      : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                  }`}
+                >
+                  {isMultiSelectMode ? (
+                    <CheckSquare className="w-4 h-4" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                  {isMultiSelectMode ? 'Exit Multi-Select' : 'Enable Multi-Select'}
+                </button>
+                
+                {isMultiSelectMode && (
+                  <>
+                    <div className="h-4 border-r border-gray-300 dark:border-gray-600"></div>
+                    
+                    <button
+                      onClick={clearSelections}
+                      disabled={selectedPlayers.length === 0}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                        selectedPlayers.length === 0
+                          ? 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Clear Selection
+                    </button>
+                    
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium mr-1">{selectedPlayers.length}</span>
+                      {selectedPlayers.length === 1 ? "player" : "players"} selected
+                    </div>
+                  </>
+                )}
               </div>
               
               {/* Main Content - 2 Column Layout on Desktop */}
@@ -849,7 +991,23 @@ const DraftOrderModal = ({
                         <table className="w-full border-collapse" ref={tableRef}>
                           <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr className="border-b border-gray-200 dark:border-gray-600">
-                              <th className="w-8 sm:w-10 sticky left-0 bg-gray-50 dark:bg-gray-700 z-10"></th>
+                              <th className="pl-2 pr-2 sm:pr-0 py-2 sm:py-3 sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">
+                                {isMultiSelectMode && (
+                                  <div className="flex items-center">
+                                    <button 
+                                      onClick={clearSelections}
+                                      className="ml-1 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                      title="Clear all selections"
+                                    >
+                                      {selectedPlayers.length > 0 ? (
+                                        <CheckSquare className="w-4 h-4 text-blue-500" />
+                                      ) : (
+                                        <Square className="w-4 h-4" />
+                                      )}
+                                    </button>
+                                  </div>
+                                )}
+                              </th>
                               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left sticky left-8 sm:left-10 bg-gray-50 dark:bg-gray-700 z-10">
                                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                                   Rank
@@ -895,6 +1053,9 @@ const DraftOrderModal = ({
                                   index={index}
                                   leagueId={leagueId}
                                   columnVisibility={columnVisibility}
+                                  selectedPlayers={selectedPlayers}
+                                  onSelectPlayer={handleSelectPlayer}
+                                  isMultiSelectMode={isMultiSelectMode}
                                 />
                               ))}
                             </SortableContext>

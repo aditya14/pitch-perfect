@@ -95,7 +95,7 @@ const PullToRefresh = ({ onRefresh, children, threshold = 80, maxPull = 120 }) =
   }, [onRefresh, pullDistance, threshold, maxPull, shouldEnablePullToRefresh]);
 
   return (
-    <div ref={containerRef} className="min-h-screen relative w-full">
+    <div ref={containerRef} className="min-h-screen relative w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* Pull to refresh indicator */}
       {shouldEnablePullToRefresh && isPulling && (
         <div 
@@ -114,10 +114,13 @@ const PullToRefresh = ({ onRefresh, children, threshold = 80, maxPull = 120 }) =
       )}
       
       {/* Main content */}
-      <div style={{ 
-        transform: isPulling ? `translateY(${pullDistance}px)` : 'translateY(0)',
-        transition: isPulling ? 'none' : 'transform 0.2s ease-out'
-      }}>
+      <div 
+        className="theme-transition"
+        style={{ 
+          transform: isPulling ? `translateY(${pullDistance}px)` : 'translateY(0)',
+          transition: isPulling ? 'none' : 'transform 0.2s ease-out'
+        }}
+      >
         {children}
       </div>
     </div>

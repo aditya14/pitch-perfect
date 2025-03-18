@@ -1,6 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const LoadingScreen = ({ message = "Loading...", description = "Preparing your cricketing experience"}) => {
+  // Ensure dark mode is properly applied to the loading screen
+  useEffect(() => {
+    // Check for dark mode preference in localStorage 
+    const storedTheme = localStorage.getItem('theme');
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Ensure dark mode is applied if needed
+    if (storedTheme === 'dark' || (!storedTheme && prefersDarkMode)) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900 z-50">
       <div className="w-24 h-24 mb-4 relative">

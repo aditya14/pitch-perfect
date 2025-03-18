@@ -22,13 +22,20 @@ const AppContent = () => {
   const { user, loading } = useAuth();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
+  // Apply theme immediately on component mount
   useEffect(() => {
+    // Apply theme from localStorage or system preference right away
+    const storedTheme = localStorage.getItem('theme');
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = storedTheme || (prefersDarkMode ? 'dark' : 'light');
+    
+    applyTheme(initialTheme);
+    
+    // Then update when user data is loaded
     if (user) {
       const userTheme = user.profile?.theme || theme;
       setTheme(userTheme);
       applyTheme(userTheme);
-    } else {
-      applyTheme(theme);
     }
   }, [user]);
 
@@ -38,6 +45,8 @@ const AppContent = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    // Use dataset to explicitly mark the theme
+    document.documentElement.dataset.theme = currentTheme;
     console.log('Theme applied:', currentTheme);
   };
 
@@ -77,6 +86,12 @@ const AppContent = () => {
   }, []);
 
   const handleRefresh = () => {
+    // Add a class to the document during refresh to maintain dark mode
+    if (theme === 'dark') {
+      document.documentElement.classList.add('force-dark');
+    }
+    
+    // Reload the page
     window.location.reload();
   };
 

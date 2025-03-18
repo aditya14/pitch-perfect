@@ -14,12 +14,23 @@
   --app-height: 100vh;
 }
 
+/* Dark mode setup to prevent flashing */
+:root {
+  color-scheme: light dark;
+}
+
+/* Ensure dark mode background is applied immediately */
 html {
   /* Fix for iOS viewport height issues */
   height: -webkit-fill-available;
   /* Enable edge-to-edge display */
   width: 100%;
   overflow-x: hidden;
+}
+
+html.dark {
+  background-color: #111827; /* Tailwind dark:bg-gray-900 */
+  color-scheme: dark;
 }
 
 body {
@@ -37,6 +48,14 @@ body {
   overflow-x: hidden;
   margin: 0;
   padding: 0;
+  /* Add smooth transition */
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Dark mode body styling */
+html.dark body {
+  background-color: #111827; /* Tailwind dark:bg-gray-900 */
+  color: #ffffff;
 }
 
 /* Apply padding to handle notch/cutout area for fixed headers */
@@ -88,6 +107,13 @@ body {
   :root {
     --status-bar-color: #121212;
   }
+  
+  /* Auto apply dark mode based on system preference if no theme is set */
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme]) {
+      background-color: #111827;
+    }
+  }
 }
 
 @media (prefers-color-scheme: light) {
@@ -100,4 +126,13 @@ body {
 .fix-fixed {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
+}
+
+/* Ensure #root fills the entire screen and has the correct background color */
+#root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: var(--app-height);
+  background-color: inherit;
+  color: inherit;
 }
