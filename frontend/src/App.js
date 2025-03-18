@@ -18,6 +18,7 @@ import SquadView from './components/squads/SquadView';
 import MatchView from './components/matches/MatchView';
 import LoadingScreen from './components/elements/LoadingScreen';
 import PullToRefresh from './components/elements/PullToRefresh';
+import HowItWorksComponent from './components/HowItWorksComponent';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -150,6 +151,14 @@ const AppContent = () => {
               element={
                 user ? 
                 <Profile /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/how-it-works" 
+              element={
+                user ? 
+                <HowItWorksComponent /> : 
                 <Navigate to="/login" />
               }
             />

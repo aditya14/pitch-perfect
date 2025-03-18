@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Check, ChevronDown, ChevronUp, AlertCircle, Calendar } from 'lucide-react';
+import { X, Clock, Check, ChevronDown, ChevronUp, AlertCircle, Calendar, HelpCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const TimelineComponent = () => {
   const [minimized, setMinimized] = useState(true);
@@ -132,6 +133,13 @@ const TimelineComponent = () => {
               {timeRemaining}
             </span>
           )}
+          <Link 
+            to="/how-it-works" 
+            className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <HelpCircle size={18} />
+          </Link>
           {minimized ? (
             <ChevronDown size={20} className="text-gray-500 dark:text-gray-400" />
           ) : (
@@ -306,6 +314,13 @@ const TimelineComponent = () => {
                 </p>
               </div>
             )}
+          </div>
+          
+          <div className="mt-4 flex">
+            <Link to="/how-it-works" className="text-blue-500 hover:text-blue-600 dark:text-blue-400 hover:underline flex items-center text-sm font-medium">
+              <HelpCircle size={14} className="mr-1" />
+              Learn more about PitchPerfect fantasy rules
+            </Link>
           </div>
         </div>
       )}
