@@ -912,6 +912,17 @@ const DraftOrderModal = ({
                         <span>Show/Hide:</span>
                       </div>
                       <button
+                        onClick={() => toggleColumn('avgPoints')}
+                        className={`px-2 py-1 text-xs rounded-md flex items-center gap-1 ${
+                          columnVisibility.avgPoints 
+                            ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' 
+                            : 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-400'
+                        }`}
+                      >
+                        {columnVisibility.avgPoints ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        Avg
+                      </button>
+                      <button
                         onClick={() => toggleColumn('team')}
                         className={`px-2 py-1 text-xs rounded-md flex items-center gap-1 ${
                           columnVisibility.team 
@@ -932,17 +943,6 @@ const DraftOrderModal = ({
                       >
                         {columnVisibility.role ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                         Role
-                      </button>
-                      <button
-                        onClick={() => toggleColumn('avgPoints')}
-                        className={`px-2 py-1 text-xs rounded-md flex items-center gap-1 ${
-                          columnVisibility.avgPoints 
-                            ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' 
-                            : 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-400'
-                        }`}
-                      >
-                        {columnVisibility.avgPoints ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                        Avg Points
                       </button>
                     </div>
                   </div>
@@ -971,7 +971,7 @@ const DraftOrderModal = ({
                       className={`overflow-auto ${isDragging ? 'bg-gray-50 dark:bg-gray-900/40' : ''}`}
                       style={{ 
                         transition: 'background-color 0.2s ease',
-                        maxHeight: '60vh',
+                        maxHeight: '70vh',
                       }}
                     >
                       <DndContext
@@ -1021,14 +1021,14 @@ const DraftOrderModal = ({
                               {columnVisibility.avgPoints && (
                                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left sm:text-right">
                                   <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                                    Avg Pts
+                                    Avg
                                   </span>
                                 </th>
                               )}
                               {columnVisibility.team && (
                                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left">
                                   <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                                    IPL Team
+                                    Team
                                   </span>
                                 </th>
                               )}
