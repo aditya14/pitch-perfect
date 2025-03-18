@@ -10,6 +10,7 @@ import JoinLeague from './components/leagues/JoinLeague';
 import CreateSquad from './components/squads/CreateSquad';
 import LeagueView from './components/leagues/LeagueView';
 import RosterView from './components/leagues/RosterView';
+import Profile from './components/user/Profile';
 import api from './utils/axios';
 import Header from './components/Header';
 import './styles/transitions.css';
@@ -141,6 +142,14 @@ const AppContent = () => {
               element={
                 user ? 
                 <UserDashboard /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/profile" 
+              element={
+                user ? 
+                <Profile /> : 
                 <Navigate to="/login" />
               }
             />

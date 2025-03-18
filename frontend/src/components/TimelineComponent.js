@@ -286,7 +286,7 @@ const TimelineComponent = () => {
               <div className="flex items-start">
                 <AlertCircle className="text-blue-500 dark:text-blue-400 mr-2 flex-shrink-0 mt-0.5" size={16} />
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  <strong>Action required:</strong> Complete your player rankings squads are assigned on {formatDate(phases[0].deadline)}.
+                  <strong>Action required:</strong> Rank players according to your preferences. Squads are assigned on {formatDate(phases[0].deadline)}.
                 </p>
               </div>
             )}

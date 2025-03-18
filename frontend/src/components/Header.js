@@ -197,9 +197,10 @@ const Header = ({ theme, onThemeChange }) => {
               {/* Dropdown Menu */}
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 py-1 theme-transition bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
-                  <button
-                    disabled
-                    className="cursor-not-allowed px-4 py-2 text-sm text-gray-400 dark:text-gray-500 flex items-center w-full hover:bg-gray-50 dark:hover:bg-gray-700"
+                  <Link
+                    to="/profile"
+                    className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center w-full hover:bg-gray-50 dark:hover:bg-gray-700"
+                    onClick={() => setIsDropdownOpen(false)}
                   >
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
@@ -214,7 +215,7 @@ const Header = ({ theme, onThemeChange }) => {
                       />
                     </svg>
                     Profile
-                  </button>
+                  </Link>
                   
                   <button
                     onClick={toggleTheme}
