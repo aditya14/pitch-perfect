@@ -63,11 +63,11 @@ const TimelineComponent = () => {
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       
       if (days > 0) {
-        setTimeRemaining(`${days}d ${hours}h ${minutes}m remaining`);
+        setTimeRemaining(`${days}d ${hours}h left`);
       } else if (hours > 0) {
-        setTimeRemaining(`${hours}h ${minutes}m remaining`);
+        setTimeRemaining(`${hours}h ${minutes}m left`);
       } else {
-        setTimeRemaining(`${minutes}m remaining`);
+        setTimeRemaining(`${minutes}m left`);
       }
     };
     

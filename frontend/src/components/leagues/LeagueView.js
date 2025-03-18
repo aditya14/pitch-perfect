@@ -284,7 +284,7 @@ const LeagueView = () => {
               {league?.season?.name ? `${league.season.name}` : 'Loading season...'}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-col gap-3">
             {/* Draft Countdown - Always visible if draft not completed */}
             {isDraftAllowed && !isDraftCompleted && (
               <DraftCountdown />
