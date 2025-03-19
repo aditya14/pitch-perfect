@@ -69,7 +69,7 @@ const Login = () => {
 
       <div className="container mx-auto max-w-7xl z-10 relative">
         {/* App Logo - Always at the top on all screens with safe spacing */}
-        <div className="flex items-center justify-center mb-8 safe-top">
+        <div className="flex items-center justify-center lg:justify-start mb-8 safe-top">
           <img src="/icon.png" alt="PitchPerfect Logo" className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl shadow-lg mr-3" />
           <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white">
             <span className="text-indigo-600 dark:text-indigo-400">Pitch</span>Perfect

@@ -3,19 +3,18 @@ import { usePlayerModal } from '../../context/PlayerModalContext';
 import { 
   Info, 
   Search, 
-  X, 
-  Filter, 
+  X,
   User, 
   ChevronDown, 
   ChevronUp,
   Crown,
-  Award,
   Zap,
-  LineChart,
   Handshake,
-  Target,
-  Shield,
-  Sparkles
+  Sparkles,
+  Anchor,
+  Swords,
+  Bomb,
+  EarthLock
 } from 'lucide-react';
 
 // Countdown Timer Component with fixed widths
@@ -96,17 +95,17 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
     case 'Captain':
       return <Crown size={size} className="text-indigo-600 dark:text-indigo-400" style={{color: squadColor}} />;
     case 'Vice-Captain':
-      return <Award size={size} className="text-indigo-500 dark:text-indigo-300" style={{color: squadColor}} />;
+      return <Swords size={size} className="text-indigo-500 dark:text-indigo-300" style={{color: squadColor}} />;
     case 'Slogger':
       return <Zap size={size} className="text-red-500 dark:text-red-400" style={{color: squadColor}} />;
     case 'Accumulator':
-      return <LineChart size={size} className="text-yellow-500 dark:text-yellow-400" style={{color: squadColor}} />;
+      return <Anchor size={size} className="text-yellow-500 dark:text-yellow-400" style={{color: squadColor}} />;
     case 'Safe Hands':
       return <Handshake size={size} className="text-cyan-500 dark:text-cyan-400" style={{color: squadColor}} />;
     case 'Rattler':
-      return <Target size={size} className="text-green-500 dark:text-green-400" style={{color: squadColor}} />;
+      return <Bomb size={size} className="text-green-500 dark:text-green-400" style={{color: squadColor}} />;
     case 'Constrictor':
-      return <Shield size={size} className="text-emerald-500 dark:text-emerald-400" style={{color: squadColor}} />;
+      return <EarthLock size={size} className="text-emerald-500 dark:text-emerald-400" style={{color: squadColor}} />;
     default: // Virtuoso
       return <Sparkles size={size} className="text-purple-500 dark:text-purple-400" style={{color: squadColor}} />;
   }

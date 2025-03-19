@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Award, Users, Star, Repeat, Zap, Mic2, Shield, Target, Clock, ChevronDown, ChevronUp, Check, Sparkles, Crown, LineChart, Handshake } from 'lucide-react';
+import { ArrowLeft, Award, Users, Star, Repeat, Zap, Clock, ChevronDown, ChevronUp, Check, Sparkles, Crown, Handshake, Anchor, Swords, Bomb, EarthLock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AccordionItem = ({ title, icon, isOpen, toggleAccordion, children }) => {
@@ -36,10 +36,10 @@ const HowItWorksComponent = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+    <div className="max-w-5xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow mb-4">
       <div className="mb-8">
         <nav className="flex items-center mb-4">
-          <Link to="/" className="flex items-center text-blue-600 dark:text-blue-400 hover:underline">
+          <Link to="/" className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors">
             <ArrowLeft size={20} className="mr-1" />
             Back to Dashboard
           </Link>
@@ -155,7 +155,7 @@ const HowItWorksComponent = () => {
         toggleAccordion={() => toggleAccordion('scoring')}
         >
         {/* Batting Points - Full width */}
-        <div className="rounded-lg p-5 shadow-md bg-white dark:bg-gray-800 border-l-4 border-blue-500 dark:border-blue-400 mb-6">
+        <div className="p-5 bg-white dark:bg-gray-800 border-l-4 border-blue-500 dark:border-blue-400 mb-6">
             <h3 className="text-xl font-semibold mb-4 text-blue-700 dark:text-blue-300">Batting</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -284,7 +284,7 @@ const HowItWorksComponent = () => {
         </div>
         
         {/* Bowling Points - Full width */}
-        <div className="rounded-lg p-5 shadow-md bg-white dark:bg-gray-800 border-l-4 border-green-500 dark:border-green-400 mb-6">
+        <div className="p-5 bg-white dark:bg-gray-800 border-l-4 border-green-500 dark:border-green-400 mb-6">
             <h3 className="text-xl font-semibold mb-4 text-green-700 dark:text-green-300">Bowling</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -405,7 +405,7 @@ const HowItWorksComponent = () => {
         </div>
         
         {/* Fielding & Other Points - Full width */}
-        <div className="rounded-lg p-5 shadow-md bg-white dark:bg-gray-800 border-l-4 border-yellow-500 dark:border-yellow-400">
+        <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-yellow-500 dark:border-yellow-400">
             <h3 className="text-xl font-semibold mb-4 text-yellow-700 dark:text-yellow-300">Fielding & Other</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -481,7 +481,7 @@ const HowItWorksComponent = () => {
             {/* Vice Captain */}
             <div className="bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4 shadow-sm">
               <div className="flex items-center mb-2">
-                <Award className="text-indigo-600 dark:text-indigo-400 mr-2" size={20} />
+                <Swords className="text-indigo-600 dark:text-indigo-400 mr-2" size={20} />
                 <h3 className="font-bold text-lg text-indigo-700 dark:text-indigo-300">Vice Captain</h3>
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> Any role</p>
@@ -503,7 +503,7 @@ const HowItWorksComponent = () => {
             {/* Accumulator */}
             <div className="bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-800 rounded-lg p-4 shadow-sm">
               <div className="flex items-center mb-2">
-                <LineChart className="text-green-600 dark:text-green-400 mr-2" size={20} />
+                <Anchor className="text-green-600 dark:text-green-400 mr-2" size={20} />
                 <h3 className="font-bold text-lg text-green-700 dark:text-green-300">Accumulator</h3>
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BAT, WK</p>
@@ -525,7 +525,7 @@ const HowItWorksComponent = () => {
             {/* Rattler */}
             <div className="bg-purple-50 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-800 rounded-lg p-4 shadow-sm">
               <div className="flex items-center mb-2">
-                <Target className="text-purple-600 dark:text-purple-400 mr-2" size={20} />
+                <Bomb className="text-purple-600 dark:text-purple-400 mr-2" size={20} />
                 <h3 className="font-bold text-lg text-purple-700 dark:text-purple-300">Rattler</h3>
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BOWL</p>
@@ -536,7 +536,7 @@ const HowItWorksComponent = () => {
             {/* Constrictor */}
             <div className="bg-teal-50 dark:bg-teal-900/40 border border-teal-200 dark:border-teal-800 rounded-lg p-4 shadow-sm">
               <div className="flex items-center mb-2">
-                <Shield className="text-teal-600 dark:text-teal-400 mr-2" size={20} />
+                <EarthLock className="text-teal-600 dark:text-teal-400 mr-2" size={20} />
                 <h3 className="font-bold text-lg text-teal-700 dark:text-teal-300">Constrictor</h3>
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BOWL</p>
@@ -612,7 +612,7 @@ const HowItWorksComponent = () => {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white dark:bg-gray-800 border-l-4 border-purple-500 dark:border-purple-400 rounded-lg p-5 shadow-md">
+            <div className="bg-white dark:bg-gray-800 border-l-4 border-purple-500 dark:border-purple-400 p-5">
               <h3 className="text-xl font-semibold mb-3 text-purple-700 dark:text-purple-300">Trading Mechanics</h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
@@ -634,7 +634,7 @@ const HowItWorksComponent = () => {
               </ul>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 border-l-4 border-green-500 dark:border-green-400 rounded-lg p-5 shadow-md">
+            <div className="bg-white dark:bg-gray-800 border-l-4 border-green-500 dark:border-green-400 p-5">
               <h3 className="text-xl font-semibold mb-3 text-green-700 dark:text-green-300">Strategic Reasons to Trade</h3>
               <ul className="space-y-3">
                 <li className="flex items-start">

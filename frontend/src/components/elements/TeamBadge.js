@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 
 const TeamBadge = ({ team, className = '', useShortName = false }) => {
+  console.log('Team', team);
   const backgroundColor = `#${team.primary_color || '000000'}`;
   const textColor = useMemo(() => 
     getTextColorForBackground(backgroundColor), 

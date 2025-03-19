@@ -4,6 +4,7 @@ import { ArrowUpDown, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../../utils/axios';
 import TeamBadge from '../elements/TeamBadge';
 import { usePlayerModal } from '../../context/PlayerModalContext';
+import BoostInlineElement from '../elements/BoostInlineElement';
 
 // Helper function to safely convert to lowercase
 const safeToLowerCase = (str) => {
@@ -102,7 +103,7 @@ const MatchOverview = ({ matchData }) => {
               <tr className="group">
                 <td className="py-3 w-32 text-gray-500 dark:text-gray-400 font-medium">Toss</td>
                 <td className="py-3 text-gray-900 dark:text-white">
-                  <TeamBadge team={matchData.toss_winner} useShortName={true} className="mr-1" /> chose to {safeToLowerCase(matchData.toss_decision)}
+                  <TeamBadge team={matchData.toss_winner ? matchData.toss_winner : ''} useShortName={true} className="mr-1" /> chose to {safeToLowerCase(matchData.toss_decision)}
                 </td>
               </tr>
               {matchData.status === 'COMPLETED' && (
@@ -110,7 +111,7 @@ const MatchOverview = ({ matchData }) => {
                   <tr className="group">
                     <td className="py-3 w-32 text-gray-500 dark:text-gray-400 font-medium">Result</td>
                     <td className="py-3 text-gray-900 dark:text-white flex items-center gap-2">
-                      <TeamBadge team={matchData.winner} useShortName={true} /> 
+                      <TeamBadge team={matchData.winner ? matchData.winner : ''} useShortName={true} /> 
                       <span>won by {matchData.win_margin} {safeToLowerCase(matchData.win_type)}</span>
                       <Trophy className="h-4 w-4 text-yellow-500" />
                     </td>
@@ -516,15 +517,13 @@ const MatchView = () => {
                             <span>{data.squad_name}</span>
                             
                             {data.boost_label && (
-                              <span 
-                                className="ml-1 px-1 text-xs rounded"
-                                style={{
-                                  backgroundColor: data.squad_color,
-                                  color: getContrastColor(data.squad_color),
-                                  fontSize: '0.65rem'
-                                }}
-                              >
-                                {data.boost_label}
+                              <span className="ml-1">
+                                <BoostInlineElement
+                                  boostName={data.boost_label} 
+                                  color={data.squad_color} 
+                                  showLabel={false} 
+                                  size="S" 
+                                />
                               </span>
                             )}
                           </div>
@@ -670,16 +669,12 @@ const MatchView = () => {
                             </div>
                             {data.boost_label && (
                               <div className="mt-1">
-                                <span 
-                                  className="px-1 text-xs rounded"
-                                  style={{
-                                    backgroundColor: data.squad_color,
-                                    color: getContrastColor(data.squad_color),
-                                    fontSize: '0.65rem'
-                                  }}
-                                >
-                                  {data.boost_label}
-                                </span>
+                                <BoostInlineElement
+                                  boostName={data.boost_label} 
+                                  color={data.squad_color} 
+                                  showLabel={true} 
+                                  size="S" 
+                                />
                               </div>
                             )}
                           </div>

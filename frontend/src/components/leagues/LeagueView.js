@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
-import { Trophy, Users, ChevronRight, RefreshCw, FileEdit, Clock } from 'lucide-react';
+import { Trophy, Users, ChevronRight, RefreshCw, FileEdit, Clock, ArrowLeft } from 'lucide-react';
 import api from '../../utils/axios';
 
 // Import tab components
@@ -277,6 +277,12 @@ const LeagueView = () => {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
+          <nav className="flex items-center mb-4">
+          <Link to="/" className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors">
+            <ArrowLeft size={20} className="mr-1" />
+            Back to Dashboard
+          </Link>
+        </nav>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {league?.name}
             </h1>
