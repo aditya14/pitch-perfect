@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trophy, Clock, Calendar } from 'lucide-react';
 import api from '../../utils/axios';
 import { getTextColorForBackground } from '../../utils/colorUtils';
+import BoostInlineElement from '../elements/BoostInlineElement';
 
 const MatchCard = ({ match, leagueId }) => {
   const navigate = useNavigate();
@@ -235,14 +236,13 @@ const MatchCard = ({ match, leagueId }) => {
                     {topPlayers[0]?.player_name}
                   </span>
                   {topPlayers[0]?.boost_label && (
-                    <span 
-                      className="ml-1 px-1.5 py-0.5 text-xs rounded"
-                      style={{
-                        backgroundColor: topPlayers[0].boost_label === 'Accumulator' ? '#FFD700' : '#1E40AF',
-                        color: topPlayers[0].boost_label === 'Accumulator' ? '#000000' : '#FFFFFF'
-                      }}
-                    >
-                      {topPlayers[0].boost_label}
+                    <span className='ml-1'>
+                      <BoostInlineElement
+                        boostName={topPlayers[0]?.boost_label} 
+                        color={topPlayers[0]?.squad_color || '#6B7280'}
+                        showLabel={true} 
+                        size="S" 
+                      />
                     </span>
                   )}
                 </div>
@@ -260,14 +260,13 @@ const MatchCard = ({ match, leagueId }) => {
                     {topPlayers[1]?.player_name}
                   </span>
                   {topPlayers[1]?.boost_label && (
-                    <span 
-                      className="ml-1 px-1.5 py-0.5 text-xs rounded"
-                      style={{
-                        backgroundColor: topPlayers[1].boost_label === 'Accumulator' ? '#FFD700' : '#1E40AF',
-                        color: topPlayers[1].boost_label === 'Accumulator' ? '#000000' : '#FFFFFF'
-                      }}
-                    >
-                      {topPlayers[1].boost_label}
+                    <span className='ml-1'>
+                      <BoostInlineElement
+                        boostName={topPlayers[1]?.boost_label} 
+                        color={topPlayers[1]?.squad_color || '#6B7280'}
+                        showLabel={true} 
+                        size="S" 
+                      />
                     </span>
                   )}
                 </div>

@@ -263,9 +263,8 @@ const LeagueView = () => {
   }
 
   const isUpcomingSeason = league?.season?.status === 'UPCOMING';
-  const isDraftAllowed = isUpcomingSeason && new Date(league?.season?.start_date) > new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
   const isDraftCompleted = league?.draft_completed;
-  const canUpdateDraft = isDraftAllowed && !isDraftCompleted && !isDraftDeadlinePassed;
+  const canUpdateDraft = !isDraftCompleted && !isDraftDeadlinePassed;
   
   // Get active tab from URL path
   const activeTab = getActiveTabFromPath();
@@ -292,14 +291,14 @@ const LeagueView = () => {
           </div>
           <div className="flex flex-col gap-3">
             {/* Draft Countdown - Always visible if draft not completed */}
-            {isDraftAllowed && !isDraftCompleted && (
+            {!isDraftCompleted && (
               <DraftCountdown />
             )}
             
             {/* Buttons row */}
             <div className="flex flex-wrap gap-3">
               {/* Draft Order Button - Show only if draft not yet completed */}
-              {isDraftAllowed && !isDraftCompleted && (
+              {!isDraftCompleted && (
                 <button 
                   onClick={handleDraftModalOpen}
                   disabled={isDraftDeadlinePassed}
