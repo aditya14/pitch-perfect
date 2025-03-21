@@ -120,7 +120,7 @@ const TimelineComponent = () => {
       >
         <div className="flex items-center space-x-2">
           <Calendar className="text-blue-500 dark:text-blue-400" size={20} />
-          <h3 className="font-bold">Rank Your Picks</h3>
+          <h3 className="font-bold">Set Your Boosts</h3>
           {timeRemaining && (
             <span className="hidden sm:inline-block text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-0.5 rounded">
               {timeRemaining}

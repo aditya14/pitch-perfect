@@ -289,16 +289,23 @@ const LeagueView = () => {
               {league?.season?.name ? `${league.season.name}` : 'Loading season...'}
             </p>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 sm:items-start md:items-end">
             {/* Draft Countdown - Always visible if draft not completed */}
-            {!isDraftCompleted && (
+            {/* {!isDraftCompleted && !isDraftCompleted && (
               <DraftCountdown />
-            )}
+            )} */}
+            {/* {isDraftCompleted &&  */}
+            <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></span>
+                <strong>
+                  Draft Complete.</strong> Check out your squad!
+              </div>
+              {/* } */}
             
             {/* Buttons row */}
             <div className="flex flex-wrap gap-3">
               {/* Draft Order Button - Show only if draft not yet completed */}
-              {!isDraftCompleted && (
+              {/* {!isDraftCompleted && (
                 <button 
                   onClick={handleDraftModalOpen}
                   disabled={isDraftDeadlinePassed}
@@ -312,8 +319,7 @@ const LeagueView = () => {
                   <FileEdit className={`h-4 w-4 ${isDraftDeadlinePassed ? 'text-gray-400 dark:text-gray-500' : ''}`} />
                   Update Draft Order
                 </button>
-              )}
-              
+              )} */}
               <Link 
                 to={league?.my_squad && isDraftCompleted ? `/squads/${league.my_squad.id}` : '#'}
                 className={`inline-flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium

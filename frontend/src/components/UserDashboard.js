@@ -83,7 +83,7 @@ const LeagueCard = ({ league }) => {
                     </p>
                     {daysUntilStart !== null && (
                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                        {daysUntilStart <= 0 ? "Starting today!" : `${daysUntilStart + 1} days until season starts`}
+                        Less than a day to go!
                       </p>
                     )}
                   </div>
