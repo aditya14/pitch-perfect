@@ -1,8 +1,30 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/axios';
-import { Users, Shield, Zap, Trophy, Globe, Flame } from 'lucide-react';
+import { Users, Shield, Zap, Trophy, Globe, Flame, Crown, Swords, Anchor, Handshake, Bomb, EarthLock, Sparkles } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
+
+// Helper function to get role icon
+const getRoleIcon = (roleName, size = 16, squadColor) => {
+    switch(roleName) {
+      case 'Captain':
+        return <Crown size={size} style={{color: squadColor}} />;
+      case 'Vice-Captain':
+        return <Swords size={size} style={{color: squadColor}} />;
+      case 'Slogger':
+        return <Zap size={size} style={{color: squadColor}} />;
+      case 'Accumulator':
+        return <Anchor size={size} style={{color: squadColor}} />;
+      case 'Safe Hands':
+        return <Handshake size={size} style={{color: squadColor}} />;
+      case 'Rattler':
+        return <Bomb size={size} style={{color: squadColor}} />;
+      case 'Constrictor':
+        return <EarthLock size={size} style={{color: squadColor}} />;
+      default: // Virtuoso
+        return <Sparkles size={size} style={{color: squadColor}} />;
+    }
+  };
 
 const LeagueSquads = ({ league }) => {
   const [squads, setSquads] = useState([]);
@@ -151,11 +173,11 @@ const getPlayerDemandInfo = (playerId) => {
     
     if (playerRank >= 0 && playerRank < 5) {
       // Top 5 most in demand - on fire!
-      demandClass = 'bg-gradient-to-r from-red-500 to-yellow-500 text-white font-bold shadow-md animate-pulse relative border border-orange-400';
+      demandClass = 'px-1 bg-gradient-to-r from-red-500 to-yellow-500 text-white font-bold shadow-md animate-pulse relative border border-orange-400';
       isHotPick = true;
     } else if (playerRank >= 5 && playerRank < 15) {
       // Next 10 most in demand - subtle glow effect
-      demandClass = 'bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 shadow-sm hover:shadow transition-all duration-200';
+      demandClass = 'px-1 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 shadow-sm hover:shadow transition-all duration-200';
       isHotPick = true;
     }
     
@@ -284,7 +306,7 @@ const getPlayerDemandInfo = (playerId) => {
                 >
                   <Link 
                     to={`/squads/${squad.id}`}
-                    className="flex flex-col items-center"
+                    className="flex flex-col items-start"
                   >
                     <span 
                       className="inline-block h-3 w-20 mb-1 rounded-md" 
@@ -313,7 +335,7 @@ const getPlayerDemandInfo = (playerId) => {
                         return (
                             <div 
                             key={player.id} 
-                            className={`px-2 py-1 rounded relative ${demandClass}`}
+                            className={`py-1 rounded relative ${demandClass}`}
                             onMouseEnter={(e) => showTooltip(player.id, e, isHotPick)}
                             onMouseLeave={hideTooltip}
                             >
@@ -514,12 +536,12 @@ const getPlayerDemandInfo = (playerId) => {
               ))
             )}
             
-            {/* BOOSTS VIEW */}
-            {activeView === 'boosts' && (
+           {/* BOOSTS VIEW */}
+           {activeView === 'boosts' && (
               squads.length > 0 && (
                 Object.entries({
-                  captain: 'Captain (2×)',
-                  vice_captain: 'Vice Captain (1.5×)',
+                  captain: 'Captain',
+                  vice_captain: 'Vice-Captain',
                   slogger: 'Slogger',
                   accumulator: 'Accumulator',
                   safe_hands: 'Safe Hands',
@@ -528,8 +550,13 @@ const getPlayerDemandInfo = (playerId) => {
                   virtuoso: 'Virtuoso',
                 }).map(([roleKey, roleLabel]) => (
                   <tr key={roleKey}>
-                    <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                      {roleLabel}
+                    <td className=" text-xs sticky left-0 bg-white dark:bg-gray-800 z-10 px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                      <div className="flex items-center">
+                        <div className="mr-1">
+                          {getRoleIcon(roleLabel, 16)}
+                        </div>
+                        {roleLabel}
+                      </div>
                     </td>
                     
                     {squads.map(squad => {
@@ -573,7 +600,7 @@ const getPlayerDemandInfo = (playerId) => {
                         <td key={`${squad.id}-${roleKey}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 align-top">
                           {boostPlayer ? (
                             <div 
-                              className={`px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 relative ${demandClass}`}
+                              className={`py-1 rounded relative ${demandClass}`}
                               onMouseEnter={(e) => showTooltip(boostPlayerId, e, isTopPick)}
                               onMouseLeave={hideTooltip}
                             >

@@ -1263,9 +1263,23 @@ def squad_player_events(request, squad_id):
 
 @api_view(['GET'])
 def fantasy_boost_roles(request):
-    """Get all available fantasy boost roles and their multipliers"""
+    """Get all available fantasy boost roles and their multipliers in a specific order"""
+    # Define the preferred order of roles
+    role_order = [
+        "Captain",
+        "Vice-Captain", 
+        "Slogger", 
+        "Accumulator", 
+        "Safe Hands", 
+        "Virtuoso", 
+        "Rattler", 
+        "Constrictor"
+    ]
+    
+    # Get all roles from database
     roles = FantasyBoostRole.objects.all()
     
+    # Create a mapping for ordering
     role_data = []
     for role in roles:
         role_data.append({
@@ -1289,6 +1303,9 @@ def fantasy_boost_roles(request):
                 'playing': role.multiplier_playing
             }
         })
+    
+    # Sort the role_data based on the role_order list
+    role_data.sort(key=lambda x: role_order.index(x['name']) if x['name'] in role_order else len(role_order))
     
     return Response(role_data)
 
