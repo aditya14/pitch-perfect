@@ -197,6 +197,7 @@ const AppContent = () => {
               <Route path="table" element={null} />
               <Route path="trades" element={null} />
               <Route path="stats" element={null} />
+              <Route path="squads" element={null} />
             </Route>
             <Route 
               path="/leagues/:leagueId/roster" 

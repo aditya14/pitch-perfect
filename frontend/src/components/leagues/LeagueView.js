@@ -11,6 +11,7 @@ import TradeList from './TradeList';
 import TradeTutorial from './TradeTutorial';
 import LeagueStats from './LeagueStats';
 import DraftOrderModal from './modals/DraftOrderModal';
+import LeagueSquads from './LeagueSquads';
 
 // Constants 
 const DRAFT_DEADLINE = new Date('2025-03-21T14:00:00Z'); // March 21, 2025 10:00 AM ET
@@ -92,6 +93,7 @@ const LeagueView = () => {
   const coreTabs = [
     { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
     { id: 'matches', label: 'Matches', component: MatchList },
+    { id: 'squads', label: 'Squads', component: LeagueSquads },
     { id: 'stats', label: 'Stats', component: LeagueStats },
   ];
 
