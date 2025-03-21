@@ -314,21 +314,6 @@ const LeagueSquads = ({ league }) => {
                 // Find the max length
                 const maxRankings = Math.max(...allRankings.map(r => r.length), 0);
                 
-                // Sort squads by draft order if available
-                const orderedSquads = [...squads];
-                console.log(league, "league")
-                if (league && league.snake_draft_order && league.snake_draft_order.length > 0) {
-                    // Sort squads based on snake_draft_order
-                    orderedSquads.sort((a, b) => {
-                    const indexA = league.snake_draft_order.indexOf(a.id);
-                    const indexB = league.snake_draft_order.indexOf(b.id);
-                    // If squad is not in draft order, put it at the end
-                    if (indexA === -1) return 1;
-                    if (indexB === -1) return -1;
-                    return indexA - indexB;
-                    });
-                }
-                
                 // Create rows for each player position in the draft
                 return Array.from({ length: maxRankings }).map((_, rankIndex) => (
                     <tr key={`rank-${rankIndex}`}>
@@ -338,7 +323,7 @@ const LeagueSquads = ({ league }) => {
                     </td>
                     
                     {/* For each squad, show the player at this rank */}
-                    {orderedSquads.map(squad => {
+                    {squads.map(squad => {
                         // Get the player ID at this rank
                         const playerId = squad.draft_ranking?.[rankIndex];
                         if (!playerId) return (
@@ -347,17 +332,12 @@ const LeagueSquads = ({ league }) => {
                         </td>
                         );
                         
-                        // Find player info
-                        const player = playersData.find(p => p.id === parseInt(playerId));
-                        if (!player) return (
-                        <td key={`${squad.id}-rank-${rankIndex}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 dark:text-gray-500">
-                            Unknown Player
-                        </td>
-                        );
+                        // Find player in playersData
+                        const player = playersData.find(p => p.id === (typeof playerId === 'string' ? parseInt(playerId) : playerId));
                         
                         // Check if player is in this squad
-                        const isInSquad = squadPlayers[squad.id]?.some(p => 
-                        p.id === parseInt(playerId) && p.status === 'current'
+                        const isInSquad = squad.players?.some(p => 
+                        p.id === (typeof playerId === 'string' ? parseInt(playerId) : playerId)
                         );
                         
                         return (
@@ -367,11 +347,17 @@ const LeagueSquads = ({ league }) => {
                             isInSquad ? 'bg-green-50 dark:bg-green-900' : ''
                             }`}
                         >
+                            {player ? (
                             <div className={`px-2 py-1 rounded ${
-                            isInSquad ? 'text-green-700 dark:text-green-300 font-medium border border-green-300 dark:border-green-700' : ''
+                                isInSquad ? 'text-green-700 dark:text-green-300 font-medium border border-green-300 dark:border-green-700' : ''
                             }`}>
-                            {player.name}
+                                {player.name}
                             </div>
+                            ) : (
+                            <div className="text-gray-400">
+                                Unknown Player (ID: {playerId})
+                            </div>
+                            )}
                         </td>
                         );
                     })}
