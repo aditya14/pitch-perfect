@@ -898,7 +898,7 @@ class LeagueViewSet(viewsets.ModelViewSet):
     def squads(self, request, pk=None):
         from django.core.cache import cache
         import time
-        """Get all squads in a league with their players and draft data with optimized performance"""
+        """Get all squads in a league with their players and draft data with optimized performance""" 
         start_time = time.time()
         
         try:
