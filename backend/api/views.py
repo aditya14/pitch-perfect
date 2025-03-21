@@ -893,88 +893,114 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
     
+
     @action(detail=True, methods=['get'])
     def squads(self, request, pk=None):
-        """Get all squads in a league with their players and draft data"""
+        from django.core.cache import cache
+        import time
+        """Get all squads in a league with their players and draft data with optimized performance"""
+        start_time = time.time()
+        
         try:
             league = self.get_object()
             
-            # Get all squads in the league
+            # Check cache first
+            cache_key = f'league_squads_{league.id}'
+            use_cache = request.query_params.get('no_cache', '0') != '1'
+            
+            if use_cache:
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    print(f"Cache hit for {cache_key}")
+                    return Response(cached_data)
+                print(f"Cache miss for {cache_key}")
+            
+            # 1. Efficiently get all squads in a single query with needed relations
             squads = FantasySquad.objects.filter(
                 league=league
-            ).select_related('user').prefetch_related('user__profile')
+            ).select_related(
+                'user'
+            ).prefetch_related(
+                'user__profile'
+            )
+            print(f"Found {squads.count()} squads")
             
-            # Get all draft data for this league
-            draft = FantasyDraft.objects.filter(
+            # 2. Get draft data for all squads in a single query
+            draft_data = FantasyDraft.objects.filter(
                 league=league,
                 type='Pre-Season'
-            ).select_related('squad')
+            ).select_related('squad').values('squad_id', 'order')
             
-            # Create a mapping of draft rankings by user
-            user_rankings = {}
+            # Convert to a dict for faster lookups
+            user_rankings = {d['squad_id']: d['order'] for d in draft_data}
+            print(f"Found draft data for {len(user_rankings)} squads")
             
-            for draft_entry in draft:
-                # Store user rankings
-                if draft_entry.order:
-                    user_rankings[draft_entry.squad.id] = draft_entry.order
+            # 3. Get all player IDs that we need to process
+            # This includes current squad members and historical players
+            all_squad_player_ids = set()
+            squad_dict = {}
             
-            # Get all players data for reference
-            all_players = IPLPlayer.objects.filter(
-                playerteamhistory__season=league.season
-            ).distinct()
-            players_dict = {player.id: player for player in all_players}
-            
-            # Prepare squad data with players
-            squad_data = []
             for squad in squads:
-                # Get players in current squad
-                current_squad = squad.current_squad or []
-                
-                # Get core squad assignments
-                current_core_squad = squad.current_core_squad or {}
-                
-                # Get all players who have fantasy events for this squad (historical players)
-                historical_player_ids = set(FantasyPlayerEvent.objects.filter(
-                    fantasy_squad_id=squad.id
-                ).values_list('match_event__player_id', flat=True).distinct())
-                
-                # Combine both sets to get all players we need to include
-                all_player_ids = set(current_squad).union(historical_player_ids)
-                
-                # Create player list with full data
-                players_list = []
-                for player_id in all_player_ids:
-                    if player_id in players_dict:
-                        player = players_dict[player_id]
-                        # Get the current team for this player
-                        current_team = player.playerteamhistory_set.filter(
-                            season=league.season
-                        ).select_related('team').first()
-                        
-                        players_list.append({
-                            'id': player.id,
-                            'name': player.name,
-                            'role': player.role,
-                            'team_code': current_team.team.short_name if current_team else None,
-                            'team_color': current_team.team.primary_color if current_team else None,
-                            'status': 'current' if player.id in current_squad else 'traded'
-                        })
-                
-                # Add the squad to our response
-                squad_data.append({
+                # Initialize squad info
+                squad_dict[squad.id] = {
                     'id': squad.id,
                     'name': squad.name,
                     'color': squad.color,
                     'user_id': squad.user.id,
                     'user_name': squad.user.username,
-                    'total_points': squad.total_points,
-                    'players': players_list,
-                    'current_core_squad': current_core_squad,
-                    'draft_ranking': user_rankings.get(squad.id, [])
-                    # Removed the draft_results field since it doesn't exist in your model
-                })
+                    'total_points': float(squad.total_points),
+                    'current_core_squad': squad.current_core_squad or {},
+                    'draft_ranking': user_rankings.get(squad.id, []),
+                    'current_player_ids': set(squad.current_squad or []),
+                    'all_player_ids': set(squad.current_squad or [])
+                }
+                
+                # Add current squad player IDs to the set
+                all_squad_player_ids.update(squad.current_squad or [])
             
-            # Calculate average draft rank for players
+            # 4. Get all historical players (from fantasy events) in a single query
+            historical_player_data = FantasyPlayerEvent.objects.filter(
+                fantasy_squad__league=league
+            ).values(
+                'fantasy_squad_id', 
+                'match_event__player_id'
+            ).distinct()
+            
+            # Update squads with historical player IDs
+            for data in historical_player_data:
+                squad_id = data['fantasy_squad_id']
+                player_id = data['match_event__player_id']
+                
+                if squad_id in squad_dict:
+                    squad_dict[squad_id]['all_player_ids'].add(player_id)
+                    all_squad_player_ids.add(player_id)
+            
+            # 5. Get all player details in a single query
+            players = IPLPlayer.objects.filter(
+                id__in=all_squad_player_ids
+            ).prefetch_related(
+                'playerteamhistory_set'
+            )
+            
+            # Create a player lookup dictionary
+            player_dict = {}
+            for player in players:
+                # Find current team for this player
+                current_team = next(
+                    (th for th in player.playerteamhistory_set.all() 
+                    if th.season_id == league.season.id),
+                    None
+                )
+                
+                player_dict[player.id] = {
+                    'id': player.id,
+                    'name': player.name,
+                    'role': player.role,
+                    'team_code': current_team.team.short_name if current_team else None,
+                    'team_color': current_team.team.primary_color if current_team else None
+                }
+            
+            # 6. Calculate average draft ranks
             player_draft_rankings = {}
             for squad_id, rankings in user_rankings.items():
                 for rank, player_id in enumerate(rankings):
@@ -990,14 +1016,44 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 if ranks:
                     avg_draft_ranks[player_id] = round(sum(ranks) / len(ranks), 2)
             
-            return Response({
+            # 7. Build the final response data
+            squad_data = []
+            for squad_id, squad_info in squad_dict.items():
+                players_list = []
+                for player_id in squad_info['all_player_ids']:
+                    if player_id in player_dict:
+                        player_info = player_dict[player_id].copy()
+                        # Add status (current or traded)
+                        player_info['status'] = 'current' if player_id in squad_info['current_player_ids'] else 'traded'
+                        players_list.append(player_info)
+                
+                # Add player list to squad data
+                squad_info['players'] = players_list
+                
+                # Remove temporary fields used for processing
+                del squad_info['current_player_ids']
+                del squad_info['all_player_ids']
+                
+                squad_data.append(squad_info)
+            
+            # 8. Prepare the final response
+            response_data = {
                 'squads': squad_data,
                 'avg_draft_ranks': avg_draft_ranks
-            })
+            }
+            
+            # 9. Cache the result (15 minutes)
+            if use_cache:
+                cache.set(cache_key, response_data, 15 * 60)
+            
+            total_time = time.time() - start_time
+            print(f"Squads endpoint completed in {total_time:.2f} seconds")
+            
+            return Response(response_data)
         
         except Exception as e:
-            print(f"Error in league squads view: {str(e)}")
             import traceback
+            print(f"Error in league squads view: {str(e)}")
             print(traceback.format_exc())
             return Response(
                 {'error': str(e)}, 
