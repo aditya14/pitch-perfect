@@ -144,31 +144,33 @@ const LeagueSquads = ({ league }) => {
   };
   
   // Find player in demand rankings with improved styling
-  const getPlayerDemandInfo = (playerId) => {
+const getPlayerDemandInfo = (playerId) => {
     const playerRank = playerDemandRanking.findIndex(item => item.playerId === parseInt(playerId));
     let demandClass = '';
-    let isTopPick = false;
+    let isHotPick = false; // Flag for showing tooltip
     
     if (playerRank >= 0 && playerRank < 5) {
       // Top 5 most in demand - on fire!
       demandClass = 'bg-gradient-to-r from-red-500 to-yellow-500 text-white font-bold shadow-md animate-pulse relative border border-orange-400';
-      isTopPick = true;
+      isHotPick = true;
     } else if (playerRank >= 5 && playerRank < 15) {
-      // Next 10 most in demand - more subtle but still highlighted
-      demandClass = 'bg-amber-50 dark:bg-amber-900 hover:bg-amber-100 dark:hover:bg-amber-800 transition-all duration-200 border border-amber-200 dark:border-amber-700';
+      // Next 10 most in demand - subtle glow effect
+      demandClass = 'bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 shadow-sm hover:shadow transition-all duration-200';
+      isHotPick = true;
     }
     
     return { 
       rank: playerRank + 1, 
       demandClass, 
       avgRank: getPlayerAvgRank(playerId),
-      isTopPick 
+      isHotPick,
+      playerRank // Include the actual rank value
     };
   };
   
   // Helper function to show tooltip
-  const showTooltip = (playerId, event, isTopPick) => {
-    if (!event || !isTopPick) return;
+  const showTooltip = (playerId, event, isHotPick) => {
+    if (!event || !isHotPick) return;
     
     setTooltip({
       visible: true,
@@ -299,34 +301,34 @@ const LeagueSquads = ({ league }) => {
             {/* NAMES VIEW */}
             {activeView === 'names' && (
               <tr>
-                <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                  All Players
+                <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                  
                 </td>
                 
                 {squads.map(squad => (
                   <td key={squad.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 align-top">
                     <div className="space-y-1">
-                      {squadPlayers[squad.id]?.map(player => {
-                        const { demandClass, avgRank, isTopPick } = getPlayerDemandInfo(player.id);
+                    {squadPlayers[squad.id]?.map(player => {
+                        const { demandClass, avgRank, isHotPick, playerRank } = getPlayerDemandInfo(player.id);
                         return (
-                          <div 
+                            <div 
                             key={player.id} 
                             className={`px-2 py-1 rounded relative ${demandClass}`}
-                            onMouseEnter={(e) => showTooltip(player.id, e, isTopPick)}
+                            onMouseEnter={(e) => showTooltip(player.id, e, isHotPick)}
                             onMouseLeave={hideTooltip}
-                          >
-                            {isTopPick && <Flame className="h-3 w-3 inline-block mr-1 text-white" />}
+                            >
+                            {playerRank <= 4 && <Flame className="h-3 w-3 inline-block mr-1 text-white" />}
                             {player.name}
                             {tooltip.visible && tooltip.playerId === parseInt(player.id) && (
-                              <div 
+                                <div 
                                 className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded z-50"
-                              >
+                                >
                                 Avg. Rank: {avgRank}
-                              </div>
+                                </div>
                             )}
-                          </div>
+                            </div>
                         );
-                      })}
+                        })}
                     </div>
                   </td>
                 ))}
@@ -600,18 +602,18 @@ const LeagueSquads = ({ league }) => {
       </div>
       
       {/* Legend for player demand */}
-      <div className="flex items-center justify-end space-x-4 text-sm mt-4">
-        <div className="flex items-center">
-          <div className="h-5 w-5 bg-gradient-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center">
-            <Flame className="h-3 w-3 text-white" />
-          </div>
-          <span className="text-gray-600 dark:text-gray-300 ml-2">Top 5 in demand</span>
+    <div className="flex items-center justify-end space-x-4 text-sm mt-4">
+    <div className="flex items-center">
+        <div className="h-5 w-5 bg-gradient-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center">
+        <Flame className="h-3 w-3 text-white" />
         </div>
-        <div className="flex items-center">
-          <div className="h-3 w-3 bg-amber-50 dark:bg-amber-900 border border-amber-200 dark:border-amber-700 rounded mr-2"></div>
-          <span className="text-gray-600 dark:text-gray-300">Top 6-15 in demand</span>
-        </div>
-      </div>
+        <span className="text-gray-600 dark:text-gray-300 ml-2">Top 5 in demand</span>
+    </div>
+    <div className="flex items-center">
+        <div className="h-5 w-5 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 rounded mr-2"></div>
+        <span className="text-gray-600 dark:text-gray-300">Top 6-15 in demand</span>
+    </div>
+    </div>
       
       {/* Add CSS for the fire effect */}
       <style jsx>{`
