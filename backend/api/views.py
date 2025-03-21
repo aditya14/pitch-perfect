@@ -594,91 +594,159 @@ class LeagueViewSet(viewsets.ModelViewSet):
         
     @action(detail=True, methods=['get'])
     def players(self, request, pk=None):
-        """Get all players eligible for drafting in a league"""
+        import time
+        from django.core.cache import cache
+
+        """Get all players eligible for drafting in a league with optimized queries and caching"""
+        start_time = time.time()
+        
         try:
             league = self.get_object()
             
-            # Get the last 4 seasons
-            past_seasons = list(range(league.season.year - 4, league.season.year))
-
-            # Get players who have team history for this season
+            # Check cache first
+            cache_key = f'league_players_{league.id}'
+            use_cache = request.query_params.get('no_cache', '0') != '1'
+            
+            if use_cache:
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    print(f"Cache hit for {cache_key}")
+                    return Response(cached_data)
+                print(f"Cache miss for {cache_key}")
+            
+            # Get the last 4 seasons (including current)
+            current_year = league.season.year
+            past_seasons = list(range(current_year - 4, current_year + 1))
+            print(f"Analyzing seasons: {past_seasons}")
+            
+            # 1. Get player_ids who are in the current season
             players = IPLPlayer.objects.filter(
-                # is_active=True,
                 playerteamhistory__season=league.season
             ).distinct()
-
-            # Annotate each player with their match count per season and total points
-            for year in past_seasons:
-                players = players.annotate(**{
-                    f'matches_{year}': Count(
-                        'iplplayerevent',
-                        filter=Q(iplplayerevent__match__season__year=year),
-                        distinct=True
-                    ),
-                    f'points_{year}': Avg(
-                        'iplplayerevent__total_points_all',
-                        filter=Q(iplplayerevent__match__season__year=year)
-                    )
-                })
-
-            # Convert QuerySet to list for custom sorting
-            players_list = list(players)
-
-            def calculate_avg_points(player):
-                total_points = 0
-                total_matches = 0
-                has_qualifying_season = False
+            
+            player_ids = list(players.values_list('id', flat=True))
+            print(f"Found {len(player_ids)} players in current season")
+            
+            # 2. Efficiently get player stats by season with a single query
+            from django.db.models import Case, When, BooleanField, Value, DecimalField, ExpressionWrapper
+            
+            # Create a combined stats query with window functions
+            player_stats = IPLPlayerEvent.objects.filter(
+                player_id__in=player_ids,
+                match__season__year__in=past_seasons
+            ).values(
+                'player_id', 
+                'match__season__year'
+            ).annotate(
+                matches=Count('id'),
+                points=Sum('total_points_all'),
+                avg_points=ExpressionWrapper(
+                    Sum('total_points_all') * 1.0 / Count('id'), 
+                    output_field=DecimalField()
+                ),
+                has_qualifying_season=Case(
+                    When(matches__gte=4, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                )
+            ).order_by('player_id', 'match__season__year')
+            
+            # 3. Organize data by player
+            player_data = {}
+            for player_id in player_ids:
+                player_data[player_id] = {
+                    'id': player_id,
+                    'total_matches': 0,
+                    'total_points': 0,
+                    'has_qualifying_season': False,
+                    'seasons': {},
+                    'avg_points': 0
+                }
+            
+            # 4. Process stats
+            for stat in player_stats:
+                player_id = stat['player_id']
+                year = stat['match__season__year']
                 
-                # Check all 4 seasons
-                for year in past_seasons:
-                    matches = getattr(player, f'matches_{year}') or 0
-                    points = getattr(player, f'points_{year}') or 0
-                    
-                    if matches >= 4:
-                        has_qualifying_season = True
-                    
-                    total_matches += matches
-                    total_points += (points * matches)  # Multiply by matches to get total points
+                # Add season data
+                player_data[player_id]['seasons'][year] = {
+                    'matches': stat['matches'],
+                    'points': stat['points'],
+                    'avg_points': stat['avg_points']
+                }
                 
-                # Calculate average points per game
-                avg_points = total_points / total_matches if total_matches > 0 else 0
+                # Update totals
+                player_data[player_id]['total_matches'] += stat['matches']
+                player_data[player_id]['total_points'] += stat['points']
                 
-                return (has_qualifying_season, avg_points)
-
-            # Sort players
+                # Check qualifying status
+                if stat['has_qualifying_season']:
+                    player_data[player_id]['has_qualifying_season'] = True
+            
+            # 5. Get player details and team info
+            player_details = {
+                p.id: {
+                    'name': p.name,
+                    'role': p.role
+                } for p in players
+            }
+            
+            # Get current team for each player in a single efficient query
+            team_mappings = PlayerTeamHistory.objects.filter(
+                player_id__in=player_ids,
+                season=league.season
+            ).select_related('team').values(
+                'player_id', 
+                'team__short_name'
+            )
+            
+            team_dict = {tm['player_id']: tm['team__short_name'] for tm in team_mappings}
+            
+            # 6. Calculate average points and prepare final data
+            complete_data = []
+            for player_id, data in player_data.items():
+                # Calculate average
+                if data['total_matches'] > 0:
+                    data['avg_points'] = data['total_points'] / data['total_matches']
+                
+                # Add player details
+                data.update(player_details.get(player_id, {'name': 'Unknown', 'role': None}))
+                
+                # Add team info
+                data['team'] = team_dict.get(player_id)
+                
+                complete_data.append(data)
+            
+            # 7. Sort players
             sorted_players = sorted(
-                players_list,
-                key=lambda p: calculate_avg_points(p),
+                complete_data,
+                key=lambda p: (p['has_qualifying_season'], p['avg_points']),
                 reverse=True
             )
-
-            # Create ranks after sorting
-            player_ranks = {player.id: idx + 1 for idx, player in enumerate(sorted_players)}
-
-            # Calculate overall stats for serializer
-            for player in sorted_players:
-                total_matches = sum(
-                    getattr(player, f'matches_{year}') or 0 
-                    for year in past_seasons
-                )
-                total_points = sum(
-                    (getattr(player, f'points_{year}') or 0) * (getattr(player, f'matches_{year}') or 0)
-                    for year in past_seasons
-                )
-                player.matches = total_matches
-                player.avg_points = total_points / total_matches if total_matches > 0 else 0
-
-            # Serialize the data
-            serializer = PlayerRosterSerializer(
-                sorted_players,
-                many=True,
-                context={
-                    'season': league.season,
-                    'player_ranks': player_ranks
-                }
-            )
-
-            return Response(serializer.data)
+            
+            # 8. Add rank and prepare response
+            response_data = []
+            for idx, player in enumerate(sorted_players):
+                response_data.append({
+                    'id': player['id'],
+                    'name': player['name'],
+                    'role': player['role'],
+                    'team': player['team'],
+                    'matches': player['total_matches'],
+                    'avg_points': round(player['avg_points'], 2) if player['avg_points'] else 0,
+                    'rank': idx + 1,
+                    'fantasy_squad': None,
+                    'draft_position': None
+                })
+            
+            # 9. Cache the result (30 minutes)
+            if use_cache:
+                cache.set(cache_key, response_data, 30 * 60)
+            
+            total_time = time.time() - start_time
+            print(f"Players endpoint completed in {total_time:.2f} seconds")
+            
+            return Response(response_data)
 
         except Exception as e:
             import traceback
