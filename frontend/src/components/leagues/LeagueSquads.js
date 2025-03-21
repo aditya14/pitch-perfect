@@ -314,6 +314,21 @@ const LeagueSquads = ({ league }) => {
                 // Find the max length
                 const maxRankings = Math.max(...allRankings.map(r => r.length), 0);
                 
+                // Sort squads by draft order if available
+                const orderedSquads = [...squads];
+                console.log(league, "league")
+                if (league && league.snake_draft_order && league.snake_draft_order.length > 0) {
+                    // Sort squads based on snake_draft_order
+                    orderedSquads.sort((a, b) => {
+                    const indexA = league.snake_draft_order.indexOf(a.id);
+                    const indexB = league.snake_draft_order.indexOf(b.id);
+                    // If squad is not in draft order, put it at the end
+                    if (indexA === -1) return 1;
+                    if (indexB === -1) return -1;
+                    return indexA - indexB;
+                    });
+                }
+                
                 // Create rows for each player position in the draft
                 return Array.from({ length: maxRankings }).map((_, rankIndex) => (
                     <tr key={`rank-${rankIndex}`}>
@@ -323,7 +338,7 @@ const LeagueSquads = ({ league }) => {
                     </td>
                     
                     {/* For each squad, show the player at this rank */}
-                    {squads.map(squad => {
+                    {orderedSquads.map(squad => {
                         // Get the player ID at this rank
                         const playerId = squad.draft_ranking?.[rankIndex];
                         if (!playerId) return (
@@ -348,7 +363,8 @@ const LeagueSquads = ({ league }) => {
                         return (
                         <td 
                             key={`${squad.id}-rank-${rankIndex}`} 
-                            className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400
+                            className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 ${
+                            isInSquad ? 'bg-green-50 dark:bg-green-900' : ''
                             }`}
                         >
                             <div className={`px-2 py-1 rounded ${
