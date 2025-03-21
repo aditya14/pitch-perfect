@@ -13,7 +13,7 @@ const LeagueSquads = ({ league }) => {
   const [error, setError] = useState(null);
   const [activeView, setActiveView] = useState('names'); // 'names', 'draft', 'roles', 'teams', 'boosts'
   const [playerDemandRanking, setPlayerDemandRanking] = useState([]);
-  const [tooltip, setTooltip] = useState({ visible: false, playerId: null, position: { x: 0, y: 0 } });
+  const [tooltip, setTooltip] = useState({ visible: false, playerId: null });
 
   useEffect(() => {
     const fetchSquadsData = async () => {
@@ -25,7 +25,36 @@ const LeagueSquads = ({ league }) => {
         // Fetch all league squads data using the new endpoint
         const squadsResponse = await api.get(`/leagues/${league.id}/squads/`);
         const { squads: squadsData, avg_draft_ranks } = squadsResponse.data;
-        setSquads(squadsData);
+        
+        // Sort squads by snake_draft_order if available
+        let sortedSquads = [...squadsData];
+        if (league.snake_draft_order && league.snake_draft_order.length > 0) {
+          // Create a map for faster lookups
+          const squadsMap = {};
+          squadsData.forEach(squad => {
+            squadsMap[squad.id] = squad;
+          });
+          
+          // Order squads based on snake_draft_order
+          sortedSquads = [];
+          league.snake_draft_order.forEach(squadId => {
+            if (squadsMap[squadId]) {
+              sortedSquads.push(squadsMap[squadId]);
+              delete squadsMap[squadId]; // Remove to avoid duplicates
+            }
+          });
+          
+          // Add any remaining squads not in snake_draft_order
+          Object.values(squadsMap).forEach(squad => {
+            sortedSquads.push(squad);
+          });
+        }
+        
+        console.log("Original squad order:", squadsData.map(s => s.id));
+        console.log("Snake draft order:", league.snake_draft_order);
+        console.log("Sorted squad order:", sortedSquads.map(s => s.id));
+        
+        setSquads(sortedSquads);
         
         // Fetch all players data (for reference)
         const playersResponse = await api.get(`/leagues/${league.id}/players/`);
@@ -34,14 +63,14 @@ const LeagueSquads = ({ league }) => {
         
         // Process squad players data from the response
         const squadPlayersData = {};
-        squadsData.forEach(squad => {
+        sortedSquads.forEach(squad => {
           squadPlayersData[squad.id] = squad.players;
         });
         setSquadPlayers(squadPlayersData);
         
         // Process draft data
         const draftInfo = {
-          user_rankings: squadsData.reduce((acc, squad) => {
+          user_rankings: sortedSquads.reduce((acc, squad) => {
             if (squad.draft_ranking && squad.draft_ranking.length > 0) {
               acc[squad.id] = squad.draft_ranking;
             }
@@ -54,7 +83,7 @@ const LeagueSquads = ({ league }) => {
         const avgRankings = Object.entries(avg_draft_ranks).map(([playerId, avgRank]) => ({
           playerId: parseInt(playerId),
           avgRank: avgRank,
-          totalRankings: squadsData.length // Assume all squads ranked the player
+          totalRankings: sortedSquads.length
         }));
         
         // Sort by ascending average rank (lower is better/more in demand)
@@ -307,12 +336,42 @@ const LeagueSquads = ({ league }) => {
             {/* DRAFT ORDER VIEW */}
             {activeView === 'draft' && (
             <>
-                {/* Calculate max number of players in any draft ranking */}
+                {/* Get ordered squads based on snake_draft_order */}
                 {(() => {
-                // Get all draft rankings
-                const allRankings = squads.map(squad => squad.draft_ranking || []);
-                // Find the max length
-                const maxRankings = Math.max(...allRankings.map(r => r.length), 0);
+                // Create a new array of squads in draft order
+                let orderedSquads = [...squads];
+                
+                console.log("Original snake_draft_order:", league.snake_draft_order);
+                console.log("Original squads:", squads.map(s => s.id));
+                
+                if (league && league.snake_draft_order && league.snake_draft_order.length > 0) {
+                    // Create a map for faster lookups
+                    const squadsMap = {};
+                    squads.forEach(squad => {
+                    squadsMap[squad.id] = squad;
+                    });
+                    
+                    // Order squads according to snake_draft_order exactly
+                    orderedSquads = [];
+                    league.snake_draft_order.forEach(squadId => {
+                    const squad = squadsMap[squadId];
+                    if (squad) {
+                        orderedSquads.push(squad);
+                    }
+                    });
+                    
+                    // Add any squads not in the draft order
+                    squads.forEach(squad => {
+                    if (!league.snake_draft_order.includes(squad.id)) {
+                        orderedSquads.push(squad);
+                    }
+                    });
+                }
+                
+                console.log("Ordered squads:", orderedSquads.map(s => s.id));
+                
+                // Get max length of draft rankings
+                const maxRankings = Math.max(...orderedSquads.map(s => (s.draft_ranking || []).length), 0);
                 
                 // Create rows for each player position in the draft
                 return Array.from({ length: maxRankings }).map((_, rankIndex) => (
@@ -322,8 +381,8 @@ const LeagueSquads = ({ league }) => {
                         {rankIndex + 1}
                     </td>
                     
-                    {/* For each squad, show the player at this rank */}
-                    {squads.map(squad => {
+                    {/* For each squad in draft order, show the player at this rank */}
+                    {orderedSquads.map(squad => {
                         // Get the player ID at this rank
                         const playerId = squad.draft_ranking?.[rankIndex];
                         if (!playerId) return (
@@ -333,12 +392,11 @@ const LeagueSquads = ({ league }) => {
                         );
                         
                         // Find player in playersData
-                        const player = playersData.find(p => p.id === (typeof playerId === 'string' ? parseInt(playerId) : playerId));
+                        const playerIdInt = typeof playerId === 'string' ? parseInt(playerId) : playerId;
+                        const player = playersData.find(p => p.id === playerIdInt);
                         
                         // Check if player is in this squad
-                        const isInSquad = squad.players?.some(p => 
-                        p.id === (typeof playerId === 'string' ? parseInt(playerId) : playerId)
-                        );
+                        const isInSquad = squad.players?.some(p => p.id === playerIdInt && p.status === 'current');
                         
                         return (
                         <td 
