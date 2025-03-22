@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/axios';
-import { Users, Shield, Zap, Trophy, Globe, Flame, Crown, Swords, Anchor, Handshake, Bomb, EarthLock, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Shield, Zap, Trophy, Globe, Flame, Crown, Swords, Anchor, Handshake, Bomb, EarthLock, Sparkles, ChevronLeft, ChevronRight, ArrowUpDown, ShieldHalf, Volleyball } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
 
 // Helper function to get role icon
@@ -300,7 +300,7 @@ const LeagueSquads = ({ league }) => {
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          <Trophy className="h-3 w-3 mr-1" />
+          <ArrowUpDown className="h-3 w-3 mr-1" />
           Draft Order
         </button>
         
@@ -312,7 +312,7 @@ const LeagueSquads = ({ league }) => {
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          <Shield className="h-3 w-3 mr-1" />
+          <Volleyball className="h-3 w-3 mr-1" />
           By Role
         </button>
         
@@ -324,7 +324,7 @@ const LeagueSquads = ({ league }) => {
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          <Globe className="h-3 w-3 mr-1" />
+          <ShieldHalf className="h-3 w-3 mr-1" />
           By IPL Team
         </button>
         
@@ -459,8 +459,7 @@ const LeagueSquads = ({ league }) => {
                 // Get max length of draft rankings
                 const maxRankings = Math.max(...orderedSquads.map(s => (s.draft_ranking || []).length), 0);
                 
-                // Create rows for the first 30 player positions in the draft (for performance)
-                const displayRankings = Math.min(maxRankings, 30);
+                const displayRankings = maxRankings
                 
                 return Array.from({ length: displayRankings }).map((_, rankIndex) => (
                   <tr key={`rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
