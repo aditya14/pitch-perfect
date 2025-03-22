@@ -62,36 +62,57 @@ class CricketDataService:
         Returns:
             Dict with summary of updates
         """
+        logger.info(f"Starting update_match_points for match {match_id}")
+        
         # Get the IPL match by cricdata_id
         try:
             match = IPLMatch.objects.get(cricdata_id=match_id)
+            logger.info(f"Found match: {match.id} - {match.team_1.short_name} vs {match.team_2.short_name}")
         except IPLMatch.DoesNotExist:
             logger.error(f"No match found with cricdata_id: {match_id}")
             return {"error": f"Match not found: {match_id}"}
+        except Exception as e:
+            logger.error(f"Error finding match {match_id}: {str(e)}")
+            return {"error": f"Error finding match: {str(e)}"}
         
         # Fetch data from API
         match_data = self.fetch_match_scorecard(match_id)
         if not match_data:
+            logger.error(f"Failed to fetch match data for {match_id}")
             return {"error": "Failed to fetch match data"}
         
-        # Update match details
-        self._update_match_details(match, match_data)
-        
-        # Process player performances
-        updated_events = self._process_player_performances(match, match_data)
-        
-        # Update fantasy player events for all fantasy squads
-        fantasy_events = self._update_fantasy_events(match, updated_events)
-        
-        # Update total points for each fantasy squad
-        updated_squads = self._update_fantasy_squad_totals(match.season)
-        
-        return {
-            "match": match.id,
-            "player_events_updated": len(updated_events),
-            "fantasy_events_updated": len(fantasy_events),
-            "fantasy_squads_updated": len(updated_squads)
-        }
+        try:
+            # Update match details
+            logger.info(f"Updating match details for {match_id}")
+            self._update_match_details(match, match_data)
+            
+            # Process player performances
+            logger.info(f"Processing player performances for {match_id}")
+            updated_events = self._process_player_performances(match, match_data)
+            logger.info(f"Updated {len(updated_events)} player events")
+            
+            # Update fantasy player events for all fantasy squads
+            logger.info(f"Updating fantasy events for {match_id}")
+            fantasy_events = self._update_fantasy_events(match, updated_events)
+            logger.info(f"Updated {len(fantasy_events)} fantasy events")
+            
+            # Update total points for each fantasy squad
+            logger.info(f"Updating fantasy squad totals for {match_id}")
+            updated_squads = self._update_fantasy_squad_totals(match.season)
+            logger.info(f"Updated {len(updated_squads)} fantasy squads")
+            
+            return {
+                "match": match.id,
+                "player_events_updated": len(updated_events),
+                "fantasy_events_updated": len(fantasy_events),
+                "fantasy_squads_updated": len(updated_squads)
+            }
+        except Exception as e:
+            logger.error(f"Error updating match {match_id}: {str(e)}")
+            # Include traceback for detailed error information
+            import traceback
+            logger.error(traceback.format_exc())
+            return {"error": f"Error updating match: {str(e)}"}
     
     def update_all_live_matches(self) -> List[Dict]:
         """
@@ -160,6 +181,45 @@ class CricketDataService:
 
         print("Match updated successfully as ", match.inns_1_runs, "/", match.inns_1_wickets, " in ", match.inns_1_overs, " overs, and ", match.inns_2_runs, "/", match.inns_2_wickets, " in ", match.inns_2_overs, " overs.")
     
+    def sync_player_data(self, player_data: Dict, update_if_exists=False) -> Optional[IPLPlayer]:
+        """
+        Sync player data from API to local database.
+        Create or update player if needed.
+        
+        Args:
+            player_data: Player data from API
+            update_if_exists: Whether to update existing players
+            
+        Returns:
+            IPLPlayer object or None
+        """
+        cricdata_id = player_data.get('id')
+        name = player_data.get('name')
+        
+        if not cricdata_id or not name:
+            return None
+        
+        # Try to find existing player
+        player = self._find_player_by_cricdata_id(cricdata_id, name)
+        
+        if player:
+            if update_if_exists:
+                # Update player data
+                if not player.cricdata_id:
+                    player.cricdata_id = cricdata_id
+                    player.save()
+            return player
+        
+        # Player not found, create new one
+        logger.info(f"Creating new player: {name} ({cricdata_id})")
+        player = IPLPlayer.objects.create(
+            name=name,
+            cricdata_id=cricdata_id,
+            is_active=True,
+            # Add other fields as needed
+        )
+        return player
+
     def _process_player_performances(self, match: IPLMatch, match_data: Dict) -> List[IPLPlayerEvent]:
         """
         Process player performances from scorecard data and update/create IPLPlayerEvent objects.
@@ -189,8 +249,14 @@ class CricketDataService:
                 cricdata_id = batsman.get("id")
                 player_name = batsman.get("name")
                 
-                player = self._find_player_by_cricdata_id(cricdata_id, player_name)
+                # Use the new sync method
+                player = self.sync_player_data({
+                    'id': cricdata_id,
+                    'name': player_name
+                })
+                
                 if not player:
+                    logger.warning(f"Skipping batting entry for {player_name}, player not found and could not be created")
                     continue
                 
                 # Create or update player event
@@ -576,10 +642,13 @@ class CricketDataService:
         Returns:
             IPLPlayer object or None if not found
         """
+        logger.debug(f"Looking for player with cricdata_id={cricdata_id}, name={name}")
+        
         # Try by cricdata_id first
         if cricdata_id:
             player = IPLPlayer.objects.filter(cricdata_id=cricdata_id).first()
             if player:
+                logger.debug(f"Found player by cricdata_id: {player.name}")
                 return player
         
         # Fallback to name matching
@@ -587,6 +656,12 @@ class CricketDataService:
             # Try exact match
             player = IPLPlayer.objects.filter(name__iexact=name).first()
             if player:
+                logger.debug(f"Found player by exact name: {player.name}")
+                # Update cricdata_id if it's missing
+                if cricdata_id and not player.cricdata_id:
+                    logger.info(f"Updating cricdata_id for player {player.name}")
+                    player.cricdata_id = cricdata_id
+                    player.save()
                 return player
             
             # Try checking if name is in our other_names field
@@ -595,6 +670,12 @@ class CricketDataService:
                 if hasattr(p, 'other_names') and p.other_names:
                     for alt_name in p.other_names:
                         if name.lower() == alt_name.lower():
+                            logger.debug(f"Found player by other name: {p.name}")
+                            # Update cricdata_id if it's missing
+                            if cricdata_id and not p.cricdata_id:
+                                logger.info(f"Updating cricdata_id for player {p.name}")
+                                p.cricdata_id = cricdata_id
+                                p.save()
                             return p
         
         # No match found

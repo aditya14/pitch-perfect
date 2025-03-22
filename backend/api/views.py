@@ -1671,6 +1671,7 @@ def update_match_points(request):
         result = service.update_match_points(match_id)
         
         if 'error' in result:
+            logger.error(f"Error updating match {match_id}: {result['error']}")
             return Response(
                 {"error": result['error']},
                 status=status.HTTP_400_BAD_REQUEST
@@ -1680,9 +1681,9 @@ def update_match_points(request):
             {
                 "success": True,
                 "match": match.id,
-                "player_events_updated": result['player_events_updated'],
-                "fantasy_events_updated": result['fantasy_events_updated'],
-                "fantasy_squads_updated": result['fantasy_squads_updated']
+                "player_events_updated": result.get('player_events_updated', 0),
+                "fantasy_events_updated": result.get('fantasy_events_updated', 0),
+                "fantasy_squads_updated": result.get('fantasy_squads_updated', 0)
             },
             status=status.HTTP_200_OK
         )
