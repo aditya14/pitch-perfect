@@ -63,6 +63,9 @@ class CricketDataService:
             Dict with summary of updates
         """
         logger.info(f"Starting update_match_points for match {match_id}")
+
+        # Reset sequence to prevent ID conflicts
+        self._reset_player_event_sequence()
         
         # Get the IPL match by cricdata_id
         try:
@@ -584,7 +587,7 @@ class CricketDataService:
         return total_boost_points
     
     def _get_or_create_player_event(self, match: IPLMatch, player: IPLPlayer, 
-                                   for_team: IPLTeam, vs_team: IPLTeam) -> IPLPlayerEvent:
+                                for_team: IPLTeam, vs_team: IPLTeam) -> IPLPlayerEvent:
         """
         Get or create an IPLPlayerEvent for a player in a match.
         
@@ -597,39 +600,66 @@ class CricketDataService:
         Returns:
             IPLPlayerEvent object
         """
-        event, created = IPLPlayerEvent.objects.get_or_create(
-            player=player,
-            match=match,
-            defaults={
-                "for_team": for_team,
-                "vs_team": vs_team,
-                # Initialize with zeros
-                "bat_runs": 0,
-                "bat_balls": 0,
-                "bat_fours": 0,
-                "bat_sixes": 0,
-                "bat_not_out": True,
-                "bat_innings": 0,
-                "bowl_balls": 0,
-                "bowl_maidens": 0,
-                "bowl_runs": 0,
-                "bowl_wickets": 0,
-                "bowl_innings": 0,
-                "field_catch": 0,
-                "wk_catch": 0,
-                "wk_stumping": 0,
-                "run_out_solo": 0,
-                "run_out_collab": 0,
-                "player_of_match": False
-            }
-        )
-        
-        if created:
-            # If this is a new event, set the teams
-            event.for_team = for_team
-            event.vs_team = vs_team
+        try:
+            # First try to get an existing event
+            event = IPLPlayerEvent.objects.get(
+                player=player,
+                match=match
+            )
             
-        return event
+            # If found, update the teams if needed
+            if event.for_team != for_team or event.vs_team != vs_team:
+                event.for_team = for_team
+                event.vs_team = vs_team
+                event.save()
+            
+            return event
+            
+        except IPLPlayerEvent.DoesNotExist:
+            # Create a new event with "force_insert=False" to avoid ID conflicts
+            event = IPLPlayerEvent(
+                player=player,
+                match=match,
+                for_team=for_team,
+                vs_team=vs_team,
+                # Initialize with zeros
+                bat_runs=0,
+                bat_balls=0,
+                bat_fours=0,
+                bat_sixes=0,
+                bat_not_out=True,
+                bat_innings=0,
+                bowl_balls=0,
+                bowl_maidens=0,
+                bowl_runs=0,
+                bowl_wickets=0,
+                bowl_innings=0,
+                field_catch=0,
+                wk_catch=0,
+                wk_stumping=0,
+                run_out_solo=0,
+                run_out_collab=0,
+                player_of_match=False
+            )
+            
+            # Use save with force_insert=False to let DB handle ID assignment
+            event.save(force_insert=False)
+            return event
+        
+    def _reset_player_event_sequence(self):
+        """
+        Reset the auto-increment sequence for IPLPlayerEvent to avoid ID conflicts.
+        Only needed in production when the sequence is out of sync.
+        """
+        from django.db import connection
+        
+        logger.info("Attempting to reset IPLPlayerEvent sequence")
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT setval(pg_get_serial_sequence('api_iplplayerevent', 'id'), 
+                            (SELECT MAX(id) FROM api_iplplayerevent));
+            """)
+            logger.info("IPLPlayerEvent sequence reset successfully")
     
     def _find_player_by_cricdata_id(self, cricdata_id: str, name: str) -> Optional[IPLPlayer]:
         """
