@@ -20,7 +20,7 @@ import {
 // Countdown Timer Component with fixed widths
 const CountdownTimer = ({ onExpire }) => {
   const [timeLeft, setTimeLeft] = useState({});
-  const lockDate = new Date('2025-03-22T04:00:00Z'); // March 22, 2025, 4am UTC
+  const lockDate = new Date('2025-03-22T14:00:00Z'); // March 22, 2025, 2pm UTC
 
   useEffect(() => {
     const calculateTimeLeft = () => {
