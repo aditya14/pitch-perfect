@@ -645,34 +645,55 @@ class FantasyBoostRoleAdmin(admin.ModelAdmin):
 
 @admin.register(FantasyPlayerEvent)
 class FantasyPlayerEventAdmin(admin.ModelAdmin):
-    list_display = ('fantasy_squad', 'get_player', 'get_match', 'boost', 'boost_points')
-    list_filter = ('fantasy_squad', 'boost', 'match_event__match')
-    search_fields = (
-        'fantasy_squad__name', 
-        'match_event__player__name',
-        'match_event__match__match_number'
-    )
-    raw_id_fields = ('match_event', 'fantasy_squad', 'boost')
-
+    list_display = ('id', 'get_squad', 'get_player', 'get_match', 'get_boost', 'boost_points')
+    list_filter = ('fantasy_squad__league',)
+    search_fields = ('fantasy_squad__name', 'match_event__player__name')
+    
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            'fantasy_squad',
-            'match_event',
-            'match_event__player',
-            'match_event__match',
-            'boost'
-        )
-
+        # Add safer query with error handling
+        qs = super().get_queryset(request)
+        try:
+            return qs.select_related(
+                'fantasy_squad',
+                'match_event__player',
+                'match_event__match',
+                'boost'
+            )
+        except Exception as e:
+            # Log the error but return a basic queryset to prevent admin crash
+            logger.error(f"Error in FantasyPlayerEventAdmin queryset: {str(e)}")
+            return qs
+    
+    def get_squad(self, obj):
+        try:
+            return obj.fantasy_squad.name if obj.fantasy_squad else None
+        except:
+            return "Error loading squad"
+    get_squad.short_description = 'Squad'
+    
     def get_player(self, obj):
-        return obj.match_event.player.name
+        try:
+            return obj.match_event.player.name if obj.match_event and obj.match_event.player else None
+        except:
+            return "Error loading player"
     get_player.short_description = 'Player'
-    get_player.admin_order_field = 'match_event__player__name'
-
+    
     def get_match(self, obj):
-        match = obj.match_event.match
-        return f"Match {match.match_number}: {match.team_1.short_name} vs {match.team_2.short_name}"
+        try:
+            match = obj.match_event.match if obj.match_event else None
+            if match:
+                return f"Match {match.match_number}"
+            return None
+        except:
+            return "Error loading match"
     get_match.short_description = 'Match'
-    get_match.admin_order_field = 'match_event__match__match_number'
+    
+    def get_boost(self, obj):
+        try:
+            return obj.boost.label if obj.boost else None
+        except:
+            return "Error loading boost"
+    get_boost.short_description = 'Boost'
 
 @admin.register(FantasyTrade)
 class FantasyTradeAdmin(admin.ModelAdmin):
