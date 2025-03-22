@@ -89,7 +89,7 @@ class IPLMatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = IPLMatch
         fields = [
-            'id', 'season', 'match_number', 'stage', 
+            'id', 'season', 'match_number', 'stage', 'phase',
             'team_1', 'team_2', 'date', 'venue', 'status',
             'toss_winner', 'toss_decision', 'winner',
             'win_margin', 'win_type', 'player_of_match',

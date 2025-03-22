@@ -190,7 +190,7 @@ class IPLMatchAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Basic Info', {
-            'fields': ('season', 'match_number', 'stage', 'date', 'venue', 'status')
+            'fields': ('season', 'match_number', 'stage', 'phase', 'date', 'venue', 'status')
         }),
         ('Teams', {
             'fields': ('team_1', 'team_2')
