@@ -296,13 +296,6 @@ const LeagueView = () => {
             {/* {!isDraftCompleted && !isDraftCompleted && (
               <DraftCountdown />
             )} */}
-            {/* {isDraftCompleted &&  */}
-            <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1.5">
-                <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></span>
-                <strong>
-                  Draft Complete.</strong> Check out your squad!
-              </div>
-              {/* } */}
             
             {/* Buttons row */}
             <div className="flex flex-wrap gap-3">

@@ -20,7 +20,7 @@ import {
 // Countdown Timer Component with fixed widths
 const CountdownTimer = ({ onExpire }) => {
   const [timeLeft, setTimeLeft] = useState({});
-  const lockDate = new Date('2025-03-22T14:00:00Z'); // March 22, 2025, 2pm UTC
+  const lockDate = new Date('2025-03-29T14:00:00Z'); // March 29, 2025, 2pm UTC
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -580,7 +580,7 @@ const CoreSquadTab = ({
 
   // Check if current time is past deadline
   useEffect(() => {
-    const lockDate = new Date('2025-03-22T14:00:00Z'); // March 22, 2025, 2pm UTC
+    const lockDate = new Date('2025-03-29T14:00:00Z'); // March 29, 2025, 2pm UTC
     const currentTime = new Date();
     setIsDeadlinePassed(currentTime >= lockDate);
   }, []);
@@ -651,7 +651,7 @@ const CoreSquadTab = ({
           {/* Header */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Week 1 (Mar 22 - Mar 28)
+              Week 2 (Mar 29 - Apr 4)
             </h2>
             
             {/* Countdown */}
