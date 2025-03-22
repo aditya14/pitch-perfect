@@ -1,30 +1,30 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/axios';
-import { Users, Shield, Zap, Trophy, Globe, Flame, Crown, Swords, Anchor, Handshake, Bomb, EarthLock, Sparkles } from 'lucide-react';
+import { Users, Shield, Zap, Trophy, Globe, Flame, Crown, Swords, Anchor, Handshake, Bomb, EarthLock, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
 
 // Helper function to get role icon
 const getRoleIcon = (roleName, size = 16, squadColor) => {
-    switch(roleName) {
-      case 'Captain':
-        return <Crown size={size} style={{color: squadColor}} />;
-      case 'Vice-Captain':
-        return <Swords size={size} style={{color: squadColor}} />;
-      case 'Slogger':
-        return <Zap size={size} style={{color: squadColor}} />;
-      case 'Accumulator':
-        return <Anchor size={size} style={{color: squadColor}} />;
-      case 'Safe Hands':
-        return <Handshake size={size} style={{color: squadColor}} />;
-      case 'Rattler':
-        return <Bomb size={size} style={{color: squadColor}} />;
-      case 'Constrictor':
-        return <EarthLock size={size} style={{color: squadColor}} />;
-      default: // Virtuoso
-        return <Sparkles size={size} style={{color: squadColor}} />;
-    }
-  };
+  switch(roleName) {
+    case 'Captain':
+      return <Crown size={size} style={{color: squadColor}} />;
+    case 'Vice-Captain':
+      return <Swords size={size} style={{color: squadColor}} />;
+    case 'Slogger':
+      return <Zap size={size} style={{color: squadColor}} />;
+    case 'Accumulator':
+      return <Anchor size={size} style={{color: squadColor}} />;
+    case 'Safe Hands':
+      return <Handshake size={size} style={{color: squadColor}} />;
+    case 'Rattler':
+      return <Bomb size={size} style={{color: squadColor}} />;
+    case 'Constrictor':
+      return <EarthLock size={size} style={{color: squadColor}} />;
+    default: // Virtuoso
+      return <Sparkles size={size} style={{color: squadColor}} />;
+  }
+};
 
 const LeagueSquads = ({ league }) => {
   const [squads, setSquads] = useState([]);
@@ -35,7 +35,29 @@ const LeagueSquads = ({ league }) => {
   const [error, setError] = useState(null);
   const [activeView, setActiveView] = useState('names'); // 'names', 'draft', 'roles', 'teams', 'boosts'
   const [playerDemandRanking, setPlayerDemandRanking] = useState([]);
-  const [tooltip, setTooltip] = useState({ visible: false, playerId: null });
+  const [tooltip, setTooltip] = useState({ 
+    visible: false, 
+    playerId: null, 
+    playerName: null, 
+    avgRank: null,
+    position: { x: 0, y: 0 } 
+  });
+  const [visibleColumns, setVisibleColumns] = useState({ start: 0, count: 3 }); // For mobile scrolling
+
+  // Determine visible column count based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      let count = 3; // Default for mobile
+      if (window.innerWidth >= 1280) count = 10; // xl screens
+      else if (window.innerWidth >= 1024) count = 5; // lg screens
+      else if (window.innerWidth >= 768) count = 4; // md screens
+      setVisibleColumns({ start: 0, count });
+    };
+
+    handleResize(); // Set initial value
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchSquadsData = async () => {
@@ -71,10 +93,6 @@ const LeagueSquads = ({ league }) => {
             sortedSquads.push(squad);
           });
         }
-        
-        console.log("Original squad order:", squadsData.map(s => s.id));
-        console.log("Snake draft order:", league.snake_draft_order);
-        console.log("Sorted squad order:", sortedSquads.map(s => s.id));
         
         setSquads(sortedSquads);
         
@@ -166,18 +184,18 @@ const LeagueSquads = ({ league }) => {
   };
   
   // Find player in demand rankings with improved styling
-const getPlayerDemandInfo = (playerId) => {
+  const getPlayerDemandInfo = (playerId) => {
     const playerRank = playerDemandRanking.findIndex(item => item.playerId === parseInt(playerId));
     let demandClass = '';
     let isHotPick = false; // Flag for showing tooltip
     
     if (playerRank >= 0 && playerRank < 5) {
       // Top 5 most in demand - on fire!
-      demandClass = 'px-1 bg-gradient-to-r from-red-500 to-yellow-500 text-white font-bold shadow-md animate-pulse relative border border-orange-400';
+      demandClass = 'bg-gradient-to-r from-red-500 to-yellow-500 text-white font-bold';
       isHotPick = true;
     } else if (playerRank >= 5 && playerRank < 15) {
       // Next 10 most in demand - subtle glow effect
-      demandClass = 'px-1 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 shadow-sm hover:shadow transition-all duration-200';
+      demandClass = 'bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700';
       isHotPick = true;
     }
     
@@ -191,25 +209,55 @@ const getPlayerDemandInfo = (playerId) => {
   };
   
   // Helper function to show tooltip
-  const showTooltip = (playerId, event, isHotPick) => {
-    if (!event || !isHotPick) return;
+  const showTooltip = (playerId, playerName, avgRank, isHotPick, event) => {
+    if (!isHotPick || !event) return;
+    
+    const tableContainer = event.currentTarget.closest('.overflow-x-auto');
+    const rect = tableContainer.getBoundingClientRect();
     
     setTooltip({
       visible: true,
-      playerId,
-      position: { x: event.clientX, y: event.clientY }
+      playerId: parseInt(playerId),
+      playerName,
+      avgRank,
+      position: {
+        x: event.clientX,
+        y: event.clientY - rect.top + tableContainer.scrollTop
+      }
     });
   };
   
   // Helper function to hide tooltip
   const hideTooltip = () => {
-    setTooltip({ ...tooltip, visible: false });
+    setTooltip({ visible: false, playerId: null, playerName: null, avgRank: null });
   };
 
-  // Check if a player was actually drafted to a squad
-  const isPlayerInSquad = (squad, playerId) => {
-    return squad.players.some(p => p.id === parseInt(playerId) && p.status === 'current');
+  // Pagination controls for mobile view
+  const nextPage = () => {
+    if (visibleColumns.start + visibleColumns.count < squads.length) {
+      setVisibleColumns(prev => ({
+        ...prev,
+        start: prev.start + 1
+      }));
+    }
   };
+
+  const prevPage = () => {
+    if (visibleColumns.start > 0) {
+      setVisibleColumns(prev => ({
+        ...prev,
+        start: prev.start - 1
+      }));
+    }
+  };
+
+  // Get visible squads for current view
+  const visibleSquads = useMemo(() => {
+    return squads.slice(
+      visibleColumns.start,
+      visibleColumns.start + visibleColumns.count
+    );
+  }, [squads, visibleColumns]);
 
   if (loading) {
     return <LoadingScreen message="Loading Squads" description="Getting all squad information" />;
@@ -223,230 +271,235 @@ const getPlayerDemandInfo = (playerId) => {
     );
   }
 
+  // Calculate progress indicators for pagination
+  const showPagination = squads.length > visibleColumns.count;
+  const canGoNext = visibleColumns.start + visibleColumns.count < squads.length;
+  const canGoPrev = visibleColumns.start > 0;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* View Selection Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-4">
         <button
           onClick={() => setActiveView('names')}
-          className={`flex items-center px-3 py-2 text-sm rounded-md ${
+          className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'names'
               ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          <Users className="h-4 w-4 mr-2" />
+          <Users className="h-3 w-3 mr-1" />
           All Players
         </button>
         
         <button
           onClick={() => setActiveView('draft')}
-          className={`flex items-center px-3 py-2 text-sm rounded-md ${
+          className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'draft'
               ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          <Trophy className="h-4 w-4 mr-2" />
+          <Trophy className="h-3 w-3 mr-1" />
           Draft Order
         </button>
         
         <button
           onClick={() => setActiveView('roles')}
-          className={`flex items-center px-3 py-2 text-sm rounded-md ${
+          className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'roles'
               ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          <Shield className="h-4 w-4 mr-2" />
+          <Shield className="h-3 w-3 mr-1" />
           By Role
         </button>
         
         <button
           onClick={() => setActiveView('teams')}
-          className={`flex items-center px-3 py-2 text-sm rounded-md ${
+          className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'teams'
               ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          <Globe className="h-4 w-4 mr-2" />
+          <Globe className="h-3 w-3 mr-1" />
           By IPL Team
         </button>
         
         <button
           onClick={() => setActiveView('boosts')}
-          className={`flex items-center px-3 py-2 text-sm rounded-md ${
+          className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'boosts'
               ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          <Zap className="h-4 w-4 mr-2" />
+          <Zap className="h-3 w-3 mr-1" />
           Boosts
         </button>
       </div>
+
+      {/* Mobile Pagination Controls */}
+      {showPagination && (
+        <div className="flex items-center justify-between mb-2">
+          <button 
+            onClick={prevPage} 
+            disabled={!canGoPrev}
+            className={`p-1 rounded-md ${!canGoPrev ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 dark:text-gray-300'}`}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          
+          <div className="text-xs text-gray-600 dark:text-gray-400">
+            {visibleColumns.start + 1}-{Math.min(visibleColumns.start + visibleColumns.count, squads.length)} of {squads.length} squads
+          </div>
+          
+          <button 
+            onClick={nextPage} 
+            disabled={!canGoNext}
+            className={`p-1 rounded-md ${!canGoNext ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 dark:text-gray-300'}`}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      )}
       
-      {/* Squad Table */}
+      {/* Squad Table - More compact and spreadsheet-like */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <table className="w-full border-collapse text-xs">
           <thead>
-            <tr>
-              <th className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                {activeView === 'teams' ? 'IPL Team' : ''}
-              </th>
+            <tr className="bg-gray-50 dark:bg-gray-700">
+              {/* Squad columns - No first column in 'names' view */}
+              {activeView !== 'names' && (
+                <th className="sticky left-0 bg-gray-50 dark:bg-gray-700 z-10 px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                  {activeView === 'teams' ? 'IPL Team' : (activeView === 'draft' ? 'Rank' : activeView === 'roles' ? 'Role' : 'Boost')}
+                </th>
+              )}
               
-              {/* Squad columns */}
-              {squads.map(squad => (
+              {visibleSquads.map(squad => (
                 <th 
                   key={squad.id}
-                  className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                  style={{ minWidth: '200px' }}
+                  className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                  style={{ minWidth: '120px' }}
                 >
                   <Link 
                     to={`/squads/${squad.id}`}
-                    className="flex flex-col items-start"
+                    className="flex flex-col items-center"
                   >
                     <span 
-                      className="inline-block h-3 w-20 mb-1 rounded-md" 
+                      className="inline-block h-2 w-12 mb-1 rounded-sm" 
                       style={{ backgroundColor: squad.color }}
                     ></span>
-                    <span>{squad.name}</span>
+                    <span className="truncate max-w-[110px]">{squad.name}</span>
                   </Link>
                 </th>
               ))}
             </tr>
           </thead>
           
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody>
             {/* NAMES VIEW */}
             {activeView === 'names' && (
-              <tr>
-                <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                  
-                </td>
-                
-                {squads.map(squad => (
-                  <td key={squad.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 align-top">
-                    <div className="space-y-1">
-                    {squadPlayers[squad.id]?.map(player => {
+              <>
+                {/* Create a single row with multiple cells, one per squad */}
+                <tr>
+                  {visibleSquads.map(squad => (
+                    <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400 align-top border border-gray-200 dark:border-gray-600">
+                        {squadPlayers[squad.id]?.map(player => {
                         const { demandClass, avgRank, isHotPick, playerRank } = getPlayerDemandInfo(player.id);
                         return (
                             <div 
                             key={player.id} 
-                            className={`py-1 rounded relative ${demandClass}`}
-                            onMouseEnter={(e) => showTooltip(player.id, e, isHotPick)}
-                            onMouseLeave={hideTooltip}
+                            className={`px-1 py-1 truncate ${demandClass} border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700`}
+                            title={isHotPick ? `Avg. Rank: ${avgRank}` : ""}
                             >
-                            {playerRank <= 4 && <Flame className="h-3 w-3 inline-block mr-1 text-white" />}
+                            {playerRank <= 4 && <Flame className="h-2 w-2 inline-block mr-1 text-white" />}
                             {player.name}
-                            {tooltip.visible && tooltip.playerId === parseInt(player.id) && (
-                                <div 
-                                className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded z-50"
-                                >
-                                Avg. Rank: {avgRank}
-                                </div>
-                            )}
                             </div>
                         );
                         })}
-                    </div>
-                  </td>
-                ))}
-              </tr>
+                    </td>
+                  ))}
+                </tr>
+              </>
             )}
             
             {/* DRAFT ORDER VIEW */}
             {activeView === 'draft' && (
-            <>
-                {/* Get ordered squads based on snake_draft_order */}
-                {(() => {
-                // Create a new array of squads in draft order
-                let orderedSquads = [...squads];
-                
-                console.log("Original snake_draft_order:", league.snake_draft_order);
-                console.log("Original squads:", squads.map(s => s.id));
+              (() => {
+                // Get ordered squads based on snake_draft_order
+                let orderedSquads = [...visibleSquads];
                 
                 if (league && league.snake_draft_order && league.snake_draft_order.length > 0) {
-                    // Create a map for faster lookups
-                    const squadsMap = {};
-                    squads.forEach(squad => {
+                  // Create a map for faster lookups
+                  const squadsMap = {};
+                  visibleSquads.forEach(squad => {
                     squadsMap[squad.id] = squad;
-                    });
-                    
-                    // Order squads according to snake_draft_order exactly
-                    orderedSquads = [];
-                    league.snake_draft_order.forEach(squadId => {
+                  });
+                  
+                  // Order squads according to snake_draft_order
+                  orderedSquads = [];
+                  league.snake_draft_order.forEach(squadId => {
                     const squad = squadsMap[squadId];
                     if (squad) {
-                        orderedSquads.push(squad);
+                      orderedSquads.push(squad);
                     }
-                    });
-                    
-                    // Add any squads not in the draft order
-                    squads.forEach(squad => {
+                  });
+                  
+                  // Add any squads not in the draft order
+                  visibleSquads.forEach(squad => {
                     if (!league.snake_draft_order.includes(squad.id)) {
-                        orderedSquads.push(squad);
+                      orderedSquads.push(squad);
                     }
-                    });
+                  });
                 }
-                
-                console.log("Ordered squads:", orderedSquads.map(s => s.id));
                 
                 // Get max length of draft rankings
                 const maxRankings = Math.max(...orderedSquads.map(s => (s.draft_ranking || []).length), 0);
                 
-                // Create rows for each player position in the draft
-                return Array.from({ length: maxRankings }).map((_, rankIndex) => (
-                    <tr key={`rank-${rankIndex}`}>
+                // Create rows for the first 30 player positions in the draft (for performance)
+                const displayRankings = Math.min(maxRankings, 30);
+                
+                return Array.from({ length: displayRankings }).map((_, rankIndex) => (
+                  <tr key={`rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
                     {/* Player rank as the first cell in each row */}
-                    <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                        {rankIndex + 1}
+                    <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                      {rankIndex + 1}
                     </td>
                     
                     {/* For each squad in draft order, show the player at this rank */}
                     {orderedSquads.map(squad => {
-                        // Get the player ID at this rank
-                        const playerId = squad.draft_ranking?.[rankIndex];
-                        if (!playerId) return (
-                        <td key={`${squad.id}-rank-${rankIndex}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 dark:text-gray-500">
-                            -
+                      // Get the player ID at this rank
+                      const playerId = squad.draft_ranking?.[rankIndex];
+                      if (!playerId) return (
+                        <td key={`${squad.id}-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-600">
+                          -
                         </td>
-                        );
-                        
-                        // Find player in playersData
-                        const playerIdInt = typeof playerId === 'string' ? parseInt(playerId) : playerId;
-                        const player = playersData.find(p => p.id === playerIdInt);
-                        
-                        // Check if player is in this squad
-                        const isInSquad = squad.players?.some(p => p.id === playerIdInt && p.status === 'current');
-                        
-                        return (
+                      );
+                      
+                      // Find player in playersData
+                      const playerIdInt = typeof playerId === 'string' ? parseInt(playerId) : playerId;
+                      const player = playersData.find(p => p.id === playerIdInt);
+                      
+                      // Check if player is in this squad
+                      const isInSquad = squad.players?.some(p => p.id === playerIdInt && p.status === 'current');
+                      
+                      return (
                         <td 
-                            key={`${squad.id}-rank-${rankIndex}`} 
-                            className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 ${
-                            isInSquad ? 'bg-green-50 dark:bg-green-900' : ''
-                            }`}
+                          key={`${squad.id}-rank-${rankIndex}`} 
+                          className={`px-2 py-1 whitespace-nowrap text-xs truncate border border-gray-200 dark:border-gray-600 ${
+                            isInSquad ? 'bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'
+                          }`}
                         >
-                            {player ? (
-                            <div className={`px-2 py-1 rounded ${
-                                isInSquad ? 'text-green-700 dark:text-green-300 font-medium border border-green-300 dark:border-green-700' : ''
-                            }`}>
-                                {player.name}
-                            </div>
-                            ) : (
-                            <div className="text-gray-400">
-                                Unknown Player (ID: {playerId})
-                            </div>
-                            )}
+                          {player ? player.name : `ID: ${playerId}`}
                         </td>
-                        );
+                      );
                     })}
-                    </tr>
+                  </tr>
                 ));
-                })()}
-            </>
+              })()
             )}
             
             {/* ROLES VIEW */}
@@ -456,37 +509,27 @@ const getPlayerDemandInfo = (playerId) => {
                 BOWL: 'BOWL',
                 ALL: 'ALL',
                 WK: 'WK'
-              }).map(([role, label]) => (
-                <tr key={role}>
-                  <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+              }).map(([role, label], roleIndex) => (
+                <tr key={role} className={roleIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
+                  <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
                     {label}
                   </td>
                   
-                  {squads.map(squad => (
-                    <td key={`${squad.id}-${role}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 align-top">
-                      <div className="space-y-1">
-                        {playersByRole[squad.id]?.[role]?.map(player => {
-                          const { demandClass, avgRank, isTopPick } = getPlayerDemandInfo(player.id);
-                          return (
-                            <div 
-                              key={player.id} 
-                              className={`px-2 py-1 rounded relative ${demandClass}`}
-                              onMouseEnter={(e) => showTooltip(player.id, e, isTopPick)}
-                              onMouseLeave={hideTooltip}
-                            >
-                              {isTopPick && <Flame className="h-3 w-3 inline-block mr-1 text-white" />}
-                              {player.name}
-                              {tooltip.visible && tooltip.playerId === parseInt(player.id) && (
-                                <div 
-                                  className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded z-50"
-                                >
-                                  Avg. Rank: {avgRank}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                  {visibleSquads.map(squad => (
+                    <td key={`${squad.id}-${role}`} className="p-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
+                      {playersByRole[squad.id]?.[role]?.map(player => {
+                        const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
+                        return (
+                          <div 
+                            key={player.id} 
+                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-gray-50 dark:hover:bg-gray-700 relative`}
+                            onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
+                            onMouseLeave={hideTooltip}
+                          >
+                            {player.name}
+                          </div>
+                        );
+                      })}
                     </td>
                   ))}
                 </tr>
@@ -499,67 +542,55 @@ const getPlayerDemandInfo = (playerId) => {
               [...new Set(
                 Object.values(playersByTeam)
                   .flatMap(teamMap => Object.keys(teamMap))
-              )].sort().map(teamCode => (
-                <tr key={teamCode}>
-                  <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+              )].sort().map((teamCode, teamIndex) => (
+                <tr key={teamCode} className={teamIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
+                  <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
                     {teamCode}
                   </td>
                   
-                  {squads.map(squad => (
-                    <td key={`${squad.id}-${teamCode}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 align-top">
-                      <div className="space-y-1">
-                        {playersByTeam[squad.id]?.[teamCode]?.map(player => {
-                          const { demandClass, avgRank, isTopPick } = getPlayerDemandInfo(player.id);
-                          return (
-                            <div 
-                              key={player.id} 
-                              className={`px-2 py-1 rounded relative ${demandClass}`}
-                              onMouseEnter={(e) => showTooltip(player.id, e, isTopPick)}
-                              onMouseLeave={hideTooltip}
-                            >
-                              {isTopPick && <Flame className="h-3 w-3 inline-block mr-1 text-white" />}
-                              {player.name}
-                              {tooltip.visible && tooltip.playerId === parseInt(player.id) && (
-                                <div 
-                                  className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded z-50"
-                                >
-                                  Avg. Rank: {avgRank}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                  {visibleSquads.map(squad => (
+                    <td key={`${squad.id}-${teamCode}`} className="p-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
+                      {playersByTeam[squad.id]?.[teamCode]?.map(player => {
+                        const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
+                        return (
+                          <div 
+                            key={player.id} 
+                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-gray-50 dark:hover:bg-gray-700 relative`}
+                            onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
+                            onMouseLeave={hideTooltip}
+                          >
+                            {player.name}
+                          </div>
+                        );
+                      })}
                     </td>
                   ))}
                 </tr>
               ))
             )}
             
-           {/* BOOSTS VIEW */}
-           {activeView === 'boosts' && (
+            {/* BOOSTS VIEW */}
+            {activeView === 'boosts' && (
               squads.length > 0 && (
                 Object.entries({
                   captain: 'Captain',
                   vice_captain: 'Vice-Captain',
                   slogger: 'Slogger',
-                  accumulator: 'Accumulator',
+                  accumulator: 'Accumulator', 
                   safe_hands: 'Safe Hands',
+                  virtuoso: 'Virtuoso',
                   rattler: 'Rattler',
                   constrictor: 'Constrictor',
-                  virtuoso: 'Virtuoso',
-                }).map(([roleKey, roleLabel]) => (
-                  <tr key={roleKey}>
-                    <td className=" text-xs sticky left-0 bg-white dark:bg-gray-800 z-10 px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                      <div className="flex items-center">
-                        <div className="mr-1">
-                          {getRoleIcon(roleLabel, 16)}
-                        </div>
-                        {roleLabel}
+                }).map(([roleKey, roleLabel], roleIndex) => (
+                  <tr key={roleKey} className={roleIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
+                    <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-xs text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                      <div className="flex items-center gap-1">
+                        {getRoleIcon(roleLabel, 14)}
+                        <span className="truncate">{roleLabel}</span>
                       </div>
                     </td>
                     
-                    {squads.map(squad => {
+                    {visibleSquads.map(squad => {
                       // Find the player ID from the core squad
                       const coreSquad = squad.current_core_squad || {};
                       
@@ -592,30 +623,23 @@ const getPlayerDemandInfo = (playerId) => {
                         ? squadPlayers[squad.id].find(p => p.id === boostPlayerId)
                         : null;
                       
-                      // Check if player is a top pick
-                      const { demandClass, avgRank, isTopPick } = boostPlayerId ? 
-                        getPlayerDemandInfo(boostPlayerId) : { demandClass: '', avgRank: 'N/A', isTopPick: false };
+                      // Get demand info if player exists
+                      const { demandClass, avgRank, isHotPick } = boostPlayerId && boostPlayer
+                        ? getPlayerDemandInfo(boostPlayerId) 
+                        : { demandClass: '', avgRank: 'N/A', isHotPick: false };
                       
                       return (
-                        <td key={`${squad.id}-${roleKey}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 align-top">
+                        <td key={`${squad.id}-${roleKey}`} className="p-0 whitespace-nowrap text-xs border border-gray-200 dark:border-gray-600">
                           {boostPlayer ? (
                             <div 
-                              className={`py-1 rounded relative ${demandClass}`}
-                              onMouseEnter={(e) => showTooltip(boostPlayerId, e, isTopPick)}
+                              className={`w-full h-full px-2 py-1 truncate ${demandClass} relative`} 
+                              onMouseEnter={() => showTooltip(boostPlayerId, boostPlayer.name, avgRank, isHotPick)}
                               onMouseLeave={hideTooltip}
                             >
-                              {isTopPick && <Flame className="h-3 w-3 inline-block mr-1 text-white" />}
                               {boostPlayer.name}
-                              {tooltip.visible && tooltip.playerId === parseInt(boostPlayerId) && (
-                                <div 
-                                  className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded z-50"
-                                >
-                                  Avg. Rank: {avgRank}
-                                </div>
-                              )}
                             </div>
                           ) : (
-                            <span className="text-gray-400 dark:text-gray-500">Not assigned</span>
+                            <span className="px-2 py-1 block text-gray-400 dark:text-gray-500">-</span>
                           )}
                         </td>
                       );
@@ -628,32 +652,33 @@ const getPlayerDemandInfo = (playerId) => {
         </table>
       </div>
       
-      {/* Legend for player demand */}
-    <div className="flex items-center justify-end space-x-4 text-sm mt-4">
-    <div className="flex items-center">
-        <div className="h-5 w-5 bg-gradient-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center">
-        <Flame className="h-3 w-3 text-white" />
+      {/* Fixed Tooltip that shows when hovering over top-ranked players */}
+      {tooltip.visible && (
+        <div 
+            className="absolute z-50 px-3 py-2 bg-gray-800 text-white text-xs rounded-md shadow-lg"
+            style={{ 
+            left: tooltip.position.x + 15,
+            top: tooltip.position.y - 30,
+            pointerEvents: 'none'
+            }}
+        >
+            Avg. Rank: {tooltip.avgRank}
         </div>
-        <span className="text-gray-600 dark:text-gray-300 ml-2">Top 5 in demand</span>
-    </div>
-    <div className="flex items-center">
-        <div className="h-5 w-5 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 rounded mr-2"></div>
-        <span className="text-gray-600 dark:text-gray-300">Top 6-15 in demand</span>
-    </div>
-    </div>
+        )}
       
-      {/* Add CSS for the fire effect */}
-      <style jsx>{`
-        @keyframes pulse-fire {
-          0% { opacity: 0.8; }
-          50% { opacity: 1; }
-          100% { opacity: 0.8; }
-        }
-        
-        .animate-pulse {
-          animation: pulse-fire 1.5s infinite ease-in-out;
-        }
-      `}</style>
+      {/* Legend for player demand */}
+      <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-xs mt-2">
+        <div className="flex items-center">
+          <div className="h-4 w-4 bg-gradient-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center mr-1">
+            <Flame className="h-2 w-2 text-white" />
+          </div>
+          <span className="text-gray-600 dark:text-gray-300">Top 5 in demand</span>
+        </div>
+        <div className="flex items-center">
+          <div className="h-4 w-4 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 rounded mr-1"></div>
+          <span className="text-gray-600 dark:text-gray-300">Top 6-15 in demand</span>
+        </div>
+      </div>
     </div>
   );
 };
