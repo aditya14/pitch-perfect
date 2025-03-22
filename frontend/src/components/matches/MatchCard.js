@@ -110,6 +110,24 @@ const MatchCard = ({ match, leagueId }) => {
     }
   };
 
+  // Format score display (only display when runs are available)
+  const formatScore = (runs, wickets, overs) => {
+    // Return empty string if runs is undefined, null, or not a valid number
+    if (runs === undefined || runs === null || isNaN(runs)) return '';
+    
+    // Format wickets (only if it's a valid number)
+    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets)) 
+      ? `/${wickets}` 
+      : '';
+    
+    // Format overs (only if it's a valid string or number)
+    const oversDisplay = (overs !== undefined && overs !== null && overs !== '') 
+      ? ` (${overs} ov)` 
+      : '';
+    
+    return `${runs}${wicketsDisplay}${oversDisplay}`;
+  };
+
   const formattedDateTime = formatMatchDateTime();
   const formattedCountdown = formatCountdown();
   const isClickable = ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status);
@@ -169,10 +187,8 @@ const MatchCard = ({ match, leagueId }) => {
           )}
           
           <div className="text-gray-900 dark:text-white text-sm">
-            {(match.status === 'COMPLETED' || match.status === 'LIVE') && match.inns_1_runs !== undefined && (
-              <span>
-                {match.inns_1_runs}/{match.inns_1_wickets || 0} ({match.inns_1_overs} ov)
-              </span>
+            {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
+              <span>{formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}</span>
             )}
           </div>
         </div>
@@ -194,10 +210,8 @@ const MatchCard = ({ match, leagueId }) => {
           )}
           
           <div className="text-gray-900 dark:text-white text-sm">
-            {(match.status === 'COMPLETED' || match.status === 'LIVE') && match.inns_2_runs !== undefined && (
-              <span>
-                {match.inns_2_runs}/{match.inns_2_wickets || 0} ({match.inns_2_overs} ov)
-              </span>
+            {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
+              <span>{formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}</span>
             )}
           </div>
         </div>

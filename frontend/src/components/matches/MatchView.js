@@ -28,6 +28,23 @@ const getContrastColor = (hexColor) => {
   return luminance > 0.5 ? '#000000' : '#FFFFFF';
 };
 
+const formatScore = (runs, wickets) => {
+  // Return empty string if runs is undefined, null, or not a valid number
+  if (runs === undefined || runs === null || isNaN(runs)) return '';
+  
+  // Format wickets (only if it's a valid number)
+  const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets)) 
+    ? `/${wickets}` 
+    : '';
+  
+  return `${runs}${wicketsDisplay}`;
+};
+
+const formatOvers = (overs) => {
+  if (overs === undefined || overs === null || overs === '') return '';
+  return `(${overs} overs)`;
+};
+
 const MatchOverview = ({ matchData }) => {
   if (!matchData) return null;
 
@@ -37,6 +54,19 @@ const MatchOverview = ({ matchData }) => {
     month: 'long',
     day: 'numeric'
   });
+
+  // Add this helper function to properly format scores
+  const formatScore = (runs, wickets) => {
+    // Return empty string if runs is undefined, null, or not a valid number
+    if (runs === undefined || runs === null || isNaN(runs)) return '';
+    
+    // Format wickets (only if it's a valid number)
+    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets)) 
+      ? `/${wickets}` 
+      : '';
+    
+    return `${runs}${wicketsDisplay}`;
+  };
 
   const getWinDescription = () => {
     if (!matchData.winner) return null;
@@ -61,29 +91,37 @@ const MatchOverview = ({ matchData }) => {
       </div>
 
       <div className="p-4">
-        {/* Teams and Score */}
+        {/* Teams and Score - THIS IS THE SECTION THAT NEEDS CHANGING */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div className="flex-1 text-center md:text-right">
             <TeamBadge team={matchData.team_1} className="mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {matchData.inns_1_runs}/{matchData.inns_1_wickets}
+            <div className="text-2xl font-bold text-gray-900 dark:text-white h-8">
+              {/* Check if runs exist before rendering */}
+              {matchData.inns_1_runs !== undefined && matchData.inns_1_runs !== null
+                ? `${matchData.inns_1_runs}${matchData.inns_1_wickets !== undefined && matchData.inns_1_wickets !== null ? `/${matchData.inns_1_wickets}` : ''}`
+                : '\u00A0'}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              ({matchData.inns_1_overs} overs)
+            <div className="text-sm text-gray-500 dark:text-gray-400 h-5">
+              {/* Check if overs exist before rendering */}
+              {matchData.inns_1_overs ? `(${matchData.inns_1_overs} overs)` : '\u00A0'}
             </div>
           </div>
-          
+
           <div className="text-gray-400 dark:text-gray-500 text-lg font-medium px-4">
             vs
           </div>
 
           <div className="flex-1 text-center md:text-left">
             <TeamBadge team={matchData.team_2} className="mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {matchData.inns_2_runs}/{matchData.inns_2_wickets}
+            <div className="text-2xl font-bold text-gray-900 dark:text-white h-8">
+              {/* Check if runs exist before rendering */}
+              {matchData.inns_2_runs !== undefined && matchData.inns_2_runs !== null
+                ? `${matchData.inns_2_runs}${matchData.inns_2_wickets !== undefined && matchData.inns_2_wickets !== null ? `/${matchData.inns_2_wickets}` : ''}`
+                : '\u00A0'}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              ({matchData.inns_2_overs} overs)
+            <div className="text-sm text-gray-500 dark:text-gray-400 h-5">
+              {/* Check if overs exist before rendering */}
+              {matchData.inns_2_overs ? `(${matchData.inns_2_overs} overs)` : '\u00A0'}
             </div>
           </div>
         </div>
