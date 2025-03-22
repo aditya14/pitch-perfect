@@ -1,1 +1,1 @@
-web: cd backend && gunicorn backend.wsgi --log-file -
+web: cd backend && python manage.py migrate && python manage.py recalculate_points --batch-size=500 && gunicorn backend.wsgi --log-file -
