@@ -1657,6 +1657,7 @@ def update_match_points(request):
     
     match_id = request.data.get('match_id')
     update_all = request.data.get('update_all', False)
+    print(f"Updating match points: {match_id} | {update_all}")
     
     if match_id:
         # Update specific match
@@ -1697,6 +1698,7 @@ def update_match_points(request):
                 status=status.HTTP_200_OK
             )
             
+        print(f"Updating {live_matches.count()} live matches")
         results = service.update_all_live_matches()
         
         successful = [r for r in results if 'error' not in r]

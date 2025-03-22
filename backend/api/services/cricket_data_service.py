@@ -62,6 +62,7 @@ class CricketDataService:
         Returns:
             Dict with summary of updates
         """
+        print("Starting update_match_points for match ", match_id)
         logger.info(f"Starting update_match_points for match {match_id}")
 
         # Reset sequence to prevent ID conflicts
@@ -69,8 +70,9 @@ class CricketDataService:
         
         # Get the IPL match by cricdata_id
         try:
+            print(f"Finding match with cricdata_id: {match_id}")
             match = IPLMatch.objects.get(cricdata_id=match_id)
-            logger.info(f"Found match: {match.id} - {match.team_1.short_name} vs {match.team_2.short_name}")
+            print(f"Found match: {match.id} - {match.team_1.short_name} vs {match.team_2.short_name}")
         except IPLMatch.DoesNotExist:
             logger.error(f"No match found with cricdata_id: {match_id}")
             return {"error": f"Match not found: {match_id}"}
@@ -86,11 +88,11 @@ class CricketDataService:
         
         try:
             # Update match details
-            logger.info(f"Updating match details for {match_id}")
+            print(f"Updating match details for {match_id}")
             self._update_match_details(match, match_data)
             
             # Process player performances
-            logger.info(f"Processing player performances for {match_id}")
+            print(f"Processing player performances for {match_id}")
             updated_events = self._process_player_performances(match, match_data)
             logger.info(f"Updated {len(updated_events)} player events")
             
@@ -129,6 +131,7 @@ class CricketDataService:
         
         for match in live_matches:
             if match.cricdata_id:
+                print("Updating match points for ", match.team_1.short_name, " vs ", match.team_2.short_name)
                 result = self.update_match_points(match.cricdata_id)
                 results.append(result)
         
@@ -651,15 +654,30 @@ class CricketDataService:
         Reset the auto-increment sequence for IPLPlayerEvent to avoid ID conflicts.
         Only needed in production when the sequence is out of sync.
         """
-        from django.db import connection
-        
-        logger.info("Attempting to reset IPLPlayerEvent sequence")
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT setval(pg_get_serial_sequence('api_iplplayerevent', 'id'), 
-                            (SELECT MAX(id) FROM api_iplplayerevent));
-            """)
-            logger.info("IPLPlayerEvent sequence reset successfully")
+        print("Attempting to reset IPLPlayerEvent sequence")
+        try:
+            from django.db import connection
+            
+            with connection.cursor() as cursor:
+                try:
+                    # PostgreSQL-specific command
+                    cursor.execute("""
+                        SELECT setval(pg_get_serial_sequence('api_iplplayerevent', 'id'), 
+                                (SELECT MAX(id) FROM api_iplplayerevent));
+                    """)
+                    print("IPLPlayerEvent sequence reset successfully")
+                except Exception as e:
+                    print(f"PostgreSQL sequence reset failed: {str(e)}")
+                    print("Trying generic approach...")
+                    
+                    # For other databases, we can at least check the max ID
+                    cursor.execute("SELECT MAX(id) FROM api_iplplayerevent")
+                    max_id = cursor.fetchone()[0]
+                    print(f"Current max ID in IPLPlayerEvent table: {max_id}")
+        except Exception as e:
+            print(f"Error in _reset_player_event_sequence: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
     
     def _find_player_by_cricdata_id(self, cricdata_id: str, name: str) -> Optional[IPLPlayer]:
         """
