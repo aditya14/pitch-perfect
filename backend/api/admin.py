@@ -362,37 +362,153 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
     
     # Override to efficiently load related objects
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        # Use select_related for ForeignKey relationships
-        return qs.select_related(
-            'player', 
-            'match', 
-            'match__team_1', 
-            'match__team_2', 
-            'match__season',
-            'for_team', 
-            'vs_team'
-        )
+        try:
+            qs = super().get_queryset(request)
+            # Use select_related for ForeignKey relationships
+            return qs.select_related(
+                'player', 
+                'match', 
+                'match__team_1', 
+                'match__team_2', 
+                'match__season',
+                'for_team', 
+                'vs_team'
+            )
+        except Exception as e:
+            # Log error but return basic queryset to prevent admin crash
+            logger.error(f"Error in IPLPlayerEventAdmin.get_queryset: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return super().get_queryset(request)
     
     # Custom methods to display related info without additional queries
     def player_name(self, obj):
-        return obj.player.name if obj.player else None
+        try:
+            return obj.player.name if obj.player else None
+        except Exception:
+            return "Error loading player"
     player_name.short_description = 'Player'
     player_name.admin_order_field = 'player__name'
     
     def match_description(self, obj):
-        if obj.match:
-            team1 = obj.match.team_1.short_name if obj.match.team_1 else 'TBD'
-            team2 = obj.match.team_2.short_name if obj.match.team_2 else 'TBD'
-            return f"{team1} vs {team2} - Match {obj.match.match_number}"
-        return None
+        try:
+            if obj.match:
+                team1 = obj.match.team_1.short_name if obj.match.team_1 else 'TBD'
+                team2 = obj.match.team_2.short_name if obj.match.team_2 else 'TBD'
+                return f"{team1} vs {team2} - Match {obj.match.match_number}"
+            return None
+        except Exception:
+            return "Error loading match"
     match_description.short_description = 'Match'
     match_description.admin_order_field = 'match__match_number'
     
     def team_name(self, obj):
-        return obj.for_team.short_name if obj.for_team else None
+        try:
+            return obj.for_team.short_name if obj.for_team else None
+        except Exception:
+            return "Error loading team"
     team_name.short_description = 'Team'
     team_name.admin_order_field = 'for_team__short_name'
+    
+    def save_model(self, request, obj, form, change):
+        """Override save_model to add error handling and proper point calculation"""
+        try:
+            # Only calculate the points if they are NULL or user is changing data
+            obj.batting_points_total = obj.bat_points
+            obj.bowling_points_total = obj.bowl_points
+            obj.fielding_points_total = obj.field_points
+            obj.other_points_total = obj.other_points
+            obj.total_points_all = obj.base_points
+            
+            # Save the model
+            super().save_model(request, obj, form, change)
+            
+            # Update affected fantasy player events
+            self._update_fantasy_events(obj, request)
+            
+            messages.success(request, f"Successfully saved player event for {obj.player.name}")
+        except Exception as e:
+            logger.error(f"Error saving IPLPlayerEvent: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            messages.error(request, f"Error saving player event: {str(e)}")
+            # Do not re-raise the exception to prevent the admin from crashing
+    
+    def _update_fantasy_events(self, ipl_event, request):
+        """Update related fantasy player events when an IPL event changes"""
+        try:
+            from .models import FantasyPlayerEvent, FantasySquad
+            from django.db.models import F
+            
+            # Find all related fantasy events
+            fantasy_events = FantasyPlayerEvent.objects.filter(match_event=ipl_event)
+            updated_count = 0
+            
+            # Keep track of affected fantasy squads
+            affected_squads = set()
+            
+            # Update each fantasy event
+            for fantasy_event in fantasy_events:
+                if fantasy_event.boost:
+                    # Recalculate boost points based on the updated IPL event
+                    boost = fantasy_event.boost
+                    
+                    # For Captain (2x) and Vice Captain (1.5x) roles that apply to all points
+                    if boost.label in ['Captain', 'Vice Captain']:
+                        # The boost is (multiplier - 1) * base_points
+                        multiplier = boost.multiplier_runs  # All multipliers are the same for these roles
+                        fantasy_event.boost_points = (multiplier - 1.0) * ipl_event.total_points_all
+                    else:
+                        # For specialized roles, we need to do more detailed calculations
+                        # This should call the same method that's used during normal scoring
+                        from .services.cricket_data_service import CricketDataService
+                        service = CricketDataService()
+                        fantasy_event.boost_points = service._calculate_boost_points(ipl_event, boost)
+                    
+                    fantasy_event.save()
+                    affected_squads.add(fantasy_event.fantasy_squad_id)
+                    updated_count += 1
+            
+            # Update total points for affected squads
+            for squad_id in affected_squads:
+                try:
+                    squad = FantasySquad.objects.get(id=squad_id)
+                    # Calculate new total points
+                    total_points = sum(
+                        FantasyPlayerEvent.objects.filter(fantasy_squad=squad)
+                        .annotate(total=F('match_event__total_points_all') + F('boost_points'))
+                        .values_list('total', flat=True)
+                    )
+                    squad.total_points = total_points
+                    squad.save()
+                except Exception as squad_e:
+                    logger.error(f"Error updating squad points: {str(squad_e)}")
+            
+            if updated_count > 0:
+                messages.info(request, f"Updated {updated_count} fantasy events and {len(affected_squads)} fantasy squads")
+                
+        except Exception as e:
+            logger.error(f"Error updating fantasy events: {str(e)}")
+            messages.warning(request, f"Player event was saved, but could not update fantasy events: {str(e)}")
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Optimize foreign key fields to prevent timeouts with large datasets"""
+        try:
+            # Optimize player selection
+            if db_field.name == "player":
+                kwargs["queryset"] = IPLPlayer.objects.filter(is_active=True)
+                
+            # Optimize match selection to show recent matches first
+            if db_field.name == "match":
+                kwargs["queryset"] = IPLMatch.objects.order_by('-date')[:100]
+                
+            # Optimize team selection
+            if db_field.name in ["for_team", "vs_team"]:
+                kwargs["queryset"] = IPLTeam.objects.filter(is_active=True)
+        except Exception as e:
+            logger.error(f"Error in formfield_for_foreignkey: {str(e)}")
+            
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 # Register with the admin site
 admin.site.register(IPLPlayerEvent, IPLPlayerEventAdmin)
