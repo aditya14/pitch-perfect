@@ -13,6 +13,23 @@ const MatchCard = ({ match, leagueId }) => {
   const [error, setError] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
 
+  // Safely determine which team batted first based on toss winner and toss decision
+  // Adding null checks to prevent "Cannot read properties of null" errors
+  let battingFirstTeam = match.team_1;
+  let battingSecondTeam = match.team_2;
+
+  // Only attempt to determine batting order if we have all the required data
+  if (match.toss_winner && match.toss_decision && match.team_1 && match.team_2) {
+    if (match.toss_decision === 'BAT') {
+      battingFirstTeam = match.toss_winner;
+      battingSecondTeam = (match.team_1.id === match.toss_winner.id) ? match.team_2 : match.team_1;
+    } else {
+      // If toss winner chose to field/bowl
+      battingFirstTeam = (match.team_1.id === match.toss_winner.id) ? match.team_2 : match.team_1;
+      battingSecondTeam = match.toss_winner;
+    }
+  }
+
   useEffect(() => {
     if (match && ['COMPLETED', 'LIVE'].includes(match.status)) {
       fetchFantasyStats();
@@ -170,17 +187,17 @@ const MatchCard = ({ match, leagueId }) => {
       
       {/* Main content area */}
       <div className="p-3">
-        {/* Teams and scores - Team 1 */}
+        {/* Teams and scores - Batting First Team */}
         <div className="flex items-center justify-between mb-3">
-          {match.team_1 ? (
+          {battingFirstTeam ? (
             <span 
               className="px-2 py-1 rounded text-sm font-bold w-16 text-center"
               style={{ 
-                backgroundColor: '#' + match.team_1.primary_color,
-                color: getTextColorForBackground(match.team_1.primary_color)
+                backgroundColor: '#' + battingFirstTeam.primary_color,
+                color: getTextColorForBackground(battingFirstTeam.primary_color)
               }}
             >
-              {match.team_1.short_name || match.team_1.name}
+              {battingFirstTeam.short_name || battingFirstTeam.name}
             </span>
           ) : (
             <span className="text-gray-900 dark:text-white font-bold">TBD</span>
@@ -193,17 +210,17 @@ const MatchCard = ({ match, leagueId }) => {
           </div>
         </div>
         
-        {/* Teams and scores - Team 2 */}
+        {/* Teams and scores - Batting Second Team */}
         <div className="flex items-center justify-between mb-3">
-          {match.team_2 ? (
+          {battingSecondTeam ? (
             <span 
               className="px-2 py-1 rounded text-sm font-bold w-16 text-center"
               style={{ 
-                backgroundColor: '#' + match.team_2.primary_color,
-                color: getTextColorForBackground(match.team_2.primary_color)
+                backgroundColor: '#' + battingSecondTeam.primary_color,
+                color: getTextColorForBackground(battingSecondTeam.primary_color)
               }}
             >
-              {match.team_2.short_name || match.team_2.name}
+              {battingSecondTeam.short_name || battingSecondTeam.name}
             </span>
           ) : (
             <span className="text-gray-900 dark:text-white font-bold">TBD</span>
