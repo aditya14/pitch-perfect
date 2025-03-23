@@ -14,13 +14,13 @@ api.interceptors.request.use(
     const token = localStorage.getItem('accessToken');
     
     // Debug log
-    console.log('Request Config:', {
-      baseURL: config.baseURL,
-      url: config.url,
-      fullURL: config.baseURL + config.url,
-      method: config.method,
-      token: token ? token.substring(0, 20) + '...' : 'no token'
-    });
+    // console.log('Request Config:', {
+    //   baseURL: config.baseURL,
+    //   url: config.url,
+    //   fullURL: config.baseURL + config.url,
+    //   method: config.method,
+    //   token: token ? token.substring(0, 20) + '...' : 'no token'
+    // });
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

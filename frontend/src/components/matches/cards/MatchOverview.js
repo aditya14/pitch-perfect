@@ -10,6 +10,15 @@ const safeToLowerCase = (str) => {
 const MatchOverview = ({ matchData }) => {
   if (!matchData) return null;
 
+  // Determine which team batted first based on toss winner and toss decision
+  const battingFirstTeam = matchData.toss_decision === 'BAT' 
+    ? matchData.toss_winner 
+    : (matchData.team_1.id === matchData.toss_winner.id ? matchData.team_2 : matchData.team_1);
+  
+  const battingSecondTeam = (battingFirstTeam.id === matchData.team_1.id)
+    ? matchData.team_2 
+    : matchData.team_1;
+
   const getReadableDate = (dateString) => new Date(dateString).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -34,7 +43,7 @@ const MatchOverview = ({ matchData }) => {
         {/* Teams and Score */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div className="flex-1 text-center md:text-right">
-            <TeamBadge team={matchData.team_1} className="mb-2" />
+            <TeamBadge team={battingFirstTeam} className="mb-2" />
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {matchData.inns_1_runs}/{matchData.inns_1_wickets}
             </div>
@@ -48,7 +57,7 @@ const MatchOverview = ({ matchData }) => {
           </div>
 
           <div className="flex-1 text-center md:text-left">
-            <TeamBadge team={matchData.team_2} className="mb-2" />
+            <TeamBadge team={battingSecondTeam} className="mb-2" />
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {matchData.inns_2_runs}/{matchData.inns_2_wickets}
             </div>

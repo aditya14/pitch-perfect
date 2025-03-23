@@ -49,7 +49,7 @@ const AppContent = () => {
     }
     // Use dataset to explicitly mark the theme
     document.documentElement.dataset.theme = currentTheme;
-    console.log('Theme applied:', currentTheme);
+    // console.log('Theme applied:', currentTheme);
   };
 
   const handleThemeChange = async (newTheme) => {

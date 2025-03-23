@@ -26,7 +26,7 @@ const PlayerModal = ({ playerId, leagueId, isOpen, onClose }) => {
   }, [isOpen]);
 
   useEffect(() => {
-    console.log('PlayerModal effect triggered with:', { playerId, leagueId, isOpen });
+    // console.log('PlayerModal effect triggered with:', { playerId, leagueId, isOpen });
     
     const loadPlayerData = async () => {
       try {
