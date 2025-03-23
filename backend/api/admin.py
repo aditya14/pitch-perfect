@@ -492,19 +492,25 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             messages.warning(request, f"Player event was saved, but could not update fantasy events: {str(e)}")
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """Optimize foreign key fields to prevent timeouts with large datasets"""
+        """Optimize foreign key fields while ensuring existing values remain valid"""
         try:
-            # Optimize player selection
+            # For player and team fields, continue using the optimized queries
             if db_field.name == "player":
                 kwargs["queryset"] = IPLPlayer.objects.filter(is_active=True)
                 
-            # Optimize match selection to show recent matches first
-            if db_field.name == "match":
-                kwargs["queryset"] = IPLMatch.objects.order_by('-date')[:100]
-                
-            # Optimize team selection
             if db_field.name in ["for_team", "vs_team"]:
                 kwargs["queryset"] = IPLTeam.objects.filter(is_active=True)
+                
+            # For the match field, do NOT limit the queryset when editing
+            # Only limit it for new objects
+            if db_field.name == "match":
+                # Check if we're editing an existing object
+                if 'object_id' in request.resolver_match.kwargs:
+                    # We're editing, so don't limit the matches
+                    pass  # Use the default queryset
+                else:
+                    # We're adding a new object, so limit to recent matches
+                    kwargs["queryset"] = IPLMatch.objects.order_by('-date')[:100]
         except Exception as e:
             logger.error(f"Error in formfield_for_foreignkey: {str(e)}")
             
