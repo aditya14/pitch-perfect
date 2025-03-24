@@ -226,7 +226,7 @@ class CricketDataService:
         )
         return player
 
-    def _process_player_performances(self, match: IPLMatch, match_data: Dict) -> Union[List[IPLPlayerEvent], Dict]:
+    def _process_player_performances(self, match: IPLMatch, match_data: Dict) -> List[IPLPlayerEvent]:
         """
         Process player performances from scorecard data and update/create IPLPlayerEvent objects.
         
@@ -235,14 +235,13 @@ class CricketDataService:
             match_data: The API response data
             
         Returns:
-            List of updated IPLPlayerEvent objects or error Dict if unmapped players found
+            List of updated IPLPlayerEvent objects
         """
         data = match_data.get("data", {})
         scorecard = data.get("scorecard", [])
         
         updated_events = []
         player_events = {}  # Track player events by cricdata_id
-        unmapped_players = []  # Track players that weren't found in the database
         
         # Process batting, bowling, and fielding performances
         for inning in scorecard:
@@ -256,17 +255,14 @@ class CricketDataService:
                 cricdata_id = batsman.get("id")
                 player_name = batsman.get("name")
                 
-                # Find player - no longer creating new players
-                player = self._find_player_by_cricdata_id(cricdata_id, player_name)
+                # Use the new sync method
+                player = self.sync_player_data({
+                    'id': cricdata_id,
+                    'name': player_name
+                })
                 
                 if not player:
-                    # Add to unmapped players list
-                    unmapped_players.append({
-                        "cricdata_id": cricdata_id,
-                        "name": player_name,
-                        "role": "batsman"
-                    })
-                    logger.warning(f"Unmapped player found: {player_name} ({cricdata_id})")
+                    logger.warning(f"Skipping batting entry for {player_name}, player not found and could not be created")
                     continue
                 
                 # Create or update player event
@@ -293,13 +289,6 @@ class CricketDataService:
                 
                 player = self._find_player_by_cricdata_id(cricdata_id, player_name)
                 if not player:
-                    # Add to unmapped players list
-                    unmapped_players.append({
-                        "cricdata_id": cricdata_id,
-                        "name": player_name,
-                        "role": "bowler"
-                    })
-                    logger.warning(f"Unmapped player found: {player_name} ({cricdata_id})")
                     continue
                 
                 # Create or update player event
@@ -336,13 +325,6 @@ class CricketDataService:
                 
                 player = self._find_player_by_cricdata_id(cricdata_id, player_name)
                 if not player:
-                    # Add to unmapped players list
-                    unmapped_players.append({
-                        "cricdata_id": cricdata_id,
-                        "name": player_name,
-                        "role": "fielder"
-                    })
-                    logger.warning(f"Unmapped player found: {player_name} ({cricdata_id})")
                     continue
                 
                 # Create or update player event
@@ -358,14 +340,6 @@ class CricketDataService:
                 player_events[cricdata_id] = event
                 updated_events.append(event)
                 print("Fielding stats updated for ", player.name, " as ", event.field_catch, " catches, ", event.wk_catch, " wicket-keeping catches, ", event.wk_stumping, " stumpings, and ", event.run_out_solo, " solo run-outs.")
-        
-        # If we found unmapped players, return error with details
-        if unmapped_players:
-            error_message = "Unable to process match: Found unmapped players"
-            return {
-                "error": error_message,
-                "unmapped_players": unmapped_players
-            }
         
         # Check if Player of the Match is defined
         if data.get("playerOfMatch"):
