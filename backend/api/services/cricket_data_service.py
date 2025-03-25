@@ -190,19 +190,20 @@ class CricketDataService:
     def sync_player_data(self, player_data: Dict, update_if_exists=False) -> Optional[IPLPlayer]:
         """
         Sync player data from API to local database.
-        Create or update player if needed.
+        Only updates existing players, never creates new ones.
         
         Args:
             player_data: Player data from API
             update_if_exists: Whether to update existing players
             
         Returns:
-            IPLPlayer object or None
+            IPLPlayer object or None if player not found
         """
         cricdata_id = player_data.get('id')
         name = player_data.get('name')
         
         if not cricdata_id or not name:
+            print("Skipping player sync, missing ID or name", cricdata_id, name)
             return None
         
         # Try to find existing player
@@ -216,15 +217,9 @@ class CricketDataService:
                     player.save()
             return player
         
-        # Player not found, create new one
-        logger.info(f"Creating new player: {name} ({cricdata_id})")
-        player = IPLPlayer.objects.create(
-            name=name,
-            cricdata_id=cricdata_id,
-            is_active=True,
-            # Add other fields as needed
-        )
-        return player
+        # Player not found - return None instead of creating a new one
+        logger.warning(f"Player not found and not creating: {name} ({cricdata_id})")
+        return None
 
     def _process_player_performances(self, match: IPLMatch, match_data: Dict) -> List[IPLPlayerEvent]:
         """

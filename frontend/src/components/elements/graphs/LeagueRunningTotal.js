@@ -172,7 +172,7 @@ const LeagueRunningTotal = ({ league }) => {
       });
       
       return (
-        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 shadow-lg rounded">
+        <div className="bg-white dark:bg-black p-3 border border-gray-200 dark:border-gray-700 shadow-lg rounded">
           <p className="font-medium text-gray-900 dark:text-white">{matchName}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
             {payload[0]?.payload?.date}
@@ -210,7 +210,7 @@ const LeagueRunningTotal = ({ league }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-black shadow rounded-lg p-6 border border-gray-200 dark:border-gray-900">
       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
         Running Total
       </h3>
