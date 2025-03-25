@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import SimpleMatchPerformance from './SimpleMatchPerformance';
 import DetailedMatchPerformance from './DetailedMatchPerformance';
@@ -14,7 +14,13 @@ const MatchPerformanceContainer = ({
   leagueId,
   isMobile
 }) => {
-  const [viewMode, setViewMode] = useState('simple'); // 'simple' or 'detailed'
+  // Set initial view mode based on device - desktop: detailed, mobile: simple
+  const [viewMode, setViewMode] = useState(isMobile ? 'simple' : 'detailed');
+  
+  // Update viewMode if isMobile changes (e.g. on window resize)
+  useEffect(() => {
+    setViewMode(isMobile ? 'simple' : 'detailed');
+  }, [isMobile]);
 
   // Process the data once for both views
   const processedEvents = useMemo(() => {
@@ -58,29 +64,26 @@ const MatchPerformanceContainer = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden">
       <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Match Performance
+          Player Points
         </h2>
-        {!isMobile && (
-          <button
-            onClick={toggleViewMode}
-            className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
-            title={viewMode === 'simple' ? 'Show detailed view' : 'Show simple view'}
-          >
-            {viewMode === 'simple' ? (
-              <Maximize2 className="h-5 w-5" />
-            ) : (
-              <Minimize2 className="h-5 w-5" />
-            )}
-          </button>
-        )}
+        <button
+          onClick={toggleViewMode}
+          className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+          title={viewMode === 'simple' ? 'Show detailed view' : 'Show simple view'}
+        >
+          {viewMode === 'simple' ? (
+            <Maximize2 className="h-5 w-5" />
+          ) : (
+            <Minimize2 className="h-5 w-5" />
+          )}
+        </button>
       </div>
 
-      {/* On mobile, always show the detailed view */}
-      {isMobile ? (
-        <DetailedMatchPerformance 
+      {viewMode === 'simple' ? (
+        <SimpleMatchPerformance 
           processedEvents={processedEvents}
           handleSort={handleSort}
           sortConfig={sortConfig}
@@ -90,27 +93,15 @@ const MatchPerformanceContainer = ({
           isMobile={isMobile}
         />
       ) : (
-        viewMode === 'simple' ? (
-          <SimpleMatchPerformance 
-            processedEvents={processedEvents}
-            handleSort={handleSort}
-            sortConfig={sortConfig}
-            hasFantasyData={hasFantasyData}
-            leagueId={leagueId}
-            activeSquadId={activeSquadId}
-            isMobile={isMobile}
-          />
-        ) : (
-          <DetailedMatchPerformance 
-            processedEvents={processedEvents}
-            handleSort={handleSort}
-            sortConfig={sortConfig}
-            hasFantasyData={hasFantasyData}
-            leagueId={leagueId}
-            activeSquadId={activeSquadId}
-            isMobile={isMobile}
-          />
-        )
+        <DetailedMatchPerformance 
+          processedEvents={processedEvents}
+          handleSort={handleSort}
+          sortConfig={sortConfig}
+          hasFantasyData={hasFantasyData}
+          leagueId={leagueId}
+          activeSquadId={activeSquadId}
+          isMobile={isMobile}
+        />
       )}
     </div>
   );

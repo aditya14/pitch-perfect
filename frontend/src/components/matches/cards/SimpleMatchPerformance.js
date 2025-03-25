@@ -96,23 +96,23 @@ const SimpleMatchPerformance = ({
   };
 
   return (
-    <div className="overflow-x-auto max-h-[calc(100vh-12rem)]">
+    <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-20">
+        <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-20">
           <tr>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               <SortableHeader label="Team" sortKey="team_name" />
             </th>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               <div className="flex flex-col">
                 <SortableHeader label="Player" sortKey="player_name" />
                 <SortableHeader label="Squad" sortKey="squad_name" />
               </div>
             </th>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               <span>Performance</span>
             </th>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               {hasFantasyData && leagueId ? (
                 <SortableHeader label="Points" sortKey="fantasy_points" />
               ) : (
@@ -121,7 +121,7 @@ const SimpleMatchPerformance = ({
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
           {localSortedEvents.length === 0 ? (
             <tr>
               <td colSpan={4} className="px-4 py-4 text-center text-gray-500 dark:text-gray-400">
@@ -139,14 +139,14 @@ const SimpleMatchPerformance = ({
                   style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
                 >
                   {/* Team column */}
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-2 py-3 whitespace-nowrap">
                     <div className="flex items-center text-xs">
                       {data.team_name && data.team_name}
                     </div>
                   </td>
                   
                   {/* Player column */}
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-2 py-3 whitespace-nowrap">
                     <div 
                       className="text-sm text-gray-900 dark:text-white cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400"
                       onClick={() => openPlayerModal(data.player_id, leagueId)}
@@ -176,12 +176,12 @@ const SimpleMatchPerformance = ({
                   </td>
                   
                   {/* Performance column */}
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td className="px-2 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {formatPerformance(data)}
                   </td>
                   
                   {/* Points column */}
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                  <td className="px-2 py-3 whitespace-nowrap text-sm font-medium">
                     {hasFantasyData && leagueId ? (
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-900 dark:text-white">

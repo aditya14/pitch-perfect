@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../../utils/axios';
 import MatchOverview from './cards/MatchOverview';
 import MatchPerformanceContainer from './cards/MatchPerformanceContainer';
+import SquadPerformance from './cards/SquadPerformance';
 import { getEventData } from '../../utils/matchUtils';
 
 const MatchView = () => {
@@ -52,7 +53,10 @@ const MatchView = () => {
         ? `/leagues/${leagueId}/matches/${matchId}/events/`
         : `/matches/${matchId}/events/`;
       const response = await api.get(endpoint);
-      setPlayerEvents(response.data);
+      
+      // Sort by total points by default
+      const sortedEvents = sortEventsByTotalPoints(response.data, leagueId);
+      setPlayerEvents(sortedEvents);
       setError(null);
     } catch (err) {
       setError('Failed to fetch match data');
@@ -60,6 +64,25 @@ const MatchView = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const sortEventsByTotalPoints = (events, hasLeagueId) => {
+    // Map the data to a simpler structure first to avoid nested property issues
+    const mappedData = events.map((event, index) => ({
+      originalEvent: event,
+      originalIndex: index,
+      ...getEventData(event)
+    }));
+    
+    // Sort the mapped data by total points
+    const sortedMappedData = [...mappedData].sort((a, b) => {
+      const aPoints = hasLeagueId ? (a.fantasy_points || 0) : (a.total_points_all || 0);
+      const bPoints = hasLeagueId ? (b.fantasy_points || 0) : (b.total_points_all || 0);
+      return bPoints - aPoints; // Descending order
+    });
+    
+    // Get the original events in sorted order
+    return sortedMappedData.map(item => events[item.originalIndex]);
   };
 
   const fetchMatchOverview = async () => {
@@ -121,8 +144,26 @@ const MatchView = () => {
 
   return (
     <div className="space-y-1 px-2 py-2">
-      <MatchOverview matchData={matchOverview} />
+      {/* Overview section with MatchOverview and SquadPerformance side by side */}
+      <div className="flex flex-col md:flex-row gap-2">
+        <div className="w-full md:w-1/2">
+          <MatchOverview matchData={matchOverview} />
+        </div>
+        
+        {leagueId && (
+          <div className="w-full md:w-1/2">
+            <SquadPerformance 
+              playerEvents={playerEvents}
+              loading={loading}
+              error={error}
+              activeSquadId={activeSquadId}
+              // squad_names={matchOverview?.squad_names}
+            />
+          </div>
+        )}
+      </div>
       
+      {/* Match Performance Container */}
       <MatchPerformanceContainer 
         playerEvents={playerEvents}
         loading={loading}
