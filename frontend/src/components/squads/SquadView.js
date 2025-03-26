@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../utils/axios';
 import PlayerListTab from './PlayerListTab';
-import CoreSquadTab from './CoreSquadTab';
+import BoostTab from './BoostTab';
 import { useAuth } from '../../context/AuthContext';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import { ArrowLeft } from 'lucide-react';
@@ -204,7 +204,7 @@ const SquadView = () => {
             squadColor={squadData.color}
           />
         ) : (
-          <CoreSquadTab
+          <BoostTab
             players={players}
             boostRoles={boostRoles}
             currentCoreSquad={squadData.current_core_squad}

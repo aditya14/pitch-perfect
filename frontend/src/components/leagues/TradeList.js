@@ -8,7 +8,7 @@ import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Check, X } from 'luci
 const TradeList = ({ league }) => {
   const [trades, setTrades] = useState([]);
   const [pendingTrades, setPendingTrades] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('pending');
   const [loading, setLoading] = useState(true);
   const [showTradeForm, setShowTradeForm] = useState(false);
   
