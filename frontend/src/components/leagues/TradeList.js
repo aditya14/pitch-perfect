@@ -8,7 +8,7 @@ import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Check, X } from 'luci
 const TradeList = ({ league }) => {
   const [trades, setTrades] = useState([]);
   const [pendingTrades, setPendingTrades] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('pending');
+  const [statusFilter, setStatusFilter] = useState('Pending');
   const [loading, setLoading] = useState(true);
   const [showTradeForm, setShowTradeForm] = useState(false);
   
@@ -136,7 +136,7 @@ const TradeList = ({ league }) => {
           </h2>
           <button
             onClick={() => setShowTradeForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
           >
             Propose Trade
           </button>
@@ -224,7 +224,7 @@ const TradeList = ({ league }) => {
       <div className="p-6">
         {loading ? (
           <div className="text-center py-8">
-            <div className="inline-block animate-spin h-8 w-8 border-4 border-gray-300 dark:border-gray-600 rounded-full border-t-indigo-600 dark:border-t-indigo-400"></div>
+            <div className="inline-block animate-spin h-8 w-8 border-4 border-gray-300 dark:border-gray-600 rounded-full border-t-primary-600 dark:border-t-primary-400"></div>
             <p className="mt-2 text-gray-500 dark:text-gray-400">Loading trades...</p>
           </div>
         ) : filteredTrades.length === 0 ? (
@@ -440,7 +440,7 @@ const TradeList = ({ league }) => {
                             onClick={() => paginate(page)}
                             className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
                               currentPage === page
-                                ? 'z-10 bg-indigo-50 dark:bg-indigo-900/30 border-indigo-500 dark:border-indigo-500 text-indigo-600 dark:text-indigo-300'
+                                ? 'z-10 bg-primary-50 dark:bg-primary-900/30 border-primary-500 dark:border-primary-500 text-primary-600 dark:text-primary-300'
                                 : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                             }`}
                           >

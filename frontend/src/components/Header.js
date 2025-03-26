@@ -112,7 +112,7 @@ const Header = ({ theme, onThemeChange }) => {
             </ol>
           </div>
           <div class="mt-6">
-            <button class="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md focus:outline-none" id="confirm-modal">
+            <button class="w-full py-2 px-4 bg-primary-500 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md focus:outline-none" id="confirm-modal">
               Got it
             </button>
           </div>
@@ -153,9 +153,9 @@ const Header = ({ theme, onThemeChange }) => {
           >
             <img src="/icon.png" alt="Logo" className="h-9 w-9 mr-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300" />
             <div 
-              className="text-xl font-extrabold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-300"
+              className="text-xl font-extrabold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-300"
             >
-              <span className="text-indigo-600 dark:text-indigo-400">Pitch</span>Perfect
+              <span className="text-primary-500 dark:text-primary-500">Pitch</span>Perfect
             </div>
           </Link>
 
@@ -164,12 +164,12 @@ const Header = ({ theme, onThemeChange }) => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-full p-1"
+                className="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-full p-1"
               >
-                <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shadow-sm">
+                <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center shadow-sm">
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5 text-indigo-600 dark:text-indigo-400" 
+                    className="h-5 w-5 text-primary-600 dark:text-primary-400" 
                     viewBox="0 0 20 20" 
                     fill="currentColor"
                   >

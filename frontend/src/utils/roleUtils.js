@@ -20,9 +20,9 @@ export const getRoleIcon = (roleName, size = 16, squadColor) => {
 
   switch(roleName) {
     case 'Captain':
-      return <Crown size={size} style={outlineStyle} className="text-indigo-600 dark:text-indigo-400" />;
+      return <Crown size={size} style={outlineStyle} className="text-primary-600 dark:text-primary-400" />;
     case 'Vice-Captain':
-      return <Swords size={size} style={outlineStyle} className="text-indigo-500 dark:text-indigo-300" />;
+      return <Swords size={size} style={outlineStyle} className="text-primary-500 dark:text-primary-300" />;
     case 'Slogger':
       return <Zap size={size} style={outlineStyle} className="text-red-500 dark:text-red-400" />;
     case 'Accumulator':

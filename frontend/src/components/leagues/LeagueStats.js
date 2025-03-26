@@ -12,8 +12,8 @@ const LeagueStats = ({ league }) => {
       
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
         <div className="relative mb-8">
-          <div className="bg-indigo-100 dark:bg-indigo-900/30 rounded-full p-5 relative z-10">
-            <BarChart3 className="w-10 h-10 text-indigo-500 dark:text-indigo-400" />
+          <div className="bg-primary-100 dark:bg-primary-900/30 rounded-full p-5 relative z-10">
+            <BarChart3 className="w-10 h-10 text-primary-500 dark:text-primary-400" />
           </div>
         </div>
         
@@ -36,7 +36,7 @@ const LeagueStats = ({ league }) => {
           </div>
           
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 flex flex-col items-center">
-            <Users className="w-6 h-6 text-indigo-500 mb-2" />
+            <Users className="w-6 h-6 text-primary-500 mb-2" />
             <h4 className="font-medium text-gray-900 dark:text-white">Squad Comparisons</h4>
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
               Compare your squad with others in the league

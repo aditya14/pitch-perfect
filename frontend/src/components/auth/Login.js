@@ -57,22 +57,22 @@ const Login = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 pt-10 pb-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-primary-950 pt-10 pb-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Inject safe-area CSS */}
       <style dangerouslySetInnerHTML={{ __html: safeTopStyle }} />
       {/* Background decoration */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-indigo-100 dark:bg-indigo-900/20 blur-3xl opacity-50"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary-100 dark:bg-primary-900/20 blur-3xl opacity-50"></div>
         <div className="absolute top-1/2 -left-24 w-80 h-80 rounded-full bg-blue-100 dark:bg-blue-900/20 blur-3xl opacity-40"></div>
-        <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 w-screen h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-30"></div>
+        <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 w-screen h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-30"></div>
       </div>
 
       <div className="container mx-auto max-w-7xl z-10 relative">
         {/* App Logo - Always at the top on all screens with safe spacing */}
         <div className="flex items-center justify-center lg:justify-start mb-8 safe-top">
-          <img src="/icon.png" alt="PitchPerfect Logo" className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl shadow-lg mr-3" />
+          <img src="/icon.png" alt="PitchPerfect Logo" className="h-12 w-12 sm:h-16 sm:w-16 mr-3" />
           <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white">
-            <span className="text-indigo-600 dark:text-indigo-400">Pitch</span>Perfect
+            <span className="text-primary-500 dark:text-primary-500">Pitch</span>Perfect
           </h1>
         </div>
         
@@ -90,7 +90,7 @@ const Login = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
                 {features.map((feature, index) => (
                   <div key={index} className="flex items-start p-3 sm:p-4 bg-white dark:bg-gray-800/50 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all">
-                    <div className="flex-shrink-0 p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400 mr-3">
+                    <div className="flex-shrink-0 p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400 mr-3">
                       {feature.icon}
                     </div>
                     <div>
@@ -119,7 +119,7 @@ const Login = () => {
                 </h2>
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                   Or{' '}
-                  <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+                  <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
                     create a new account
                   </Link>
                 </p>
@@ -144,8 +144,8 @@ const Login = () => {
                       type="text"
                       required
                       className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 
-                        focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 
-                        dark:bg-gray-700 dark:text-white sm:text-sm"
+                        focus:outline-none focus:ring-primary-500 focus:border-primary-500 
+                        dark:bg-gray-700 dark:text-white sm:text-sm bg-gray-100 text-black"
                       placeholder="you@example.com"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
@@ -163,8 +163,8 @@ const Login = () => {
                         type={showPassword ? "text" : "password"}
                         required
                         className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 
-                          focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 
-                          dark:bg-gray-700 dark:text-white sm:text-sm"
+                          focus:outline-none focus:ring-primary-500 focus:border-primary-500 
+                          dark:bg-gray-700 dark:text-white sm:text-sm bg-gray-100 text-black"
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -186,9 +186,9 @@ const Login = () => {
                     type="submit"
                     disabled={isSubmitting}
                     className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                      bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 
-                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 
-                      disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors duration-200"
+                      bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 
+                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 
+                      disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {isSubmitting ? 'Signing in...' : 'Sign in'}
                   </button>

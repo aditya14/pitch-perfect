@@ -39,7 +39,7 @@ const HowItWorksComponent = () => {
     <div className="max-w-5xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow mb-4">
       <div className="mb-8">
         <nav className="flex items-center mb-4">
-          <Link to="/" className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors">
+          <Link to="/" className="flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 transition-colors">
             <ArrowLeft size={20} className="mr-1" />
             Back to Dashboard
           </Link>
@@ -479,10 +479,10 @@ const HowItWorksComponent = () => {
             </div>
             
             {/* Vice Captain */}
-            <div className="bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4 shadow-sm">
+            <div className="bg-primary-50 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-800 rounded-lg p-4 shadow-sm">
               <div className="flex items-center mb-2">
-                <Swords className="text-indigo-600 dark:text-indigo-400 mr-2" size={20} />
-                <h3 className="font-bold text-lg text-indigo-700 dark:text-indigo-300">Vice Captain</h3>
+                <Swords className="text-primary-600 dark:text-primary-400 mr-2" size={20} />
+                <h3 className="font-bold text-lg text-primary-700 dark:text-primary-300">Vice Captain</h3>
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> Any role</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 1.5× all points</p>

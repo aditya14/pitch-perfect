@@ -284,7 +284,7 @@ const LeagueSquads = ({ league }) => {
           onClick={() => setActiveView('names')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'names'
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
@@ -296,7 +296,7 @@ const LeagueSquads = ({ league }) => {
           onClick={() => setActiveView('draft')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'draft'
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
@@ -308,7 +308,7 @@ const LeagueSquads = ({ league }) => {
           onClick={() => setActiveView('roles')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'roles'
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
@@ -320,7 +320,7 @@ const LeagueSquads = ({ league }) => {
           onClick={() => setActiveView('teams')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'teams'
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
@@ -332,7 +332,7 @@ const LeagueSquads = ({ league }) => {
           onClick={() => setActiveView('boosts')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'boosts'
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >

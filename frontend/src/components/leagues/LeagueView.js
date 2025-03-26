@@ -251,7 +251,7 @@ const LeagueView = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
       </div>
     );
   }
@@ -279,7 +279,7 @@ const LeagueView = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
           <nav className="flex items-center mb-4">
-          <Link to="/" className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors">
+          <Link to="/" className="flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 transition-colors">
             <ArrowLeft size={20} className="mr-1" />
             Back to Dashboard
           </Link>
@@ -307,7 +307,7 @@ const LeagueView = () => {
                   className={`inline-flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium 
                     ${isDraftDeadlinePassed 
                       ? 'border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 cursor-not-allowed'
-                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900'
+                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-900'
                     }
                   `}
                 >
@@ -319,7 +319,7 @@ const LeagueView = () => {
                 to={league?.my_squad && isDraftCompleted ? `/squads/${league.my_squad.id}` : '#'}
                 className={`inline-flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium
                           ${(isDraftCompleted && league?.my_squad) 
-                            ? 'bg-indigo-600 text-white border-transparent hover:bg-indigo-700 focus:ring-indigo-500' 
+                            ? 'bg-primary-600 text-white border-transparent hover:bg-primary-700 focus:ring-primary-500' 
                             : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-500'
                           }
                           focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900`}
@@ -344,7 +344,7 @@ const LeagueView = () => {
               className={`
                 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
                 ${activeTab === tab.id
-                  ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                  ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-300'
                 }
               `}

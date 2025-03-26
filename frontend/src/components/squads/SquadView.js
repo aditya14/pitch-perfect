@@ -123,7 +123,7 @@ const SquadView = () => {
           {/* Back Navigation */}
           <button
             onClick={handleBackToLeague}
-            className="flex items-center text-indigo-600 dark:text-indigo-400 mb-4 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+            className="flex items-center text-primary-600 dark:text-primary-400 mb-4 hover:text-primary-800 dark:hover:text-primary-300 transition-colors"
           >
             <ArrowLeft size={16} className="mr-1" />
             <span className="text-sm">{squadData.league_name}</span>
@@ -139,7 +139,7 @@ const SquadView = () => {
           {/* Points Card */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-4 py-3 min-w-[100px] text-center">
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Points</div>
-            <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+            <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
               {Number.isInteger(squadData.total_points) 
                 ? squadData.total_points 
                 : parseFloat(squadData.total_points).toFixed(1)}
@@ -157,7 +157,7 @@ const SquadView = () => {
               <div className={`text-xl font-bold ${
                 rankInfo.rank === 1
                   ? 'text-amber-600 dark:text-amber-400'
-                  : 'text-indigo-600 dark:text-indigo-400'
+                  : 'text-primary-600 dark:text-primary-400'
               }`}>
                 {rankInfo.rank}/{rankInfo.totalSquads}
               </div>
@@ -173,7 +173,7 @@ const SquadView = () => {
             onClick={() => setActiveTab('players')}
             className={`py-2 px-4 text-sm font-medium ${
               activeTab === 'players'
-                ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
@@ -183,7 +183,7 @@ const SquadView = () => {
             onClick={() => setActiveTab('core')}
             className={`py-2 px-4 text-sm font-medium ${
               activeTab === 'core'
-                ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >

@@ -73,23 +73,23 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
     }
   
     return (
-      <div className="rounded-lg bg-indigo-50 dark:bg-indigo-900 px-4 py-3 w-full">
-        <div className="text-xs text-indigo-600 dark:text-indigo-300 mb-1">Boost Picks Lock For The Week In:</div>
+      <div className="rounded-lg bg-primary-50 dark:bg-primary-900 px-4 py-3 w-full">
+        <div className="text-xs text-primary-600 dark:text-primary-300 mb-1">Boost Picks Lock For The Week In:</div>
         <div className="flex space-x-2 text-center justify-center md:justify-start">
           <div className="bg-white dark:bg-gray-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{timeLeft.days}</div>
+            <div className="text-lg font-bold text-primary-600 dark:text-primary-400">{timeLeft.days}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">days</div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{timeLeft.hours}</div>
+            <div className="text-lg font-bold text-primary-600 dark:text-primary-400">{timeLeft.hours}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">hrs</div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{timeLeft.minutes}</div>
+            <div className="text-lg font-bold text-primary-600 dark:text-primary-400">{timeLeft.minutes}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">min</div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{timeLeft.seconds}</div>
+            <div className="text-lg font-bold text-primary-600 dark:text-primary-400">{timeLeft.seconds}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">sec</div>
           </div>
         </div>
@@ -252,7 +252,7 @@ const BoostSelection = ({
           {/* Back button */}
           <button 
             onClick={handleBackToPlayerList}
-            className="flex items-center text-indigo-600 dark:text-indigo-400 mb-4"
+            className="flex items-center text-primary-600 dark:text-primary-400 mb-4"
           >
             <ArrowLeft size={16} className="mr-1" />
             <span>Back to Players</span>
@@ -287,8 +287,8 @@ const BoostSelection = ({
                     className={`
                       w-full flex items-start p-3 rounded-lg text-left transition-all
                       ${isCurrentlyAssigned 
-                        ? 'bg-indigo-50 dark:bg-indigo-900 border border-indigo-200 dark:border-indigo-800' 
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}
+                        ? 'bg-primary-50 dark:bg-primary-900 border border-primary-200 dark:border-primary-800' 
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/30'}
                       ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
                     `}
                   >
@@ -521,7 +521,7 @@ const BoostSelection = ({
                     className={`
                       rounded-lg p-3 cursor-pointer border transition-all
                       ${isSelected 
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900 dark:border-indigo-700' 
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900 dark:border-primary-700' 
                         : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'}
                       ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
                     `}
@@ -603,8 +603,8 @@ const BoostSelection = ({
                           className={`
                             w-full flex items-start p-3 rounded-lg text-left transition-all
                             ${isCurrentlyAssigned 
-                              ? 'bg-indigo-50 dark:bg-indigo-900 border border-indigo-200 dark:border-indigo-800' 
-                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}
+                              ? 'bg-primary-50 dark:bg-primary-900 border border-primary-200 dark:border-primary-800' 
+                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/30'}
                             ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
                           `}
                         >

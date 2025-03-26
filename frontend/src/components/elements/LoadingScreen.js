@@ -17,13 +17,13 @@ const LoadingScreen = ({ message = "Loading...", description = "Preparing your c
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900 z-50">
       <div className="w-24 h-24 mb-4 relative">
         {/* Outer spinning cricket ball */}
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-600 dark:border-t-indigo-500 animate-spin"></div>
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary-600 dark:border-t-primary-500 animate-spin"></div>
         
         {/* Inner spinning cricket ball with seam */}
-        <div className="absolute inset-3 rounded-full border-2 border-transparent border-t-indigo-500 dark:border-t-indigo-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1s' }}></div>
+        <div className="absolute inset-3 rounded-full border-2 border-transparent border-t-primary-500 dark:border-t-primary-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1s' }}></div>
         
         {/* Cricket ball core */}
-        <div className="absolute inset-6 bg-indigo-600 dark:bg-indigo-500 rounded-full">
+        <div className="absolute inset-6 bg-primary-600 dark:bg-primary-500 rounded-full">
           {/* Cricket seam line */}
           <div className="absolute w-full h-0.5 bg-white dark:bg-gray-200 top-1/2 -translate-y-1/2 transform rotate-45"></div>
           <div className="absolute w-full h-0.5 bg-white dark:bg-gray-200 top-1/2 -translate-y-1/2 transform -rotate-45"></div>

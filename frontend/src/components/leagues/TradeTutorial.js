@@ -53,7 +53,7 @@ const TradeTutorial = ({ league }) => {
                     </p>
                   </div>
                   
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-indigo-50 dark:bg-indigo-900/30">
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-primary-50 dark:bg-primary-900/30">
                     <div className="flex items-center">
                       <div className="ml-3 flex-grow">
                         <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
@@ -144,13 +144,13 @@ const TradeTutorial = ({ league }) => {
           
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
             <div className="flex items-center mb-4">
-              <Info className="h-5 w-5 text-indigo-500 dark:text-indigo-400 mr-2" />
+              <Info className="h-5 w-5 text-primary-500 dark:text-primary-400 mr-2" />
               <h3 className="font-medium text-gray-900 dark:text-white">Trading Boosted Players</h3>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               When trading a player with a boost role (like Captain):
             </p>
-            <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+            <p className="text-sm font-medium text-primary-600 dark:text-primary-400">
               The incoming player inherits that boost until the weekly update window.
             </p>
           </div>

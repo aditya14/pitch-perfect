@@ -181,7 +181,7 @@ const DetailedMatchPerformance = ({
                       style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
                   >
                     <div 
-                      className="text-xs text-gray-900 dark:text-white cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400"
+                      className="text-xs text-gray-900 dark:text-white cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
                       onClick={() => openPlayerModal(data.player_id, leagueId)}
                     >
                       {data.player_name} {data.player_of_match && '🏅'}

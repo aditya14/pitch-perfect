@@ -54,7 +54,7 @@ const CurrentBoosts = ({
                     </div>
                     {player ? (
                       <div 
-                        className="ml-10 text-sm text-indigo-600 dark:text-indigo-400 font-medium cursor-pointer hover:underline"
+                        className="ml-10 text-sm text-primary-600 dark:text-primary-400 font-medium cursor-pointer hover:underline"
                         onClick={() => openPlayerModal(player.id, leagueId)}
                       >
                         {player.name}

@@ -179,7 +179,7 @@ const DraftList = ({ players, draftOrder, onSaveOrder }) => {
             <select
               value={breakdownCount}
               onChange={(e) => setBreakdownCount(Number(e.target.value))}
-              className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              className="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
             >
               {BREAKDOWN_OPTIONS.map(option => (
                 <option key={option} value={option}>{option}</option>
@@ -204,7 +204,7 @@ const DraftList = ({ players, draftOrder, onSaveOrder }) => {
                       <div className="flex-1 mx-4">
                         <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                           <div
-                            className="h-2 bg-indigo-600 rounded-full"
+                            className="h-2 bg-primary-600 rounded-full"
                             style={{ width: `${getPercentage(count)}%` }}
                           />
                         </div>
@@ -231,7 +231,7 @@ const DraftList = ({ players, draftOrder, onSaveOrder }) => {
                       <div className="flex-1 mx-4">
                         <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                           <div
-                            className="h-2 bg-indigo-600 rounded-full"
+                            className="h-2 bg-primary-600 rounded-full"
                             style={{ width: `${getPercentage(count)}%` }}
                           />
                         </div>
