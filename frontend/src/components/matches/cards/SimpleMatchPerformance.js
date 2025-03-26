@@ -71,8 +71,9 @@ const SimpleMatchPerformance = ({
     
     // Add bowling info if player bowled
     if (data.bowl_balls > 0) {
-      const overs = `${Math.floor(data.bowl_balls / 6)}${data.bowl_balls % 6 ? '.' + (data.bowl_balls % 6) : ''}`;
-      performance.push(`${data.bowl_wickets}/${data.bowl_runs} (${overs})`);
+      // const overs = `${Math.floor(data.bowl_balls / 6)}${data.bowl_balls % 6 ? '.' + (data.bowl_balls % 6) : ''}`;
+      // performance.push(`${data.bowl_wickets}/${data.bowl_runs} (${overs})`);
+      performance.push(`${data.bowl_wickets}/${data.bowl_runs}`);
     }
     
     // Add fielding info if player was involved in fielding
@@ -176,7 +177,7 @@ const SimpleMatchPerformance = ({
                   </td>
                   
                   {/* Performance column */}
-                  <td className="px-2 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td className="px-2 py-3 text-sm text-sm text-gray-900 dark:text-white">
                     {formatPerformance(data)}
                   </td>
                   
@@ -184,7 +185,7 @@ const SimpleMatchPerformance = ({
                   <td className="px-2 py-3 whitespace-nowrap text-sm font-medium">
                     {hasFantasyData && leagueId ? (
                       <div className="flex flex-col">
-                        <span className="font-bold text-gray-900 dark:text-white">
+                        <span className="font-bold text-gray-900 dark:text-white text-base">
                           {data.fantasy_points}
                         </span>
                         <div className='flex items-center gap-1'>

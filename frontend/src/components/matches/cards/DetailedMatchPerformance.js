@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import BoostInlineElement from '../../elements/BoostInlineElement';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
 import { getPointsColorClass } from '../../../utils/matchUtils';
@@ -24,6 +24,108 @@ const DetailedMatchPerformance = ({
       <ArrowUpDown className="h-4 w-4 ml-1 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
+
+  // Function to render strike rate chevrons
+  const renderSRChevrons = (sr, ballsFaced) => {
+    if (!sr || ballsFaced < 10) return null;
+    
+    if (sr >= 200) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (sr >= 175) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (sr >= 150) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+        </span>
+      );
+    } else if (sr < 50) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (sr < 75) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (sr < 100) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+        </span>
+      );
+    }
+    
+    return null;
+  };
+
+  // Function to render economy chevrons
+  const renderEconomyChevrons = (economy, ballsBowled) => {
+    if (!economy || ballsBowled < 10) return null;
+    
+    if (economy <= 5) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (economy <= 6) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (economy <= 7) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+        </span>
+      );
+    } else if (economy >= 12) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (economy >= 11) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (economy >= 10) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+        </span>
+      );
+    }
+    
+    return null;
+  };
 
   return (
     <div className="overflow-x-auto max-h-[calc(100vh-12rem)]">
@@ -260,7 +362,10 @@ const DetailedMatchPerformance = ({
                     px-1 py-2 whitespace-nowrap text-xs text-left text-gray-900 dark:text-white font-extralight
                     ${!data.bat_strike_rate && 'opacity-30'}
                   `}>
-                    {data.bat_strike_rate ? data.bat_strike_rate?.toFixed(2) : '-'}
+                    <div className="flex items-center">
+                      {data.bat_strike_rate ? data.bat_strike_rate?.toFixed(2) : '-'}
+                      {renderSRChevrons(data.bat_strike_rate, data.bat_balls)}
+                    </div>
                   </td>
                   <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-gray-900 dark:text-white">
                     {data.batting_points_total || '-'}
@@ -295,7 +400,10 @@ const DetailedMatchPerformance = ({
                     {data.bowl_wickets ? data.bowl_wickets : data.bowl_balls ? 0 : '-'}
                   </td>
                   <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-gray-900 dark:text-white">
-                    {data.bowl_economy ? data.bowl_economy?.toFixed(2) : '-'}
+                    <div className="flex items-center">
+                      {data.bowl_economy ? data.bowl_economy?.toFixed(2) : '-'}
+                      {renderEconomyChevrons(data.bowl_economy, data.bowl_balls)}
+                    </div>
                   </td>
                   <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-gray-900 dark:text-white">
                     {data.bowling_points_total || '-'}

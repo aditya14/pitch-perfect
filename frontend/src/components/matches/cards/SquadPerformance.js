@@ -114,7 +114,7 @@ const SquadPerformance = ({ playerEvents, loading, error, activeSquadId }) => {
       </div>
       
       <div className="p-1">
-        <div className={`grid ${useGridLayout ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-3`}>
+        <div className={`grid ${useGridLayout ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
           {squadTotals.map((squad) => (
             <div 
               key={`squad-${squad.id}`}
