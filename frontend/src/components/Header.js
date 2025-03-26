@@ -151,7 +151,7 @@ const Header = ({ theme, onThemeChange }) => {
               to="/dashboard"
               className="flex items-center"
           >
-            <img src="/icon.png" alt="Logo" className="h-9 w-9 mr-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300" />
+            <img src="/icon.png" alt="Logo" className="h-9 w-9 mr-3" />
             <div 
               className="text-xl font-extrabold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-300"
             >
