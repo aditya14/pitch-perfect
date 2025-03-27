@@ -183,10 +183,10 @@ const LeagueRunningTotal = ({ league }) => {
                 <div key={index} className="flex items-center justify-between gap-2">
                   <div className="flex items-center">
                     <div
-                      className="h-3 w-3 rounded-full mr-1"
+                      className="h-3 w-1 rounded-full mr-1"
                       style={{ backgroundColor: entry.color }}
                     ></div>
-                    <span className="text-gray-800 dark:text-gray-200 text-sm">
+                    <span className="text-gray-800 dark:text-gray-200 text-xs">
                       {entry.name}
                     </span>
                   </div>
