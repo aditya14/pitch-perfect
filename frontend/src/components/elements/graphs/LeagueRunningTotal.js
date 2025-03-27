@@ -233,12 +233,6 @@ const LeagueRunningTotal = ({ league }) => {
               tickLine={{ stroke: '#6B7280' }}
             />
             <YAxis 
-              label={{ 
-                value: 'Points', 
-                angle: -90, 
-                position: 'insideLeft',
-                style: { textAnchor: 'middle', fill: '#4B5563' }
-              }}
               tick={{ fill: '#4B5563' }}
               tickLine={{ stroke: '#6B7280' }}
             />
