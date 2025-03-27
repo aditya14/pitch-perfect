@@ -87,7 +87,7 @@ const LeagueRunningTotal = ({ league }) => {
           const dataPoint = {
             name: match.match_number.toString(),
             match_id: match.id,
-            date: new Date(match.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }),
+            date: new Date(match.date).toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric' }),
             match_name: match.team_1.short_name + ' vs ' + match.team_2.short_name,
             matchPoints: {},
           };
