@@ -89,7 +89,7 @@ class IPLMatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = IPLMatch
         fields = [
-            'id', 'season', 'match_number', 'stage', 
+            'id', 'season', 'match_number', 'stage', 'phase',
             'team_1', 'team_2', 'date', 'venue', 'status',
             'toss_winner', 'toss_decision', 'winner',
             'win_margin', 'win_type', 'player_of_match',
@@ -140,7 +140,7 @@ class LeagueDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'color', 'max_teams', 'season',
             'league_code', 'squads_count', 'my_squad',
-            'created_at', 'squads', 'draft_completed'
+            'created_at', 'squads', 'draft_completed', 'snake_draft_order'
         ]
 
     def get_squads_count(self, obj):

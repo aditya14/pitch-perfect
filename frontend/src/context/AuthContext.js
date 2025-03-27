@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/axios';
+import LoadingScreen from '../components/elements/LoadingScreen';
 
 const AuthContext = createContext(null);
 
@@ -7,6 +8,19 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Apply system theme preference or stored theme on initial load
+  useEffect(() => {
+    // First check localStorage
+    const storedTheme = localStorage.getItem('theme');
+    
+    // Apply theme from localStorage or system preference
+    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -88,8 +102,9 @@ export const AuthProvider = ({ children }) => {
     logout
   };
 
+  // Force dark mode to be properly applied to LoadingScreen
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen message="Connecting..." />;
   }
 
   return (

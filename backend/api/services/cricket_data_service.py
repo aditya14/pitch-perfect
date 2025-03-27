@@ -18,7 +18,7 @@ class CricketDataService:
     """
     
     def __init__(self, api_key=None):
-        self.api_key = api_key or settings.CRICKET_API_KEY
+        self.api_key = api_key or settings.CRICDATA_API_KEY
         self.base_url = "https://api.cricapi.com/v1"
         
     def fetch_match_scorecard(self, match_id: str) -> Dict:
@@ -62,36 +62,62 @@ class CricketDataService:
         Returns:
             Dict with summary of updates
         """
+        print("Starting update_match_points for match ", match_id)
+        logger.info(f"Starting update_match_points for match {match_id}")
+
+        # Reset sequence to prevent ID conflicts
+        self._reset_player_event_sequence()
+        
         # Get the IPL match by cricdata_id
         try:
+            print(f"Finding match with cricdata_id: {match_id}")
             match = IPLMatch.objects.get(cricdata_id=match_id)
+            print(f"Found match: {match.id} - {match.team_1.short_name} vs {match.team_2.short_name}")
         except IPLMatch.DoesNotExist:
             logger.error(f"No match found with cricdata_id: {match_id}")
             return {"error": f"Match not found: {match_id}"}
+        except Exception as e:
+            logger.error(f"Error finding match {match_id}: {str(e)}")
+            return {"error": f"Error finding match: {str(e)}"}
         
         # Fetch data from API
         match_data = self.fetch_match_scorecard(match_id)
         if not match_data:
+            logger.error(f"Failed to fetch match data for {match_id}")
             return {"error": "Failed to fetch match data"}
         
-        # Update match details
-        self._update_match_details(match, match_data)
-        
-        # Process player performances
-        updated_events = self._process_player_performances(match, match_data)
-        
-        # Update fantasy player events for all fantasy squads
-        fantasy_events = self._update_fantasy_events(match, updated_events)
-        
-        # Update total points for each fantasy squad
-        updated_squads = self._update_fantasy_squad_totals(match.season)
-        
-        return {
-            "match": match.id,
-            "player_events_updated": len(updated_events),
-            "fantasy_events_updated": len(fantasy_events),
-            "fantasy_squads_updated": len(updated_squads)
-        }
+        try:
+            # Update match details
+            print(f"Updating match details for {match_id}")
+            self._update_match_details(match, match_data)
+            
+            # Process player performances
+            print(f"Processing player performances for {match_id}")
+            updated_events = self._process_player_performances(match, match_data)
+            logger.info(f"Updated {len(updated_events)} player events")
+            
+            # Update fantasy player events for all fantasy squads
+            logger.info(f"Updating fantasy events for {match_id}")
+            fantasy_events = self._update_fantasy_events(match, updated_events)
+            logger.info(f"Updated {len(fantasy_events)} fantasy events")
+            
+            # Update total points for each fantasy squad
+            logger.info(f"Updating fantasy squad totals for {match_id}")
+            updated_squads = self._update_fantasy_squad_totals(match.season)
+            logger.info(f"Updated {len(updated_squads)} fantasy squads")
+            
+            return {
+                "match": match.id,
+                "player_events_updated": len(updated_events),
+                "fantasy_events_updated": len(fantasy_events),
+                "fantasy_squads_updated": len(updated_squads)
+            }
+        except Exception as e:
+            logger.error(f"Error updating match {match_id}: {str(e)}")
+            # Include traceback for detailed error information
+            import traceback
+            logger.error(traceback.format_exc())
+            return {"error": f"Error updating match: {str(e)}"}
     
     def update_all_live_matches(self) -> List[Dict]:
         """
@@ -105,6 +131,7 @@ class CricketDataService:
         
         for match in live_matches:
             if match.cricdata_id:
+                print("Updating match points for ", match.team_1.short_name, " vs ", match.team_2.short_name)
                 result = self.update_match_points(match.cricdata_id)
                 results.append(result)
         
@@ -160,6 +187,40 @@ class CricketDataService:
 
         print("Match updated successfully as ", match.inns_1_runs, "/", match.inns_1_wickets, " in ", match.inns_1_overs, " overs, and ", match.inns_2_runs, "/", match.inns_2_wickets, " in ", match.inns_2_overs, " overs.")
     
+    def sync_player_data(self, player_data: Dict, update_if_exists=False) -> Optional[IPLPlayer]:
+        """
+        Sync player data from API to local database.
+        Only updates existing players, never creates new ones.
+        
+        Args:
+            player_data: Player data from API
+            update_if_exists: Whether to update existing players
+            
+        Returns:
+            IPLPlayer object or None if player not found
+        """
+        cricdata_id = player_data.get('id')
+        name = player_data.get('name')
+        
+        if not cricdata_id or not name:
+            print("Skipping player sync, missing ID or name", cricdata_id, name)
+            return None
+        
+        # Try to find existing player
+        player = self._find_player_by_cricdata_id(cricdata_id, name)
+        
+        if player:
+            if update_if_exists:
+                # Update player data
+                if not player.cricdata_id:
+                    player.cricdata_id = cricdata_id
+                    player.save()
+            return player
+        
+        # Player not found - return None instead of creating a new one
+        logger.warning(f"Player not found and not creating: {name} ({cricdata_id})")
+        return None
+
     def _process_player_performances(self, match: IPLMatch, match_data: Dict) -> List[IPLPlayerEvent]:
         """
         Process player performances from scorecard data and update/create IPLPlayerEvent objects.
@@ -189,8 +250,14 @@ class CricketDataService:
                 cricdata_id = batsman.get("id")
                 player_name = batsman.get("name")
                 
-                player = self._find_player_by_cricdata_id(cricdata_id, player_name)
+                # Use the new sync method
+                player = self.sync_player_data({
+                    'id': cricdata_id,
+                    'name': player_name
+                })
+                
                 if not player:
+                    logger.warning(f"Skipping batting entry for {player_name}, player not found and could not be created")
                     continue
                 
                 # Create or update player event
@@ -518,7 +585,7 @@ class CricketDataService:
         return total_boost_points
     
     def _get_or_create_player_event(self, match: IPLMatch, player: IPLPlayer, 
-                                   for_team: IPLTeam, vs_team: IPLTeam) -> IPLPlayerEvent:
+                                for_team: IPLTeam, vs_team: IPLTeam) -> IPLPlayerEvent:
         """
         Get or create an IPLPlayerEvent for a player in a match.
         
@@ -531,39 +598,81 @@ class CricketDataService:
         Returns:
             IPLPlayerEvent object
         """
-        event, created = IPLPlayerEvent.objects.get_or_create(
-            player=player,
-            match=match,
-            defaults={
-                "for_team": for_team,
-                "vs_team": vs_team,
-                # Initialize with zeros
-                "bat_runs": 0,
-                "bat_balls": 0,
-                "bat_fours": 0,
-                "bat_sixes": 0,
-                "bat_not_out": True,
-                "bat_innings": 0,
-                "bowl_balls": 0,
-                "bowl_maidens": 0,
-                "bowl_runs": 0,
-                "bowl_wickets": 0,
-                "bowl_innings": 0,
-                "field_catch": 0,
-                "wk_catch": 0,
-                "wk_stumping": 0,
-                "run_out_solo": 0,
-                "run_out_collab": 0,
-                "player_of_match": False
-            }
-        )
-        
-        if created:
-            # If this is a new event, set the teams
-            event.for_team = for_team
-            event.vs_team = vs_team
+        try:
+            # First try to get an existing event
+            event = IPLPlayerEvent.objects.get(
+                player=player,
+                match=match
+            )
             
-        return event
+            # If found, update the teams if needed
+            if event.for_team != for_team or event.vs_team != vs_team:
+                event.for_team = for_team
+                event.vs_team = vs_team
+                event.save()
+            
+            return event
+            
+        except IPLPlayerEvent.DoesNotExist:
+            # Create a new event with "force_insert=False" to avoid ID conflicts
+            event = IPLPlayerEvent(
+                player=player,
+                match=match,
+                for_team=for_team,
+                vs_team=vs_team,
+                # Initialize with zeros
+                bat_runs=0,
+                bat_balls=0,
+                bat_fours=0,
+                bat_sixes=0,
+                bat_not_out=True,
+                bat_innings=0,
+                bowl_balls=0,
+                bowl_maidens=0,
+                bowl_runs=0,
+                bowl_wickets=0,
+                bowl_innings=0,
+                field_catch=0,
+                wk_catch=0,
+                wk_stumping=0,
+                run_out_solo=0,
+                run_out_collab=0,
+                player_of_match=False
+            )
+            
+            # Use save with force_insert=False to let DB handle ID assignment
+            event.save(force_insert=False)
+            return event
+        
+    def _reset_player_event_sequence(self):
+        """
+        Reset the auto-increment sequence for IPLPlayerEvent to avoid ID conflicts.
+        Only needed in production when the sequence is out of sync.
+        """
+        print("Attempting to reset IPLPlayerEvent sequence")
+        try:
+            from django.db import connection
+            
+            with connection.cursor() as cursor:
+                try:
+                    # PostgreSQL-specific command
+                    cursor.execute("""
+                        SELECT setval(pg_get_serial_sequence('api_iplplayerevent', 'id'), 
+                                (SELECT MAX(id) FROM api_iplplayerevent));
+                    """)
+                    print("IPLPlayerEvent sequence reset successfully")
+                except Exception as e:
+                    print(f"PostgreSQL sequence reset failed: {str(e)}")
+                    print("Trying generic approach...")
+                    
+                    # For other databases, we can at least check the max ID
+                    cursor.execute("SELECT MAX(id) FROM api_iplplayerevent")
+                    max_id = cursor.fetchone()[0]
+                    print(f"Current max ID in IPLPlayerEvent table: {max_id}")
+        except Exception as e:
+            print(f"Error in _reset_player_event_sequence: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
     
     def _find_player_by_cricdata_id(self, cricdata_id: str, name: str) -> Optional[IPLPlayer]:
         """
@@ -576,10 +685,13 @@ class CricketDataService:
         Returns:
             IPLPlayer object or None if not found
         """
+        logger.debug(f"Looking for player with cricdata_id={cricdata_id}, name={name}")
+        
         # Try by cricdata_id first
         if cricdata_id:
             player = IPLPlayer.objects.filter(cricdata_id=cricdata_id).first()
             if player:
+                logger.debug(f"Found player by cricdata_id: {player.name}")
                 return player
         
         # Fallback to name matching
@@ -587,6 +699,12 @@ class CricketDataService:
             # Try exact match
             player = IPLPlayer.objects.filter(name__iexact=name).first()
             if player:
+                logger.debug(f"Found player by exact name: {player.name}")
+                # Update cricdata_id if it's missing
+                if cricdata_id and not player.cricdata_id:
+                    logger.info(f"Updating cricdata_id for player {player.name}")
+                    player.cricdata_id = cricdata_id
+                    player.save()
                 return player
             
             # Try checking if name is in our other_names field
@@ -595,6 +713,12 @@ class CricketDataService:
                 if hasattr(p, 'other_names') and p.other_names:
                     for alt_name in p.other_names:
                         if name.lower() == alt_name.lower():
+                            logger.debug(f"Found player by other name: {p.name}")
+                            # Update cricdata_id if it's missing
+                            if cricdata_id and not p.cricdata_id:
+                                logger.info(f"Updating cricdata_id for player {p.name}")
+                                p.cricdata_id = cricdata_id
+                                p.save()
                             return p
         
         # No match found

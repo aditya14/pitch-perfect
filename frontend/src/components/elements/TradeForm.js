@@ -490,7 +490,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                     </div>
                     <button
                       onClick={() => setSelectedSquad(null)}
-                      className="mt-2 text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                      className="mt-2 text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
                     >
                       ← Back to team selection
                     </button>
@@ -507,7 +507,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                       </div>
                       <button 
                         onClick={handleAddTradePair}
-                        className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md"
+                        className="px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-md"
                       >
                         Add Pair
                       </button>
@@ -716,8 +716,8 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                   tradePairs.length === 0 || 
                   tradePairs.some(pair => !pair.myPlayer || !pair.theirPlayer) ||
                   Object.keys(validationErrors).length > 0
-                    ? 'bg-indigo-300 dark:bg-indigo-700 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600'
+                    ? 'bg-primary-300 dark:bg-primary-700 cursor-not-allowed'
+                    : 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600'
                 }`}
             >
               Propose Trade

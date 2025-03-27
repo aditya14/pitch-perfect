@@ -1,3 +1,138 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Combined iOS and Android Safe Area Utilities */
+:root {
+  /* iOS safe area insets */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  
+  /* For Android and iOS app-like experience */
+  --app-height: 100vh;
+}
+
+/* Dark mode setup to prevent flashing */
+:root {
+  color-scheme: light dark;
+}
+
+/* Ensure dark mode background is applied immediately */
+html {
+  /* Fix for iOS viewport height issues */
+  height: -webkit-fill-available;
+  /* Enable edge-to-edge display */
+  width: 100%;
+  overflow-x: hidden;
+}
+
+html.dark {
+  background-color: #111827; /* Tailwind dark:bg-gray-900 */
+  color-scheme: dark;
+}
+
+body {
+  /* Prevent content from flowing under status bar */
+  padding-top: env(safe-area-inset-top, 0px);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: var(--app-height);
+  /* Prevent overscroll bounce effect */
+  overscroll-behavior-y: none;
+  /* Improve touch behavior */
+  -webkit-tap-highlight-color: transparent;
+  /* Android edge-to-edge support */
+  width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  /* Add smooth transition */
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Dark mode body styling */
+html.dark body {
+  background-color: #111827; /* Tailwind dark:bg-gray-900 */
+  color: #ffffff;
+}
+
+/* Apply padding to handle notch/cutout area for fixed headers */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+/* Prevent content from flowing under fixed header */
+.header-offset {
+  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+}
+
+/* Adjust viewport height for iOS and Android */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: var(--app-height);
+}
+
+/* Fix for Android bottom navigation */
+.android-nav-fix {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Hide scrollbars but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Android-specific status bar handling for different themes */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --status-bar-color: #121212;
+  }
+  
+  /* Auto apply dark mode based on system preference if no theme is set */
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme]) {
+      background-color: #111827;
+    }
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --status-bar-color: white;
+  }
+}
+
+/* Fix for any potential position: fixed issues on mobile */
+.fix-fixed {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Ensure #root fills the entire screen and has the correct background color */
+#root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: var(--app-height);
+  background-color: inherit;
+  color: inherit;
+}

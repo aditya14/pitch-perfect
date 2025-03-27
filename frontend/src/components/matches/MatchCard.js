@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trophy, Clock, Calendar } from 'lucide-react';
 import api from '../../utils/axios';
 import { getTextColorForBackground } from '../../utils/colorUtils';
+import BoostInlineElement from '../elements/BoostInlineElement';
 
 const MatchCard = ({ match, leagueId }) => {
   const navigate = useNavigate();
@@ -11,6 +12,23 @@ const MatchCard = ({ match, leagueId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
+
+  // Safely determine which team batted first based on toss winner and toss decision
+  // Adding null checks to prevent "Cannot read properties of null" errors
+  let battingFirstTeam = match.team_1;
+  let battingSecondTeam = match.team_2;
+
+  // Only attempt to determine batting order if we have all the required data
+  if (match.toss_winner && match.toss_decision && match.team_1 && match.team_2) {
+    if (match.toss_decision === 'BAT') {
+      battingFirstTeam = match.toss_winner;
+      battingSecondTeam = (match.team_1.id === match.toss_winner.id) ? match.team_2 : match.team_1;
+    } else {
+      // If toss winner chose to field/bowl
+      battingFirstTeam = (match.team_1.id === match.toss_winner.id) ? match.team_2 : match.team_1;
+      battingSecondTeam = match.toss_winner;
+    }
+  }
 
   useEffect(() => {
     if (match && ['COMPLETED', 'LIVE'].includes(match.status)) {
@@ -109,6 +127,24 @@ const MatchCard = ({ match, leagueId }) => {
     }
   };
 
+  // Format score display (only display when runs are available)
+  const formatScore = (runs, wickets, overs) => {
+    // Return empty string if runs is undefined, null, or not a valid number
+    if (runs === undefined || runs === null || isNaN(runs)) return '';
+    
+    // Format wickets (only if it's a valid number)
+    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets)) 
+      ? `/${wickets}` 
+      : '';
+    
+    // Format overs (only if it's a valid string or number)
+    const oversDisplay = (overs !== undefined && overs !== null && overs !== '') 
+      ? ` (${overs} ov)` 
+      : '';
+    
+    return `${runs}${wicketsDisplay}${oversDisplay}`;
+  };
+
   const formattedDateTime = formatMatchDateTime();
   const formattedCountdown = formatCountdown();
   const isClickable = ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status);
@@ -151,52 +187,48 @@ const MatchCard = ({ match, leagueId }) => {
       
       {/* Main content area */}
       <div className="p-3">
-        {/* Teams and scores - Team 1 */}
+        {/* Teams and scores - Batting First Team */}
         <div className="flex items-center justify-between mb-3">
-          {match.team_1 ? (
+          {battingFirstTeam ? (
             <span 
               className="px-2 py-1 rounded text-sm font-bold w-16 text-center"
               style={{ 
-                backgroundColor: '#' + match.team_1.primary_color,
-                color: getTextColorForBackground(match.team_1.primary_color)
+                backgroundColor: '#' + battingFirstTeam.primary_color,
+                color: getTextColorForBackground(battingFirstTeam.primary_color)
               }}
             >
-              {match.team_1.short_name || match.team_1.name}
+              {battingFirstTeam.short_name || battingFirstTeam.name}
             </span>
           ) : (
             <span className="text-gray-900 dark:text-white font-bold">TBD</span>
           )}
           
           <div className="text-gray-900 dark:text-white text-sm">
-            {(match.status === 'COMPLETED' || match.status === 'LIVE') && match.inns_1_runs !== undefined && (
-              <span>
-                {match.inns_1_runs}/{match.inns_1_wickets || 0} ({match.inns_1_overs} ov)
-              </span>
+            {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
+              <span>{formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}</span>
             )}
           </div>
         </div>
         
-        {/* Teams and scores - Team 2 */}
+        {/* Teams and scores - Batting Second Team */}
         <div className="flex items-center justify-between mb-3">
-          {match.team_2 ? (
+          {battingSecondTeam ? (
             <span 
               className="px-2 py-1 rounded text-sm font-bold w-16 text-center"
               style={{ 
-                backgroundColor: '#' + match.team_2.primary_color,
-                color: getTextColorForBackground(match.team_2.primary_color)
+                backgroundColor: '#' + battingSecondTeam.primary_color,
+                color: getTextColorForBackground(battingSecondTeam.primary_color)
               }}
             >
-              {match.team_2.short_name || match.team_2.name}
+              {battingSecondTeam.short_name || battingSecondTeam.name}
             </span>
           ) : (
             <span className="text-gray-900 dark:text-white font-bold">TBD</span>
           )}
           
           <div className="text-gray-900 dark:text-white text-sm">
-            {(match.status === 'COMPLETED' || match.status === 'LIVE') && match.inns_2_runs !== undefined && (
-              <span>
-                {match.inns_2_runs}/{match.inns_2_wickets || 0} ({match.inns_2_overs} ov)
-              </span>
+            {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
+              <span>{formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}</span>
             )}
           </div>
         </div>
@@ -235,14 +267,13 @@ const MatchCard = ({ match, leagueId }) => {
                     {topPlayers[0]?.player_name}
                   </span>
                   {topPlayers[0]?.boost_label && (
-                    <span 
-                      className="ml-1 px-1.5 py-0.5 text-xs rounded"
-                      style={{
-                        backgroundColor: topPlayers[0].boost_label === 'Accumulator' ? '#FFD700' : '#1E40AF',
-                        color: topPlayers[0].boost_label === 'Accumulator' ? '#000000' : '#FFFFFF'
-                      }}
-                    >
-                      {topPlayers[0].boost_label}
+                    <span className='ml-1'>
+                      <BoostInlineElement
+                        boostName={topPlayers[0]?.boost_label} 
+                        color={topPlayers[0]?.squad_color || '#6B7280'}
+                        showLabel={true} 
+                        size="S" 
+                      />
                     </span>
                   )}
                 </div>
@@ -260,14 +291,13 @@ const MatchCard = ({ match, leagueId }) => {
                     {topPlayers[1]?.player_name}
                   </span>
                   {topPlayers[1]?.boost_label && (
-                    <span 
-                      className="ml-1 px-1.5 py-0.5 text-xs rounded"
-                      style={{
-                        backgroundColor: topPlayers[1].boost_label === 'Accumulator' ? '#FFD700' : '#1E40AF',
-                        color: topPlayers[1].boost_label === 'Accumulator' ? '#000000' : '#FFFFFF'
-                      }}
-                    >
-                      {topPlayers[1].boost_label}
+                    <span className='ml-1'>
+                      <BoostInlineElement
+                        boostName={topPlayers[1]?.boost_label} 
+                        color={topPlayers[1]?.squad_color || '#6B7280'}
+                        showLabel={true} 
+                        size="S" 
+                      />
                     </span>
                   )}
                 </div>

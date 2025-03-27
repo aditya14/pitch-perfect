@@ -71,7 +71,7 @@ const RosterView = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
       </div>
     );
   }
@@ -104,7 +104,7 @@ const RosterView = () => {
               className={`px-4 py-2 rounded-md font-medium mb-2 ${
                 draftMode 
                   ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'bg-primary-600 text-white hover:bg-primary-700'
               }`}
             >
               {draftMode ? "View Roster" : "Update Draft Order"}

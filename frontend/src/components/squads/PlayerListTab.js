@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { usePlayerModal } from '../../context/PlayerModalContext';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import { ArrowRightCircle } from 'lucide-react';
+import BoostInlineElement from '../elements/BoostInlineElement';
 
 const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, leagueId, squadColor }) => {
   console.log('PlayerListTab:', players, playerEvents, currentCoreSquad, boostRoles, leagueId, squadColor);
@@ -141,7 +142,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             onClick={() => requestSort('name')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'name' 
-                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' 
+                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
                 : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
             }`}
           >
@@ -151,7 +152,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             onClick={() => requestSort('total_points')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'total_points' 
-                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' 
+                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
                 : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
             }`}
           >
@@ -161,7 +162,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             onClick={() => requestSort('matches')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'matches' 
-                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' 
+                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
                 : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
             }`}
           >
@@ -171,7 +172,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             onClick={() => requestSort('role')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'role' 
-                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' 
+                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
                 : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
             }`}
           >
@@ -203,13 +204,13 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                       />
                     )}
                     <span 
-                      className={`text-sm font-medium ${isTraded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'} cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400`}
+                      className={`text-sm font-medium ${isTraded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400`}
                       onClick={() => openPlayerModal(player.id, leagueId)}
                     >
                       {player.name}
                     </span>
                   </div>
-                  <div>
+                  <div className="flex items-center gap-2">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                       ${player.role === 'BAT' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
                         player.role === 'BOWL' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
@@ -219,12 +220,12 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                       {player.role}
                     </span>
                     {coreRole && !isTraded && (
-                      <span 
-                        className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
-                        style={{backgroundColor: squadColor, color: getTextColorForBackground(squadColor)}}
-                      >
-                        {coreRole}
-                      </span>
+                      <BoostInlineElement
+                        boostName={coreRole} 
+                        color={squadColor} 
+                        showLabel={true} 
+                        size="M" 
+                      />
                     )}
                   </div>
                 </div>
@@ -250,7 +251,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                   </div>
                   <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded">
                     <div className="text-xs text-gray-500 dark:text-gray-400">Total Points</div>
-                    <div className="font-semibold text-indigo-600 dark:text-indigo-400">
+                    <div className="font-semibold text-primary-600 dark:text-primary-400">
                       {Number.isInteger(stats.totalPoints) ? stats.totalPoints : stats.totalPoints.toFixed(1)}
                     </div>
                   </div>
@@ -357,7 +358,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                           />
                         )}
                         <span 
-                          className={`text-sm font-medium truncate ${isTraded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'} cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400`}
+                          className={`text-sm font-medium truncate ${isTraded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400`}
                           onClick={() => openPlayerModal(player.id, leagueId)}
                         >
                           {player.name}
@@ -370,26 +371,22 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                       </div>
                       
                       {/* Role */}
-                      <div className="flex items-center">
-                        <div className="min-w-[50px]">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            ${player.role === 'BAT' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                              player.role === 'BOWL' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                              player.role === 'ALL' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
-                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}
-                          >
-                            {player.role}
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          ${player.role === 'BAT' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                            player.role === 'BOWL' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                            player.role === 'ALL' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}
+                        >
+                          {player.role}
+                        </span>
                         {coreRole && !isTraded && (
-                          <div className="ml-2">
-                            <span 
-                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
-                              style={{backgroundColor: squadColor, color: getTextColorForBackground(squadColor)}}
-                            >
-                              {coreRole}
-                            </span>
-                          </div>
+                          <BoostInlineElement
+                            boostName={coreRole} 
+                            color={squadColor} 
+                            showLabel={true} 
+                            size="M" 
+                          />
                         )}
                       </div>
                     </div>

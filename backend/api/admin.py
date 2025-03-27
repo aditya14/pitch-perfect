@@ -1,5 +1,7 @@
 from django.contrib import admin, messages
 from django.contrib.auth.models import User
+from django.db.models import Prefetch, Index
+from django.db import models
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.utils import timezone
@@ -11,16 +13,102 @@ from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, 
 from .forms import CSVUploadForm
 import csv
 from io import TextIOWrapper
-from django.db.models import Q
+from django.db.models import Q, Avg, F
 
 import logging
 _logger = logging.getLogger(__name__)
 
-@admin.register(Season)
+
+@admin.action(description="Update default draft order based on current roster and historical performance")
+def update_default_draft_order(modeladmin, request, queryset):
+    for season in queryset:
+        try:
+            # Get all players with a valid team history for this season
+            player_histories = PlayerTeamHistory.objects.filter(
+                season=season,
+                is_active=True  # Assuming there's a field to mark active mappings
+            ).select_related('player')
+            
+            # Get all relevant players
+            players = [history.player for history in player_histories]
+            player_ids = [player.id for player in players]
+            
+            # Calculate average points for each player (2021-2024)
+            # First, let's get relevant seasons for filtering
+            relevant_seasons = Season.objects.filter(
+                Q(name__icontains='2021') | 
+                Q(name__icontains='2022') | 
+                Q(name__icontains='2023') | 
+                Q(name__icontains='2024')
+            )
+            
+            # Dictionary to store player averages
+            player_averages = {}
+            
+            # For each player, calculate their average
+            for player_id in player_ids:
+                # Get all events for this player in 2021-2024 seasons
+                events = IPLPlayerEvent.objects.filter(
+                    player_id=player_id,
+                    match__season__in=relevant_seasons
+                )
+                
+                # If player has events, calculate average
+                if events.exists():
+                    avg_points = events.aggregate(avg_points=Avg('total_points'))['avg_points'] or 0
+                else:
+                    avg_points = 0
+                
+                player_averages[player_id] = avg_points
+            
+            # Sort player IDs by average points (highest first)
+            sorted_player_ids = sorted(
+                player_ids,
+                key=lambda pid: player_averages.get(pid, 0),
+                reverse=True
+            )
+            
+            # Update the season's default draft order
+            season.default_draft_order = sorted_player_ids
+            season.save()
+            
+            # Also update existing draft orders if needed
+            from .models import Draft
+            drafts = Draft.objects.filter(season=season, is_completed=False)
+            for draft in drafts:
+                draft.order = season.default_draft_order
+                draft.save()
+            
+            messages.success(
+                request, 
+                f"Successfully updated default draft order for {season.name} with {len(sorted_player_ids)} players."
+            )
+            
+            # Log detailed information for admin review
+            admin_message = f"Player rankings for {season.name}:\n"
+            for i, pid in enumerate(sorted_player_ids[:20], 1):
+                player = next((p for p in players if p.id == pid), None)
+                if player:
+                    admin_message += f"{i}. {player.name}: {player_averages[pid]:.2f} avg points\n"
+            admin_message += f"... and {len(sorted_player_ids) - 20} more players"
+            
+            messages.info(request, admin_message)
+            
+        except Exception as e:
+            messages.error(
+                request, 
+                f"Error updating default draft order for {season.name}: {str(e)}"
+            )
+
+
+# Register the action with the Season admin
 class SeasonAdmin(admin.ModelAdmin):
+    actions = [update_default_draft_order]
     list_display = ('year', 'name', 'start_date', 'end_date', 'status', 'default_draft_order')
     list_filter = ('status',)
     search_fields = ('name', 'year')
+
+admin.site.register(Season, SeasonAdmin)
 
 @admin.register(IPLTeam)
 class IPLTeamAdmin(admin.ModelAdmin):
@@ -102,7 +190,7 @@ class IPLMatchAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Basic Info', {
-            'fields': ('season', 'match_number', 'stage', 'date', 'venue', 'status')
+            'fields': ('season', 'match_number', 'stage', 'phase', 'date', 'venue', 'status')
         }),
         ('Teams', {
             'fields': ('team_1', 'team_2')
@@ -225,327 +313,210 @@ class IPLMatchAdmin(admin.ModelAdmin):
 
                 messages.success(request, f"Updated Player of the Match from {old_potm} to {obj.player_of_match}. Recalculated fantasy points for {len(fantasy_events)} fantasy events.")
 
+# Add this to your admin.py file
+
+from django.contrib import admin
+from django.db import models
+from .models import IPLPlayerEvent, IPLPlayer, IPLMatch, IPLTeam  # Import your actual models
+
 class IPLPlayerEventAdmin(admin.ModelAdmin):
-    list_display = [
-        'match',
-        'player',
-        'for_team',
-        'vs_team',
-        'bat_runs',
-        'get_strike_rate',
-        'bowl_wickets',
-        'get_economy',
-        'player_of_match',
-        'get_base_points'
+    # Efficient list display with limited columns
+    list_display = ['id', 'player_name', 'match_description', 'team_name', 'total_points_all']
+    list_display_links = ['id', 'player_name']
+    
+    # Optimize with limited search fields
+    search_fields = ['player__name', 'match__team_1__name', 'match__team_2__name']
+    
+    # Add filters to help narrow down records
+    list_filter = ['player_of_match', 'match__season__year', 'match__stage']
+    
+    # Define what fields are readonly to prevent accidental changes
+    readonly_fields = [
+        'batting_points_total', 'bowling_points_total', 
+        'fielding_points_total', 'other_points_total', 
+        'total_points_all', 'bat_strike_rate', 'bowl_economy'
     ]
     
-    # Add sorting capabilities
-    ordering = ('-match__date', 'player__name')
-    
-    def get_strike_rate(self, obj):
-        return obj.bat_strike_rate if obj.bat_strike_rate is not None else '-'
-    get_strike_rate.short_description = 'Strike Rate'
-
-    def get_economy(self, obj):
-        return obj.bowl_economy if obj.bowl_economy is not None else '-'
-    get_economy.short_description = 'Economy'
-    
-    def get_base_points(self, obj):
-        return obj.base_points
-    get_base_points.short_description = 'Points'
-    
-    list_filter = [
-        ('match__season', admin.RelatedFieldListFilter),  # Filter by season
-        ('for_team', admin.RelatedFieldListFilter),       # Filter by team played for
-        ('vs_team', admin.RelatedFieldListFilter),        # Filter by team played against
-        'player__role',                                   # Filter by player role
-        'player_of_match',                                # Filter by POTM
-        ('match__date', admin.DateFieldListFilter),       # Filter by date
+    # Custom field sets to organize the edit form
+    fieldsets = [
+        ('Match Information', {
+            'fields': ['player', 'match', 'for_team', 'vs_team']
+        }),
+        ('Batting', {
+            'fields': ['bat_runs', 'bat_balls', 'bat_fours', 'bat_sixes', 'bat_not_out', 'bat_innings', 'bat_strike_rate']
+        }),
+        ('Bowling', {
+            'fields': ['bowl_balls', 'bowl_maidens', 'bowl_runs', 'bowl_wickets', 'bowl_innings', 'bowl_economy']
+        }),
+        ('Fielding', {
+            'fields': ['field_catch', 'wk_catch', 'wk_stumping', 'run_out_solo', 'run_out_collab']
+        }),
+        ('Other', {
+            'fields': ['player_of_match']
+        }),
+        ('Points (Calculated)', {
+            'fields': ['batting_points_total', 'bowling_points_total', 'fielding_points_total', 
+                      'other_points_total', 'total_points_all']
+        }),
     ]
     
-    search_fields = [
-        'player__name',
-        'match__match_number',
-        'for_team__name',
-        'vs_team__name',
-        'match__season__year',
-    ]
-
-    date_hierarchy = 'match__date'
-
+    # Override to efficiently load related objects
     def get_queryset(self, request):
-        """Optimize queries by prefetching related fields"""
-        queryset = super().get_queryset(request)
-        return queryset.select_related(
-            'player',
-            'match',
-            'match__season',
-            'for_team',
-            'vs_team'
-        )
-    
-    readonly_fields = [
-        'bat_strike_rate',
-        'bowl_economy',
-    ]
-    
-    fieldsets = (
-        ('Match Information', {
-            'fields': ('player', 'match', 'for_team', 'vs_team')
-        }),
-        ('Batting', {
-            'fields': (
-                'bat_runs',
-                'bat_balls',
-                'bat_fours',
-                'bat_sixes',
-                'bat_not_out',
-                'bat_innings',
-                'bat_strike_rate'
+        try:
+            qs = super().get_queryset(request)
+            # Use select_related for ForeignKey relationships
+            return qs.select_related(
+                'player', 
+                'match', 
+                'match__team_1', 
+                'match__team_2', 
+                'match__season',
+                'for_team', 
+                'vs_team'
             )
-        }),
-        ('Bowling', {
-            'fields': (
-                'bowl_balls',
-                'bowl_maidens',
-                'bowl_runs',
-                'bowl_wickets',
-                'bowl_innings',
-                'bowl_economy'
-            )
-        }),
-        ('Fielding', {
-            'fields': (
-                'field_catch',
-                'wk_catch',
-                'wk_stumping',
-                'run_out_solo',
-                'run_out_collab'
-            )
-        }),
-        ('Other', {
-            'fields': ('player_of_match',)
-        })
-    )
+        except Exception as e:
+            # Log error but return basic queryset to prevent admin crash
+            logger.error(f"Error in IPLPlayerEventAdmin.get_queryset: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return super().get_queryset(request)
     
-    def get_strike_rate(self, obj):
-        return obj.bat_strike_rate if obj.bat_strike_rate is not None else '-'
-    get_strike_rate.short_description = 'Strike Rate'
-
-    def get_economy(self, obj):
-        return obj.bowl_economy if obj.bowl_economy is not None else '-'
-    get_economy.short_description = 'Economy'
+    # Custom methods to display related info without additional queries
+    def player_name(self, obj):
+        try:
+            return obj.player.name if obj.player else None
+        except Exception:
+            return "Error loading player"
+    player_name.short_description = 'Player'
+    player_name.admin_order_field = 'player__name'
     
-    list_filter = [
-        'for_team',
-        'vs_team',
-        'player__role'
-    ]
+    def match_description(self, obj):
+        try:
+            if obj.match:
+                team1 = obj.match.team_1.short_name if obj.match.team_1 else 'TBD'
+                team2 = obj.match.team_2.short_name if obj.match.team_2 else 'TBD'
+                return f"{team1} vs {team2} - Match {obj.match.match_number}"
+            return None
+        except Exception:
+            return "Error loading match"
+    match_description.short_description = 'Match'
+    match_description.admin_order_field = 'match__match_number'
     
-    search_fields = [
-        'player__name',
-        'match__name',
-        'for_team__name',
-        'vs_team__name'
-    ]
+    def team_name(self, obj):
+        try:
+            return obj.for_team.short_name if obj.for_team else None
+        except Exception:
+            return "Error loading team"
+    team_name.short_description = 'Team'
+    team_name.admin_order_field = 'for_team__short_name'
     
-    readonly_fields = [
-        'bat_strike_rate',
-        'bowl_economy',
-        'get_base_points'
-    ]
-    
-    fieldsets = (
-        ('Match Information', {
-            'fields': ('player', 'match', 'for_team', 'vs_team')
-        }),
-        ('Batting', {
-            'fields': (
-                'bat_runs',
-                'bat_balls',
-                'bat_fours',
-                'bat_sixes',
-                'bat_not_out',
-                'bat_innings',
-                'bat_strike_rate'
-            )
-        }),
-        ('Bowling', {
-            'fields': (
-                'bowl_balls',
-                'bowl_maidens',
-                'bowl_runs',
-                'bowl_wickets',
-                'bowl_innings',
-                'bowl_economy'
-            )
-        }),
-        ('Fielding', {
-            'fields': (
-                'field_catch',
-                'wk_catch',
-                'wk_stumping',
-                'run_out_solo',
-                'run_out_collab'
-            )
-        }),
-        ('Other', {
-            'fields': ('player_of_match',)
-        }),
-        ('Points', {
-            'fields': ('get_base_points',)
-        })
-    )
-    
-    def get_total_points(self, obj):
-        return obj.base_points
-    get_total_points.short_description = 'Total Points'
-    
-    def get_base_points(self, obj):
-        return f"""
-        Batting: {obj.bat_points}
-        Bowling: {obj.bowl_points}
-        Fielding: {obj.field_points}
-        Other: {obj.other_points}
-        Total: {obj.base_points}
-        """
-    get_base_points.short_description = 'Point Breakdown'
-
-    def get_urls(self):
-            urls = super().get_urls()
-            custom_urls = [
-                path('upload-csv/', self.admin_site.admin_view(self.upload_csv), name='upload_csv'),
-            ]
-            return custom_urls + urls
-
-    def upload_csv(self, request):
-        from api.models import IPLPlayer, IPLMatch, IPLTeam
-        import logging
-        from decimal import Decimal
-        from io import TextIOWrapper
-        import csv
-        from django.db import connection
-        
-        if request.method == 'POST':
-            form = CSVUploadForm(request.POST, request.FILES)
-            if form.is_valid():
-                csv_file = form.cleaned_data['csv_file']
-                try:
-                    data = TextIOWrapper(csv_file.file, encoding='utf-8')
-                    reader = csv.DictReader(data)
-                    
-                    # Temporarily disable the foreign key check
-                    with connection.cursor() as cursor:
-                        cursor.execute('SET FOREIGN_KEY_CHECKS = 0;')
-                    
-                    for row_number, row in enumerate(reader, start=1):
-                        logging.info(f"Processing row {row_number}: {row}")
-                        
-                        try:
-                            # Get match
-                            match_id = int(row['match_id'])
-                            match = IPLMatch.objects.get(id=match_id)
-                            
-                            # Get player
-                            player_id = int(row['player'])
-                            player = IPLPlayer.objects.get(id=player_id)
-                            
-                            # Get teams - directly from database to bypass Django's checks
-                            for_team_id = int(row['for_team_id'])
-                            vs_team_id = int(row['vs_team_id'])
-                            for_team = IPLTeam.objects.get(id=for_team_id)
-                            vs_team = IPLTeam.objects.get(id=vs_team_id)
-                            
-                            def parse_number(value):
-                                if value in (None, '', 'NULL'):
-                                    return None
-                                try:
-                                    return int(float(value))
-                                except (ValueError, TypeError):
-                                    return None
-                                    
-                            def parse_boolean(value):
-                                if value in (None, '', 'NULL'):
-                                    return False
-                                return bool(int(value))
-                            
-                            event_data = {
-                                "match": match,
-                                "player": player,
-                                "for_team": for_team,
-                                "vs_team": vs_team,
-                                "bat_runs": parse_number(row.get('bat_runs')),
-                                "bat_balls": parse_number(row.get('bat_balls')),
-                                "bat_fours": parse_number(row.get('fours')),
-                                "bat_sixes": parse_number(row.get('sixes')),
-                                "bat_not_out": parse_boolean(row.get('not_out')),
-                                "bat_innings": parse_number(row.get('bat_inngs')),
-                                "bowl_balls": parse_number(row.get('bowl_balls')),
-                                "bowl_maidens": parse_number(row.get('maidens')),
-                                "bowl_runs": parse_number(row.get('bowl_runs')),
-                                "bowl_wickets": parse_number(row.get('wickets')),
-                                "bowl_innings": parse_number(row.get('bowl_inngs')),
-                                "field_catch": parse_number(row.get('field_catch')),
-                                "wk_catch": parse_number(row.get('wk_catch')),
-                                "wk_stumping": parse_number(row.get('stumpings')),
-                                "run_out_solo": parse_number(row.get('run_out_solo')),
-                                "run_out_collab": parse_number(row.get('run_out_collab'))
-                            }
-                            
-                            # Create new event using raw SQL if for_team_id is 0
-                            if for_team_id == 0 or vs_team_id == 0:
-                                with connection.cursor() as cursor:
-                                    cursor.execute(
-                                        """
-                                        INSERT INTO api_iplplayerevent 
-                                        (match_id, player_id, for_team_id, vs_team_id, 
-                                        bat_runs, bat_balls, bat_fours, bat_sixes, bat_not_out, bat_innings,
-                                        bowl_balls, bowl_maidens, bowl_runs, bowl_wickets, bowl_innings,
-                                        field_catch, wk_catch, wk_stumping, run_out_solo, run_out_collab)
-                                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                        """,
-                                        [
-                                            match.id, player.id, for_team_id, vs_team_id,
-                                            event_data['bat_runs'], event_data['bat_balls'], 
-                                            event_data['bat_fours'], event_data['bat_sixes'],
-                                            event_data['bat_not_out'], event_data['bat_innings'],
-                                            event_data['bowl_balls'], event_data['bowl_maidens'],
-                                            event_data['bowl_runs'], event_data['bowl_wickets'],
-                                            event_data['bowl_innings'], event_data['field_catch'],
-                                            event_data['wk_catch'], event_data['wk_stumping'],
-                                            event_data['run_out_solo'], event_data['run_out_collab']
-                                        ]
-                                    )
-                            else:
-                                # Use Django ORM for non-zero team IDs
-                                IPLPlayerEvent.objects.create(**event_data)
-                            
-                        except Exception as e:
-                            logging.error(f"Error on row {row_number}:")
-                            logging.error(f"Row data: {row}")
-                            logging.error(f"Error: {str(e)}")
-                            raise Exception(f"Error on row {row_number}: {str(e)}")
-                    
-                    # Re-enable foreign key checks
-                    with connection.cursor() as cursor:
-                        cursor.execute('SET FOREIGN_KEY_CHECKS = 1;')
-
-                    messages.success(request, "CSV file processed successfully!")
-                    
-                except Exception as e:
-                    # Re-enable foreign key checks even if there's an error
-                    with connection.cursor() as cursor:
-                        cursor.execute('SET FOREIGN_KEY_CHECKS = 1;')
-                    messages.error(request, str(e))
-                    
-            else:
-                messages.error(request, "Invalid form submission.")
-                
-        else:
-            form = CSVUploadForm()
+    def save_model(self, request, obj, form, change):
+        """Override save_model to add error handling and proper point calculation"""
+        try:
+            # Only calculate the points if they are NULL or user is changing data
+            obj.batting_points_total = obj.bat_points
+            obj.bowling_points_total = obj.bowl_points
+            obj.fielding_points_total = obj.field_points
+            obj.other_points_total = obj.other_points
+            obj.total_points_all = obj.base_points
             
-        return render(request, 'admin/upload_csv.html', {'form': form})
+            # Save the model
+            super().save_model(request, obj, form, change)
+            
+            # Update affected fantasy player events
+            self._update_fantasy_events(obj, request)
+            
+            messages.success(request, f"Successfully saved player event for {obj.player.name}")
+        except Exception as e:
+            logger.error(f"Error saving IPLPlayerEvent: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            messages.error(request, f"Error saving player event: {str(e)}")
+            # Do not re-raise the exception to prevent the admin from crashing
+    
+    def _update_fantasy_events(self, ipl_event, request):
+        """Update related fantasy player events when an IPL event changes"""
+        try:
+            from .models import FantasyPlayerEvent, FantasySquad
+            from django.db.models import F
+            
+            # Find all related fantasy events
+            fantasy_events = FantasyPlayerEvent.objects.filter(match_event=ipl_event)
+            updated_count = 0
+            
+            # Keep track of affected fantasy squads
+            affected_squads = set()
+            
+            # Update each fantasy event
+            for fantasy_event in fantasy_events:
+                if fantasy_event.boost:
+                    # Recalculate boost points based on the updated IPL event
+                    boost = fantasy_event.boost
+                    
+                    # For Captain (2x) and Vice Captain (1.5x) roles that apply to all points
+                    if boost.label in ['Captain', 'Vice Captain']:
+                        # The boost is (multiplier - 1) * base_points
+                        multiplier = boost.multiplier_runs  # All multipliers are the same for these roles
+                        fantasy_event.boost_points = (multiplier - 1.0) * ipl_event.total_points_all
+                    else:
+                        # For specialized roles, we need to do more detailed calculations
+                        # This should call the same method that's used during normal scoring
+                        from .services.cricket_data_service import CricketDataService
+                        service = CricketDataService()
+                        fantasy_event.boost_points = service._calculate_boost_points(ipl_event, boost)
+                    
+                    fantasy_event.save()
+                    affected_squads.add(fantasy_event.fantasy_squad_id)
+                    updated_count += 1
+            
+            # Update total points for affected squads
+            for squad_id in affected_squads:
+                try:
+                    squad = FantasySquad.objects.get(id=squad_id)
+                    # Calculate new total points
+                    total_points = sum(
+                        FantasyPlayerEvent.objects.filter(fantasy_squad=squad)
+                        .annotate(total=F('match_event__total_points_all') + F('boost_points'))
+                        .values_list('total', flat=True)
+                    )
+                    squad.total_points = total_points
+                    squad.save()
+                except Exception as squad_e:
+                    logger.error(f"Error updating squad points: {str(squad_e)}")
+            
+            if updated_count > 0:
+                messages.info(request, f"Updated {updated_count} fantasy events and {len(affected_squads)} fantasy squads")
+                
+        except Exception as e:
+            logger.error(f"Error updating fantasy events: {str(e)}")
+            messages.warning(request, f"Player event was saved, but could not update fantasy events: {str(e)}")
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Optimize foreign key fields while ensuring existing values remain valid"""
+        try:
+            # For player and team fields, continue using the optimized queries
+            if db_field.name == "player":
+                kwargs["queryset"] = IPLPlayer.objects.filter(is_active=True)
+                
+            if db_field.name in ["for_team", "vs_team"]:
+                kwargs["queryset"] = IPLTeam.objects.filter(is_active=True)
+                
+            # For the match field, do NOT limit the queryset when editing
+            # Only limit it for new objects
+            if db_field.name == "match":
+                # Check if we're editing an existing object
+                if 'object_id' in request.resolver_match.kwargs:
+                    # We're editing, so don't limit the matches
+                    pass  # Use the default queryset
+                else:
+                    # We're adding a new object, so limit to recent matches
+                    kwargs["queryset"] = IPLMatch.objects.order_by('-date')[:100]
+        except Exception as e:
+            logger.error(f"Error in formfield_for_foreignkey: {str(e)}")
+            
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+# Register with the admin site
 admin.site.register(IPLPlayerEvent, IPLPlayerEventAdmin)
 
 class UserProfileInline(admin.StackedInline):
@@ -796,34 +767,55 @@ class FantasyBoostRoleAdmin(admin.ModelAdmin):
 
 @admin.register(FantasyPlayerEvent)
 class FantasyPlayerEventAdmin(admin.ModelAdmin):
-    list_display = ('fantasy_squad', 'get_player', 'get_match', 'boost', 'boost_points')
-    list_filter = ('fantasy_squad', 'boost', 'match_event__match')
-    search_fields = (
-        'fantasy_squad__name', 
-        'match_event__player__name',
-        'match_event__match__match_number'
-    )
-    raw_id_fields = ('match_event', 'fantasy_squad', 'boost')
-
+    list_display = ('id', 'get_squad', 'get_player', 'get_match', 'get_boost', 'boost_points')
+    list_filter = ('fantasy_squad__league',)
+    search_fields = ('fantasy_squad__name', 'match_event__player__name')
+    
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            'fantasy_squad',
-            'match_event',
-            'match_event__player',
-            'match_event__match',
-            'boost'
-        )
-
+        # Add safer query with error handling
+        qs = super().get_queryset(request)
+        try:
+            return qs.select_related(
+                'fantasy_squad',
+                'match_event__player',
+                'match_event__match',
+                'boost'
+            )
+        except Exception as e:
+            # Log the error but return a basic queryset to prevent admin crash
+            logger.error(f"Error in FantasyPlayerEventAdmin queryset: {str(e)}")
+            return qs
+    
+    def get_squad(self, obj):
+        try:
+            return obj.fantasy_squad.name if obj.fantasy_squad else None
+        except:
+            return "Error loading squad"
+    get_squad.short_description = 'Squad'
+    
     def get_player(self, obj):
-        return obj.match_event.player.name
+        try:
+            return obj.match_event.player.name if obj.match_event and obj.match_event.player else None
+        except:
+            return "Error loading player"
     get_player.short_description = 'Player'
-    get_player.admin_order_field = 'match_event__player__name'
-
+    
     def get_match(self, obj):
-        match = obj.match_event.match
-        return f"Match {match.match_number}: {match.team_1.short_name} vs {match.team_2.short_name}"
+        try:
+            match = obj.match_event.match if obj.match_event else None
+            if match:
+                return f"Match {match.match_number}"
+            return None
+        except:
+            return "Error loading match"
     get_match.short_description = 'Match'
-    get_match.admin_order_field = 'match_event__match__match_number'
+    
+    def get_boost(self, obj):
+        try:
+            return obj.boost.label if obj.boost else None
+        except:
+            return "Error loading boost"
+    get_boost.short_description = 'Boost'
 
 @admin.register(FantasyTrade)
 class FantasyTradeAdmin(admin.ModelAdmin):

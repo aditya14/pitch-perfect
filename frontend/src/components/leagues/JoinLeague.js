@@ -73,9 +73,9 @@ const JoinLeague = () => {
       <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8">
           {status.isCreatingSquad ? (
-            <Shield className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
+            <Shield className="h-12 w-12 text-primary-600 dark:text-primary-400 mx-auto mb-3" />
           ) : (
-            <Users className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
+            <Users className="h-12 w-12 text-primary-600 dark:text-primary-400 mx-auto mb-3" />
           )}
           
           <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
@@ -88,7 +88,7 @@ const JoinLeague = () => {
           
           {!status.isCreatingSquad && (
             <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-              Enter the 6-character league code to join
+              Enter the league code to join
             </p>
           )}
         </div>
@@ -131,9 +131,9 @@ const JoinLeague = () => {
                     transition-colors duration-200
                     bg-white dark:bg-gray-700 
                     text-gray-900 dark:text-white
-                    focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 
+                    focus:outline-none focus:ring-primary-500 focus:border-primary-500 
                     dark:border-gray-600"
-                  placeholder="Enter 6-character code"
+                  placeholder="Enter league code"
                   value={leagueCode}
                   onChange={(e) => setLeagueCode(e.target.value.toUpperCase())}
                 />
@@ -144,10 +144,10 @@ const JoinLeague = () => {
                   type="submit"
                   disabled={status.isSubmitting}
                   className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium 
-                         text-white bg-indigo-600 hover:bg-indigo-700 
-                         dark:bg-indigo-700 dark:hover:bg-indigo-800
+                         text-white bg-primary-600 hover:bg-primary-700 
+                         dark:bg-primary-700 dark:hover:bg-primary-800
                          transition-colors duration-200
-                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800
+                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800
                          disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {status.isSubmitting ? (
@@ -169,7 +169,7 @@ const JoinLeague = () => {
               <button
                 type="button"
                 onClick={() => setStatus(prev => ({ ...prev, isCreatingSquad: false }))}
-                className="w-full text-center text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                className="w-full text-center text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
               >
                 ← Back to league code
               </button>

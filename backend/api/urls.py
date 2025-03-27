@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from . import views
 from . import admin_views
+from . import user_views
 
 router = DefaultRouter()
 router.register(r'seasons', views.SeasonViewSet)
@@ -23,6 +24,11 @@ urlpatterns = [
     path('register/', views.register_user, name='register'),
     path('user/', views.get_user_details, name='user-details'),
     path('user/preferences/', views.update_preferences, name='user-preferences'),
+    
+    # New user profile endpoints
+    path('user/profile/', user_views.user_profile, name='user-profile'),
+    path('user/change-password/', user_views.change_password, name='user-change-password'),
+    
     path('squads/<int:squad_id>/players/', views.squad_players),
     path('squads/<int:squad_id>/player-events/', views.squad_player_events),
     path('fantasy/boost-roles/', views.fantasy_boost_roles),

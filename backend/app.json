@@ -1,0 +1,25 @@
+{
+  "name": "PitchPerfect Backend",
+  "description": "Fantasy Cricket Web Application Backend API",
+  "env": {
+    "SECRET_KEY": {
+      "description": "A secret key for verifying the integrity of signed cookies.",
+      "generator": "secret"
+    },
+    "DEBUG": {
+      "description": "Turn debug mode on or off.",
+      "value": "False"
+    },
+    "CRICDATA_API_KEY": {
+      "description": "API key for cricket data service"
+    }
+  },
+  "addons": [
+    "heroku-postgresql"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+}

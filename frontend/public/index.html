@@ -3,14 +3,92 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Pitch Perfect - Fantasy League Management"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <title>Pitch Perfect</title>
+    <!-- Combined viewport settings for iOS and Android -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+    <meta name="description" content="PitchPerfect - Draft-based fantasy cricket app designed for IPL enthusiasts" />
+    
+    <!-- Prevent flash of white content during page refresh -->
+    <script>
+      (function() {
+        // Immediately check and apply theme before any content is rendered
+        var theme = localStorage.getItem('theme');
+        var prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (theme === 'dark' || (!theme && prefersDarkMode)) {
+          document.documentElement.classList.add('dark');
+          // Add a background color to the HTML element to prevent white flash
+          document.documentElement.style.backgroundColor = '#111827'; // Tailwind dark:bg-gray-900 color
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#ffffff'; // White background for light mode
+        }
+      })();
+    </script>
+    
+    <!-- Apple Touch Icon and other iOS/macOS specific tags -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/icon.png" />
+    <link rel="apple-touch-icon-precomposed" href="%PUBLIC_URL%/icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PitchPerfect" />
+    
+    <!-- Android specific -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="PitchPerfect" />
+    
+    <!-- Microsoft Tile -->
+    <meta name="msapplication-TileImage" content="%PUBLIC_URL%/icon.png" />
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-navbutton-color" content="#000000" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pitchperfectcricket.com" />
+    <meta property="og:title" content="PitchPerfect Cricket Fantasy" />
+    <meta property="og:description" content="Join PitchPerfect, the premier draft-based fantasy cricket app for IPL fans. Build your team, make trades, and dominate your league!" />
+    <meta property="og:image" content="%PUBLIC_URL%/images/sharesheet.webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="PitchPerfect" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://pitchperfectcricket.com" />
+    <meta name="twitter:title" content="PitchPerfect Cricket Fantasy" />
+    <meta name="twitter:description" content="Join PitchPerfect, the premier draft-based fantasy cricket app for IPL fans. Build your team, make trades, and dominate your league!" />
+    <meta name="twitter:image" content="%PUBLIC_URL%/images/sharesheet.webp" />
+    <meta name="twitter:creator" content="@PitchPerfectApp" />
+    
+    <!-- App manifest and other PWA support -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pitchperfectcricket.com" />
+    
+    <!-- Splash screen for Android -->
+    <link href="%PUBLIC_URL%/splashscreens/iphone5_splash.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="%PUBLIC_URL%/splashscreens/iphone6_splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="%PUBLIC_URL%/splashscreens/iphoneplus_splash.png" media="(device-width: 621px) and (device-height: 1104px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+    <link href="%PUBLIC_URL%/splashscreens/iphonex_splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+    <link href="%PUBLIC_URL%/splashscreens/ipad_splash.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="%PUBLIC_URL%/splashscreens/ipadpro1_splash.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="%PUBLIC_URL%/splashscreens/ipadpro2_splash.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    
+    <title>PitchPerfect</title>
+    
+    <style>
+      /* Ensure body has dark background when in dark mode */
+      body {
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+      }
+      
+      html.dark body {
+        background-color: #111827; /* Same as Tailwind's dark:bg-gray-900 */
+        color: #ffffff;
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

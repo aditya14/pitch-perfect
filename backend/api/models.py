@@ -191,6 +191,7 @@ class IPLMatch(TimeStampedModel):
         choices=Stage.choices,
         default=Stage.LEAGUE
     )
+    phase = models.IntegerField(default=1)
     team_1 = models.ForeignKey(
         IPLTeam,
         on_delete=models.CASCADE,

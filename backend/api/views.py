@@ -24,7 +24,7 @@ from .serializers import (
     FantasyTradeSerializer
 )
 from .roster_serializers import PlayerRosterSerializer
-from .draft_serializers import FantasyDraftSerializer
+from .draft_serializers import FantasyDraftSerializer, OptimizedFantasyDraftSerializer
 from django.db.models import Q, Prefetch, Count, Avg, Sum
 from functools import reduce
 from operator import or_
@@ -594,91 +594,159 @@ class LeagueViewSet(viewsets.ModelViewSet):
         
     @action(detail=True, methods=['get'])
     def players(self, request, pk=None):
-        """Get all players eligible for drafting in a league"""
+        import time
+        from django.core.cache import cache
+
+        """Get all players eligible for drafting in a league with optimized queries and caching"""
+        start_time = time.time()
+        
         try:
             league = self.get_object()
             
-            # Get the last 4 seasons
-            past_seasons = list(range(league.season.year - 4, league.season.year))
-
-            # Get players who have team history for this season
+            # Check cache first
+            cache_key = f'league_players_{league.id}'
+            use_cache = request.query_params.get('no_cache', '0') != '1'
+            
+            if use_cache:
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    print(f"Cache hit for {cache_key}")
+                    return Response(cached_data)
+                print(f"Cache miss for {cache_key}")
+            
+            # Get the last 4 seasons (including current)
+            current_year = league.season.year
+            past_seasons = list(range(current_year - 4, current_year + 1))
+            print(f"Analyzing seasons: {past_seasons}")
+            
+            # 1. Get player_ids who are in the current season
             players = IPLPlayer.objects.filter(
-                # is_active=True,
                 playerteamhistory__season=league.season
             ).distinct()
-
-            # Annotate each player with their match count per season and total points
-            for year in past_seasons:
-                players = players.annotate(**{
-                    f'matches_{year}': Count(
-                        'iplplayerevent',
-                        filter=Q(iplplayerevent__match__season__year=year),
-                        distinct=True
-                    ),
-                    f'points_{year}': Avg(
-                        'iplplayerevent__total_points_all',
-                        filter=Q(iplplayerevent__match__season__year=year)
-                    )
-                })
-
-            # Convert QuerySet to list for custom sorting
-            players_list = list(players)
-
-            def calculate_avg_points(player):
-                total_points = 0
-                total_matches = 0
-                has_qualifying_season = False
+            
+            player_ids = list(players.values_list('id', flat=True))
+            print(f"Found {len(player_ids)} players in current season")
+            
+            # 2. Efficiently get player stats by season with a single query
+            from django.db.models import Case, When, BooleanField, Value, DecimalField, ExpressionWrapper
+            
+            # Create a combined stats query with window functions
+            player_stats = IPLPlayerEvent.objects.filter(
+                player_id__in=player_ids,
+                match__season__year__in=past_seasons
+            ).values(
+                'player_id', 
+                'match__season__year'
+            ).annotate(
+                matches=Count('id'),
+                points=Sum('total_points_all'),
+                avg_points=ExpressionWrapper(
+                    Sum('total_points_all') * 1.0 / Count('id'), 
+                    output_field=DecimalField()
+                ),
+                has_qualifying_season=Case(
+                    When(matches__gte=4, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                )
+            ).order_by('player_id', 'match__season__year')
+            
+            # 3. Organize data by player
+            player_data = {}
+            for player_id in player_ids:
+                player_data[player_id] = {
+                    'id': player_id,
+                    'total_matches': 0,
+                    'total_points': 0,
+                    'has_qualifying_season': False,
+                    'seasons': {},
+                    'avg_points': 0
+                }
+            
+            # 4. Process stats
+            for stat in player_stats:
+                player_id = stat['player_id']
+                year = stat['match__season__year']
                 
-                # Check all 4 seasons
-                for year in past_seasons:
-                    matches = getattr(player, f'matches_{year}') or 0
-                    points = getattr(player, f'points_{year}') or 0
-                    
-                    if matches >= 4:
-                        has_qualifying_season = True
-                    
-                    total_matches += matches
-                    total_points += (points * matches)  # Multiply by matches to get total points
+                # Add season data
+                player_data[player_id]['seasons'][year] = {
+                    'matches': stat['matches'],
+                    'points': stat['points'],
+                    'avg_points': stat['avg_points']
+                }
                 
-                # Calculate average points per game
-                avg_points = total_points / total_matches if total_matches > 0 else 0
+                # Update totals
+                player_data[player_id]['total_matches'] += stat['matches']
+                player_data[player_id]['total_points'] += stat['points']
                 
-                return (has_qualifying_season, avg_points)
-
-            # Sort players
+                # Check qualifying status
+                if stat['has_qualifying_season']:
+                    player_data[player_id]['has_qualifying_season'] = True
+            
+            # 5. Get player details and team info
+            player_details = {
+                p.id: {
+                    'name': p.name,
+                    'role': p.role
+                } for p in players
+            }
+            
+            # Get current team for each player in a single efficient query
+            team_mappings = PlayerTeamHistory.objects.filter(
+                player_id__in=player_ids,
+                season=league.season
+            ).select_related('team').values(
+                'player_id', 
+                'team__short_name'
+            )
+            
+            team_dict = {tm['player_id']: tm['team__short_name'] for tm in team_mappings}
+            
+            # 6. Calculate average points and prepare final data
+            complete_data = []
+            for player_id, data in player_data.items():
+                # Calculate average
+                if data['total_matches'] > 0:
+                    data['avg_points'] = data['total_points'] / data['total_matches']
+                
+                # Add player details
+                data.update(player_details.get(player_id, {'name': 'Unknown', 'role': None}))
+                
+                # Add team info
+                data['team'] = team_dict.get(player_id)
+                
+                complete_data.append(data)
+            
+            # 7. Sort players
             sorted_players = sorted(
-                players_list,
-                key=lambda p: calculate_avg_points(p),
+                complete_data,
+                key=lambda p: (p['has_qualifying_season'], p['avg_points']),
                 reverse=True
             )
-
-            # Create ranks after sorting
-            player_ranks = {player.id: idx + 1 for idx, player in enumerate(sorted_players)}
-
-            # Calculate overall stats for serializer
-            for player in sorted_players:
-                total_matches = sum(
-                    getattr(player, f'matches_{year}') or 0 
-                    for year in past_seasons
-                )
-                total_points = sum(
-                    (getattr(player, f'points_{year}') or 0) * (getattr(player, f'matches_{year}') or 0)
-                    for year in past_seasons
-                )
-                player.matches = total_matches
-                player.avg_points = total_points / total_matches if total_matches > 0 else 0
-
-            # Serialize the data
-            serializer = PlayerRosterSerializer(
-                sorted_players,
-                many=True,
-                context={
-                    'season': league.season,
-                    'player_ranks': player_ranks
-                }
-            )
-
-            return Response(serializer.data)
+            
+            # 8. Add rank and prepare response
+            response_data = []
+            for idx, player in enumerate(sorted_players):
+                response_data.append({
+                    'id': player['id'],
+                    'name': player['name'],
+                    'role': player['role'],
+                    'team': player['team'],
+                    'matches': player['total_matches'],
+                    'avg_points': round(player['avg_points'], 2) if player['avg_points'] else 0,
+                    'rank': idx + 1,
+                    'fantasy_squad': None,
+                    'draft_position': None
+                })
+            
+            # 9. Cache the result (30 minutes)
+            if use_cache:
+                cache.set(cache_key, response_data, 30 * 60)
+            
+            total_time = time.time() - start_time
+            print(f"Players endpoint completed in {total_time:.2f} seconds")
+            
+            return Response(response_data)
 
         except Exception as e:
             import traceback
@@ -824,6 +892,173 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 {'error': str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+    
+
+    @action(detail=True, methods=['get'])
+    def squads(self, request, pk=None):
+        from django.core.cache import cache
+        import time
+        """Get all squads in a league with their players and draft data with optimized performance""" 
+        start_time = time.time()
+        
+        try:
+            league = self.get_object()
+            
+            # Check cache first
+            cache_key = f'league_squads_{league.id}'
+            use_cache = request.query_params.get('no_cache', '0') != '1'
+            
+            if use_cache:
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    print(f"Cache hit for {cache_key}")
+                    return Response(cached_data)
+                print(f"Cache miss for {cache_key}")
+            
+            # 1. Efficiently get all squads in a single query with needed relations
+            squads = FantasySquad.objects.filter(
+                league=league
+            ).select_related(
+                'user'
+            ).prefetch_related(
+                'user__profile'
+            )
+            print(f"Found {squads.count()} squads")
+            
+            # 2. Get draft data for all squads in a single query
+            draft_data = FantasyDraft.objects.filter(
+                league=league,
+                type='Pre-Season'
+            ).select_related('squad').values('squad_id', 'order')
+            
+            # Convert to a dict for faster lookups
+            user_rankings = {d['squad_id']: d['order'] for d in draft_data}
+            print(f"Found draft data for {len(user_rankings)} squads")
+            
+            # 3. Get all player IDs that we need to process
+            # This includes current squad members and historical players
+            all_squad_player_ids = set()
+            squad_dict = {}
+            
+            for squad in squads:
+                # Initialize squad info
+                squad_dict[squad.id] = {
+                    'id': squad.id,
+                    'name': squad.name,
+                    'color': squad.color,
+                    'user_id': squad.user.id,
+                    'user_name': squad.user.username,
+                    'total_points': float(squad.total_points),
+                    'current_core_squad': squad.current_core_squad or {},
+                    'draft_ranking': user_rankings.get(squad.id, []),
+                    'current_player_ids': set(squad.current_squad or []),
+                    'all_player_ids': set(squad.current_squad or [])
+                }
+                
+                # Add current squad player IDs to the set
+                all_squad_player_ids.update(squad.current_squad or [])
+            
+            # 4. Get all historical players (from fantasy events) in a single query
+            historical_player_data = FantasyPlayerEvent.objects.filter(
+                fantasy_squad__league=league
+            ).values(
+                'fantasy_squad_id', 
+                'match_event__player_id'
+            ).distinct()
+            
+            # Update squads with historical player IDs
+            for data in historical_player_data:
+                squad_id = data['fantasy_squad_id']
+                player_id = data['match_event__player_id']
+                
+                if squad_id in squad_dict:
+                    squad_dict[squad_id]['all_player_ids'].add(player_id)
+                    all_squad_player_ids.add(player_id)
+            
+            # 5. Get all player details in a single query
+            players = IPLPlayer.objects.filter(
+                id__in=all_squad_player_ids
+            ).prefetch_related(
+                'playerteamhistory_set'
+            )
+            
+            # Create a player lookup dictionary
+            player_dict = {}
+            for player in players:
+                # Find current team for this player
+                current_team = next(
+                    (th for th in player.playerteamhistory_set.all() 
+                    if th.season_id == league.season.id),
+                    None
+                )
+                
+                player_dict[player.id] = {
+                    'id': player.id,
+                    'name': player.name,
+                    'role': player.role,
+                    'team_code': current_team.team.short_name if current_team else None,
+                    'team_color': current_team.team.primary_color if current_team else None
+                }
+            
+            # 6. Calculate average draft ranks
+            player_draft_rankings = {}
+            for squad_id, rankings in user_rankings.items():
+                for rank, player_id in enumerate(rankings):
+                    if player_id not in player_draft_rankings:
+                        player_draft_rankings[player_id] = []
+                    
+                    # Add the 1-indexed rank to the player's rankings
+                    player_draft_rankings[player_id].append(rank + 1)
+            
+            # Calculate average rank for each player with rankings
+            avg_draft_ranks = {}
+            for player_id, ranks in player_draft_rankings.items():
+                if ranks:
+                    avg_draft_ranks[player_id] = round(sum(ranks) / len(ranks), 2)
+            
+            # 7. Build the final response data
+            squad_data = []
+            for squad_id, squad_info in squad_dict.items():
+                players_list = []
+                for player_id in squad_info['all_player_ids']:
+                    if player_id in player_dict:
+                        player_info = player_dict[player_id].copy()
+                        # Add status (current or traded)
+                        player_info['status'] = 'current' if player_id in squad_info['current_player_ids'] else 'traded'
+                        players_list.append(player_info)
+                
+                # Add player list to squad data
+                squad_info['players'] = players_list
+                
+                # Remove temporary fields used for processing
+                del squad_info['current_player_ids']
+                del squad_info['all_player_ids']
+                
+                squad_data.append(squad_info)
+            
+            # 8. Prepare the final response
+            response_data = {
+                'squads': squad_data,
+                'avg_draft_ranks': avg_draft_ranks
+            }
+            
+            # 9. Cache the result (15 minutes)
+            if use_cache:
+                cache.set(cache_key, response_data, 15 * 60)
+            
+            total_time = time.time() - start_time
+            print(f"Squads endpoint completed in {total_time:.2f} seconds")
+            
+            return Response(response_data)
+        
+        except Exception as e:
+            import traceback
+            print(f"Error in league squads view: {str(e)}")
+            print(traceback.format_exc())
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class FantasySquadViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -847,12 +1082,21 @@ class FantasySquadViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 class DraftViewSet(viewsets.ModelViewSet):
-    serializer_class = FantasyDraftSerializer
+    # Instead of a fixed serializer_class, use get_serializer_class method
+    # serializer_class = FantasyDraftSerializer  # Remove/comment this line
     
     def get_queryset(self):
         return FantasyDraft.objects.filter(
             squad__user=self.request.user
         ).select_related('league', 'league__season', 'squad')
+
+    # Add this method to return the appropriate serializer
+    def get_serializer_class(self):
+        # Use optimized serializer for GET requests
+        if self.request and self.request.method == 'GET':
+            return OptimizedFantasyDraftSerializer
+        # Use standard serializer for other methods (POST, PATCH, etc.)
+        return FantasyDraftSerializer
 
     @action(detail=False, methods=['get'])
     def get_draft_order(self, request):
@@ -863,6 +1107,7 @@ class DraftViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
+        # First check if the user already has a draft order for this league
         draft = FantasyDraft.objects.filter(
             league_id=league_id,
             squad__user=request.user,
@@ -870,25 +1115,58 @@ class DraftViewSet(viewsets.ModelViewSet):
         ).first()
         
         if not draft:
-            # Create new draft order using default ranking
-            league = FantasyLeague.objects.get(id=league_id)
-            squad = FantasySquad.objects.get(league=league, user=request.user)
-            
-            # Get players in default rank order
-            players = IPLPlayer.objects.filter(
-                playerteamhistory__season=league.season
-            ).annotate(
-                matches=Count('iplplayerevent'),
-                avg_points=Avg('iplplayerevent__total_points_all')
-            ).order_by('-avg_points')
-            
-            draft = FantasyDraft.objects.create(
-                league=league,
-                squad=squad,
-                type='Pre-Season',
-                order=list(players.values_list('id', flat=True))
-            )
-            
+            # User doesn't have a draft order yet - create a new one
+            try:
+                league = FantasyLeague.objects.get(id=league_id)
+                squad = FantasySquad.objects.get(league=league, user=request.user)
+                
+                # Use the season's default_draft_order if available
+                if league.season and league.season.default_draft_order:
+                    # Make sure the default_draft_order is a list
+                    if isinstance(league.season.default_draft_order, list) and league.season.default_draft_order:
+                        print(f"Using default draft order from season with {len(league.season.default_draft_order)} players")
+                        draft = FantasyDraft.objects.create(
+                            league=league,
+                            squad=squad,
+                            type='Pre-Season',
+                            order=league.season.default_draft_order
+                        )
+                        serializer = self.get_serializer(draft)
+                        return Response(serializer.data)
+                
+                # If no default_draft_order available or it's empty, fallback to using avg_points
+                print("No default draft order available, using fallback method")
+                players = IPLPlayer.objects.filter(
+                    playerteamhistory__season=league.season
+                ).annotate(
+                    matches=Count('iplplayerevent'),
+                    avg_points=Avg('iplplayerevent__total_points_all')
+                ).order_by('-avg_points')
+                
+                draft = FantasyDraft.objects.create(
+                    league=league,
+                    squad=squad,
+                    type='Pre-Season',
+                    order=list(players.values_list('id', flat=True))
+                )
+                
+            except FantasyLeague.DoesNotExist:
+                return Response(
+                    {"error": "League not found"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except FantasySquad.DoesNotExist:
+                return Response(
+                    {"error": "You don't have a squad in this league"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except Exception as e:
+                print(f"Error creating draft order: {str(e)}")
+                return Response(
+                    {"error": str(e)}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
         serializer = self.get_serializer(draft)
         return Response(serializer.data)
 
@@ -985,9 +1263,23 @@ def squad_player_events(request, squad_id):
 
 @api_view(['GET'])
 def fantasy_boost_roles(request):
-    """Get all available fantasy boost roles and their multipliers"""
+    """Get all available fantasy boost roles and their multipliers in a specific order"""
+    # Define the preferred order of roles
+    role_order = [
+        "Captain",
+        "Vice-Captain", 
+        "Slogger", 
+        "Accumulator", 
+        "Safe Hands", 
+        "Virtuoso", 
+        "Rattler", 
+        "Constrictor"
+    ]
+    
+    # Get all roles from database
     roles = FantasyBoostRole.objects.all()
     
+    # Create a mapping for ordering
     role_data = []
     for role in roles:
         role_data.append({
@@ -1011,6 +1303,9 @@ def fantasy_boost_roles(request):
                 'playing': role.multiplier_playing
             }
         })
+    
+    # Sort the role_data based on the role_order list
+    role_data.sort(key=lambda x: role_order.index(x['name']) if x['name'] in role_order else len(role_order))
     
     return Response(role_data)
 
@@ -1362,6 +1657,7 @@ def update_match_points(request):
     
     match_id = request.data.get('match_id')
     update_all = request.data.get('update_all', False)
+    print(f"Updating match points: {match_id} | {update_all}")
     
     if match_id:
         # Update specific match
@@ -1376,6 +1672,7 @@ def update_match_points(request):
         result = service.update_match_points(match_id)
         
         if 'error' in result:
+            logger.error(f"Error updating match {match_id}: {result['error']}")
             return Response(
                 {"error": result['error']},
                 status=status.HTTP_400_BAD_REQUEST
@@ -1385,9 +1682,9 @@ def update_match_points(request):
             {
                 "success": True,
                 "match": match.id,
-                "player_events_updated": result['player_events_updated'],
-                "fantasy_events_updated": result['fantasy_events_updated'],
-                "fantasy_squads_updated": result['fantasy_squads_updated']
+                "player_events_updated": result.get('player_events_updated', 0),
+                "fantasy_events_updated": result.get('fantasy_events_updated', 0),
+                "fantasy_squads_updated": result.get('fantasy_squads_updated', 0)
             },
             status=status.HTTP_200_OK
         )
@@ -1401,6 +1698,7 @@ def update_match_points(request):
                 status=status.HTTP_200_OK
             )
             
+        print(f"Updating {live_matches.count()} live matches")
         results = service.update_all_live_matches()
         
         successful = [r for r in results if 'error' not in r]
@@ -1429,8 +1727,6 @@ def update_match_points(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-# Updated match_fantasy_stats function for views.py
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def match_fantasy_stats(request, match_id, league_id=None):
