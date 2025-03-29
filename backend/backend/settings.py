@@ -38,6 +38,7 @@ ALLOWED_HOSTS = ['*']
 TRUSTED_DOMAINS = [
     'http://localhost:3000',
     'http://10.0.0.119:3000',
+    'http://10.0.0.119:8000',
     'https://pitchperfectcricket.com',
     'https://www.pitchperfectcricket.com',
     'https://api.pitchperfectcricket.com',
@@ -146,32 +147,18 @@ if os.environ.get('DATABASE_URL'):
         )
     }
 else:
-    # For local development
-    try:
-        import MySQLdb
-        default_db = {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('DB_NAME', 'pitch_perfect'),
-            'USER': os.environ.get('DB_USER', 'pitch_perfect_user'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'userpassword'),
-            'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-            'PORT': os.environ.get('DB_PORT', '3307'),
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
-        }
-        print("Using MySQL for local development")
-    except ImportError:
-        # Use SQLite as a fallback
-        default_db = {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
-        print("Using SQLite for local development")
-    
+    # Local PostgreSQL database setup (similar to production)
     DATABASES = {
-        'default': default_db
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'pitch_perfect_local',
+            'USER': 'postgres',
+            'PASSWORD': 'password',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
     }
+    print("Using PostgreSQL for local development")
 
 # Configure static files
 STATIC_URL = '/static/'

@@ -268,7 +268,7 @@ class CricketDataService:
                 event.bat_balls = batting.get("b", 0)
                 event.bat_fours = batting.get("4s", 0)
                 event.bat_sixes = batting.get("6s", 0)
-                event.bat_not_out = batting.get("dismissal-text") == "not out"
+                event.bat_not_out = batting.get("dismissal-text") in ["not out", "batting"]
                 event.bat_innings = 1
                 
                 event.save()

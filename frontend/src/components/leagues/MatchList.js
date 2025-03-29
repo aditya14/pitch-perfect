@@ -38,6 +38,32 @@ const MatchList = ({ league }) => {
     return matches;
   };
 
+  // Group matches by phase, maintaining chronological order
+  const getGroupedMatches = () => {
+    const filteredMatches = getFilteredMatches();
+    
+    // Sort matches by date first to ensure chronological order
+    const sortedMatches = [...filteredMatches].sort((a, b) => 
+      new Date(a.date) - new Date(b.date)
+    );
+    
+    // Group the sorted matches by phase
+    const groupedByPhase = sortedMatches.reduce((groups, match) => {
+      const phase = match.phase || 1; // Default to phase 1 if not set
+      if (!groups[phase]) {
+        groups[phase] = [];
+      }
+      groups[phase].push(match);
+      return groups;
+    }, {});
+    
+    // Convert to array of phase groups for rendering
+    return Object.entries(groupedByPhase).map(([phase, phaseMatches]) => ({
+      phase: parseInt(phase, 10),
+      matches: phaseMatches
+    }));
+  };
+
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -77,7 +103,7 @@ const MatchList = ({ league }) => {
     );
   }
 
-  const filteredMatches = getFilteredMatches();
+  const groupedMatches = getGroupedMatches();
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -120,14 +146,23 @@ const MatchList = ({ league }) => {
       </div>
       
       <div className="p-2">
-        {filteredMatches.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-            {filteredMatches.map((match) => (
-              <MatchCard 
-                key={match.id}
-                match={match}
-                leagueId={league.id}
-              />
+        {groupedMatches.length > 0 ? (
+          <div className="space-y-6">
+            {groupedMatches.map((group) => (
+              <div key={`phase-${group.phase}`} className="space-y-2">
+                <div className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-md font-medium text-gray-800 dark:text-gray-200 border-l-4 border-primary-500">
+                  Week {group.phase}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {group.matches.map((match) => (
+                    <MatchCard 
+                      key={match.id}
+                      match={match}
+                      leagueId={league.id}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         ) : (

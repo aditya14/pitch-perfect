@@ -438,7 +438,7 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
         """Update related fantasy player events when an IPL event changes"""
         try:
             from .models import FantasyPlayerEvent, FantasySquad
-            from django.db.models import F
+            from django.db.models import F, Sum
             
             # Find all related fantasy events
             fantasy_events = FantasyPlayerEvent.objects.filter(match_event=ipl_event)
@@ -460,36 +460,51 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
                         fantasy_event.boost_points = (multiplier - 1.0) * ipl_event.total_points_all
                     else:
                         # For specialized roles, we need to do more detailed calculations
-                        # This should call the same method that's used during normal scoring
                         from .services.cricket_data_service import CricketDataService
                         service = CricketDataService()
                         fantasy_event.boost_points = service._calculate_boost_points(ipl_event, boost)
                     
-                    fantasy_event.save()
+                    fantasy_event.save(update_fields=['boost_points'])
                     affected_squads.add(fantasy_event.fantasy_squad_id)
                     updated_count += 1
             
-            # Update total points for affected squads
+            # Update total points for affected squads using a more efficient approach
             for squad_id in affected_squads:
                 try:
                     squad = FantasySquad.objects.get(id=squad_id)
-                    # Calculate new total points
-                    total_points = sum(
-                        FantasyPlayerEvent.objects.filter(fantasy_squad=squad)
-                        .annotate(total=F('match_event__total_points_all') + F('boost_points'))
-                        .values_list('total', flat=True)
-                    )
+                    
+                    # Calculate new total points with a single query
+                    total_points = FantasyPlayerEvent.objects.filter(
+                        fantasy_squad=squad
+                    ).annotate(
+                        event_total=F('match_event__total_points_all') + F('boost_points')
+                    ).aggregate(
+                        total=Sum('event_total')
+                    )['total'] or 0
+                    
+                    # Update the squad's total points
                     squad.total_points = total_points
-                    squad.save()
+                    squad.save(update_fields=['total_points'])
+                    
                 except Exception as squad_e:
+                    import logging
+                    logger = logging.getLogger(__name__)
                     logger.error(f"Error updating squad points: {str(squad_e)}")
+                    if request:
+                        from django.contrib import messages
+                        messages.warning(request, f"Error updating Squad {squad_id}: {str(squad_e)}")
             
-            if updated_count > 0:
+            if request and updated_count > 0:
+                from django.contrib import messages
                 messages.info(request, f"Updated {updated_count} fantasy events and {len(affected_squads)} fantasy squads")
-                
+                    
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
             logger.error(f"Error updating fantasy events: {str(e)}")
-            messages.warning(request, f"Player event was saved, but could not update fantasy events: {str(e)}")
+            if request:
+                from django.contrib import messages
+                messages.warning(request, f"Player event was saved, but could not update fantasy events: {str(e)}")
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Optimize foreign key fields while ensuring existing values remain valid"""
