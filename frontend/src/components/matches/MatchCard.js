@@ -5,6 +5,20 @@ import api from '../../utils/axios';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import BoostInlineElement from '../elements/BoostInlineElement';
 
+// Utility function to convert hex color to rgba with opacity
+const hexToRgba = (hex, opacity) => {
+  // Remove the hash if it exists
+  hex = hex.replace('#', '');
+  
+  // Parse the hex values
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  // Return rgba format
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
 const MatchCard = ({ match, leagueId }) => {
   const navigate = useNavigate();
   const [topPlayers, setTopPlayers] = useState([]);
@@ -150,13 +164,7 @@ const MatchCard = ({ match, leagueId }) => {
   const isClickable = ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status);
 
   return (
-    <div 
-      onClick={isClickable ? handleMatchClick : undefined}
-      className={`
-        bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-800
-        ${isClickable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''}
-      `}
-    >
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-800">
       {/* Header: Match number + date/time */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center mb-2 sm:mb-0">
@@ -191,10 +199,9 @@ const MatchCard = ({ match, leagueId }) => {
         <div className="flex items-center justify-between mb-3">
           {battingFirstTeam ? (
             <span 
-              className="px-2 py-1 rounded text-sm font-bold w-16 text-center"
+              className="px-2 py-1 rounded text-sm font-bold w-16 text-center text-gray-900 dark:text-white"
               style={{ 
-                backgroundColor: '#' + battingFirstTeam.primary_color,
-                color: getTextColorForBackground(battingFirstTeam.primary_color)
+                backgroundColor: battingFirstTeam.primary_color ? `${hexToRgba('#' + battingFirstTeam.primary_color, 0.5)}` : 'rgba(209, 213, 219, 0.5)'
               }}
             >
               {battingFirstTeam.short_name || battingFirstTeam.name}
@@ -214,10 +221,9 @@ const MatchCard = ({ match, leagueId }) => {
         <div className="flex items-center justify-between mb-3">
           {battingSecondTeam ? (
             <span 
-              className="px-2 py-1 rounded text-sm font-bold w-16 text-center"
+              className="px-2 py-1 rounded text-sm font-bold w-16 text-center text-gray-900 dark:text-white"
               style={{ 
-                backgroundColor: '#' + battingSecondTeam.primary_color,
-                color: getTextColorForBackground(battingSecondTeam.primary_color)
+                backgroundColor: battingSecondTeam.primary_color ? `${hexToRgba('#' + battingSecondTeam.primary_color, 0.5)}` : 'rgba(209, 213, 219, 0.5)'
               }}
             >
               {battingSecondTeam.short_name || battingSecondTeam.name}
@@ -256,7 +262,7 @@ const MatchCard = ({ match, leagueId }) => {
         {!loading && topPlayers.length > 0 && (
           <div className="mb-3">
             <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
-              TOP PERFORMERS
+              {match.status === 'LIVE' ? 'LEADING' : 'TOP'} PERFORMERS
             </div>
             
             {/* Player 1 */}
@@ -313,7 +319,7 @@ const MatchCard = ({ match, leagueId }) => {
         {!loading && topSquads.length > 0 && (
           <div>
             <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
-              TOP SQUADS
+              {match.status === 'LIVE' ? 'LEADING' : 'TOP'} SQUADS
             </div>
             
             {/* Squad 1 */}
@@ -324,7 +330,7 @@ const MatchCard = ({ match, leagueId }) => {
                     className="h-4 w-1 mr-1.5 rounded-sm"
                     style={{ backgroundColor: topSquads[0]?.color || '#6B7280' }}
                   />
-                  <span className="text-gray-900 dark:text-white text-sm truncate max-w-[150px]">
+                  <span className="text-gray-900 dark:text-white text-sm font-bold truncate max-w-[150px]">
                     {topSquads[0]?.name}
                   </span>
                 </div>
@@ -352,6 +358,19 @@ const MatchCard = ({ match, leagueId }) => {
               </div>
             )}
           </div>
+        )}
+        
+        {/* View Match Details button */}
+        {isClickable && (
+          <button
+            onClick={handleMatchClick}
+            className="mt-4 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
+          >
+            <span>{match.status === 'LIVE' ? 'View Match Details' : 'View Match Details'}</span>
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         )}
       </div>
     </div>

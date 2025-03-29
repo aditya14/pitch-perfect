@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/axios';
 import MatchCard from '../matches/MatchCard';
+import MatchCardMin from '../matches/MatchCardMin';
 
 const MatchList = ({ league }) => {
   const [matches, setMatches] = useState([]);
@@ -153,9 +154,9 @@ const MatchList = ({ league }) => {
                 <div className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-md font-medium text-gray-800 dark:text-gray-200 border-l-4 border-primary-500">
                   Week {group.phase}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-2">
                   {group.matches.map((match) => (
-                    <MatchCard 
+                    <MatchCardMin 
                       key={match.id}
                       match={match}
                       leagueId={league.id}
