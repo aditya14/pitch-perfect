@@ -153,11 +153,9 @@ const MatchView = () => {
         {leagueId && (
           <div className="w-full md:w-1/2">
             <SquadPerformance 
-              playerEvents={playerEvents}
-              loading={loading}
-              error={error}
+              matchId={matchId}
+              leagueId={leagueId}
               activeSquadId={activeSquadId}
-              // squad_names={matchOverview?.squad_names}
             />
           </div>
         )}

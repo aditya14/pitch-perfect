@@ -6,18 +6,26 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  Legend
 } from 'recharts';
 import api from '../../../utils/axios';
-import { getEventData } from '../../../utils/matchUtils';
 
 const LeagueRunningTotal = ({ league }) => {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [visibleSquads, setVisibleSquads] = useState({});
 
   useEffect(() => {
     if (league?.id && league?.season?.id) {
+      // Initialize all squads as visible
+      const initialVisibility = {};
+      league.squads.forEach(squad => {
+        initialVisibility[squad.id] = true;
+      });
+      setVisibleSquads(initialVisibility);
+      
       fetchRunningTotalData();
     }
   }, [league?.id, league?.season?.id]);
@@ -25,12 +33,6 @@ const LeagueRunningTotal = ({ league }) => {
   const fetchRunningTotalData = async () => {
     try {
       setLoading(true);
-      
-      // Create a map of squad names to squad IDs for lookup
-      const squadMap = {};
-      league.squads.forEach(squad => {
-        squadMap[squad.name] = squad.id;
-      });
       
       // Fetch all completed matches for the season
       const matchesResponse = await api.get(`/seasons/${league.season.id}/matches/`);
@@ -44,63 +46,71 @@ const LeagueRunningTotal = ({ league }) => {
         return;
       }
 
-      // Initialize running totals for each squad
-      const runningTotals = {};
-      league.squads.forEach(squad => {
-        runningTotals[squad.id] = 0;
-      });
-
+      // Initialize data structure for chart
       const chartDataPoints = [];
       
       // Process each match sequentially
       for (const match of matches) {
         try {
-          // Fetch all events for this match
-          const eventsResponse = await api.get(`/leagues/${league.id}/matches/${match.id}/events/`);
-          const events = eventsResponse.data;
+          // Fetch match standings data (using the new endpoint)
+          const standingsResponse = await api.get(`/matches/${match.id}/standings/?league_id=${league.id}`);
+          const standings = standingsResponse.data;
           
-          // Calculate squad points for this match
-          const matchSquadPoints = {};
+          // Create a map of squad data for this match
+          const matchSquadData = {};
+          
+          // Create a previous data point to get running totals
+          const previousDataPoint = chartDataPoints.length > 0 
+            ? chartDataPoints[chartDataPoints.length - 1] 
+            : null;
+          
+          // Calculate running totals for each squad
           league.squads.forEach(squad => {
-            matchSquadPoints[squad.id] = 0;
-          });
-          
-          // Process each event to calculate fantasy points per squad
-          events.forEach(event => {
-            // Look up squad ID from squad name
-            const squadId = squadMap[event.squad_name];
+            // Find this squad's data in the standings
+            const squadStanding = standings.find(s => s.fantasy_squad === squad.id);
             
-            // Only process events for squads in this league
-            if (squadId && matchSquadPoints[squadId] !== undefined) {
-              // Process event to get fantasy points
-              const processedEvent = getEventData(event);
-              matchSquadPoints[squadId] += processedEvent.fantasy_points;
+            // If squad has data for this match
+            if (squadStanding) {
+              const matchPoints = squadStanding.total_points || 0;
+              const previousTotal = previousDataPoint ? 
+                (previousDataPoint[`squad_${squad.id}`] || 0) : 0;
+              
+              // Store both match points and running total
+              matchSquadData[squad.id] = {
+                matchPoints: matchPoints,
+                runningTotal: previousTotal + matchPoints
+              };
+            } else {
+              // Squad didn't participate in this match
+              const previousTotal = previousDataPoint ? 
+                (previousDataPoint[`squad_${squad.id}`] || 0) : 0;
+              
+              matchSquadData[squad.id] = {
+                matchPoints: 0,
+                runningTotal: previousTotal
+              };
             }
-          });
-          
-          // Update running totals
-          league.squads.forEach(squad => {
-            runningTotals[squad.id] += matchSquadPoints[squad.id];
           });
           
           // Create data point for chart
           const dataPoint = {
             name: match.match_number.toString(),
             match_id: match.id,
-            date: new Date(match.date).toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric' }),
-            match_name: match.team_1.short_name + ' vs ' + match.team_2.short_name,
-            matchPoints: {},
+            date: new Date(match.date).toLocaleDateString(undefined, { 
+              weekday: 'short', month: 'short', day: 'numeric' 
+            }),
+            match_name: `${match.team_1.short_name} vs ${match.team_2.short_name}`,
+            matchData: matchSquadData,
           };
           
-          // Add running total for each squad
+          // Add squad-specific running totals
           league.squads.forEach(squad => {
-            dataPoint[squad.name] = runningTotals[squad.id];
-            dataPoint.matchPoints[squad.name] = matchSquadPoints[squad.id];
+            dataPoint[`squad_${squad.id}`] = matchSquadData[squad.id].runningTotal;
           });
           
           chartDataPoints.push(dataPoint);
         } catch (err) {
-          console.error(`Error fetching events for match ${match.id}:`, err);
+          console.error(`Error fetching standings for match ${match.id}:`, err);
           // Continue with next match if this one fails
         }
       }
@@ -115,9 +125,10 @@ const LeagueRunningTotal = ({ league }) => {
   };
 
   // Get squad color with fallback to predefined colors
-  const getSquadColor = (squadIndex) => {
-    if (league?.squads?.[squadIndex]?.color) {
-      return league.squads[squadIndex].color;
+  const getSquadColor = (squadId) => {
+    const squad = league?.squads?.find(s => s.id === squadId);
+    if (squad?.color) {
+      return squad.color;
     }
     
     // Fallback colors
@@ -126,7 +137,26 @@ const LeagueRunningTotal = ({ league }) => {
       '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
     ];
     
+    // Get index of squad in league.squads
+    const squadIndex = league?.squads?.findIndex(s => s.id === squadId) || 0;
     return colors[squadIndex % colors.length];
+  };
+
+  // Toggle squad visibility
+  const toggleSquadVisibility = (squadId) => {
+    setVisibleSquads(prev => ({
+      ...prev,
+      [squadId]: !prev[squadId]
+    }));
+  };
+
+  // Select/deselect all squads
+  const toggleAllSquads = (visible) => {
+    const newVisibility = {};
+    league.squads.forEach(squad => {
+      newVisibility[squad.id] = visible;
+    });
+    setVisibleSquads(newVisibility);
   };
 
   if (loading) {
@@ -161,33 +191,40 @@ const LeagueRunningTotal = ({ league }) => {
   // Custom tooltip to show squad point details
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Get match points and match name for this data point
-      const matchPoints = payload[0]?.payload?.matchPoints || {};
+      // Get match name and date for this data point
       const matchName = payload[0]?.payload?.match_name || `Match ${label}`;
+      const matchDate = payload[0]?.payload?.date || '';
+      const matchData = payload[0]?.payload?.matchData || {};
       
-      // Sort squads by total points (running total) in descending order
-      const sortedEntries = [...payload].sort((a, b) => {
-        return b.value - a.value;
-      });
+      // Filter for visible squads and sort by running total in descending order
+      const visibleEntries = payload
+        .filter(entry => {
+          const squadId = parseInt(entry.dataKey.replace('squad_', ''));
+          return visibleSquads[squadId];
+        })
+        .sort((a, b) => b.value - a.value);
       
       return (
         <div className="bg-white dark:bg-black p-3 border border-gray-200 dark:border-gray-700 shadow-lg rounded">
           <p className="font-medium text-gray-900 dark:text-white">{matchName}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            {payload[0]?.payload?.date}
+            {matchDate}
           </p>
           <div className="space-y-1">
-            {sortedEntries.map((entry, index) => {
-              const matchPoint = matchPoints[entry.name] || 0;
+            {visibleEntries.map((entry, index) => {
+              const squadId = parseInt(entry.dataKey.replace('squad_', ''));
+              const squad = league.squads.find(s => s.id === squadId);
+              const squadMatchData = matchData[squadId] || { matchPoints: 0 };
+              
               return (
                 <div key={index} className="flex items-center justify-between gap-2">
                   <div className="flex items-center">
                     <div
                       className="h-3 w-3 rounded-full mr-1"
-                      style={{ backgroundColor: entry.color }}
+                      style={{ backgroundColor: entry.stroke }}
                     ></div>
                     <span className="text-gray-800 dark:text-gray-200 text-sm">
-                      {entry.name}
+                      {squad?.name}
                     </span>
                   </div>
                   <div className="text-right">
@@ -195,7 +232,7 @@ const LeagueRunningTotal = ({ league }) => {
                       {entry.value.toFixed(1)}
                     </span>
                     <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
-                      (+{matchPoint.toFixed(1)})
+                      (+{squadMatchData.matchPoints.toFixed(1)})
                     </span>
                   </div>
                 </div>
@@ -210,9 +247,26 @@ const LeagueRunningTotal = ({ league }) => {
 
   return (
     <div className="bg-white dark:bg-black shadow rounded-lg p-6 border border-gray-200 dark:border-gray-900">
-      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-        Running Total
-      </h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+          Running Total
+        </h3>
+        <div className="flex space-x-2">
+          <button 
+            onClick={() => toggleAllSquads(true)}
+            className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Show All
+          </button>
+          <button 
+            onClick={() => toggleAllSquads(false)}
+            className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Hide All
+          </button>
+        </div>
+      </div>
+      
       <div className="h-64 md:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -234,22 +288,57 @@ const LeagueRunningTotal = ({ league }) => {
             <YAxis 
               tick={{ fill: '#4B5563' }}
               tickLine={{ stroke: '#6B7280' }}
+              label={{
+                value: 'Points',
+                angle: -90,
+                position: 'insideLeft',
+                style: { textAnchor: 'middle', fill: '#4B5563' }
+              }}
             />
             <Tooltip content={<CustomTooltip />} />
-            {league?.squads?.map((squad, index) => (
-              <Line
-                key={squad.id}
-                type="monotone"
-                dataKey={squad.name}
-                name={squad.name}
-                stroke={getSquadColor(index)}
-                activeDot={{ r: 6 }}
-                strokeWidth={2}
-                dot={true}
-              />
+            {league?.squads?.map((squad) => (
+              visibleSquads[squad.id] && (
+                <Line
+                  key={squad.id}
+                  type="monotone"
+                  dataKey={`squad_${squad.id}`}
+                  name={squad.name}
+                  stroke={getSquadColor(squad.id)}
+                  activeDot={{ r: 6 }}
+                  strokeWidth={2}
+                  dot={true}
+                />
+              )
             ))}
           </LineChart>
         </ResponsiveContainer>
+      </div>
+      
+      {/* Squad Filter Toggles */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        {league?.squads?.map((squad) => (
+          <div 
+            key={squad.id}
+            className={`
+              flex items-center p-2 rounded-md cursor-pointer transition-colors
+              ${visibleSquads[squad.id] 
+                ? `bg-opacity-20 bg-gray-100 dark:bg-gray-800` 
+                : `bg-gray-50 dark:bg-gray-900 bg-opacity-50 text-gray-400 dark:text-gray-600`}
+            `}
+            onClick={() => toggleSquadVisibility(squad.id)}
+          >
+            <div 
+              className={`
+                h-3 w-3 rounded-full mr-2
+                ${visibleSquads[squad.id] ? 'opacity-100' : 'opacity-30'}
+              `}
+              style={{ backgroundColor: getSquadColor(squad.id) }}
+            />
+            <span className="text-sm truncate">
+              {squad.name}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
