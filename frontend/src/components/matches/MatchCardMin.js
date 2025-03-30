@@ -164,13 +164,13 @@ const MatchCardMin = ({ match, leagueId }) => {
   const isClickable = ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-col h-full">
+    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800 flex flex-col h-full">
       {/* Header section with match info */}
-      <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+      <div className="p-3 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center mb-2">
-          <span className="text-gray-900 dark:text-white font-medium text-sm">Match {match.match_number}</span>
-          <span className="text-gray-500 dark:text-gray-400 mx-2">•</span>
-          <span className="text-gray-500 dark:text-gray-400 uppercase text-xs">
+          <span className="text-neutral-900 dark:text-white font-medium text-sm">Match {match.match_number}</span>
+          <span className="text-neutral-500 dark:text-neutral-400 mx-2">•</span>
+          <span className="text-neutral-500 dark:text-neutral-400 uppercase text-xs">
             {match.stage || "LEAGUE"}
           </span>
           
@@ -184,7 +184,7 @@ const MatchCardMin = ({ match, leagueId }) => {
         
         {/* Date and time below the match number */}
         {match.date && (
-          <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs">
+          <div className="flex items-center text-neutral-500 dark:text-neutral-400 text-xs">
             <Calendar className="h-4 w-4 mr-1" />
             <span>{formattedDateTime.date}</span>
             <span className="mx-1">•</span>
@@ -201,18 +201,18 @@ const MatchCardMin = ({ match, leagueId }) => {
           <div className="flex items-center justify-between mb-3">
             {battingFirstTeam ? (
               <span 
-                className="px-2 py-1 rounded text-sm font-bold w-16 text-center text-gray-900 dark:text-white"
+                className="px-2 py-1 rounded text-sm font-bold w-16 text-center text-neutral-900 dark:text-white"
                 style={{ 
-                  backgroundColor: battingFirstTeam.primary_color ? `${hexToRgba('#' + battingFirstTeam.primary_color, 0.5)}` : 'rgba(209, 213, 219, 0.5)'
+                  backgroundColor: battingFirstTeam.primary_color ? `${hexToRgba('#' + battingFirstTeam.primary_color, 0.4)}` : 'rgba(209, 213, 219, 0.5)'
                 }}
               >
                 {battingFirstTeam.short_name || battingFirstTeam.name}
               </span>
             ) : (
-              <span className="text-gray-900 dark:text-white font-bold">TBD</span>
+              <span className="text-neutral-900 dark:text-white font-bold">TBD</span>
             )}
             
-            <div className="text-gray-900 dark:text-white text-sm">
+            <div className="text-neutral-900 dark:text-white text-sm">
               {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
                 <span>{formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}</span>
               )}
@@ -223,18 +223,18 @@ const MatchCardMin = ({ match, leagueId }) => {
           <div className="flex items-center justify-between mb-3">
             {battingSecondTeam ? (
               <span 
-                className="px-2 py-1 rounded text-sm font-bold w-16 text-center text-gray-900 dark:text-white"
+                className="px-2 py-1 rounded text-sm font-bold w-16 text-center text-neutral-900 dark:text-white"
                 style={{ 
-                  backgroundColor: battingSecondTeam.primary_color ? `${hexToRgba('#' + battingSecondTeam.primary_color, 0.5)}` : 'rgba(209, 213, 219, 0.5)'
+                  backgroundColor: battingSecondTeam.primary_color ? `${hexToRgba('#' + battingSecondTeam.primary_color, 0.4)}` : 'rgba(209, 213, 219, 0.5)'
                 }}
               >
                 {battingSecondTeam.short_name || battingSecondTeam.name}
               </span>
             ) : (
-              <span className="text-gray-900 dark:text-white font-bold">TBD</span>
+              <span className="text-neutral-900 dark:text-white font-bold">TBD</span>
             )}
             
-            <div className="text-gray-900 dark:text-white text-sm">
+            <div className="text-neutral-900 dark:text-white text-sm">
               {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
                 <span>{formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}</span>
               )}
@@ -246,7 +246,7 @@ const MatchCardMin = ({ match, leagueId }) => {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
                 <Trophy className="h-4 w-4 text-yellow-500 mr-1.5" />
-                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                <span className="text-neutral-700 dark:text-neutral-300 text-sm">
                     {match.winner.short_name} won by {match.win_margin} {match.win_margin === 1 ? (match.win_type === 'RUNS' ? 'run' : 'wicket') : (match.win_type === 'RUNS' ? 'runs' : 'wickets')}
                 </span>
               </div>
@@ -285,7 +285,7 @@ const MatchCardMin = ({ match, leagueId }) => {
           {/* Fantasy Stats Section - Top Squads */}
           {!loading && topSquads.length > 0 && (
             <div className="mb-3">
-              <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
+              <div className="text-neutral-500 dark:text-neutral-400 text-xs uppercase font-medium mb-2">
                 {match.status === 'LIVE' ? 'LEADING' : 'TOP'} SQUADS
               </div>
               
@@ -297,11 +297,11 @@ const MatchCardMin = ({ match, leagueId }) => {
                       className="h-4 w-1 mr-1.5 rounded-sm"
                       style={{ backgroundColor: topSquads[0]?.color || '#6B7280' }}
                     />
-                    <span className="text-gray-900 dark:text-white text-sm truncate max-w-[150px] font-bold">
+                    <span className="text-neutral-900 dark:text-white text-sm truncate max-w-[150px] font-bold">
                       {topSquads[0]?.name}
                     </span>
                   </div>
-                  <span className="text-gray-900 dark:text-white text-sm whitespace-nowrap ml-2">
+                  <span className="text-neutral-900 dark:text-white text-sm whitespace-nowrap ml-2">
                     {topSquads[0]?.match_points} pts
                   </span>
                 </div>
@@ -315,11 +315,11 @@ const MatchCardMin = ({ match, leagueId }) => {
                       className="h-4 w-1 mr-1.5 rounded-sm"
                       style={{ backgroundColor: topSquads[1]?.color || '#6B7280' }}
                     />
-                    <span className="text-gray-900 dark:text-white text-xs truncate max-w-[150px]">
+                    <span className="text-neutral-900 dark:text-white text-xs truncate max-w-[150px]">
                       {topSquads[1]?.name}
                     </span>
                   </div>
-                  <span className="text-gray-900 dark:text-white text-xs whitespace-nowrap ml-2">
+                  <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
                     {topSquads[1]?.match_points} pts
                   </span>
                 </div>
@@ -330,7 +330,7 @@ const MatchCardMin = ({ match, leagueId }) => {
           {/* Fantasy Stats Section - Top Performers */}
           {!loading && topPlayers.length > 0 && (
             <div>
-              <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
+              <div className="text-neutral-500 dark:text-neutral-400 text-xs uppercase font-medium mb-2">
                 {match.status === 'LIVE' ? 'LEADING' : 'TOP'} PERFORMERS
               </div>
               
@@ -338,10 +338,10 @@ const MatchCardMin = ({ match, leagueId }) => {
               {topPlayers.length > 0 && (
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center">
-                    <span className="text-gray-900 dark:text-white text-xs truncate max-w-[150px]">
+                    <span className="text-neutral-900 dark:text-white text-xs truncate max-w-[150px]">
                       {topPlayers[0]?.player_name}
                     </span>
-                    {topPlayers[0]?.boost_label && (
+                    {topPlayers[0]?.boost_label ? (
                       <span className='ml-1'>
                         <BoostInlineElement
                           boostName={topPlayers[0]?.boost_label} 
@@ -350,9 +350,16 @@ const MatchCardMin = ({ match, leagueId }) => {
                           size="XS" 
                         />
                       </span>
+                    ) : (
+                      <span className='ml-2'>
+                        <div 
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: topPlayers[0]?.squad_color || '#6B7280' }}
+                        />
+                      </span>
                     )}
                   </div>
-                  <span className="text-gray-900 dark:text-white text-xs whitespace-nowrap ml-2">
+                  <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
                     {topPlayers[0]?.fantasy_points} pts
                   </span>
                 </div>
@@ -362,10 +369,10 @@ const MatchCardMin = ({ match, leagueId }) => {
               {topPlayers.length > 1 && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <span className="text-gray-900 dark:text-white text-xs truncate max-w-[150px]">
+                    <span className="text-neutral-900 dark:text-white text-xs truncate max-w-[150px]">
                       {topPlayers[1]?.player_name}
                     </span>
-                    {topPlayers[1]?.boost_label && (
+                    {topPlayers[1]?.boost_label ? (
                       <span className='ml-1'>
                         <BoostInlineElement
                           boostName={topPlayers[1]?.boost_label} 
@@ -374,9 +381,16 @@ const MatchCardMin = ({ match, leagueId }) => {
                           size="XS" 
                         />
                       </span>
+                    ) : (
+                      <span className='ml-2'>
+                        <div 
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: topPlayers[1]?.squad_color || '#6B7280' }}
+                        />
+                      </span>
                     )}
                   </div>
-                  <span className="text-gray-900 dark:text-white text-xs whitespace-nowrap ml-2">
+                  <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
                     {topPlayers[1]?.fantasy_points} pts
                   </span>
                 </div>
@@ -403,8 +417,8 @@ const MatchCardMin = ({ match, leagueId }) => {
         
         {/* Countdown for upcoming matches - Properly positioned at the bottom of the card */}
         {match.status === 'SCHEDULED' && timeRemaining && (
-          <div className="flex items-center justify-center bg-gray-100 dark:bg-gray-800 py-2 rounded-md mt-auto">
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 py-2 rounded-md mt-auto">
+            <span className="text-sm text-neutral-700 dark:text-neutral-300">
               Starting in: {formattedCountdown}
             </span>
           </div>

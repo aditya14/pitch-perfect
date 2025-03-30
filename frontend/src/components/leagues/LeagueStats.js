@@ -1,5 +1,5 @@
 import React from 'react';
-import StatsContainer from '../stats/LeagueStats';
+import StatsContainer from '../stats/StatsContainer';
 
 const LeagueStats = ({ league }) => {
   return <StatsContainer league={league} />;

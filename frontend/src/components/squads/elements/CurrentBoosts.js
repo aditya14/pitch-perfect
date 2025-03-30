@@ -22,12 +22,12 @@ const CurrentBoosts = ({
   }
   
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6">
       <button
         onClick={() => setShowCurrent(!showCurrent)}
         className="w-full flex justify-between items-center mb-4"
       >
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
           Current Week Boosts
         </h2>
         {showCurrent ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -43,12 +43,12 @@ const CurrentBoosts = ({
                 if (!role) return null;
 
                 return (
-                  <div key={role.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
+                  <div key={role.id} className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 border border-neutral-100 dark:border-neutral-800">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="h-8 w-8 flex items-center justify-center bg-white dark:bg-gray-900 rounded-full shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+                      <div className="h-8 w-8 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-800">
                         {getRoleIcon(role.name, 18, squadColor)}
                       </div>
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-medium text-neutral-900 dark:text-white">
                         {role.name}
                       </div>
                     </div>
@@ -58,12 +58,12 @@ const CurrentBoosts = ({
                         onClick={() => openPlayerModal(player.id, leagueId)}
                       >
                         {player.name}
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                           {player.role} • {player.current_team?.name || 'No team'}
                         </div>
                       </div>
                     ) : (
-                      <div className="ml-10 text-sm text-gray-500 italic">
+                      <div className="ml-10 text-sm text-neutral-500 italic">
                         No player assigned
                       </div>
                     )}
@@ -72,7 +72,7 @@ const CurrentBoosts = ({
               })}
             </div>
           ) : (
-            <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+            <div className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">
               No players assigned for current week
             </div>
           )}

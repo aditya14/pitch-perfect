@@ -78,7 +78,7 @@ const JoinLeague = () => {
             <Users className="h-12 w-12 text-primary-600 dark:text-primary-400 mx-auto mb-3" />
           )}
           
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white">
             {status.isCreatingSquad ? (
               `Create Squad for ${status.leagueDetails?.name || 'League'}`
             ) : (
@@ -87,14 +87,14 @@ const JoinLeague = () => {
           </h2>
           
           {!status.isCreatingSquad && (
-            <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-center text-sm text-neutral-600 dark:text-neutral-400">
               Enter the league code to join
             </p>
           )}
         </div>
         
         {/* Main Card */}
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+        <div className="bg-white dark:bg-neutral-800 shadow-md rounded-lg p-6 mb-6">
           {/* Error Message */}
           {status.error && (
             <div className="mb-6 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900/50 dark:border-red-800 dark:text-red-300 px-4 py-3 rounded-md">
@@ -119,7 +119,7 @@ const JoinLeague = () => {
             // League code input form
             <form onSubmit={handleJoinSubmit}>
               <div>
-                <label htmlFor="leagueCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor="leagueCode" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   League Code
                 </label>
                 <input
@@ -127,12 +127,12 @@ const JoinLeague = () => {
                   type="text"
                   required
                   maxLength="6"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
+                  className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm 
                     transition-colors duration-200
-                    bg-white dark:bg-gray-700 
-                    text-gray-900 dark:text-white
+                    bg-white dark:bg-neutral-700 
+                    text-neutral-900 dark:text-white
                     focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                    dark:border-gray-600"
+                    dark:border-neutral-600"
                   placeholder="Enter league code"
                   value={leagueCode}
                   onChange={(e) => setLeagueCode(e.target.value.toUpperCase())}
@@ -147,7 +147,7 @@ const JoinLeague = () => {
                          text-white bg-primary-600 hover:bg-primary-700 
                          dark:bg-primary-700 dark:hover:bg-primary-800
                          transition-colors duration-200
-                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800
+                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-neutral-800
                          disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {status.isSubmitting ? (
@@ -169,7 +169,7 @@ const JoinLeague = () => {
               <button
                 type="button"
                 onClick={() => setStatus(prev => ({ ...prev, isCreatingSquad: false }))}
-                className="w-full text-center text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                className="w-full text-center text-sm text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400"
               >
                 ← Back to league code
               </button>

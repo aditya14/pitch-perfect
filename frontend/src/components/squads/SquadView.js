@@ -137,8 +137,8 @@ const SquadView = () => {
         {/* Total Points and Rank Display as side-by-side cards */}
         <div className="flex space-x-3">
           {/* Points Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-4 py-3 min-w-[100px] text-center">
-            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Points</div>
+          <div className="bg-white dark:bg-neutral-950 rounded-lg shadow px-4 py-3 min-w-[100px] text-center">
+            <div className="text-sm text-neutral-500 dark:text-neutral-400 mb-1">Total Points</div>
             <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
               {Number.isInteger(squadData.total_points) 
                 ? squadData.total_points 
@@ -151,9 +151,9 @@ const SquadView = () => {
             <div className={`rounded-lg shadow px-4 py-3 min-w-[100px] text-center ${
               rankInfo.rank === 1 
                 ? 'bg-amber-50 dark:bg-amber-900 border border-amber-200 dark:border-amber-800' 
-                : 'bg-white dark:bg-gray-800'
+                : 'bg-white dark:bg-neutral-800'
             }`}>
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Rank</div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400 mb-1">Rank</div>
               <div className={`text-xl font-bold ${
                 rankInfo.rank === 1
                   ? 'text-amber-600 dark:text-amber-400'
@@ -168,13 +168,13 @@ const SquadView = () => {
 
       {/* Tabs */}
       <div className="mb-6">
-        <nav className="flex space-x-4 border-b border-gray-200 dark:border-gray-700">
+        <nav className="flex space-x-4 border-b border-neutral-200 dark:border-neutral-700">
           <button
             onClick={() => setActiveTab('players')}
             className={`py-2 px-4 text-sm font-medium ${
               activeTab === 'players'
                 ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'
             }`}
           >
             Player List
@@ -184,7 +184,7 @@ const SquadView = () => {
             className={`py-2 px-4 text-sm font-medium ${
               activeTab === 'core'
                 ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'
             }`}
           >
             Boosts

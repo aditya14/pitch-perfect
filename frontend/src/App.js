@@ -106,8 +106,8 @@ const AppContent = () => {
       <div className={`
         min-h-screen 
         theme-transition
-        bg-white dark:bg-gray-900 
-        text-gray-900 dark:text-white
+        bg-white dark:bg-neutral-900 
+        text-neutral-900 dark:text-white
         relative
       `}>
         {user && (
@@ -118,7 +118,7 @@ const AppContent = () => {
         )}
         <div className={`
           theme-transition 
-          dark:bg-gray-900
+          dark:bg-neutral-900
           ${user ? 'pt-4' : ''}
         `}>
           <Routes>

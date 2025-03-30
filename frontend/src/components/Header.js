@@ -94,18 +94,18 @@ const Header = ({ theme, onThemeChange }) => {
     // Create simplified instructions for iOS
     const instructionsHTML = `
       <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" id="ios-install-modal">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="bg-white dark:bg-primary-800 rounded-lg shadow-xl max-w-md w-full p-6">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Add to Home Screen</h3>
-            <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" id="close-modal">
+            <h3 class="text-lg font-bold text-primary-900 dark:text-white">Add to Home Screen</h3>
+            <button class="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-200" id="close-modal">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
           <div class="space-y-4">
-            <p class="text-gray-700 dark:text-gray-300">To add PitchPerfect to your home screen:</p>
-            <ol class="list-decimal pl-5 text-gray-700 dark:text-gray-300 space-y-2">
+            <p class="text-primary-700 dark:text-primary-300">To add PitchPerfect to your home screen:</p>
+            <ol class="list-decimal pl-5 text-primary-700 dark:text-primary-300 space-y-2">
               <li>Tap the <strong>Share</strong> icon at the bottom of your screen</li>
               <li>Select <strong>"Add to Home Screen"</strong> from the menu</li>
               <li>Tap <strong>"Add"</strong> to confirm</li>
@@ -140,9 +140,9 @@ const Header = ({ theme, onThemeChange }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-gray-800 shadow-sm fix-fixed">
+    <header className="sticky top-0 z-50 w-full border-b theme-transition bg-white dark:bg-primary-950 shadow-sm fix-fixed">
       {/* Safe area padding to account for notch/status bar */}
-      <div className="w-full bg-white dark:bg-gray-800 safe-area-top"></div>
+      <div className="w-full bg-white dark:bg-primary-900 safe-area-top"></div>
       
       <div className="container mx-auto px-2 sm:px-6 lg:px-3">
         <div className="flex justify-between h-16">
@@ -153,7 +153,7 @@ const Header = ({ theme, onThemeChange }) => {
           >
             <img src="/icon.png" alt="Logo" className="h-9 w-9 mr-3" />
             <div 
-              className="text-xl font-extrabold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-300"
+              className="text-xl font-extrabold text-primary-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-300"
             >
               <span className="text-primary-500 dark:text-primary-500">Pitch</span>Perfect
             </div>
@@ -164,7 +164,7 @@ const Header = ({ theme, onThemeChange }) => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-full p-1"
+                className="flex items-center text-primary-700 dark:text-primary-300 hover:text-primary-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-full p-1"
               >
                 <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center shadow-sm">
                   <svg 
@@ -196,10 +196,10 @@ const Header = ({ theme, onThemeChange }) => {
 
               {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 py-1 theme-transition bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
+                <div className="absolute right-0 mt-2 w-48 py-1 theme-transition bg-white dark:bg-primary-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
                   <Link
                     to="/profile"
-                    className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center w-full hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="px-4 py-2 text-sm text-primary-700 dark:text-primary-300 flex items-center w-full hover:bg-primary-50 dark:hover:bg-primary-800"
                     onClick={() => setIsDropdownOpen(false)}
                   >
                     <svg 
@@ -219,7 +219,7 @@ const Header = ({ theme, onThemeChange }) => {
                   
                   <button
                     onClick={toggleTheme}
-                    className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center w-full hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="px-4 py-2 text-sm text-primary-700 dark:text-primary-300 flex items-center w-full hover:bg-primary-50 dark:hover:bg-primary-700"
                   >
                     {theme === 'light' ? (
                       <>
@@ -256,7 +256,7 @@ const Header = ({ theme, onThemeChange }) => {
                   {isMobile && !isStandalone && (
                     <button
                       onClick={handleAddToHomeScreen}
-                      className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center w-full hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="px-4 py-2 text-sm text-primary-700 dark:text-primary-300 flex items-center w-full hover:bg-primary-50 dark:hover:bg-primary-700"
                     >
                       <svg 
                         xmlns="http://www.w3.org/2000/svg" 
@@ -270,11 +270,11 @@ const Header = ({ theme, onThemeChange }) => {
                     </button>
                   )}
                   
-                  <div className="border-t border-gray-100 dark:border-gray-700"></div>
+                  <div className="border-t border-primary-100 dark:border-primary-700"></div>
                   
                   <button
                     onClick={logout}
-                    className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center w-full hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="px-4 py-2 text-sm text-primary-700 dark:text-primary-300 flex items-center w-full hover:bg-primary-50 dark:hover:bg-primary-700"
                   >
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 

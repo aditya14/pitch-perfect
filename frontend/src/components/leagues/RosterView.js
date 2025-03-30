@@ -88,10 +88,10 @@ const RosterView = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">
             Player Roster
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-neutral-600 dark:text-neutral-400">
             {league?.name} - {league?.season?.name}
           </p>
         </div>
@@ -103,7 +103,7 @@ const RosterView = () => {
               onClick={() => setDraftMode(!draftMode)}
               className={`px-4 py-2 rounded-md font-medium mb-2 ${
                 draftMode 
-                  ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  ? 'bg-neutral-200 text-neutral-800 hover:bg-neutral-300'
                   : 'bg-primary-600 text-white hover:bg-primary-700'
               }`}
             >
@@ -111,7 +111,7 @@ const RosterView = () => {
             </button>
           )}
           {draftClosesIn !== null && (
-            <div className="flex items-center justify-end text-sm text-gray-600">
+            <div className="flex items-center justify-end text-sm text-neutral-600">
               <svg 
                 className="w-4 h-4 mr-1"
                 fill="none" 

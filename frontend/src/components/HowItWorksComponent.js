@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 
 const AccordionItem = ({ title, icon, isOpen, toggleAccordion, children }) => {
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg mb-4 overflow-hidden">
+    <div className="border border-neutral-200 dark:border-neutral-700 rounded-lg mb-4 overflow-hidden">
       <button
-        className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 text-left"
+        className="w-full flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-900 text-left"
         onClick={toggleAccordion}
       >
         <div className="flex items-center">
@@ -14,13 +14,13 @@ const AccordionItem = ({ title, icon, isOpen, toggleAccordion, children }) => {
           <h2 className="text-xl font-bold ml-2">{title}</h2>
         </div>
         {isOpen ? (
-          <ChevronUp className="text-gray-500 dark:text-gray-400" size={20} />
+          <ChevronUp className="text-neutral-500 dark:text-neutral-400" size={20} />
         ) : (
-          <ChevronDown className="text-gray-500 dark:text-gray-400" size={20} />
+          <ChevronDown className="text-neutral-500 dark:text-neutral-400" size={20} />
         )}
       </button>
       {isOpen && (
-        <div className="p-5 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-5 bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
           {children}
         </div>
       )}
@@ -36,7 +36,7 @@ const HowItWorksComponent = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow mb-4">
+    <div className="max-w-5xl mx-auto px-4 py-8 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white rounded-lg shadow mb-4">
       <div className="mb-8">
         <nav className="flex items-center mb-4">
           <Link to="/" className="flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 transition-colors">
@@ -63,17 +63,17 @@ const HowItWorksComponent = () => {
             </p>
             
             <div className="overflow-x-auto mb-6">
-            <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <table className="min-w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg">
                 <thead>
                 <tr>
-                    <th className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-left w-1/4">Round</th>
-                    <th className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-left w-3/4">Draft Order</th>
+                    <th className="py-3 px-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 text-left w-1/4">Round</th>
+                    <th className="py-3 px-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 text-left w-3/4">Draft Order</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr>
-                    <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 font-medium">Round 1</td>
-                    <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700">
+                    <td className="py-3 px-4 border-b border-neutral-200 dark:border-neutral-700 font-medium">Round 1</td>
+                    <td className="py-3 px-4 border-b border-neutral-200 dark:border-neutral-700">
                     <div className="flex items-center flex-wrap gap-1">
                         <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">User 1</span>
                         <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">User 2</span>
@@ -84,8 +84,8 @@ const HowItWorksComponent = () => {
                     </td>
                 </tr>
                 <tr>
-                    <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 font-medium">Round 2</td>
-                    <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700">
+                    <td className="py-3 px-4 border-b border-neutral-200 dark:border-neutral-700 font-medium">Round 2</td>
+                    <td className="py-3 px-4 border-b border-neutral-200 dark:border-neutral-700">
                     <div className="flex items-center flex-wrap gap-1">
                         <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">User 10</span>
                         <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">User 9</span>
@@ -96,8 +96,8 @@ const HowItWorksComponent = () => {
                     </td>
                 </tr>
                 <tr>
-                    <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 font-medium">Round 3</td>
-                    <td className="py-3 px-4 border-b border-gray-200 dark:border-gray-700">
+                    <td className="py-3 px-4 border-b border-neutral-200 dark:border-neutral-700 font-medium">Round 3</td>
+                    <td className="py-3 px-4 border-b border-neutral-200 dark:border-neutral-700">
                     <div className="flex items-center flex-wrap gap-1">
                         <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">User 1</span>
                         <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">User 2</span>
@@ -112,7 +112,7 @@ const HowItWorksComponent = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg shadow border border-neutral-200 dark:border-neutral-700">
                 <h4 className="font-semibold mb-2 flex items-center">
                 <Clock size={18} className="text-blue-500 dark:text-blue-400 mr-2" />
                 Draft Timing
@@ -123,7 +123,7 @@ const HowItWorksComponent = () => {
                 </p>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg shadow border border-neutral-200 dark:border-neutral-700">
                 <h4 className="font-semibold mb-2 flex items-center">
                 <Star size={18} className="text-yellow-500 dark:text-yellow-400 mr-2" />
                 Player Ranking
@@ -155,7 +155,7 @@ const HowItWorksComponent = () => {
         toggleAccordion={() => toggleAccordion('scoring')}
         >
         {/* Batting Points - Full width */}
-        <div className="p-5 bg-white dark:bg-gray-800 border-l-4 border-blue-500 dark:border-blue-400 mb-6">
+        <div className="p-5 bg-white dark:bg-neutral-800 border-l-4 border-blue-500 dark:border-blue-400 mb-6">
             <h3 className="text-xl font-semibold mb-4 text-blue-700 dark:text-blue-300">Batting</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -163,23 +163,23 @@ const HowItWorksComponent = () => {
             <div>
                 <table className="w-full">
                 <tbody>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">Per Run</td>
                     <td className="py-2 text-right font-bold">1 pt</td>
                     </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">Per Four</td>
                     <td className="py-2 text-right font-bold">1 pt</td>
                     </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">Per Six</td>
                     <td className="py-2 text-right font-bold">2 pts</td>
                     </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">50+ Runs</td>
                     <td className="py-2 text-right font-bold">8 pts</td>
                     </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">100+ Runs</td>
                     <td className="py-2 text-right font-bold">16 pts</td>
                     </tr>
@@ -197,8 +197,8 @@ const HowItWorksComponent = () => {
                 
                 {/* Center line indicator */}
                 <div className="mb-3 flex items-center justify-center">
-                <div className="w-full h-0.5 bg-gray-300 dark:bg-gray-600 relative">
-                    <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-4 bg-gray-400 dark:bg-gray-500"></div>
+                <div className="w-full h-0.5 bg-neutral-300 dark:bg-neutral-600 relative">
+                    <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-4 bg-neutral-400 dark:bg-neutral-500"></div>
                 </div>
                 </div>
                 
@@ -284,7 +284,7 @@ const HowItWorksComponent = () => {
         </div>
         
         {/* Bowling Points - Full width */}
-        <div className="p-5 bg-white dark:bg-gray-800 border-l-4 border-green-500 dark:border-green-400 mb-6">
+        <div className="p-5 bg-white dark:bg-neutral-800 border-l-4 border-green-500 dark:border-green-400 mb-6">
             <h3 className="text-xl font-semibold mb-4 text-green-700 dark:text-green-300">Bowling</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -292,15 +292,15 @@ const HowItWorksComponent = () => {
             <div>
                 <table className="w-full">
                 <tbody>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">Per Wicket</td>
                     <td className="py-2 text-right font-bold">25 pts</td>
                     </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">Per Maiden</td>
                     <td className="py-2 text-right font-bold">8 pts</td>
                     </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">3+ Wickets</td>
                     <td className="py-2 text-right font-bold">8 pts</td>
                     </tr>
@@ -318,8 +318,8 @@ const HowItWorksComponent = () => {
                 
                 {/* Center line indicator */}
                 <div className="mb-3 flex items-center justify-center">
-                <div className="w-full h-0.5 bg-gray-300 dark:bg-gray-600 relative">
-                    <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-4 bg-gray-400 dark:bg-gray-500"></div>
+                <div className="w-full h-0.5 bg-neutral-300 dark:bg-neutral-600 relative">
+                    <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-4 bg-neutral-400 dark:bg-neutral-500"></div>
                 </div>
                 </div>
                 
@@ -405,7 +405,7 @@ const HowItWorksComponent = () => {
         </div>
         
         {/* Fielding & Other Points - Full width */}
-        <div className="p-4 bg-white dark:bg-gray-800 border-l-4 border-yellow-500 dark:border-yellow-400">
+        <div className="p-4 bg-white dark:bg-neutral-800 border-l-4 border-yellow-500 dark:border-yellow-400">
             <h3 className="text-xl font-semibold mb-4 text-yellow-700 dark:text-yellow-300">Fielding & Other</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -414,15 +414,15 @@ const HowItWorksComponent = () => {
                 <h4 className="font-semibold mb-2">Fielding</h4>
                 <table className="w-full">
                 <tbody>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">Per Stumping</td>
                     <td className="py-2 text-right font-bold">12 pts</td>
                     </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">Per Catch</td>
                     <td className="py-2 text-right font-bold">8 pts</td>
                     </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                    <tr className="border-b border-neutral-100 dark:border-neutral-700">
                     <td className="py-2">Run Out (single fielder)</td>
                     <td className="py-2 text-right font-bold">8 pts</td>
                     </tr>
@@ -436,7 +436,7 @@ const HowItWorksComponent = () => {
                 <div className="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-lg">
                 <table className="w-full">
                     <tbody>
-                    <tr className="border-b border-gray-100 dark:border-yellow-800/30">
+                    <tr className="border-b border-neutral-100 dark:border-yellow-800/30">
                         <td className="py-2">Player of the Match</td>
                         <td className="py-2 text-right font-bold text-purple-600 dark:text-purple-400">50 pts</td>
                     </tr>
@@ -475,7 +475,7 @@ const HowItWorksComponent = () => {
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> Any role</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 2× all points</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Best for your star player and top point getter.</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Best for your star player and top point getter.</p>
             </div>
             
             {/* Vice Captain */}
@@ -486,7 +486,7 @@ const HowItWorksComponent = () => {
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> Any role</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 1.5× all points</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Great for reliable, consistent performers who regularly contribute substantial points.</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Great for reliable, consistent performers who regularly contribute substantial points.</p>
             </div>
             
             {/* Slogger */}
@@ -497,7 +497,7 @@ const HowItWorksComponent = () => {
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BAT, WK</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 2× Strike Rate, 2× Fours, 2× Sixes, 1.5× Runs, 1.5× Batting Milestones</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Perfect for big hitters known for clearing the ropes.</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Perfect for big hitters known for clearing the ropes.</p>
             </div>
             
             {/* Accumulator */}
@@ -508,7 +508,7 @@ const HowItWorksComponent = () => {
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BAT, WK</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 1.5× Strike Rate, 1.5× Fours, 1.5× Sixes, 2× Runs, 2× Batting Milestones</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Ideal for anchor batsmen who build big innings.</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Ideal for anchor batsmen who build big innings.</p>
             </div>
             
             {/* Safe Hands */}
@@ -519,7 +519,7 @@ const HowItWorksComponent = () => {
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> WK</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 2× Fielding, 1.5× Runs, 1.5× Batting Milestones</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Perfect for wicket-keepers who can bat.</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Perfect for wicket-keepers who can bat.</p>
             </div>
             
             {/* Rattler */}
@@ -530,7 +530,7 @@ const HowItWorksComponent = () => {
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BOWL</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 2× Wickets, 2× Bowling Milestones, 1.5× Maidens, 1.5× Economy</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Ideal for strike bowlers who take lots of wickets.</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Ideal for strike bowlers who take lots of wickets.</p>
             </div>
             
             {/* Constrictor */}
@@ -541,7 +541,7 @@ const HowItWorksComponent = () => {
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BOWL</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 1.5× Wickets, 1.5× Bowling Milestones, 2× Maidens, 2× Economy</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Great for economical bowlers who keep the runs down.</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Great for economical bowlers who keep the runs down.</p>
             </div>
             
             {/* Virtuoso */}
@@ -552,11 +552,11 @@ const HowItWorksComponent = () => {
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> ALL</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 1.5× Runs, 1.5× Wickets, 1.5× Strike Rate, 1.5× Economy, 1.5× Fielding</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Perfect for balanced all-rounders who contribute in all aspects.</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Perfect for balanced all-rounders who contribute in all aspects.</p>
             </div>
           </div>
           
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 mt-6">
+          <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-6 mt-6">
             <h3 className="text-xl font-semibold mb-4">Weekly Selection Rules</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -612,7 +612,7 @@ const HowItWorksComponent = () => {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white dark:bg-gray-800 border-l-4 border-purple-500 dark:border-purple-400 p-5">
+            <div className="bg-white dark:bg-neutral-800 border-l-4 border-purple-500 dark:border-purple-400 p-5">
               <h3 className="text-xl font-semibold mb-3 text-purple-700 dark:text-purple-300">Trading Mechanics</h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
@@ -634,7 +634,7 @@ const HowItWorksComponent = () => {
               </ul>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 border-l-4 border-green-500 dark:border-green-400 p-5">
+            <div className="bg-white dark:bg-neutral-800 border-l-4 border-green-500 dark:border-green-400 p-5">
               <h3 className="text-xl font-semibold mb-3 text-green-700 dark:text-green-300">Strategic Reasons to Trade</h3>
               <ul className="space-y-3">
                 <li className="flex items-start">

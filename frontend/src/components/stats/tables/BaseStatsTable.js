@@ -5,7 +5,7 @@ const BaseStatsTable = ({
   columns, 
   defaultSortColumn = null, 
   defaultSortDirection = 'desc', 
-  emptyMessage = 'No data available' 
+  emptyMessage = 'No data available'
 }) => {
   const [sortConfig, setSortConfig] = useState({
     key: defaultSortColumn,
@@ -61,10 +61,13 @@ const BaseStatsTable = ({
     });
   };
 
+  // Get visible columns (non-hidden)
+  const visibleColumns = columns.filter(col => !col.hidden);
+
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-        <p className="text-gray-500 dark:text-gray-400 text-center">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+        <p className="text-neutral-500 dark:text-neutral-400 text-center">
           {emptyMessage}
         </p>
       </div>
@@ -72,75 +75,70 @@ const BaseStatsTable = ({
   }
 
   return (
-    <div className="bg-white dark:bg-black shadow rounded-b-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-900">
+    <div className="overflow-x-auto rounded-b-lg">
+      <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 text-sm md:text-base rounded-b-lg">
+        <thead className="bg-neutral-50 dark:bg-black">
           <tr>
-            {columns.map((column) => {
-              // Skip hidden columns
-              if (column.hidden) return null;
-              
-              return (
-                <th 
-                  key={column.key}
-                  scope="col" 
-                  className={`px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider ${column.sortable !== false ? 'cursor-pointer' : ''}`}
-                  onClick={() => column.sortable !== false && requestSort(column.key)}
-                >
-                  <div className="flex items-center">
-                    {column.header}
-                    {column.sortable !== false && (
-                      <span className="ml-1">
-                        {sortConfig.key === column.key ? (
-                          <svg 
-                            className="w-4 h-4" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24" 
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            {sortConfig.direction === 'asc' ? (
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
-                            ) : (
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                            )}
-                          </svg>
-                        ) : (
-                          <svg 
-                            className="w-4 h-4 opacity-0 group-hover:opacity-50" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24" 
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
+            {visibleColumns.map((column) => (
+              <th 
+                key={column.key}
+                scope="col" 
+                className={`
+                  px-1 py-2 sm:px-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider
+                  ${column.sortable !== false ? 'cursor-pointer' : ''}
+                `}
+                onClick={() => column.sortable !== false && requestSort(column.key)}
+              >
+                <div className="flex items-center">
+                  <span className="whitespace-nowrap">{column.header}</span>
+                  {column.sortable !== false && (
+                    <span className="ml-1">
+                      {sortConfig.key === column.key ? (
+                        <svg 
+                          className="w-3 h-3" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24" 
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          {sortConfig.direction === 'asc' ? (
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
-                          </svg>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              );
-            })}
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          )}
+                        </svg>
+                      ) : null}
+                    </span>
+                  )}
+                </div>
+              </th>
+            ))}
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-black divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="bg-white dark:bg-neutral-950 divide-y divide-neutral-200 dark:divide-neutral-900">
           {sortedData.map((row, rowIndex) => (
-            <tr key={rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-900">
-              {columns.map((column) => {
-                // Skip hidden columns
-                if (column.hidden) return null;
-                
+            <tr key={rowIndex} className="hover:bg-neutral-50 dark:hover:bg-black">
+              {visibleColumns.map((column, colIndex) => {
                 // Get the cell value
                 const value = row[column.key];
                 
                 // Format the value based on the renderer function if provided
-                const renderedValue = column.renderer ? column.renderer(value, row) : value;
+                const renderedValue = column.renderer 
+                  ? column.renderer(value, row) 
+                  : value;
+                
+                // Apply special styling to first column
+                const isFirstColumn = colIndex === 0;
                 
                 return (
                   <td 
                     key={`${rowIndex}-${column.key}`} 
-                    className="px-2 py-2 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200"
+                    className={`
+                      px-1 py-2 sm:px-2 whitespace-nowrap text-xs sm:text-sm 
+                      ${isFirstColumn 
+                        ? 'font-medium text-neutral-900 dark:text-white min-w-[120px]' 
+                        : 'text-neutral-800 dark:text-neutral-200'}
+                    `}
                   >
                     {renderedValue}
                   </td>

@@ -285,7 +285,7 @@ const LeagueSquads = ({ league }) => {
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'names'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
         >
           <Users className="h-3 w-3 mr-1" />
@@ -297,7 +297,7 @@ const LeagueSquads = ({ league }) => {
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'draft'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
         >
           <ArrowUpDown className="h-3 w-3 mr-1" />
@@ -309,7 +309,7 @@ const LeagueSquads = ({ league }) => {
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'roles'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
         >
           <Volleyball className="h-3 w-3 mr-1" />
@@ -321,7 +321,7 @@ const LeagueSquads = ({ league }) => {
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'teams'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
         >
           <ShieldHalf className="h-3 w-3 mr-1" />
@@ -333,7 +333,7 @@ const LeagueSquads = ({ league }) => {
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'boosts'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
         >
           <Zap className="h-3 w-3 mr-1" />
@@ -347,19 +347,19 @@ const LeagueSquads = ({ league }) => {
           <button 
             onClick={prevPage} 
             disabled={!canGoPrev}
-            className={`p-1 rounded-md ${!canGoPrev ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 dark:text-gray-300'}`}
+            className={`p-1 rounded-md ${!canGoPrev ? 'text-neutral-400 cursor-not-allowed' : 'text-neutral-700 dark:text-neutral-300'}`}
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           
-          <div className="text-xs text-gray-600 dark:text-gray-400">
+          <div className="text-xs text-neutral-600 dark:text-neutral-400">
             {visibleColumns.start + 1}-{Math.min(visibleColumns.start + visibleColumns.count, squads.length)} of {squads.length} squads
           </div>
           
           <button 
             onClick={nextPage} 
             disabled={!canGoNext}
-            className={`p-1 rounded-md ${!canGoNext ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 dark:text-gray-300'}`}
+            className={`p-1 rounded-md ${!canGoNext ? 'text-neutral-400 cursor-not-allowed' : 'text-neutral-700 dark:text-neutral-300'}`}
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -367,13 +367,13 @@ const LeagueSquads = ({ league }) => {
       )}
       
       {/* Squad Table - More compact and spreadsheet-like */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-x-auto">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-x-auto">
         <table className="w-full border-collapse text-xs">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700">
+            <tr className="bg-neutral-50 dark:bg-neutral-700">
               {/* Squad columns - No first column in 'names' view */}
               {activeView !== 'names' && (
-                <th className="sticky left-0 bg-gray-50 dark:bg-gray-700 z-10 px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                <th className="sticky left-0 bg-neutral-50 dark:bg-neutral-700 z-10 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600">
                   {activeView === 'teams' ? 'IPL Team' : (activeView === 'draft' ? 'Rank' : activeView === 'roles' ? 'Role' : 'Boost')}
                 </th>
               )}
@@ -381,7 +381,7 @@ const LeagueSquads = ({ league }) => {
               {visibleSquads.map(squad => (
                 <th 
                   key={squad.id}
-                  className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                  className="px-2 py-2 text-center text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600"
                   style={{ minWidth: '120px' }}
                 >
                   <Link 
@@ -406,13 +406,13 @@ const LeagueSquads = ({ league }) => {
                 {/* Create a single row with multiple cells, one per squad */}
                 <tr>
                   {visibleSquads.map(squad => (
-                    <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400 align-top border border-gray-200 dark:border-gray-600">
+                    <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400 align-top border border-neutral-200 dark:border-neutral-600">
                         {squadPlayers[squad.id]?.map(player => {
                         const { demandClass, avgRank, isHotPick, playerRank } = getPlayerDemandInfo(player.id);
                         return (
                             <div 
                             key={player.id} 
-                            className={`px-1 py-1 truncate ${demandClass} border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700`}
+                            className={`px-1 py-1 truncate ${demandClass} border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700`}
                             title={isHotPick ? `Avg. Rank: ${avgRank}` : ""}
                             >
                             {playerRank <= 4 && <Flame className="h-2 w-2 inline-block mr-1 text-white" />}
@@ -462,9 +462,9 @@ const LeagueSquads = ({ league }) => {
                 const displayRankings = maxRankings
                 
                 return Array.from({ length: displayRankings }).map((_, rankIndex) => (
-                  <tr key={`rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
+                  <tr key={`rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : ''}>
                     {/* Player rank as the first cell in each row */}
-                    <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                    <td className="sticky left-0 bg-white dark:bg-neutral-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600">
                       {rankIndex + 1}
                     </td>
                     
@@ -473,7 +473,7 @@ const LeagueSquads = ({ league }) => {
                       // Get the player ID at this rank
                       const playerId = squad.draft_ranking?.[rankIndex];
                       if (!playerId) return (
-                        <td key={`${squad.id}-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-600">
+                        <td key={`${squad.id}-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-neutral-400 dark:text-neutral-500 border border-neutral-200 dark:border-neutral-600">
                           -
                         </td>
                       );
@@ -488,8 +488,8 @@ const LeagueSquads = ({ league }) => {
                       return (
                         <td 
                           key={`${squad.id}-rank-${rankIndex}`} 
-                          className={`px-2 py-1 whitespace-nowrap text-xs truncate border border-gray-200 dark:border-gray-600 ${
-                            isInSquad ? 'bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'
+                          className={`px-2 py-1 whitespace-nowrap text-xs truncate border border-neutral-200 dark:border-neutral-600 ${
+                            isInSquad ? 'bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300' : 'text-neutral-500 dark:text-neutral-400'
                           }`}
                         >
                           {player ? player.name : `ID: ${playerId}`}
@@ -509,19 +509,19 @@ const LeagueSquads = ({ league }) => {
                 ALL: 'ALL',
                 WK: 'WK'
               }).map(([role, label], roleIndex) => (
-                <tr key={role} className={roleIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
-                  <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                <tr key={role} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : ''}>
+                  <td className="sticky left-0 bg-white dark:bg-neutral-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600">
                     {label}
                   </td>
                   
                   {visibleSquads.map(squad => (
-                    <td key={`${squad.id}-${role}`} className="p-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
+                    <td key={`${squad.id}-${role}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600">
                       {playersByRole[squad.id]?.[role]?.map(player => {
                         const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
                         return (
                           <div 
                             key={player.id} 
-                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-gray-50 dark:hover:bg-gray-700 relative`}
+                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-neutral-50 dark:hover:bg-neutral-700 relative`}
                             onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
                             onMouseLeave={hideTooltip}
                           >
@@ -542,19 +542,19 @@ const LeagueSquads = ({ league }) => {
                 Object.values(playersByTeam)
                   .flatMap(teamMap => Object.keys(teamMap))
               )].sort().map((teamCode, teamIndex) => (
-                <tr key={teamCode} className={teamIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
-                  <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                <tr key={teamCode} className={teamIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : ''}>
+                  <td className="sticky left-0 bg-white dark:bg-neutral-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600">
                     {teamCode}
                   </td>
                   
                   {visibleSquads.map(squad => (
-                    <td key={`${squad.id}-${teamCode}`} className="p-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
+                    <td key={`${squad.id}-${teamCode}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600">
                       {playersByTeam[squad.id]?.[teamCode]?.map(player => {
                         const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
                         return (
                           <div 
                             key={player.id} 
-                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-gray-50 dark:hover:bg-gray-700 relative`}
+                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-neutral-50 dark:hover:bg-neutral-700 relative`}
                             onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
                             onMouseLeave={hideTooltip}
                           >
@@ -581,8 +581,8 @@ const LeagueSquads = ({ league }) => {
                   rattler: 'Rattler',
                   constrictor: 'Constrictor',
                 }).map(([roleKey, roleLabel], roleIndex) => (
-                  <tr key={roleKey} className={roleIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : ''}>
-                    <td className="sticky left-0 bg-white dark:bg-gray-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-xs text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                  <tr key={roleKey} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : ''}>
+                    <td className="sticky left-0 bg-white dark:bg-neutral-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-xs text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600">
                       <div className="flex items-center gap-1">
                         {getRoleIcon(roleLabel, 14)}
                         <span className="truncate">{roleLabel}</span>
@@ -628,7 +628,7 @@ const LeagueSquads = ({ league }) => {
                         : { demandClass: '', avgRank: 'N/A', isHotPick: false };
                       
                       return (
-                        <td key={`${squad.id}-${roleKey}`} className="p-0 whitespace-nowrap text-xs border border-gray-200 dark:border-gray-600">
+                        <td key={`${squad.id}-${roleKey}`} className="p-0 whitespace-nowrap text-xs border border-neutral-200 dark:border-neutral-600">
                           {boostPlayer ? (
                             <div 
                               className={`w-full h-full px-2 py-1 truncate ${demandClass} relative`} 
@@ -638,7 +638,7 @@ const LeagueSquads = ({ league }) => {
                               {boostPlayer.name}
                             </div>
                           ) : (
-                            <span className="px-2 py-1 block text-gray-400 dark:text-gray-500">-</span>
+                            <span className="px-2 py-1 block text-neutral-400 dark:text-neutral-500">-</span>
                           )}
                         </td>
                       );
@@ -654,7 +654,7 @@ const LeagueSquads = ({ league }) => {
       {/* Fixed Tooltip that shows when hovering over top-ranked players */}
       {tooltip.visible && (
         <div 
-            className="absolute z-50 px-3 py-2 bg-gray-800 text-white text-xs rounded-md shadow-lg"
+            className="absolute z-50 px-3 py-2 bg-neutral-800 text-white text-xs rounded-md shadow-lg"
             style={{ 
             left: tooltip.position.x + 15,
             top: tooltip.position.y - 30,
@@ -671,11 +671,11 @@ const LeagueSquads = ({ league }) => {
           <div className="h-4 w-4 bg-gradient-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center mr-1">
             <Flame className="h-2 w-2 text-white" />
           </div>
-          <span className="text-gray-600 dark:text-gray-300">Top 5 in demand</span>
+          <span className="text-neutral-600 dark:text-neutral-300">Top 5 in demand</span>
         </div>
         <div className="flex items-center">
           <div className="h-4 w-4 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 rounded mr-1"></div>
-          <span className="text-gray-600 dark:text-gray-300">Top 6-15 in demand</span>
+          <span className="text-neutral-600 dark:text-neutral-300">Top 6-15 in demand</span>
         </div>
       </div>
     </div>

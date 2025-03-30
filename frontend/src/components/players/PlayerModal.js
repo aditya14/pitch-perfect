@@ -98,25 +98,25 @@ const PlayerModal = ({ playerId, leagueId, isOpen, onClose }) => {
         {/* Modal Panel - Truly full width/height on mobile, 90% width on desktop */}
         <div 
           ref={modalRef}
-          className="relative w-full h-full sm:w-[90%] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-lg bg-white dark:bg-gray-800 shadow-xl transform transition-all overflow-hidden flex flex-col touch-auto"
+          className="relative w-full h-full sm:w-[90%] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-lg bg-white dark:bg-neutral-800 shadow-xl transform transition-all overflow-hidden flex flex-col touch-auto"
         >
           {/* Header - Fixed */}
-          <div className="flex-shrink-0 sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 sm:px-6 py-3 sm:py-4 sm:rounded-t-lg">
+          <div className="flex-shrink-0 sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-4 sm:px-6 py-3 sm:py-4 sm:rounded-t-lg">
             {playerData && (
-              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white truncate pr-2">
+              <h3 className="text-base sm:text-lg font-medium text-neutral-900 dark:text-white truncate pr-2">
                 {playerData.name} - {playerData.team}
               </h3>
             )}
             <button
               onClick={onClose}
-              className="rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 flex-shrink-0 hidden sm:block"
+              className="rounded-md text-neutral-400 hover:text-neutral-500 dark:hover:text-neutral-300 flex-shrink-0 hidden sm:block"
             >
               <X className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
           </div>
 
           {/* Mobile Back Button - Only visible on mobile */}
-          <div className="sm:hidden sticky top-[53px] z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2">
+          <div className="sm:hidden sticky top-[53px] z-10 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 px-4 py-2">
             <button
               onClick={onClose}
               className="flex items-center text-sm font-medium text-blue-600 dark:text-blue-400"

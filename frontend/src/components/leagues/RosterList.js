@@ -67,7 +67,7 @@ const RosterList = ({ players, leagueId }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div className="bg-white dark:bg-neutral-800 rounded-lg shadow">
       <div className="p-6">
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-6">
@@ -95,11 +95,11 @@ const RosterList = ({ players, leagueId }) => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <tr className="bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
                 <th className="px-4 py-3 text-left">
                   <button
                     onClick={() => handleSort('rank')}
-                    className="flex items-center text-sm font-semibold text-gray-900 dark:text-white"
+                    className="flex items-center text-sm font-semibold text-neutral-900 dark:text-white"
                   >
                     Rank
                     <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -108,26 +108,26 @@ const RosterList = ({ players, leagueId }) => {
                 <th className="px-4 py-3 text-left">
                   <button
                     onClick={() => handleSort('name')}
-                    className="flex items-center text-sm font-semibold text-gray-900 dark:text-white"
+                    className="flex items-center text-sm font-semibold text-neutral-900 dark:text-white"
                   >
                     Name
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </button>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">
                     IPL Team
                   </span>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">
                     Role
                   </span>
                 </th>
                 <th className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleSort('matches')}
-                    className="flex items-center justify-end text-sm font-semibold text-gray-900 dark:text-white ml-auto"
+                    className="flex items-center justify-end text-sm font-semibold text-neutral-900 dark:text-white ml-auto"
                   >
                     Matches
                     <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -136,7 +136,7 @@ const RosterList = ({ players, leagueId }) => {
                 <th className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleSort('avgPoints')}
-                    className="flex items-center justify-end text-sm font-semibold text-gray-900 dark:text-white ml-auto"
+                    className="flex items-center justify-end text-sm font-semibold text-neutral-900 dark:text-white ml-auto"
                   >
                     2021-24 Avg
                     <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -144,16 +144,16 @@ const RosterList = ({ players, leagueId }) => {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-600">
               {getSortedAndFilteredPlayers().map((player) => (
                 <tr 
                   key={player.id}
-                  className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700"
                 >
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
                     {player.rank}
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <td className="px-4 py-3 text-sm font-medium text-neutral-900 dark:text-neutral-100">
                     <button 
                       onClick={() => openPlayerModal(player.id, leagueId)}
                       className="text-blue-600 hover:underline"
@@ -161,16 +161,16 @@ const RosterList = ({ players, leagueId }) => {
                       {player.name}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
                     {player.team}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
                     {roleMap[player.role] || player.role}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 text-right">
+                  <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100 text-right">
                     {player.matches}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 text-right">
+                  <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100 text-right">
                     {player.avg_points?.toFixed(1) ?? '-'}
                   </td>
                 </tr>

@@ -38,9 +38,9 @@ const UpdatePointsButton = ({ matchId = null }) => {
     <div className="relative">
       <button 
         className="inline-flex items-center gap-2 px-4 py-2 border border-orange-300 dark:border-orange-600 rounded-md 
-                  text-sm font-medium text-orange-700 dark:text-orange-200 bg-white dark:bg-gray-800 
-                  hover:bg-orange-50 dark:hover:bg-gray-700 
-                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 dark:focus:ring-offset-gray-900"
+                  text-sm font-medium text-orange-700 dark:text-orange-200 bg-white dark:bg-neutral-800 
+                  hover:bg-orange-50 dark:hover:bg-neutral-700 
+                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 dark:focus:ring-offset-neutral-900"
         onClick={updatePoints}
         disabled={loading}
       >
@@ -49,19 +49,19 @@ const UpdatePointsButton = ({ matchId = null }) => {
       </button>
       
       {showDetails && result && (
-        <div className="absolute top-full right-0 mt-2 p-4 bg-white dark:bg-gray-800 rounded-md shadow-lg 
+        <div className="absolute top-full right-0 mt-2 p-4 bg-white dark:bg-neutral-800 rounded-md shadow-lg 
                         border border-green-200 dark:border-green-800 z-10
                         max-w-xs sm:max-w-sm md:max-w-md">
           <div className="flex justify-between items-center mb-2">
             <h4 className="text-green-600 dark:text-green-400 font-semibold">✓ Update Complete</h4>
             <button 
               onClick={() => setShowDetails(false)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
             >
               ×
             </button>
           </div>
-          <div className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="text-sm text-neutral-700 dark:text-neutral-300">
             {result.matches_updated !== undefined ? (
               <p>
                 Updated <span className="font-medium">{result.matches_updated}</span> matches with{' '}
@@ -79,19 +79,19 @@ const UpdatePointsButton = ({ matchId = null }) => {
       )}
       
       {error && (
-        <div className="absolute top-full right-0 mt-2 p-4 bg-white dark:bg-gray-800 rounded-md shadow-lg 
+        <div className="absolute top-full right-0 mt-2 p-4 bg-white dark:bg-neutral-800 rounded-md shadow-lg 
                         border border-red-200 dark:border-red-800 z-10
                         max-w-xs sm:max-w-sm md:max-w-md">
           <div className="flex justify-between items-center mb-2">
             <h4 className="text-red-600 dark:text-red-400 font-semibold">Error</h4>
             <button 
               onClick={() => setError(null)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
             >
               ×
             </button>
           </div>
-          <p className="text-sm text-gray-700 dark:text-gray-300">{error}</p>
+          <p className="text-sm text-neutral-700 dark:text-neutral-300">{error}</p>
         </div>
       )}
     </div>

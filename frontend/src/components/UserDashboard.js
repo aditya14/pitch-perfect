@@ -40,19 +40,19 @@ const LeagueCard = ({ league }) => {
   if (isUpcomingSeason) {
     return (
       <div 
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-gray-200 dark:border-gray-700 border-l-4 cursor-pointer"
+        className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-neutral-200 dark:border-neutral-700 border-l-4 cursor-pointer"
         style={{ borderLeftColor: league.color || '#6366F1' }}
         onClick={() => navigate(`/leagues/${league.id}`)}
       >
         <div className="p-5">
           {/* League Name */}
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
             {league.name}
           </h3>
           
           {/* Season Name with Upcoming Badge */}
           <div className="flex items-center mb-4">
-            <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">
+            <span className="text-sm text-neutral-500 dark:text-neutral-400 mr-2">
               {league.season?.name || 'No season'}
             </span>
             <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs px-2 py-0.5 rounded">
@@ -68,7 +68,7 @@ const LeagueCard = ({ league }) => {
                   className="h-5 w-1.5 rounded-md mr-2"
                   style={{ backgroundColor: league.my_squad.color }}
                 />
-                <span className="font-medium text-gray-800 dark:text-gray-200">
+                <span className="font-medium text-neutral-800 dark:text-neutral-200">
                   {league.my_squad.name}
                 </span>
               </div>
@@ -120,21 +120,21 @@ const LeagueCard = ({ league }) => {
               </div>
             </div>
           ) : (
-            <div className="mb-5 text-gray-500 dark:text-gray-400 italic text-sm">
+            <div className="mb-5 text-neutral-500 dark:text-neutral-400 italic text-sm">
               You haven't joined this league yet
             </div>
           )}
         </div>
         
         {/* Footer with League Info */}
-        <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3 flex justify-between items-center">
+        <div className="bg-neutral-50 dark:bg-neutral-700 px-5 py-3 flex justify-between items-center">
           <div className="flex items-center">
-            <Users className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-1" />
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <Users className="h-4 w-4 text-neutral-500 dark:text-neutral-400 mr-1" />
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
               {league.squads_count}/{league.max_teams} Squads
             </span>
           </div>
-          <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+          <ChevronRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
         </div>
       </div>
     );
@@ -169,18 +169,18 @@ const LeagueCard = ({ league }) => {
   // Regular season card (active season)
   return (
     <div 
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-gray-200 dark:border-gray-700 border-l-4 cursor-pointer"
+      className="bg-white dark:bg-neutral-950 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-neutral-200 dark:border-neutral-700 border-l-4 cursor-pointer"
       style={{ borderLeftColor: league.color || '#6366F1' }}
       onClick={() => navigate(`/leagues/${league.id}`)}
     >
       <div className="p-5">
         {/* League Name */}
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
           {league.name}
         </h3>
         
         {/* Season Name */}
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
           {league.season?.name || 'No season'}
         </p>
         
@@ -192,7 +192,7 @@ const LeagueCard = ({ league }) => {
                 className="h-5 w-1.5 rounded-md mr-2"
                 style={{ backgroundColor: league.my_squad.color }}
               />
-              <span className="font-medium text-gray-800 dark:text-gray-200">
+              <span className="font-medium text-neutral-800 dark:text-neutral-200">
                 {league.my_squad.name}
               </span>
             </div>
@@ -208,7 +208,7 @@ const LeagueCard = ({ league }) => {
                         <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
                         <span className="font-bold text-yellow-600 dark:text-yellow-400">
                           1
-                          <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
+                          <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400 ml-1">
                             of {league.squads_count}
                           </span>
                         </span>
@@ -216,10 +216,10 @@ const LeagueCard = ({ league }) => {
                     </>
                   ) : (
                     <>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Position</span>
-                      <span className="font-bold text-gray-900 dark:text-white">
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400">Position</span>
+                      <span className="font-bold text-neutral-900 dark:text-white">
                         {userPosition}
-                        <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
+                        <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400 ml-1">
                           of {league.squads_count}
                         </span>
                       </span>
@@ -228,8 +228,8 @@ const LeagueCard = ({ league }) => {
                 </div>
                 
                 <div className="flex flex-col">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Points</span>
-                  <span className="font-bold text-gray-900 dark:text-white">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">Points</span>
+                  <span className="font-bold text-neutral-900 dark:text-white">
                     {league.my_squad.total_points || 0}
                   </span>
                 </div>
@@ -237,26 +237,26 @@ const LeagueCard = ({ league }) => {
             </div>
           </div>
         ) : (
-          <div className="mb-5 text-gray-500 dark:text-gray-400 italic text-sm">
+          <div className="mb-5 text-neutral-500 dark:text-neutral-400 italic text-sm">
             You haven't joined this league yet
           </div>
         )}
         
         {/* Leader or Runner-up Info */}
         {secondPlaceOrLeaderInfo && (
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 {isUserLeading ? (
                   <>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
                       2nd Place:
                     </span>
                   </>
                 ) : (
                   <>
                     <Trophy className="h-4 w-4 text-yellow-500 mr-2" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
                       Leader:
                     </span>
                   </>
@@ -267,10 +267,10 @@ const LeagueCard = ({ league }) => {
                   className="h-4 w-1 rounded-md mr-1"
                   style={{ backgroundColor: secondPlaceOrLeaderInfo.color }}
                 />
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 mr-2">
+                <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 mr-2">
                   {secondPlaceOrLeaderInfo.name}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
                   {secondPlaceOrLeaderInfo.total_points || 0} pts
                 </span>
               </div>
@@ -280,14 +280,14 @@ const LeagueCard = ({ league }) => {
       </div>
       
       {/* Footer with League Info */}
-      <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3 flex justify-between items-center">
+      <div className="bg-neutral-50 dark:bg-neutral-800 px-5 py-3 flex justify-between items-center">
         <div className="flex items-center">
-          <Users className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-1" />
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <Users className="h-4 w-4 text-neutral-500 dark:text-neutral-400 mr-1" />
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
             {league.squads_count}/{league.max_teams} Squads
           </span>
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+        <ChevronRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
       </div>
     </div>
   );
@@ -351,9 +351,9 @@ const UserDashboard = () => {
       )}
 
       {leagues.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded">
-          <p className="text-gray-600 dark:text-gray-300">You haven't joined any leagues yet.</p>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">Join a league to get started!</p>
+        <div className="text-center py-8 bg-neutral-50 dark:bg-neutral-800 rounded">
+          <p className="text-neutral-600 dark:text-neutral-300">You haven't joined any leagues yet.</p>
+          <p className="text-neutral-500 dark:text-neutral-400 mt-2">Join a league to get started!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -27,13 +27,13 @@ const MatchOverview = ({ matchData }) => {
   });
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden mb-2">
-      <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden mb-2">
+      <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-700">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
             Match Overview
           </h2>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-neutral-500 dark:text-neutral-400">
             Match #{matchData.match_number} • {matchData.stage}
           </span>
         </div>
@@ -44,24 +44,24 @@ const MatchOverview = ({ matchData }) => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div className="flex-1 text-center md:text-right">
             <TeamBadge team={battingFirstTeam} className="mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="text-2xl font-bold text-neutral-900 dark:text-white">
               {matchData.inns_1_runs}/{matchData.inns_1_wickets}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-neutral-500 dark:text-neutral-400">
               ({matchData.inns_1_overs} overs)
             </div>
           </div>
           
-          <div className="text-gray-400 dark:text-gray-500 text-lg font-medium px-4">
+          <div className="text-neutral-400 dark:text-neutral-500 text-lg font-medium px-4">
             vs
           </div>
 
           <div className="flex-1 text-center md:text-left">
             <TeamBadge team={battingSecondTeam} className="mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="text-2xl font-bold text-neutral-900 dark:text-white">
               {matchData.inns_2_runs}/{matchData.inns_2_wickets}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-neutral-500 dark:text-neutral-400">
               ({matchData.inns_2_overs} overs)
             </div>
           </div>
@@ -70,18 +70,18 @@ const MatchOverview = ({ matchData }) => {
         {/* Match Details Table */}
         <div className="w-full max-w-3xl">
           <table className="w-full text-sm">
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               <tr className="group">
-                <td className="py-1 w-32 text-gray-500 dark:text-gray-400 font-medium">Date</td>
-                <td className="py-1 text-gray-900 dark:text-white">{getReadableDate(matchData.date)}</td>
+                <td className="py-1 w-32 text-neutral-500 dark:text-neutral-400 font-medium">Date</td>
+                <td className="py-1 text-neutral-900 dark:text-white">{getReadableDate(matchData.date)}</td>
               </tr>
               <tr className="group">
-                <td className="py-1 w-32 text-gray-500 dark:text-gray-400 font-medium">Venue</td>
-                <td className="py-1 text-gray-900 dark:text-white">{matchData.venue}</td>
+                <td className="py-1 w-32 text-neutral-500 dark:text-neutral-400 font-medium">Venue</td>
+                <td className="py-1 text-neutral-900 dark:text-white">{matchData.venue}</td>
               </tr>
               <tr className="group">
-                <td className="py-1 w-32 text-gray-500 dark:text-gray-400 font-medium">Toss</td>
-                <td className="py-1 text-gray-900 dark:text-white">
+                <td className="py-1 w-32 text-neutral-500 dark:text-neutral-400 font-medium">Toss</td>
+                <td className="py-1 text-neutral-900 dark:text-white">
                   <TeamBadge team={matchData.toss_winner ? matchData.toss_winner : ''} useShortName={true} /> 
                   <span className='ml-1'>chose to {safeToLowerCase(matchData.toss_decision)}</span>
                 </td>
@@ -89,8 +89,8 @@ const MatchOverview = ({ matchData }) => {
               {matchData.status === 'COMPLETED' && (
                 <>
                   <tr className="group">
-                    <td className="py-1 w-32 text-gray-500 dark:text-gray-400 font-medium">Result</td>
-                    <td className="py-1 text-gray-900 dark:text-white flex items-center">
+                    <td className="py-1 w-32 text-neutral-500 dark:text-neutral-400 font-medium">Result</td>
+                    <td className="py-1 text-neutral-900 dark:text-white flex items-center">
                       <TeamBadge team={matchData.winner ? matchData.winner : ''} useShortName={true} className="mr-1" /> 
                       <span className='ml-1'>won by {matchData.win_margin} {safeToLowerCase(matchData.win_type)}</span>
                       <Trophy className="h-4 w-4 text-yellow-500 ml-2" />
@@ -98,8 +98,8 @@ const MatchOverview = ({ matchData }) => {
                   </tr>
                   {matchData.player_of_match && (
                     <tr className="group">
-                      <td className="py-1 w-32 text-gray-500 dark:text-gray-400 font-medium">Player of Match</td>
-                      <td className="py-1 text-gray-900 dark:text-white">{matchData.player_of_match.name}</td>
+                      <td className="py-1 w-32 text-neutral-500 dark:text-neutral-400 font-medium">Player of Match</td>
+                      <td className="py-1 text-neutral-900 dark:text-white">{matchData.player_of_match.name}</td>
                     </tr>
                   )}
                 </>

@@ -284,10 +284,10 @@ const LeagueView = () => {
             Back to Dashboard
           </Link>
         </nav>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
               {league?.name}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-neutral-600 dark:text-neutral-400">
               {league?.season?.name ? `${league.season.name}` : 'Loading season...'}
             </p>
           </div>
@@ -306,12 +306,12 @@ const LeagueView = () => {
                   disabled={isDraftDeadlinePassed}
                   className={`inline-flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium 
                     ${isDraftDeadlinePassed 
-                      ? 'border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 cursor-not-allowed'
-                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-900'
+                      ? 'border-neutral-300 dark:border-neutral-600 text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-700 cursor-not-allowed'
+                      : 'border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-neutral-900'
                     }
                   `}
                 >
-                  <FileEdit className={`h-4 w-4 ${isDraftDeadlinePassed ? 'text-gray-400 dark:text-gray-500' : ''}`} />
+                  <FileEdit className={`h-4 w-4 ${isDraftDeadlinePassed ? 'text-neutral-400 dark:text-neutral-500' : ''}`} />
                   Update Draft Order
                 </button>
               )} */}
@@ -320,9 +320,9 @@ const LeagueView = () => {
                 className={`inline-flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium
                           ${(isDraftCompleted && league?.my_squad) 
                             ? 'bg-primary-600 text-white border-transparent hover:bg-primary-700 focus:ring-primary-500' 
-                            : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-500'
+                            : 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-500'
                           }
-                          focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900`}
+                          focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-neutral-900`}
                 onClick={e => (!isDraftCompleted || !league?.my_squad) && e.preventDefault()}
               >
                 <Trophy className="h-4 w-4" />
@@ -335,7 +335,7 @@ const LeagueView = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+      <div className="border-b border-neutral-200 dark:border-neutral-700 mb-6">
         <nav className="-mb-px flex space-x-8 overflow-x-auto">
           {tabs.map(tab => (
             <button
@@ -345,7 +345,7 @@ const LeagueView = () => {
                 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
                 ${activeTab === tab.id
                   ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300 dark:text-neutral-400 dark:hover:text-neutral-300 dark:hover:border-neutral-300'
                 }
               `}
             >

@@ -95,7 +95,7 @@ const PullToRefresh = ({ onRefresh, children, threshold = 80, maxPull = 120 }) =
   }, [onRefresh, pullDistance, threshold, maxPull, shouldEnablePullToRefresh]);
 
   return (
-    <div ref={containerRef} className="min-h-screen relative w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+    <div ref={containerRef} className="min-h-screen relative w-full bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white">
       {/* Pull to refresh indicator */}
       {shouldEnablePullToRefresh && isPulling && (
         <div 

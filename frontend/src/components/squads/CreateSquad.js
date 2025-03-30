@@ -45,8 +45,8 @@ const getTextColor = (backgroundColor) => {
 // Blank shield with initial appearance
 const BlankShield = ({ className }) => (
   <div className={`relative ${className || ''}`}>
-    <Shield size={48} className="text-gray-300 dark:text-gray-600" />
-    <span className="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs">
+    <Shield size={48} className="text-neutral-300 dark:text-neutral-600" />
+    <span className="absolute inset-0 flex items-center justify-center text-neutral-400 dark:text-neutral-500 text-xs">
       Select
     </span>
   </div>
@@ -56,7 +56,7 @@ const BlankShield = ({ className }) => (
 const ColorPicker = ({ selectedColor, onChange, usedColors, showUsedColors = true }) => {
   return (
     <div className="mt-4">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
         Squad Color
       </label>
       <div className="grid grid-cols-5 gap-3">
@@ -73,7 +73,7 @@ const ColorPicker = ({ selectedColor, onChange, usedColors, showUsedColors = tru
               className={`
                 w-full aspect-square rounded-lg p-1 relative
                 transition-all duration-200
-                ${isSelected ? 'ring-2 ring-offset-2 ring-primary-500 dark:ring-offset-gray-800 scale-110' : ''}
+                ${isSelected ? 'ring-2 ring-offset-2 ring-primary-500 dark:ring-offset-neutral-800 scale-110' : ''}
                 ${isUsed && !isSelected && showUsedColors ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:scale-105'}
               `}
               style={{ backgroundColor: color.hex }}
@@ -108,8 +108,8 @@ const SquadPreview = ({ name, color }) => {
   
   return (
     <div className="mt-6 mb-8">
-      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</h3>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+      <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Preview</h3>
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm p-4 border border-neutral-200 dark:border-neutral-700">
         <div className="flex items-center">
           {color ? (
             <div 
@@ -122,10 +122,10 @@ const SquadPreview = ({ name, color }) => {
             <BlankShield className="mr-3" />
           )}
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-neutral-900 dark:text-white">
               {displayName}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               0 points • New Squad
             </p>
           </div>
@@ -141,17 +141,17 @@ const ExistingSquads = ({ squads, leagueName }) => {
   
   return (
     <div className="mt-6 mb-2">
-      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
         Existing Squads in {leagueName}
       </h3>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm overflow-hidden border border-neutral-200 dark:border-neutral-700 divide-y divide-neutral-200 dark:divide-neutral-700">
         {squads.map((squad) => (
           <div key={squad.id} className="flex items-center p-3">
             <div 
               className="w-1.5 h-8 rounded-sm mr-3"
               style={{ backgroundColor: squad.color }}
             />
-            <span className="text-gray-900 dark:text-white font-medium">
+            <span className="text-neutral-900 dark:text-white font-medium">
               {squad.name}
             </span>
           </div>
@@ -217,7 +217,7 @@ export const SquadForm = ({
       <form onSubmit={handleSubmit}>
         {/* Name Input */}
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
             Squad Name
           </label>
           <input
@@ -225,12 +225,12 @@ export const SquadForm = ({
             type="text"
             required
             placeholder="Enter squad name"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
+            className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm 
               transition-colors duration-200
-              bg-white dark:bg-gray-700 
-              text-gray-900 dark:text-white
+              bg-white dark:bg-neutral-700 
+              text-neutral-900 dark:text-white
               focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-              dark:border-gray-600"
+              dark:border-neutral-600"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -255,7 +255,7 @@ export const SquadForm = ({
                    text-white bg-primary-600 hover:bg-primary-700 
                    dark:bg-primary-700 dark:hover:bg-primary-800
                    transition-colors duration-200
-                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800
+                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-neutral-800
                    disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isProcessing ? (
@@ -360,9 +360,9 @@ const CreateSquad = () => {
   if (status.loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <div className="p-6 bg-white dark:bg-neutral-800 rounded-lg shadow-md">
           <div className="h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-center text-gray-700 dark:text-gray-300">Loading...</p>
+          <p className="mt-4 text-center text-neutral-700 dark:text-neutral-300">Loading...</p>
         </div>
       </div>
     );
@@ -373,18 +373,18 @@ const CreateSquad = () => {
       <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8">
           <Shield className="h-12 w-12 text-primary-600 dark:text-primary-400 mx-auto mb-3" />
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white">
             Create Your Squad
           </h2>
           {status.leagueDetails && (
-            <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-center text-sm text-neutral-600 dark:text-neutral-400">
               for {status.leagueDetails.name}
             </p>
           )}
         </div>
         
         {/* Main Card */}
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+        <div className="bg-white dark:bg-neutral-800 shadow-md rounded-lg p-6 mb-6">
           <SquadForm
             leagueId={status.leagueId}
             leagueData={status.leagueDetails}

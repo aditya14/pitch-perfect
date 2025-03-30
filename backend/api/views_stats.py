@@ -20,18 +20,22 @@ def filter_by_time_frame(queryset, time_frame, match_field='match'):
     Filter queryset based on time frame parameter
     """
     if time_frame == 'last5':
-        # Get the 5 most recent matches
-        recent_matches = IPLMatch.objects.filter(
+        # Get the 5 most recent matches IDs first, then filter
+        recent_match_ids = list(IPLMatch.objects.filter(
             status__in=['COMPLETED', 'LIVE']
-        ).order_by('-date')[:5]
-        return queryset.filter(**{f"{match_field}__in": recent_matches})
+        ).order_by('-date').values_list('id', flat=True)[:5])
+        
+        # Use the IDs to filter instead of the queryset directly
+        return queryset.filter(**{f"{match_field}__id__in": recent_match_ids})
     
     elif time_frame == 'last10':
-        # Get the 10 most recent matches
-        recent_matches = IPLMatch.objects.filter(
+        # Get the 10 most recent matches IDs first, then filter
+        recent_match_ids = list(IPLMatch.objects.filter(
             status__in=['COMPLETED', 'LIVE']
-        ).order_by('-date')[:10]
-        return queryset.filter(**{f"{match_field}__in": recent_matches})
+        ).order_by('-date').values_list('id', flat=True)[:10])
+        
+        # Use the IDs to filter instead of the queryset directly
+        return queryset.filter(**{f"{match_field}__id__in": recent_match_ids})
     
     elif time_frame == 'phase1':
         return queryset.filter(**{f"{match_field}__phase": 1})
@@ -473,22 +477,46 @@ def league_stats_domination(request, league_id):
         # Filter match events by league and squads
         league = FantasyLeague.objects.get(id=league_id)
         
-        # Get all matches for this league
-        league_matches = IPLMatch.objects.filter(
-            fantasymatchevent__fantasy_squad__league=league
-        ).distinct()
-        
-        # Apply time frame filter to matches
+        # Get all matches for this league based on time_frame
         if time_frame == 'last5':
-            league_matches = league_matches.order_by('-date')[:5]
+            # First get match IDs, then create a new queryset
+            match_ids = list(IPLMatch.objects.filter(
+                fantasymatchevent__fantasy_squad__league=league
+            ).distinct().order_by('-date').values_list('id', flat=True)[:5])
+            
+            league_matches = IPLMatch.objects.filter(id__in=match_ids)
+            
         elif time_frame == 'last10':
-            league_matches = league_matches.order_by('-date')[:10]
+            # First get match IDs, then create a new queryset
+            match_ids = list(IPLMatch.objects.filter(
+                fantasymatchevent__fantasy_squad__league=league
+            ).distinct().order_by('-date').values_list('id', flat=True)[:10])
+            
+            league_matches = IPLMatch.objects.filter(id__in=match_ids)
+            
         elif time_frame == 'phase1':
-            league_matches = league_matches.filter(phase=1)
+            league_matches = IPLMatch.objects.filter(
+                fantasymatchevent__fantasy_squad__league=league,
+                phase=1
+            ).distinct()
+            
         elif time_frame == 'phase2':
-            league_matches = league_matches.filter(phase=2)
+            league_matches = IPLMatch.objects.filter(
+                fantasymatchevent__fantasy_squad__league=league,
+                phase=2
+            ).distinct()
+            
         elif time_frame == 'phase3':
-            league_matches = league_matches.filter(phase=3)
+            league_matches = IPLMatch.objects.filter(
+                fantasymatchevent__fantasy_squad__league=league,
+                phase=3
+            ).distinct()
+            
+        else:
+            # Default: all matches
+            league_matches = IPLMatch.objects.filter(
+                fantasymatchevent__fantasy_squad__league=league
+            ).distinct()
         
         # Prepare response data
         response_data = []
@@ -575,30 +603,57 @@ def league_stats_running_total(request, league_id):
         # Get league
         league = FantasyLeague.objects.get(id=league_id)
         
-        # Get all matches in order
-        matches = IPLMatch.objects.filter(
-            status__in=['COMPLETED', 'LIVE'],
-            fantasymatchevent__fantasy_squad__league=league
-        ).distinct().order_by('date')
-        
-        # Apply time frame filter
-        if time_frame == 'last5':
-            matches = matches.order_by('-date')[:5]
-            matches = matches.order_by('date')  # Re-sort in ascending order
-        elif time_frame == 'last10':
-            matches = matches.order_by('-date')[:10]
-            matches = matches.order_by('date')  # Re-sort in ascending order
-        elif time_frame == 'phase1':
-            matches = matches.filter(phase=1)
-        elif time_frame == 'phase2':
-            matches = matches.filter(phase=2)
-        elif time_frame == 'phase3':
-            matches = matches.filter(phase=3)
-        
         # Get squads in the league
         squads = FantasySquad.objects.filter(league=league)
         if squad_ids:
             squads = squads.filter(id__in=squad_ids)
+            
+        # Get matches based on time_frame
+        if time_frame == 'last5':
+            # First get the match IDs, then create a new queryset
+            match_ids = list(IPLMatch.objects.filter(
+                status__in=['COMPLETED', 'LIVE'],
+                fantasymatchevent__fantasy_squad__league=league
+            ).distinct().order_by('-date').values_list('id', flat=True)[:5])
+            
+            matches = IPLMatch.objects.filter(id__in=match_ids).order_by('date')
+            
+        elif time_frame == 'last10':
+            # First get the match IDs, then create a new queryset
+            match_ids = list(IPLMatch.objects.filter(
+                status__in=['COMPLETED', 'LIVE'],
+                fantasymatchevent__fantasy_squad__league=league
+            ).distinct().order_by('-date').values_list('id', flat=True)[:10])
+            
+            matches = IPLMatch.objects.filter(id__in=match_ids).order_by('date')
+            
+        elif time_frame == 'phase1':
+            matches = IPLMatch.objects.filter(
+                status__in=['COMPLETED', 'LIVE'],
+                fantasymatchevent__fantasy_squad__league=league,
+                phase=1
+            ).distinct().order_by('date')
+            
+        elif time_frame == 'phase2':
+            matches = IPLMatch.objects.filter(
+                status__in=['COMPLETED', 'LIVE'],
+                fantasymatchevent__fantasy_squad__league=league,
+                phase=2
+            ).distinct().order_by('date')
+            
+        elif time_frame == 'phase3':
+            matches = IPLMatch.objects.filter(
+                status__in=['COMPLETED', 'LIVE'],
+                fantasymatchevent__fantasy_squad__league=league,
+                phase=3
+            ).distinct().order_by('date')
+            
+        else:
+            # Default: all matches
+            matches = IPLMatch.objects.filter(
+                status__in=['COMPLETED', 'LIVE'],
+                fantasymatchevent__fantasy_squad__league=league
+            ).distinct().order_by('date')
         
         # Create data structure for chart
         chart_data = []

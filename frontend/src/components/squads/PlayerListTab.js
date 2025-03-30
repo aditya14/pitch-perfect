@@ -119,7 +119,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
       {/* Toggle switch for showing/hiding traded players */}
       {tradedCount > 0 && (
         <div className="mb-4 flex justify-end items-center">
-          <span className="mr-2 text-sm text-gray-600 dark:text-gray-300">
+          <span className="mr-2 text-sm text-neutral-600 dark:text-neutral-300">
             {showTraded ? 'Showing' : 'Hiding'} Traded Players ({tradedCount})
           </span>
           <label className="relative inline-flex items-center cursor-pointer">
@@ -129,21 +129,21 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               onChange={() => setShowTraded(!showTraded)}
               className="sr-only peer" 
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-blue-600"></div>
           </label>
         </div>
       )}
       
       {/* Sort controls for mobile - MOVED TO TOP, BEFORE the mobile card list */}
       <div className="md:hidden mb-4">
-        <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">Sort Players By:</div>
+        <div className="text-sm text-neutral-600 dark:text-neutral-300 mb-2">Sort Players By:</div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => requestSort('name')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'name' 
                 ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
-                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
             }`}
           >
             Name {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
@@ -153,7 +153,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'total_points' 
                 ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
-                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
             }`}
           >
             Points {sortConfig.key === 'total_points' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
@@ -163,7 +163,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'matches' 
                 ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
-                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
             }`}
           >
             Matches {sortConfig.key === 'matches' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
@@ -173,7 +173,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'role' 
                 ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
-                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
             }`}
           >
             Role {sortConfig.key === 'role' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
@@ -181,7 +181,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
         </div>
       </div>
       
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
         {/* Mobile view - card-based layout */}
         <div className="md:hidden">
           {sortedPlayers.map(player => {
@@ -192,7 +192,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             return (
               <div 
                 key={player.id} 
-                className={`border-b dark:border-gray-700 p-4 ${isTraded ? 'bg-gray-50 dark:bg-gray-900' : ''}`}
+                className={`border-b dark:border-neutral-700 p-4 ${isTraded ? 'bg-neutral-50 dark:bg-neutral-900' : ''}`}
               >
                 {/* Player header */}
                 <div className="flex items-center justify-between mb-2">
@@ -204,7 +204,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                       />
                     )}
                     <span 
-                      className={`text-sm font-medium ${isTraded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400`}
+                      className={`text-sm font-medium ${isTraded ? 'text-neutral-600 dark:text-neutral-400' : 'text-neutral-900 dark:text-white'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400`}
                       onClick={() => openPlayerModal(player.id, leagueId)}
                     >
                       {player.name}
@@ -231,26 +231,26 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                 </div>
                 
                 {/* Mobile card - team short name */}
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                <div className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
                   Team: {player.current_team?.short_name || '-'}
                 </div>
                 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                  <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Matches</div>
+                  <div className="bg-neutral-50 dark:bg-neutral-800 p-2 rounded">
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Matches</div>
                     <div className="font-medium">{stats.matches}</div>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Base Points</div>
+                  <div className="bg-neutral-50 dark:bg-neutral-800 p-2 rounded">
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Base Points</div>
                     <div className="font-medium">{Number.isInteger(stats.basePoints) ? stats.basePoints : stats.basePoints.toFixed(1)}</div>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Boost Points</div>
+                  <div className="bg-neutral-50 dark:bg-neutral-800 p-2 rounded">
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Boost Points</div>
                     <div className="font-medium">{Number.isInteger(stats.boostPoints) ? stats.boostPoints : stats.boostPoints.toFixed(1)}</div>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Total Points</div>
+                  <div className="bg-neutral-50 dark:bg-neutral-800 p-2 rounded">
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Total Points</div>
                     <div className="font-semibold text-primary-600 dark:text-primary-400">
                       {Number.isInteger(stats.totalPoints) ? stats.totalPoints : stats.totalPoints.toFixed(1)}
                     </div>
@@ -260,36 +260,36 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             );
           })}
           {sortedPlayers.length === 0 && (
-            <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="p-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
               No players found
             </div>
           )}
         </div>
         
         {/* Desktop view - table layout */}
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden md:table">
+        <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700 hidden md:table">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700">
+            <tr className="bg-neutral-50 dark:bg-neutral-700">
               {/* Player Info Group */}
-              <th scope="col" colSpan="3" className="px-6 py-3 border-b dark:border-gray-700 text-center border-r dark:border-gray-600">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th scope="col" colSpan="3" className="px-6 py-3 border-b dark:border-neutral-700 text-center border-r dark:border-neutral-600">
+                <div className="text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
                   Player Information
                 </div>
-                <div className="grid grid-cols-3 gap-4 mt-2 border-t dark:border-gray-600 pt-2">
+                <div className="grid grid-cols-3 gap-4 mt-2 border-t dark:border-neutral-600 pt-2">
                   <div 
-                    className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                    className="text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort('name')}
                   >
                     Name {getSortDirection('name')}
                   </div>
                   <div 
-                    className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                    className="text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort('team')}
                   >
                     Team {getSortDirection('team')}
                   </div>
                   <div 
-                    className="text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                    className="text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort('role')}
                   >
                     Role {getSortDirection('role')}
@@ -298,9 +298,9 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               </th>
               
               {/* Matches Column */}
-              <th scope="col" className="px-6 py-3 border-b dark:border-gray-700 text-center border-r dark:border-gray-600">
+              <th scope="col" className="px-6 py-3 border-b dark:border-neutral-700 text-center border-r dark:border-neutral-600">
                 <div 
-                  className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                  className="text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort('matches')}
                 >
                   Matches {getSortDirection('matches')}
@@ -308,25 +308,25 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               </th>
               
               {/* Points Columns Group */}
-              <th scope="col" colSpan="3" className="px-6 py-3 border-b dark:border-gray-700 text-center">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th scope="col" colSpan="3" className="px-6 py-3 border-b dark:border-neutral-700 text-center">
+                <div className="text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
                   Points Breakdown
                 </div>
-                <div className="grid grid-cols-3 gap-4 mt-2 border-t dark:border-gray-600 pt-2">
+                <div className="grid grid-cols-3 gap-4 mt-2 border-t dark:border-neutral-600 pt-2">
                   <div 
-                    className="text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                    className="text-center text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort('base_points')}
                   >
                     Base {getSortDirection('base_points')}
                   </div>
                   <div 
-                    className="text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                    className="text-center text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort('boost_points')}
                   >
                     Boost {getSortDirection('boost_points')}
                   </div>
                   <div 
-                    className="text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer font-bold"
+                    className="text-center text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer font-bold"
                     onClick={() => requestSort('total_points')}
                   >
                     Total {getSortDirection('total_points')}
@@ -335,7 +335,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-white dark:bg-neutral-800 divide-y divide-neutral-200 dark:divide-neutral-700">
             {sortedPlayers.map(player => {
               const stats = getPlayerStats(player.id);
               const coreRole = getCurrentBoostRole(player.id);
@@ -344,10 +344,10 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               return (
                 <tr 
                   key={player.id} 
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${isTraded ? 'bg-gray-50 dark:bg-gray-900' : ''}`}
+                  className={`hover:bg-neutral-50 dark:hover:bg-neutral-700 ${isTraded ? 'bg-neutral-50 dark:bg-neutral-900' : ''}`}
                 >
                   {/* Player Info (Name, Team, Role) in a group */}
-                  <td colSpan="3" className="px-6 py-4 border-r dark:border-gray-700">
+                  <td colSpan="3" className="px-6 py-4 border-r dark:border-neutral-700">
                     <div className="grid grid-cols-3 gap-4">
                       {/* Name */}
                       <div className="flex items-center">
@@ -358,7 +358,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                           />
                         )}
                         <span 
-                          className={`text-sm font-medium truncate ${isTraded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400`}
+                          className={`text-sm font-medium truncate ${isTraded ? 'text-neutral-600 dark:text-neutral-400' : 'text-neutral-900 dark:text-white'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400`}
                           onClick={() => openPlayerModal(player.id, leagueId)}
                         >
                           {player.name}
@@ -366,7 +366,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                       </div>
                       
                       {/* Team - use short_name */}
-                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      <div className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
                         {player.current_team?.short_name || '-'}
                       </div>
                       
@@ -393,19 +393,19 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                   </td>
                   
                   {/* Matches */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600 dark:text-gray-300 border-r dark:border-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-neutral-600 dark:text-neutral-300 border-r dark:border-neutral-700">
                     {stats.matches}
                   </td>
                   
                   {/* Points Breakdown */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600 dark:text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-neutral-600 dark:text-neutral-300">
                     {Number.isInteger(stats.basePoints) ? stats.basePoints : stats.basePoints.toFixed(1)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600 dark:text-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-neutral-600 dark:text-neutral-300">
                     {Number.isInteger(stats.boostPoints) ? stats.boostPoints : stats.boostPoints.toFixed(1)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`text-sm font-semibold ${isTraded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                    <span className={`text-sm font-semibold ${isTraded ? 'text-neutral-600 dark:text-neutral-400' : 'text-neutral-900 dark:text-white'}`}>
                       {Number.isInteger(stats.totalPoints) ? stats.totalPoints : stats.totalPoints.toFixed(1)}
                     </span>
                   </td>
@@ -414,7 +414,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             })}
             {sortedPlayers.length === 0 && (
               <tr>
-                <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td colSpan="7" className="px-6 py-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
                   No players found
                 </td>
               </tr>

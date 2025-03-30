@@ -161,10 +161,10 @@ const LeagueRunningTotal = ({ league }) => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
         <div className="space-y-4">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/4"></div>
-          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/4"></div>
+          <div className="h-64 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse"></div>
         </div>
       </div>
     );
@@ -172,7 +172,7 @@ const LeagueRunningTotal = ({ league }) => {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
         <p className="text-red-500 dark:text-red-400">{error}</p>
       </div>
     );
@@ -180,8 +180,8 @@ const LeagueRunningTotal = ({ league }) => {
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-        <p className="text-gray-500 dark:text-gray-400 text-center">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+        <p className="text-neutral-500 dark:text-neutral-400 text-center">
           No match data available to display running totals.
         </p>
       </div>
@@ -205,9 +205,9 @@ const LeagueRunningTotal = ({ league }) => {
         .sort((a, b) => b.value - a.value);
       
       return (
-        <div className="bg-white dark:bg-black p-3 border border-gray-200 dark:border-gray-700 shadow-lg rounded">
-          <p className="font-medium text-gray-900 dark:text-white">{matchName}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+        <div className="bg-white dark:bg-black p-3 border border-neutral-200 dark:border-neutral-700 shadow-lg rounded">
+          <p className="font-medium text-neutral-900 dark:text-white">{matchName}</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
             {matchDate}
           </p>
           <div className="space-y-1">
@@ -223,15 +223,15 @@ const LeagueRunningTotal = ({ league }) => {
                       className="h-3 w-3 rounded-full mr-1"
                       style={{ backgroundColor: entry.stroke }}
                     ></div>
-                    <span className="text-gray-800 dark:text-gray-200 text-sm">
+                    <span className="text-neutral-800 dark:text-neutral-200 text-sm">
                       {squad?.name}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-gray-900 dark:text-white font-medium text-sm">
+                    <span className="text-neutral-900 dark:text-white font-medium text-sm">
                       {entry.value.toFixed(1)}
                     </span>
-                    <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="ml-1 text-xs text-neutral-500 dark:text-neutral-400">
                       (+{squadMatchData.matchPoints.toFixed(1)})
                     </span>
                   </div>
@@ -246,21 +246,21 @@ const LeagueRunningTotal = ({ league }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-black shadow rounded-lg p-6 border border-gray-200 dark:border-gray-900">
+    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
           Running Total
         </h3>
         <div className="flex space-x-2">
           <button 
             onClick={() => toggleAllSquads(true)}
-            className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
           >
             Show All
           </button>
           <button 
             onClick={() => toggleAllSquads(false)}
-            className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
           >
             Hide All
           </button>
@@ -322,8 +322,8 @@ const LeagueRunningTotal = ({ league }) => {
             className={`
               flex items-center p-2 rounded-md cursor-pointer transition-colors
               ${visibleSquads[squad.id] 
-                ? `bg-opacity-20 bg-gray-100 dark:bg-gray-800` 
-                : `bg-gray-50 dark:bg-gray-900 bg-opacity-50 text-gray-400 dark:text-gray-600`}
+                ? `bg-opacity-20 bg-neutral-400 dark:bg-neutral-700` 
+                : `bg-neutral-50 dark:bg-neutral-900 bg-opacity-50 text-neutral-400 dark:text-neutral-600`}
             `}
             onClick={() => toggleSquadVisibility(squad.id)}
           >

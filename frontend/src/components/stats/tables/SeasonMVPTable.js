@@ -80,13 +80,13 @@ const SeasonMVPTable = ({
       header: 'Player/Squad',
       renderer: (_, row) => (
         <div className="flex flex-col">
-          <span className="font-medium text-gray-900 dark:text-white">{row.player.name}</span>
+          <span className="font-medium text-neutral-900 dark:text-white">{row.player.name}</span>
           <div className="flex items-center mt-1">
             <div 
               className="w-1 h-4 rounded-full mr-1"
               style={{ backgroundColor: row.squad.color || '#808080' }}
             />
-            <span className="text-xs text-gray-600 dark:text-gray-400">{row.squad.name}</span>
+            <span className="text-xs text-neutral-600 dark:text-neutral-400">{row.squad.name}</span>
           </div>
         </div>
       )
@@ -95,6 +95,14 @@ const SeasonMVPTable = ({
       key: 'matches',
       header: 'Mts',
       type: 'number'
+    },
+    
+    {
+      key: 'total',
+      header: 'Total',
+      type: 'number',
+      renderer: (value) => value.toFixed(1),
+      hidden: !includeBoost
     },
     {
       key: 'base',
@@ -108,22 +116,15 @@ const SeasonMVPTable = ({
       type: 'number',
       renderer: (value) => value.toFixed(1),
       hidden: !includeBoost
-    },
-    {
-      key: 'total',
-      header: 'Total',
-      type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
     }
   ];
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
         <div className="space-y-4">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/4"></div>
-          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/4"></div>
+          <div className="h-64 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse"></div>
         </div>
       </div>
     );
@@ -131,28 +132,26 @@ const SeasonMVPTable = ({
 
   if (error && !data.length) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
         <p className="text-red-500 dark:text-red-400">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
-          Season MVP
+    <div className="bg-white dark:bg-neutral-900 shadow rounded-lg">
+      <div className="p-3 border-b border-neutral-200 dark:border-neutral-700">
+        <h3 className="text-lg sm:text-xl font-semibold text-neutral-900 dark:text-white">
+          Running MVP
         </h3>
-        <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-          Players with the most points throughout the season
+        <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
+          Players with the most points across all matches
         </p>
       </div>
       
       <BaseStatsTable 
         data={data} 
         columns={columns} 
-        defaultSortColumn={includeBoost ? "total" : "base"} 
-        defaultSortDirection="desc" 
         emptyMessage="No player data available for the selected filters." 
       />
     </div>

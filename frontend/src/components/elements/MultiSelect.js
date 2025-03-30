@@ -27,22 +27,22 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
     <div ref={containerRef} className="relative w-60">
       <div 
         className="w-full min-h-[42px] px-3 py-2 border rounded-lg cursor-pointer
-                   bg-white dark:bg-gray-700 
-                   border-gray-300 dark:border-gray-600
-                   hover:border-gray-400 dark:hover:border-gray-500
+                   bg-white dark:bg-neutral-700 
+                   border-neutral-300 dark:border-neutral-600
+                   hover:border-neutral-400 dark:hover:border-neutral-500
                    focus:outline-none focus:ring-2 focus:ring-indigo-500"
         onClick={() => setIsOpen(!isOpen)}
       >
         {value.length === 0 ? (
-          <span className="text-gray-500 dark:text-gray-400">{placeholder}</span>
+          <span className="text-neutral-500 dark:text-neutral-400">{placeholder}</span>
         ) : (
           <div className="flex flex-wrap gap-1">
             {value.map(v => (
               <span 
                 key={v} 
                 className="inline-flex items-center px-2 py-1 rounded
-                           bg-gray-200 dark:bg-gray-600 
-                           text-sm text-gray-800 dark:text-gray-200"
+                           bg-neutral-200 dark:bg-neutral-600 
+                           text-sm text-neutral-800 dark:text-neutral-200"
               >
                 {v}
                 <button
@@ -60,7 +60,7 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
         )}
         <div className="absolute right-2 top-1/2 -translate-y-1/2">
           <svg 
-            className="w-5 h-5 text-gray-400"
+            className="w-5 h-5 text-neutral-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -76,22 +76,22 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
       </div>
       
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 
-                        border border-gray-300 dark:border-gray-600 rounded-lg 
+        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-neutral-700 
+                        border border-neutral-300 dark:border-neutral-600 rounded-lg 
                         shadow-lg max-h-60 overflow-auto">
           {options.map(option => (
             <div
               key={option}
               className={`flex items-center px-3 py-2 cursor-pointer
                          ${value.includes(option) 
-                           ? 'bg-gray-100 dark:bg-gray-600' 
-                           : 'hover:bg-gray-50 dark:hover:bg-gray-600'}`}
+                           ? 'bg-neutral-100 dark:bg-neutral-600' 
+                           : 'hover:bg-neutral-50 dark:hover:bg-neutral-600'}`}
               onClick={() => toggleOption(option)}
             >
               <div className={`w-4 h-4 border rounded mr-2
                              ${value.includes(option)
                                ? 'border-indigo-500 bg-indigo-500'
-                               : 'border-gray-300 dark:border-gray-500'}`}>
+                               : 'border-neutral-300 dark:border-neutral-500'}`}>
                 {value.includes(option) && (
                   <svg 
                     className="w-4 h-4 text-white" 
@@ -106,7 +106,7 @@ const MultiSelect = ({ options, value, onChange, placeholder }) => {
                   </svg>
                 )}
               </div>
-              <span className="text-gray-900 dark:text-gray-200">{option}</span>
+              <span className="text-neutral-900 dark:text-neutral-200">{option}</span>
             </div>
           ))}
         </div>

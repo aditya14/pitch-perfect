@@ -101,7 +101,7 @@ const BoostInlineElement = ({ boostName, color, showLabel = false, size = 'M', c
       {showLabel ? (
         <span>{boostName}</span>
       ) : (
-        <span className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-1 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+        <span className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-1 bg-neutral-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
           {boostName}
         </span>
       )}

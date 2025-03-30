@@ -112,10 +112,10 @@ const TimelineComponent = () => {
   const progressPercentage = calculateProgress();
 
   return (
-    <div className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md mb-6 text-gray-900 dark:text-white overflow-hidden">
+    <div className="w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-md mb-6 text-neutral-900 dark:text-white overflow-hidden">
       {/* Header */}
       <div 
-        className="flex items-center justify-between p-3 cursor-pointer bg-gray-50 dark:bg-gray-900"
+        className="flex items-center justify-between p-3 cursor-pointer bg-neutral-50 dark:bg-neutral-900"
         onClick={() => setMinimized(!minimized)}
       >
         <div className="flex items-center space-x-2">
@@ -141,9 +141,9 @@ const TimelineComponent = () => {
             <HelpCircle size={18} />
           </Link>
           {minimized ? (
-            <ChevronDown size={20} className="text-gray-500 dark:text-gray-400" />
+            <ChevronDown size={20} className="text-neutral-500 dark:text-neutral-400" />
           ) : (
-            <ChevronUp size={20} className="text-gray-500 dark:text-gray-400" />
+            <ChevronUp size={20} className="text-neutral-500 dark:text-neutral-400" />
           )}
         </div>
       </div>
@@ -153,7 +153,7 @@ const TimelineComponent = () => {
         <div className="p-4">
           {/* Progress bar */}
           <div className="mb-6 relative pt-1">
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+            <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full">
               <div 
                 className="h-2 rounded-full bg-blue-500" 
                 style={{ width: `${progressPercentage}%` }}
@@ -162,13 +162,13 @@ const TimelineComponent = () => {
             
             {/* Phase markers */}
             <div className="flex justify-between mt-1">
-              <div className={`text-xs ${currentPhase > 0 ? 'text-gray-500 dark:text-gray-400' : 'text-blue-600 dark:text-blue-400'}`}>
+              <div className={`text-xs ${currentPhase > 0 ? 'text-neutral-500 dark:text-neutral-400' : 'text-blue-600 dark:text-blue-400'}`}>
                 Now
               </div>
-              <div className={`text-xs ${currentPhase > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
+              <div className={`text-xs ${currentPhase > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500 dark:text-neutral-400'}`}>
                 Mar 21
               </div>
-              <div className={`text-xs ${currentPhase > 1 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
+              <div className={`text-xs ${currentPhase > 1 ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500 dark:text-neutral-400'}`}>
                 Mar 22
               </div>
             </div>
@@ -190,10 +190,10 @@ const TimelineComponent = () => {
                     <div 
                       className={`h-8 w-8 rounded-full flex items-center justify-center border-2 z-10
                       ${index === currentPhase 
-                        ? 'bg-white dark:bg-gray-800 border-blue-500 pulse-animation' 
+                        ? 'bg-white dark:bg-neutral-800 border-blue-500 pulse-animation' 
                         : index < currentPhase 
-                          ? 'bg-white dark:bg-gray-800 border-green-500' 
-                          : 'bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-600'}`}
+                          ? 'bg-white dark:bg-neutral-800 border-green-500' 
+                          : 'bg-white dark:bg-neutral-800 border-neutral-400 dark:border-neutral-600'}`}
                     >
                       {phase.icon}
                     </div>
@@ -206,7 +206,7 @@ const TimelineComponent = () => {
                           ? 'text-blue-600 dark:text-blue-400' 
                           : index < currentPhase 
                             ? 'text-green-600 dark:text-green-400' 
-                            : 'text-gray-700 dark:text-gray-300'
+                            : 'text-neutral-700 dark:text-neutral-300'
                       }`}>
                         {phase.title}
                       </h4>
@@ -218,10 +218,10 @@ const TimelineComponent = () => {
                       )}
                     </div>
                     
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{phase.description}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-2">{phase.description}</p>
                     
                     {phase.deadline && (
-                      <div className="inline-flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-900 rounded-full text-xs text-gray-600 dark:text-gray-300">
+                      <div className="inline-flex items-center px-3 py-1 bg-neutral-100 dark:bg-neutral-900 rounded-full text-xs text-neutral-600 dark:text-neutral-300">
                         <Clock size={12} className="mr-1" />
                         <span>{formatDate(phase.deadline)}</span>
                       </div>
@@ -247,10 +247,10 @@ const TimelineComponent = () => {
                   <div 
                     className={`h-7 w-7 rounded-full flex items-center justify-center border-2 
                     ${index === currentPhase 
-                      ? 'bg-white dark:bg-gray-800 border-blue-500 pulse-animation' 
+                      ? 'bg-white dark:bg-neutral-800 border-blue-500 pulse-animation' 
                       : index < currentPhase 
-                        ? 'bg-white dark:bg-gray-800 border-green-500' 
-                        : 'bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-600'}`}
+                        ? 'bg-white dark:bg-neutral-800 border-green-500' 
+                        : 'bg-white dark:bg-neutral-800 border-neutral-400 dark:border-neutral-600'}`}
                   >
                     {phase.icon}
                   </div>
@@ -263,7 +263,7 @@ const TimelineComponent = () => {
                         ? 'text-blue-600 dark:text-blue-400' 
                         : index < currentPhase 
                           ? 'text-green-600 dark:text-green-400' 
-                          : 'text-gray-700 dark:text-gray-300'
+                          : 'text-neutral-700 dark:text-neutral-300'
                     }`}>
                       {phase.title}
                     </h4>
@@ -275,10 +275,10 @@ const TimelineComponent = () => {
                     )}
                   </div>
                   
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-2">{phase.description}</p>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-300 mt-1 mb-2">{phase.description}</p>
                   
                   {phase.deadline && (
-                    <div className="inline-flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-900 rounded-full text-xs text-gray-600 dark:text-gray-300">
+                    <div className="inline-flex items-center px-3 py-1 bg-neutral-100 dark:bg-neutral-900 rounded-full text-xs text-neutral-600 dark:text-neutral-300">
                       <Clock size={12} className="mr-1" />
                       <span>{formatDate(phase.deadline)}</span>
                     </div>
@@ -289,11 +289,11 @@ const TimelineComponent = () => {
           </div>
           
           {/* Action prompt based on current phase */}
-          <div className="mt-6 p-3 bg-gray-100 dark:bg-gray-900 rounded border-l-4 border-blue-500">
+          <div className="mt-6 p-3 bg-neutral-100 dark:bg-neutral-900 rounded border-l-4 border-blue-500">
             {currentPhase === 0 && (
               <div className="flex items-start">
                 <AlertCircle className="text-blue-500 dark:text-blue-400 mr-2 flex-shrink-0 mt-0.5" size={16} />
-                <p className="text-sm text-gray-700 dark:text-gray-300">
+                <p className="text-sm text-neutral-700 dark:text-neutral-300">
                   <strong>Action required:</strong> Rank players according to your preferences. Squads are assigned on {formatDate(phases[0].deadline)}.
                 </p>
               </div>
@@ -301,7 +301,7 @@ const TimelineComponent = () => {
             {currentPhase === 1 && (
               <div className="flex items-start">
                 <AlertCircle className="text-yellow-500 dark:text-yellow-400 mr-2 flex-shrink-0 mt-0.5" size={16} />
-                <p className="text-sm text-gray-700 dark:text-gray-300">
+                <p className="text-sm text-neutral-700 dark:text-neutral-300">
                   <strong>Action required:</strong> Review your squad, assign your Core Roles, and consider making trades before Week 1 starts on March 22nd at 10:00 AM EDT.
                 </p>
               </div>
@@ -309,7 +309,7 @@ const TimelineComponent = () => {
             {currentPhase === 2 && (
               <div className="flex items-start">
                 <Check className="text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" size={16} />
-                <p className="text-sm text-gray-700 dark:text-gray-300">
+                <p className="text-sm text-neutral-700 dark:text-neutral-300">
                   <strong>Season in progress!</strong> Week 1 Core Roles are locked. Good luck with your fantasy squad!
                 </p>
               </div>

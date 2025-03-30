@@ -43,14 +43,14 @@ const BoostGuide = ({ boostRoles, showGuide, setShowGuide, squadColor }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
+    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 mb-6">
       <button
         onClick={() => setShowGuide(!showGuide)}
         className="w-full flex justify-between items-center mb-4"
       >
         <div className="flex items-center">
           <Info className="h-5 w-5 text-blue-500 dark:text-blue-400 mr-2" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Boost Guide</h2>
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">Boost Guide</h2>
         </div>
         {showGuide ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
       </button>
@@ -62,14 +62,14 @@ const BoostGuide = ({ boostRoles, showGuide, setShowGuide, squadColor }) => {
             
             return (
               <div key={role.id} className="flex items-start">
-                <div className="h-8 w-8 flex items-center justify-center bg-white dark:bg-gray-900 rounded-full shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mr-3 flex-shrink-0">
+                <div className="h-8 w-8 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-800 mr-3 flex-shrink-0">
                   <div className="flex items-center justify-center">
                     {getRoleIcon(role.name, 18, squadColor)}
                   </div>
                 </div>
                 <div>
-                  <div className="font-medium text-sm text-gray-800 dark:text-gray-200 mb-1">{role.name}</div>
-                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  <div className="font-medium text-sm text-neutral-800 dark:text-neutral-200 mb-1">{role.name}</div>
+                  <div className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2">
                     {role.allowed_player_types.join(', ')}
                   </div>
                   
@@ -88,7 +88,7 @@ const BoostGuide = ({ boostRoles, showGuide, setShowGuide, squadColor }) => {
                       {formattedMultipliers["2"] && formattedMultipliers["2"].length > 0 && (
                         <div className="text-xs">
                           <span className="text-emerald-600 dark:text-emerald-400 font-medium inline-block w-8">2×:</span> 
-                          <span className="text-gray-700 dark:text-gray-300">
+                          <span className="text-neutral-700 dark:text-neutral-300">
                             {formattedMultipliers["2"].map(stat => formatStatName(stat)).join(', ')}
                           </span>
                         </div>
@@ -96,7 +96,7 @@ const BoostGuide = ({ boostRoles, showGuide, setShowGuide, squadColor }) => {
                       {formattedMultipliers["1.5"] && formattedMultipliers["1.5"].length > 0 && (
                         <div className="text-xs">
                           <span className="text-blue-600 dark:text-blue-400 font-medium inline-block w-8">1.5×:</span> 
-                          <span className="text-gray-700 dark:text-gray-300">
+                          <span className="text-neutral-700 dark:text-neutral-300">
                             {formattedMultipliers["1.5"].map(stat => formatStatName(stat)).join(', ')}
                           </span>
                         </div>

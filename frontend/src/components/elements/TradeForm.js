@@ -341,11 +341,11 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           ${isSelected ? 
             `${borderColorSelected} ${bgColorSelected}` : 
-            'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'}
+            'border-neutral-200 hover:border-neutral-300 dark:border-neutral-700 dark:hover:border-neutral-600'}
         `}
       >
         <div className="ml-3 flex-grow">
-          <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
+          <p className="text-sm font-medium text-neutral-900 dark:text-white flex items-center">
             {player.name}
             {/* Core Squad Role Indicator with squad color */}
             {coreSquadRoles[player.id] && (
@@ -361,7 +361,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
               </span>
             )}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             {getPlayerRole(player)}
           </p>
         </div>
@@ -375,15 +375,15 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-auto bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+    <div className="fixed inset-0 z-50 overflow-auto bg-neutral-500 bg-opacity-75 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
+          <h3 className="text-lg font-medium text-neutral-900 dark:text-white">
             Propose New Trade
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+            className="text-neutral-400 hover:text-neutral-500 dark:hover:text-neutral-300"
           >
             <X className="h-5 w-5" />
           </button>
@@ -393,13 +393,13 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
-              <p className="mt-2 text-gray-500 dark:text-gray-400">Loading teams...</p>
+              <p className="mt-2 text-neutral-500 dark:text-neutral-400">Loading teams...</p>
             </div>
           ) : success ? (
             <div className="text-center py-8">
               <CheckCircle className="h-16 w-16 mx-auto text-green-500" />
-              <p className="mt-2 text-xl font-medium text-gray-900 dark:text-white">Trade Proposed!</p>
-              <p className="mt-1 text-gray-500 dark:text-gray-400">Your trade proposal has been sent.</p>
+              <p className="mt-2 text-xl font-medium text-neutral-900 dark:text-white">Trade Proposed!</p>
+              <p className="mt-1 text-neutral-500 dark:text-neutral-400">Your trade proposal has been sent.</p>
             </div>
           ) : (
             <>
@@ -436,12 +436,12 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
 
               {!selectedSquad ? (
                 <>
-                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
+                  <h4 className="text-md font-medium text-neutral-900 dark:text-white mb-4">
                     Select a team to trade with:
                   </h4>
                   {squads.length === 0 ? (
-                    <div className="text-center py-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                      <p className="text-gray-500 dark:text-gray-400">
+                    <div className="text-center py-6 border border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg">
+                      <p className="text-neutral-500 dark:text-neutral-400">
                         No teams available for trading in this league.
                       </p>
                     </div>
@@ -451,7 +451,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                         <div
                           key={squad.id}
                           onClick={() => handleSquadSelect(squad)}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-indigo-500 dark:hover:border-indigo-400 cursor-pointer transition-colors"
+                          className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 hover:border-indigo-500 dark:hover:border-indigo-400 cursor-pointer transition-colors"
                         >
                           <div className="flex items-center">
                             <div 
@@ -461,7 +461,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                               }}
                             ></div>
                             <div>
-                              <p className="text-md font-medium text-gray-900 dark:text-white">
+                              <p className="text-md font-medium text-neutral-900 dark:text-white">
                                 {squad.name}
                               </p>
                             </div>
@@ -475,7 +475,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                 <>
                   <div className="mb-6">
                     <div className="flex items-center">
-                      <h4 className="text-md font-semibold text-gray-900 dark:text-white mr-2">
+                      <h4 className="text-md font-semibold text-neutral-900 dark:text-white mr-2">
                         Trading with:
                       </h4>
                       <div 
@@ -484,7 +484,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                           backgroundColor: selectedSquad.color || '#9333EA'
                         }}
                       ></div>
-                      <span className="font-semibold text-gray-900 dark:text-white">
+                      <span className="font-semibold text-neutral-900 dark:text-white">
                         {selectedSquad.name}
                       </span>
                     </div>
@@ -500,8 +500,8 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                   <div className="space-y-4 mb-6">
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center">
-                        <h5 className="text-md font-medium text-gray-900 dark:text-white">Trade Pairs</h5>
-                        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                        <h5 className="text-md font-medium text-neutral-900 dark:text-white">Trade Pairs</h5>
+                        <span className="ml-2 text-sm text-neutral-500 dark:text-neutral-400">
                           ({tradePairs.length} {tradePairs.length === 1 ? 'pair' : 'pairs'})
                         </span>
                       </div>
@@ -514,17 +514,17 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                     </div>
                     
                     {tradePairs.length === 0 ? (
-                      <div className="text-center py-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                        <p className="text-gray-500 dark:text-gray-400">
+                      <div className="text-center py-6 border border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg">
+                        <p className="text-neutral-500 dark:text-neutral-400">
                           Click "Add Pair" to create a player trade pairing
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-6">
                         {tradePairs.map((pair, index) => (
-                          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                          <div key={index} className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4">
                             <div className="flex justify-between items-center mb-3">
-                              <h6 className="text-sm font-medium text-gray-900 dark:text-white">
+                              <h6 className="text-sm font-medium text-neutral-900 dark:text-white">
                                 Trade Pair #{index + 1}
                               </h6>
                               <button
@@ -570,26 +570,26 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                                     )
                                   ) : (
                                     <div 
-                                      className="border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                                      className="border border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg p-4 text-center cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700"
                                       onClick={() => {
                                         // Open player selector
                                         document.getElementById(`my-player-selector-${index}`).classList.remove('hidden');
                                       }}
                                     >
-                                      <p className="text-gray-500 dark:text-gray-400">
+                                      <p className="text-neutral-500 dark:text-neutral-400">
                                         Select your player
                                       </p>
                                     </div>
                                   )}
                                   
-                                  <div id={`my-player-selector-${index}`} className="hidden mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                                    <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
-                                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Select a player from your team</p>
+                                  <div id={`my-player-selector-${index}`} className="hidden mt-2 max-h-48 overflow-y-auto border border-neutral-200 dark:border-neutral-700 rounded-lg">
+                                    <div className="p-2 bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600 flex justify-between items-center">
+                                      <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Select a player from your team</p>
                                       <button
                                         onClick={() => {
                                           document.getElementById(`my-player-selector-${index}`).classList.add('hidden');
                                         }}
-                                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                        className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
                                       >
                                         <X className="h-4 w-4" />
                                       </button>
@@ -614,7 +614,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                               
                               <div className="flex justify-center md:col-span-1">
                                 <div className="flex items-center">
-                                  <ArrowRight className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                                  <ArrowRight className="h-6 w-6 text-neutral-500 dark:text-neutral-400" />
                                 </div>
                               </div>
                               
@@ -643,26 +643,26 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                                     )
                                   ) : (
                                     <div 
-                                      className="border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                                      className="border border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg p-4 text-center cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700"
                                       onClick={() => {
                                         // Open player selector
                                         document.getElementById(`their-player-selector-${index}`).classList.remove('hidden');
                                       }}
                                     >
-                                      <p className="text-gray-500 dark:text-gray-400">
+                                      <p className="text-neutral-500 dark:text-neutral-400">
                                         Select their player
                                       </p>
                                     </div>
                                   )}
                                   
-                                  <div id={`their-player-selector-${index}`} className="hidden mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                                    <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
-                                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Select a player from {selectedSquad.name}</p>
+                                  <div id={`their-player-selector-${index}`} className="hidden mt-2 max-h-48 overflow-y-auto border border-neutral-200 dark:border-neutral-700 rounded-lg">
+                                    <div className="p-2 bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600 flex justify-between items-center">
+                                      <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Select a player from {selectedSquad.name}</p>
                                       <button
                                         onClick={() => {
                                           document.getElementById(`their-player-selector-${index}`).classList.add('hidden');
                                         }}
-                                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                        className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
                                       >
                                         <X className="h-4 w-4" />
                                       </button>
@@ -696,10 +696,10 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+        <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm text-sm font-medium text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700"
           >
             Cancel
           </button>

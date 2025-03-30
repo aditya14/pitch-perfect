@@ -121,10 +121,10 @@ const RankBreakdownTable = ({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
         <div className="space-y-4">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/4"></div>
-          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/4"></div>
+          <div className="h-64 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse"></div>
         </div>
       </div>
     );
@@ -132,19 +132,19 @@ const RankBreakdownTable = ({
 
   if (error && !data.length) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
         <p className="text-red-500 dark:text-red-400">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+    <div className="bg-white dark:bg-neutral-900 shadow rounded-lg mb-3">
+      <div className="p-3 border-b border-neutral-200 dark:border-neutral-700">
+        <h3 className="text-lg sm:text-xl font-semibold text-neutral-900 dark:text-white">
           Rank Breakdown
         </h3>
-        <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
           Squad ranking performance over time
         </p>
       </div>

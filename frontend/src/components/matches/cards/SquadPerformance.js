@@ -54,7 +54,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
       case 1:
         return "bg-yellow-50 dark:bg-yellow-900";
       default:
-        return "bg-white dark:bg-gray-800";
+        return "bg-white dark:bg-neutral-800";
     }
   };
 
@@ -70,13 +70,13 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-900 shadow rounded-lg p-4 h-full">
+      <div className="bg-white dark:bg-neutral-900 shadow rounded-lg p-4 h-full">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+          <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3"></div>
           <div className="space-y-3">
-            <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-14 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-14 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+            <div className="h-14 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+            <div className="h-14 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
           </div>
         </div>
       </div>
@@ -85,7 +85,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-900 shadow rounded-lg p-4 h-full">
+      <div className="bg-white dark:bg-neutral-900 shadow rounded-lg p-4 h-full">
         <div className="text-red-500 dark:text-red-400">
           {error}
         </div>
@@ -96,13 +96,13 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   // If there are no squads to display
   if (squadData.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-900 overflow-hidden h-full">
-        <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Match Standings
+      <div className="bg-white dark:bg-neutral-900 overflow-hidden h-full">
+        <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-700">
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+            Squad Points
           </h2>
         </div>
-        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+        <div className="p-4 text-center text-neutral-500 dark:text-neutral-400">
           No squad data available for this match
         </div>
       </div>
@@ -113,10 +113,10 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   const useGridLayout = squadData.length >= 4;
   
   return (
-    <div className="bg-white dark:bg-gray-900 overflow-hidden h-full shadow rounded-lg">
-      <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Match Standings
+    <div className="bg-white dark:bg-black overflow-hidden h-full shadow rounded-lg">
+      <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-700">
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+          Squad Points
         </h2>
       </div>
       
@@ -143,18 +143,18 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
                     </span>
                   </div>
                   
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
                     {squad.playersCount} player{squad.playersCount !== 1 ? 's' : ''}
                   </span>
                 </div>
               </div>
               
               <div className="flex flex-col items-end">
-                <span className="text-md font-bold text-gray-900 dark:text-white">
+                <span className="text-md font-bold text-neutral-900 dark:text-white">
                   {squad.points.toFixed(1)}
                 </span>
                 {squad.basePoints > 0 || squad.boostPoints > 0 ? (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
                     {squad.basePoints.toFixed(1)} {squad.boostPoints >= 0 && '+'}{squad.boostPoints.toFixed(1)}
                   </span>
                 ) : null}
