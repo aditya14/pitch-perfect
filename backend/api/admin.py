@@ -245,7 +245,7 @@ class IPLMatchAdmin(admin.ModelAdmin):
         
         # If player_of_match field was changed, update related events
         if player_of_match_changed:
-            from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasyMatchEvent
+            from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasyMatchEvent, FantasySquad
             from api.services.cricket_data_service import CricketDataService
             
             # Create service instance
@@ -375,6 +375,26 @@ class IPLMatchAdmin(admin.ModelAdmin):
                 # Update ranks for all fantasy match events
                 service._update_match_ranks(obj)
                 service._update_running_ranks(obj)
+                
+                # NEW CODE: Update total_points for all affected FantasySquads
+                for squad_id in affected_squad_ids:
+                    squad = FantasySquad.objects.get(id=squad_id)
+                    old_total = squad.total_points
+                    
+                    # Calculate new total from all fantasy player events
+                    total_points = FantasyPlayerEvent.objects.filter(
+                        fantasy_squad=squad
+                    ).annotate(
+                        event_total=F('match_event__total_points_all') + F('boost_points')
+                    ).aggregate(
+                        total=Sum('event_total')
+                    )['total'] or 0
+                    
+                    # Update the squad's total points
+                    squad.total_points = total_points
+                    squad.save(update_fields=['total_points'])
+                    
+                    print(f"Updated FantasySquad {squad.name} total points: {old_total} -> {total_points}")
 
 class IPLPlayerEventAdmin(admin.ModelAdmin):
     # Efficient list display with limited columns

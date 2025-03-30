@@ -416,7 +416,7 @@ class IPLPlayerEvent(models.Model):
         points = 0
         points += ((self.bowl_wickets or 0) * 25)  # Wickets
         points += ((self.bowl_maidens or 0) * 8)  # Maidens
-        points += (8 if (self.bowl_wickets or 0) >= 4 else 0)  # 4+ wickets bonus
+        points += (8 if (self.bowl_wickets or 0) >= 3 else 0)  # 3+ wickets bonus
         points += (16 if (self.bowl_wickets or 0) >= 5 else 0)  # 5+ wickets bonus
         points += self._calculate_economy_bonus()  # Economy bonus/penalty
         return points
