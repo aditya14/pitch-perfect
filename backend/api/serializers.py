@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, FantasySquad, FantasyLeague, 
-                     FantasyPlayerEvent, IPLPlayerEvent, FantasyTrade)
+                     FantasyPlayerEvent, IPLPlayerEvent, FantasyTrade, FantasyMatchEvent)
 from django.contrib.auth.models import User
 import random
 import string
@@ -375,3 +375,18 @@ class FantasyTradeSerializer(serializers.ModelSerializer):
                 players.append({'id': player_id, 'name': f'Unknown Player (ID: {player_id})'})
                 
         return players
+    
+class FantasyMatchEventSerializer(serializers.ModelSerializer):
+    squad_name = serializers.CharField(source='fantasy_squad.name')
+    squad_color = serializers.CharField(source='fantasy_squad.color')
+    match_number = serializers.IntegerField(source='match.match_number')
+    match_date = serializers.DateTimeField(source='match.date')
+    team_1 = serializers.CharField(source='match.team_1.short_name')
+    team_2 = serializers.CharField(source='match.team_2.short_name')
+    
+    class Meta:
+        model = FantasyMatchEvent
+        fields = ['id', 'match', 'fantasy_squad', 'squad_name', 'squad_color', 
+                  'total_base_points', 'total_boost_points', 'total_points', 
+                  'match_rank', 'running_rank', 'running_total_points',
+                  'players_count', 'match_number', 'match_date', 'team_1', 'team_2']

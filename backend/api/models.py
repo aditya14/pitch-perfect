@@ -595,3 +595,25 @@ class FantasyTrade(models.Model):
 
     def __str__(self):
         return f"{self.initiator.name} -> {self.receiver.name}"
+    
+class FantasyMatchEvent(models.Model):
+    match = models.ForeignKey(IPLMatch, on_delete=models.CASCADE)
+    fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='match_events')
+    total_base_points = models.FloatField(default=0)
+    total_boost_points = models.FloatField(default=0)
+    total_points = models.FloatField(default=0)
+    match_rank = models.IntegerField(null=True, blank=True)  # Rank in this match
+    running_rank = models.IntegerField(null=True, blank=True)  # Overall league rank as of this match
+    running_total_points = models.FloatField(default=0)  # Cumulative squad points as of this match
+    players_count = models.IntegerField(default=0)  # Number of players who participated
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('match', 'fantasy_squad')
+        indexes = [
+            models.Index(fields=['match', 'total_points']),
+            models.Index(fields=['fantasy_squad', 'match']),
+            models.Index(fields=['fantasy_squad', 'running_rank']),
+            models.Index(fields=['match', 'match_rank']),
+        ]

@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, 
-                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade)
+                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade, FantasyMatchEvent)
 
 from .forms import CSVUploadForm
 import csv
@@ -1049,3 +1049,37 @@ class FantasyTradeAdmin(admin.ModelAdmin):
         css = {
             'all': ('admin/css/vendor/buttons.css',)
         }
+
+@admin.register(FantasyMatchEvent)
+class FantasyMatchEventAdmin(admin.ModelAdmin):
+    list_display = ('match', 'fantasy_squad', 'total_points', 'match_rank', 'running_rank')
+    list_filter = ('match__season', 'fantasy_squad__league')
+    search_fields = ('fantasy_squad__name', 'match__match_number')
+    ordering = ('-match__date', 'match_rank')
+    
+    def get_queryset(self, request):
+        # Optimize queryset with select_related to avoid N+1 query issues
+        return super().get_queryset(request).select_related(
+            'match', 'fantasy_squad', 'fantasy_squad__league', 'match__season'
+        )
+    
+    fieldsets = (
+        ('Match Info', {
+            'fields': ('match', 'fantasy_squad')
+        }),
+        ('Points Breakdown', {
+            'fields': ('total_base_points', 'total_boost_points', 'total_points')
+        }),
+        ('Rankings', {
+            'fields': ('match_rank', 'running_rank', 'running_total_points')
+        }),
+        ('Other Stats', {
+            'fields': ('players_count',)
+        })
+    )
+    
+    # Don't use readonly_fields that might not exist
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # This is an edit
+            return ('match', 'fantasy_squad')
+        return ()
