@@ -18,7 +18,6 @@ from django.db.models import Q, Avg, F
 import logging
 _logger = logging.getLogger(__name__)
 
-
 @admin.action(description="Update default draft order based on current roster and historical performance")
 def update_default_draft_order(modeladmin, request, queryset):
     for season in queryset:
@@ -230,94 +229,152 @@ class IPLMatchAdmin(admin.ModelAdmin):
     formatted_match.short_description = "Match"
 
     def save_model(self, request, obj, form, change):
-        # Track the old player_of_match value before saving
-        if change:  # if this is an edit
-            old_obj = IPLMatch.objects.get(pk=obj.pk)
-            old_potm = old_obj.player_of_match
-        else:
-            old_potm = None
-
-        # Save the match object first
+        # Track if player_of_match was changed
+        player_of_match_changed = False
+        old_player_of_match = None
+        
+        # Check if this is an update and if player_of_match field changed
+        if change and 'player_of_match' in form.changed_data:
+            # Get the original object from database to find old player_of_match
+            old_obj = self.model.objects.get(pk=obj.pk)
+            old_player_of_match = old_obj.player_of_match
+            player_of_match_changed = True
+        
+        # Save the match
         super().save_model(request, obj, form, change)
-
-        # Handle player_of_match updates
-        if obj.player_of_match != old_potm:
-            # If there was a previous POTM, set their event's player_of_match to False
-            if old_potm:
-                IPLPlayerEvent.objects.filter(
-                    match=obj,
-                    player=old_potm
-                ).update(player_of_match=False)
-
-            # If there's a new POTM, set their event's player_of_match to True
+        
+        # If player_of_match field was changed, update related events
+        if player_of_match_changed:
+            from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasyMatchEvent
+            from api.services.cricket_data_service import CricketDataService
+            
+            # Create service instance
+            service = CricketDataService()
+            
+            # Get all player events for this match
+            all_player_events = IPLPlayerEvent.objects.filter(match=obj)
+            
+            # First reset player_of_match for all events
+            for event in all_player_events:
+                if event.player_of_match:
+                    event.player_of_match = False
+                    # We need to force recalculation of the point totals
+                    # First store the current values for our debugging
+                    old_total = event.total_points_all
+                    old_other = event.other_points_total
+                    
+                    # Trigger a full recalculation by calling save()
+                    event.save()
+                    
+                    # For debugging, check if values changed
+                    event.refresh_from_db()
+                    print(f"Old POM: Total points changed from {old_total} to {event.total_points_all}")
+                    print(f"Old POM: Other points changed from {old_other} to {event.other_points_total}")
+            
+            # Then set the new player of the match (if there is one)
             if obj.player_of_match:
-                IPLPlayerEvent.objects.filter(
-                    match=obj,
-                    player=obj.player_of_match
-                ).update(player_of_match=True)
-
-                # Recalculate points for affected IPL events
-                affected_events = IPLPlayerEvent.objects.filter(
-                    Q(match=obj, player=obj.player_of_match) |
-                    (Q(match=obj, player=old_potm) if old_potm else Q())
+                for event in all_player_events.filter(player=obj.player_of_match):
+                    event.player_of_match = True
+                    
+                    # Debug current values
+                    old_total = event.total_points_all
+                    old_other = event.other_points_total
+                    
+                    # Save to trigger recalculation
+                    event.save()
+                    
+                    # Check if values changed
+                    event.refresh_from_db()
+                    print(f"New POM: Total points changed from {old_total} to {event.total_points_all}")
+                    print(f"New POM: Other points changed from {old_other} to {event.other_points_total}")
+            
+            # Get affected player IDs (old and new player of the match)
+            affected_player_ids = []
+            if old_player_of_match:
+                affected_player_ids.append(old_player_of_match.id)
+            if obj.player_of_match:
+                affected_player_ids.append(obj.player_of_match.id)
+            
+            # Get all fantasy player events that need to be updated
+            if affected_player_ids:
+                # Get all affected IPL player events (both old and new POM)
+                affected_ipl_events = all_player_events.filter(
+                    player_id__in=affected_player_ids
                 )
-                for event in affected_events:
-                    event.save()  # This recalculates the base points
-
-                # Now also update the related FantasyPlayerEvents for POTM changes
-                # Get all fantasy events related to the affected IPL events
-                fantasy_events = FantasyPlayerEvent.objects.filter(
-                    match_event__in=affected_events
-                ).select_related('match_event', 'boost')
-
-                # Recalculate boost points for each fantasy event
-                for fantasy_event in fantasy_events:
-                    if fantasy_event.boost:
-                        # Recalculate boost points based on the updated IPL event
-                        ipl_event = fantasy_event.match_event
-                        boost = fantasy_event.boost
+                
+                # Refresh our local copies from the database to ensure we have the updated values
+                refreshed_ipl_events = list(IPLPlayerEvent.objects.filter(id__in=[e.id for e in affected_ipl_events]))
+                
+                # Update all fantasy player events that use these IPL events
+                affected_fantasy_events = FantasyPlayerEvent.objects.filter(
+                    match_event__in=refreshed_ipl_events
+                ).select_related('match_event', 'fantasy_squad')
+                
+                # Update each fantasy player event
+                affected_squad_ids = set()
+                for fantasy_event in affected_fantasy_events:
+                    # Get the fresh event from our refreshed list
+                    ipl_event = next((e for e in refreshed_ipl_events if e.id == fantasy_event.match_event_id), None)
+                    
+                    old_boost = fantasy_event.boost_points
+                    
+                    # Recalculate boost points with the updated base points
+                    fantasy_event.boost_points = service._calculate_boost_points(ipl_event, fantasy_event.boost)
+                    fantasy_event.save()
+                    
+                    print(f"Fantasy Event: Boost points changed from {old_boost} to {fantasy_event.boost_points}")
+                    
+                    affected_squad_ids.add(fantasy_event.fantasy_squad_id)
+                
+                # Update all fantasy match events for affected squads
+                for squad_id in affected_squad_ids:
+                    # Get all fantasy player events for this squad and match (refresh from DB)
+                    squad_events = FantasyPlayerEvent.objects.filter(
+                        fantasy_squad_id=squad_id,
+                        match_event__match=obj
+                    ).select_related('match_event')
+                    
+                    # Calculate totals (using fresh data)
+                    base_points = sum(e.match_event.total_points_all for e in squad_events)
+                    boost_points = sum(e.boost_points for e in squad_events)
+                    total_points = base_points + boost_points
+                    
+                    # Get existing match event if any
+                    try:
+                        match_event = FantasyMatchEvent.objects.get(
+                            match=obj,
+                            fantasy_squad_id=squad_id
+                        )
                         
-                        # For Captain (2x) and Vice Captain (1.5x) roles that apply to all points
-                        if boost.label in ['Captain', 'Vice Captain']:
-                            # The boost is (multiplier - 1) * base_points
-                            multiplier = boost.multiplier_runs  # All multipliers are the same for these roles
-                            fantasy_event.boost_points = (multiplier - 1.0) * ipl_event.total_points_all
-                        # For POTM-specific boosts in other roles
-                        elif ipl_event.player_of_match:
-                            # Update POTM boost component
-                            potm_points = 50  # POTM gets 50 points
-                            potm_boost = potm_points * (boost.multiplier_potm - 1.0)
-                            # Add/Remove the POTM boost component
-                            current_boost = fantasy_event.boost_points
-                            if old_potm and ipl_event.player == obj.player_of_match:
-                                # Player just became POTM, add the boost
-                                fantasy_event.boost_points = current_boost + potm_boost
-                            elif not old_potm and ipl_event.player == old_potm:
-                                # Player just lost POTM, remove the boost
-                                fantasy_event.boost_points = current_boost - potm_boost
+                        old_base = match_event.total_base_points
+                        old_boost = match_event.total_boost_points
+                        old_total = match_event.total_points
                         
-                        fantasy_event.save()
-
-                # Update total points for affected fantasy squads
-                affected_squads = set(fantasy_events.values_list('fantasy_squad_id', flat=True))
-                for squad_id in affected_squads:
-                    squad = FantasySquad.objects.get(id=squad_id)
-                    # Calculate new total points
-                    total_points = sum(
-                        FantasyPlayerEvent.objects.filter(fantasy_squad=squad)
-                        .annotate(total=F('match_event__total_points_all') + F('boost_points'))
-                        .values_list('total', flat=True)
-                    )
-                    squad.total_points = total_points
-                    squad.save()
-
-                messages.success(request, f"Updated Player of the Match from {old_potm} to {obj.player_of_match}. Recalculated fantasy points for {len(fantasy_events)} fantasy events.")
-
-# Add this to your admin.py file
-
-from django.contrib import admin
-from django.db import models
-from .models import IPLPlayerEvent, IPLPlayer, IPLMatch, IPLTeam  # Import your actual models
+                        # Update with new values
+                        match_event.total_base_points = base_points
+                        match_event.total_boost_points = boost_points
+                        match_event.total_points = total_points
+                        match_event.save()
+                        
+                        print(f"Squad {squad_id}: Base points changed from {old_base} to {base_points}")
+                        print(f"Squad {squad_id}: Boost points changed from {old_boost} to {boost_points}")
+                        print(f"Squad {squad_id}: Total points changed from {old_total} to {total_points}")
+                        
+                    except FantasyMatchEvent.DoesNotExist:
+                        # Create new match event
+                        match_event = FantasyMatchEvent.objects.create(
+                            match=obj,
+                            fantasy_squad_id=squad_id,
+                            total_base_points=base_points,
+                            total_boost_points=boost_points,
+                            total_points=total_points,
+                            players_count=squad_events.count()
+                        )
+                        print(f"Created new match event for squad {squad_id} with {total_points} points")
+                
+                # Update ranks for all fantasy match events
+                service._update_match_ranks(obj)
+                service._update_running_ranks(obj)
 
 class IPLPlayerEventAdmin(admin.ModelAdmin):
     # Efficient list display with limited columns

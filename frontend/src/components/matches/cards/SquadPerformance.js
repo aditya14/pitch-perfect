@@ -138,7 +138,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
                 />
                 <div className="flex flex-col">
                   <div className="flex items-center">
-                    <span className={`${squad.rank === 1 ? 'font-bold' : 'font-medium'} text-base truncate max-w-[140px] sm:max-w-[200px]`}>
+                    <span className={`${squad.rank === 1 ? 'font-bold' : 'font-medium'} text-base text-sm truncate max-w-[140px] sm:max-w-[200px]`}>
                       {squad.name}
                     </span>
                   </div>
@@ -150,7 +150,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
               </div>
               
               <div className="flex flex-col items-end">
-                <span className="text-xl font-bold text-gray-900 dark:text-white">
+                <span className="text-md font-bold text-gray-900 dark:text-white">
                   {squad.points.toFixed(1)}
                 </span>
                 {squad.basePoints > 0 || squad.boostPoints > 0 ? (
