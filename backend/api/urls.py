@@ -5,6 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
 from . import admin_views
 from . import user_views
+from . import views_stats
 
 router = DefaultRouter()
 router.register(r'seasons', views.SeasonViewSet)
@@ -41,7 +42,16 @@ urlpatterns = [
     path('matches/<int:match_id>/standings/', views.match_standings, name='match-standings'),
     path('leagues/<int:league_id>/matches/<int:match_id>/stats/', views.match_fantasy_stats),
     
+    # Stats endpoints
+    path('leagues/<int:league_id>/stats/season-mvp/', views_stats.league_stats_season_mvp, name='league-stats-season-mvp'),
+    path('leagues/<int:league_id>/stats/match-mvp/', views_stats.league_stats_match_mvp, name='league-stats-match-mvp'),
+    path('leagues/<int:league_id>/stats/season-total-actives/', views_stats.league_stats_season_total_actives, name='league-stats-season-total-actives'),
+    path('leagues/<int:league_id>/stats/most-players-in-match/', views_stats.league_stats_most_players_in_match, name='league-stats-most-players-in-match'),
+    path('leagues/<int:league_id>/stats/most-points-in-match/', views_stats.league_stats_most_points_in_match, name='league-stats-most-points-in-match'),
+    path('leagues/<int:league_id>/stats/rank-breakdown/', views_stats.league_stats_rank_breakdown, name='league-stats-rank-breakdown'),
+    path('leagues/<int:league_id>/stats/domination/', views_stats.league_stats_domination, name='league-stats-domination'),
+    path('leagues/<int:league_id>/stats/running-total/', views_stats.league_stats_running_total, name='league-stats-running-total'),
+    
     # Admin endpoints
     path('admin/run-fantasy-draft/', admin_views.run_fantasy_draft, name='run-fantasy-draft'),
-    
 ]

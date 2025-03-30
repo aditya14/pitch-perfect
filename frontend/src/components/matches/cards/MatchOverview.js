@@ -82,17 +82,18 @@ const MatchOverview = ({ matchData }) => {
               <tr className="group">
                 <td className="py-1 w-32 text-gray-500 dark:text-gray-400 font-medium">Toss</td>
                 <td className="py-1 text-gray-900 dark:text-white">
-                  <TeamBadge team={matchData.toss_winner ? matchData.toss_winner : ''} useShortName={true} className="mr-1" /> chose to {safeToLowerCase(matchData.toss_decision)}
+                  <TeamBadge team={matchData.toss_winner ? matchData.toss_winner : ''} useShortName={true} /> 
+                  <span className='ml-1'>chose to {safeToLowerCase(matchData.toss_decision)}</span>
                 </td>
               </tr>
               {matchData.status === 'COMPLETED' && (
                 <>
                   <tr className="group">
                     <td className="py-1 w-32 text-gray-500 dark:text-gray-400 font-medium">Result</td>
-                    <td className="py-1 text-gray-900 dark:text-white flex items-center gap-2">
-                      <TeamBadge team={matchData.winner ? matchData.winner : ''} useShortName={true} /> 
-                      <span>won by {matchData.win_margin} {safeToLowerCase(matchData.win_type)}</span>
-                      <Trophy className="h-4 w-4 text-yellow-500" />
+                    <td className="py-1 text-gray-900 dark:text-white flex items-center">
+                      <TeamBadge team={matchData.winner ? matchData.winner : ''} useShortName={true} className="mr-1" /> 
+                      <span className='ml-1'>won by {matchData.win_margin} {safeToLowerCase(matchData.win_type)}</span>
+                      <Trophy className="h-4 w-4 text-yellow-500 ml-2" />
                     </td>
                   </tr>
                   {matchData.player_of_match && (
