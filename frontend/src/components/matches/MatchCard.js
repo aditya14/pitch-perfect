@@ -257,67 +257,10 @@ const MatchCard = ({ match, leagueId }) => {
             </span>
           </div>
         )}
-        
-        {/* Fantasy Stats Section - Top Performers */}
-        {!loading && topPlayers.length > 0 && (
-          <div className="mb-3">
-            <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
-              {match.status === 'LIVE' ? 'LEADING' : 'TOP'} PERFORMERS
-            </div>
-            
-            {/* Player 1 */}
-            {topPlayers.length > 0 && (
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center">
-                  <span className="text-gray-900 dark:text-white text-sm truncate max-w-[150px]">
-                    {topPlayers[0]?.player_name}
-                  </span>
-                  {topPlayers[0]?.boost_label && (
-                    <span className='ml-1'>
-                      <BoostInlineElement
-                        boostName={topPlayers[0]?.boost_label} 
-                        color={topPlayers[0]?.squad_color || '#6B7280'}
-                        showLabel={true} 
-                        size="S" 
-                      />
-                    </span>
-                  )}
-                </div>
-                <span className="text-gray-900 dark:text-white text-sm whitespace-nowrap ml-2">
-                  {topPlayers[0]?.fantasy_points} pts
-                </span>
-              </div>
-            )}
-            
-            {/* Player 2 */}
-            {topPlayers.length > 1 && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-gray-900 dark:text-white text-sm truncate max-w-[150px]">
-                    {topPlayers[1]?.player_name}
-                  </span>
-                  {topPlayers[1]?.boost_label && (
-                    <span className='ml-1'>
-                      <BoostInlineElement
-                        boostName={topPlayers[1]?.boost_label} 
-                        color={topPlayers[1]?.squad_color || '#6B7280'}
-                        showLabel={true} 
-                        size="S" 
-                      />
-                    </span>
-                  )}
-                </div>
-                <span className="text-gray-900 dark:text-white text-sm whitespace-nowrap ml-2">
-                  {topPlayers[1]?.fantasy_points} pts
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-        
+
         {/* Fantasy Stats Section - Top Squads */}
         {!loading && topSquads.length > 0 && (
-          <div>
+          <div className="mb-3">
             <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
               {match.status === 'LIVE' ? 'LEADING' : 'TOP'} SQUADS
             </div>
@@ -330,11 +273,11 @@ const MatchCard = ({ match, leagueId }) => {
                     className="h-4 w-1 mr-1.5 rounded-sm"
                     style={{ backgroundColor: topSquads[0]?.color || '#6B7280' }}
                   />
-                  <span className="text-gray-900 dark:text-white text-sm font-bold truncate max-w-[150px]">
+                  <span className="text-gray-900 dark:text-white text-md font-bold truncate max-w-[150px]">
                     {topSquads[0]?.name}
                   </span>
                 </div>
-                <span className="text-gray-900 dark:text-white text-sm whitespace-nowrap ml-2">
+                <span className="text-green-600 dark:text-green-500 text-md font-bold whitespace-nowrap ml-2">
                   {topSquads[0]?.match_points} pts
                 </span>
               </div>
@@ -354,6 +297,63 @@ const MatchCard = ({ match, leagueId }) => {
                 </div>
                 <span className="text-gray-900 dark:text-white text-sm whitespace-nowrap ml-2">
                   {topSquads[1]?.match_points} pts
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Fantasy Stats Section - Top Performers */}
+        {!loading && topPlayers.length > 0 && (
+          <div>
+            <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
+              {match.status === 'LIVE' ? 'LEADING' : 'TOP'} PERFORMERS
+            </div>
+            
+            {/* Player 1 */}
+            {topPlayers.length > 0 && (
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <span className="text-gray-900 dark:text-white text-xs truncate max-w-[150px]">
+                    {topPlayers[0]?.player_name}
+                  </span>
+                  {topPlayers[0]?.boost_label && (
+                    <span className='ml-1'>
+                      <BoostInlineElement
+                        boostName={topPlayers[0]?.boost_label} 
+                        color={topPlayers[0]?.squad_color || '#6B7280'}
+                        showLabel={true} 
+                        size="XS" 
+                      />
+                    </span>
+                  )}
+                </div>
+                <span className="text-gray-900 dark:text-white text-xs whitespace-nowrap ml-2">
+                  {topPlayers[0]?.fantasy_points} pts
+                </span>
+              </div>
+            )}
+            
+            {/* Player 2 */}
+            {topPlayers.length > 1 && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-gray-900 dark:text-white text-xs truncate max-w-[150px]">
+                    {topPlayers[1]?.player_name}
+                  </span>
+                  {topPlayers[1]?.boost_label && (
+                    <span className='ml-1'>
+                      <BoostInlineElement
+                        boostName={topPlayers[1]?.boost_label} 
+                        color={topPlayers[1]?.squad_color || '#6B7280'}
+                        showLabel={true} 
+                        size="XS" 
+                      />
+                    </span>
+                  )}
+                </div>
+                <span className="text-gray-900 dark:text-white text-xs whitespace-nowrap ml-2">
+                  {topPlayers[1]?.fantasy_points} pts
                 </span>
               </div>
             )}

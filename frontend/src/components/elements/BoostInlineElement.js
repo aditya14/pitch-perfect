@@ -24,6 +24,12 @@ import { getTextColorForBackground } from '../../utils/colorUtils';
 const BoostInlineElement = ({ boostName, color, showLabel = false, size = 'M', className = '' }) => {
   // Map size values to icon dimensions and text sizes
   const sizeMap = {
+    'XS': {
+      iconSize: 12,
+      badgeClasses: 'px-1 py-0.5 text-xs',
+      iconClasses: 'mr-0.5',
+      containerClasses: 'rounded ml-1'
+    },
     'S': {
       iconSize: 14,
       badgeClasses: 'px-1 py-0.5 text-xs',

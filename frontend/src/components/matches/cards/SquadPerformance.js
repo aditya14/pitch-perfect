@@ -1,63 +1,70 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trophy, Medal, Award } from 'lucide-react';
-import { getEventData } from '../../../utils/matchUtils';
+import api from '../../../utils/axios';
 
-const SquadPerformance = ({ playerEvents, loading, error, activeSquadId }) => {
-  // Calculate squad totals from player events
-  const squadTotals = useMemo(() => {
-    if (!playerEvents || playerEvents.length === 0) return [];
-    
-    // Map to keep track of squad totals
-    const squadMap = new Map();
-    
-    // Process each player event
-    playerEvents.forEach(event => {
-      // Check if the event has squad information
-      if (event.squad_name) {
-        // Use squad_name as the key since squad_id might not be available
-        const squadKey = event.squad_name;
-        const points = event.total_points || 
-                      (event.base_stats && event.base_stats.total_points_all) || 0;
-        
-        if (squadMap.has(squadKey)) {
-          // Update existing squad information
-          const squad = squadMap.get(squadKey);
-          squadMap.set(squadKey, {
-            ...squad,
-            points: squad.points + points
-          });
-        } else {
-          // Add new squad information
-          squadMap.set(squadKey, {
-            name: event.squad_name,
-            points: points,
-            color: event.squad_color || '#888888'
-          });
-        }
-      }
-    });
-    
-    // Convert map to array and sort by points (highest to lowest)
-    const sortedSquads = Array.from(squadMap.values())
-      .sort((a, b) => b.points - a.points)
-      .map((squad, index) => ({
-        ...squad,
-        rank: index + 1,
-        id: index // Use index as id since we don't have squad_id
+const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
+  const [squadData, setSquadData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Only fetch if we're in a league context
+    if (matchId && leagueId) {
+      fetchSquadStandings();
+    } else {
+      setLoading(false);
+    }
+  }, [matchId, leagueId]);
+
+  const fetchSquadStandings = async () => {
+    try {
+      setLoading(true);
+      
+      // Use the new match_standings endpoint with league filter
+      const response = await api.get(`/matches/${matchId}/standings/?league_id=${leagueId}`);
+      
+      // Format the data for display
+      const formattedData = response.data.map(event => ({
+        id: event.fantasy_squad,
+        name: event.squad_name,
+        color: event.squad_color || '#888888',
+        points: event.total_points,
+        basePoints: event.total_base_points,
+        boostPoints: event.total_boost_points,
+        rank: event.match_rank,
+        playersCount: event.players_count
       }));
-    
-    return sortedSquads;
-  }, [playerEvents]);
+      
+      // Sort by rank ascending (1st, 2nd, 3rd, etc.)
+      const sortedData = formattedData.sort((a, b) => a.rank - b.rank);
+      
+      setSquadData(sortedData);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching squad standings:', err);
+      setError('Failed to load squad standings');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Get rank background color
   const getRankStyle = (rank) => {
     switch (rank) {
       case 1:
         return "bg-yellow-50 dark:bg-yellow-900";
-      case 2:
-        return "bg-gray-50 dark:bg-gray-500";
       default:
         return "bg-white dark:bg-gray-800";
+    }
+  };
+
+  // Get rank icon
+  const getRankIcon = (rank) => {
+    switch (rank) {
+      case 1:
+        return <Trophy className="w-5 h-5 text-yellow-500" />;
+      default:
+        return null;
     }
   };
 
@@ -86,13 +93,13 @@ const SquadPerformance = ({ playerEvents, loading, error, activeSquadId }) => {
     );
   }
 
-  // If there are no squads to display (not a fantasy match)
-  if (squadTotals.length === 0) {
+  // If there are no squads to display
+  if (squadData.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-900 overflow-hidden h-full">
         <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Squad Points
+            Match Standings
           </h2>
         </div>
         <div className="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -103,50 +110,58 @@ const SquadPerformance = ({ playerEvents, loading, error, activeSquadId }) => {
   }
 
   // Determine layout based on number of squads
-  const useGridLayout = squadTotals.length >= 4;
+  const useGridLayout = squadData.length >= 4;
   
   return (
-    <div className="bg-white dark:bg-gray-900 overflow-hidden h-full">
+    <div className="bg-white dark:bg-gray-900 overflow-hidden h-full shadow rounded-lg">
       <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Squad Points
+          Match Standings
         </h2>
       </div>
       
       <div className="p-1">
-        <div className={`grid ${useGridLayout ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-          {squadTotals.map((squad) => (
-            <div 
-              key={`squad-${squad.id}`}
-              className='transition-all'
-            >
-              <div className="p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className='flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-bold'>
-                      {squad.rank}
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <div 
-                        className="h-5 w-1 mr-2 rounded-md"
-                        style={{ backgroundColor: squad.color }}
-                      />
-                      <span className="text-base font-medium text-gray-900 dark:text-white truncate max-w-[140px] sm:max-w-[200px]">
-                        {squad.name}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-baseline">
-                    <span className="text-xl font-bold text-gray-900 dark:text-white">
-                      {squad.points.toFixed(1)}
+        <div className={`grid ${useGridLayout ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-1`}>
+        {squadData.map((squad) => (
+          <div 
+            key={`squad-${squad.id}`}
+            className={`transition-all py-2 px-3 ${squad.id === activeSquadId ? 'bg-blue-50 dark:bg-blue-900/20 rounded-md' : ''}`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className={`flex items-center justify-center w-8 h-8 ${getRankStyle(squad.rank)} rounded-full text-sm font-bold`}>
+                  {getRankIcon(squad.rank) || squad.rank}
+                </div>
+                <div 
+                  className="h-10 w-2 mr-2 rounded-md"
+                  style={{ backgroundColor: squad.color }}
+                />
+                <div className="flex flex-col">
+                  <div className="flex items-center">
+                    <span className={`${squad.rank === 1 ? 'font-bold' : 'font-medium'} text-base truncate max-w-[140px] sm:max-w-[200px]`}>
+                      {squad.name}
                     </span>
                   </div>
+                  
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {squad.playersCount} player{squad.playersCount !== 1 ? 's' : ''}
+                  </span>
                 </div>
               </div>
+              
+              <div className="flex flex-col items-end">
+                <span className="text-xl font-bold text-gray-900 dark:text-white">
+                  {squad.points.toFixed(1)}
+                </span>
+                {squad.basePoints > 0 || squad.boostPoints > 0 ? (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {squad.basePoints.toFixed(1)} {squad.boostPoints >= 0 && '+'}{squad.boostPoints.toFixed(1)}
+                  </span>
+                ) : null}
+              </div>
             </div>
-          ))}
+          </div>
+        ))}
         </div>
       </div>
     </div>

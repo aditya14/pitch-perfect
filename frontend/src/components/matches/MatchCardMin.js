@@ -168,9 +168,9 @@ const MatchCardMin = ({ match, leagueId }) => {
       {/* Header section with match info */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center mb-2">
-          <span className="text-gray-900 dark:text-white font-medium">Match {match.match_number}</span>
+          <span className="text-gray-900 dark:text-white font-medium text-sm">Match {match.match_number}</span>
           <span className="text-gray-500 dark:text-gray-400 mx-2">•</span>
-          <span className="text-gray-500 dark:text-gray-400 uppercase">
+          <span className="text-gray-500 dark:text-gray-400 uppercase text-xs">
             {match.stage || "LEAGUE"}
           </span>
           
@@ -184,7 +184,7 @@ const MatchCardMin = ({ match, leagueId }) => {
         
         {/* Date and time below the match number */}
         {match.date && (
-          <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
+          <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs">
             <Calendar className="h-4 w-4 mr-1" />
             <span>{formattedDateTime.date}</span>
             <span className="mx-1">•</span>
@@ -281,67 +281,10 @@ const MatchCardMin = ({ match, leagueId }) => {
               </button>
             </div>
           )}
-          
-          {/* Fantasy Stats Section - Top Performers */}
-          {!loading && topPlayers.length > 0 && (
-            <div className="mb-3">
-              <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
-                {match.status === 'LIVE' ? 'LEADING' : 'TOP'} PERFORMERS
-              </div>
-              
-              {/* Player 1 */}
-              {topPlayers.length > 0 && (
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <span className="text-gray-900 dark:text-white text-sm truncate max-w-[150px]">
-                      {topPlayers[0]?.player_name}
-                    </span>
-                    {topPlayers[0]?.boost_label && (
-                      <span className='ml-1'>
-                        <BoostInlineElement
-                          boostName={topPlayers[0]?.boost_label} 
-                          color={topPlayers[0]?.squad_color || '#6B7280'}
-                          showLabel={false} 
-                          size="S" 
-                        />
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-gray-900 dark:text-white text-sm whitespace-nowrap ml-2">
-                    {topPlayers[0]?.fantasy_points} pts
-                  </span>
-                </div>
-              )}
-              
-              {/* Player 2 */}
-              {topPlayers.length > 1 && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-gray-900 dark:text-white text-sm truncate max-w-[150px]">
-                      {topPlayers[1]?.player_name}
-                    </span>
-                    {topPlayers[1]?.boost_label && (
-                      <span className='ml-1'>
-                        <BoostInlineElement
-                          boostName={topPlayers[1]?.boost_label} 
-                          color={topPlayers[1]?.squad_color || '#6B7280'}
-                          showLabel={false} 
-                          size="S" 
-                        />
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-gray-900 dark:text-white text-sm whitespace-nowrap ml-2">
-                    {topPlayers[1]?.fantasy_points} pts
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-          
+
           {/* Fantasy Stats Section - Top Squads */}
           {!loading && topSquads.length > 0 && (
-            <div>
+            <div className="mb-3">
               <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
                 {match.status === 'LIVE' ? 'LEADING' : 'TOP'} SQUADS
               </div>
@@ -372,12 +315,69 @@ const MatchCardMin = ({ match, leagueId }) => {
                       className="h-4 w-1 mr-1.5 rounded-sm"
                       style={{ backgroundColor: topSquads[1]?.color || '#6B7280' }}
                     />
-                    <span className="text-gray-900 dark:text-white text-sm truncate max-w-[150px]">
+                    <span className="text-gray-900 dark:text-white text-xs truncate max-w-[150px]">
                       {topSquads[1]?.name}
                     </span>
                   </div>
-                  <span className="text-gray-900 dark:text-white text-sm whitespace-nowrap ml-2">
+                  <span className="text-gray-900 dark:text-white text-xs whitespace-nowrap ml-2">
                     {topSquads[1]?.match_points} pts
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Fantasy Stats Section - Top Performers */}
+          {!loading && topPlayers.length > 0 && (
+            <div>
+              <div className="text-gray-500 dark:text-gray-400 text-xs uppercase font-medium mb-2">
+                {match.status === 'LIVE' ? 'LEADING' : 'TOP'} PERFORMERS
+              </div>
+              
+              {/* Player 1 */}
+              {topPlayers.length > 0 && (
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <span className="text-gray-900 dark:text-white text-xs truncate max-w-[150px]">
+                      {topPlayers[0]?.player_name}
+                    </span>
+                    {topPlayers[0]?.boost_label && (
+                      <span className='ml-1'>
+                        <BoostInlineElement
+                          boostName={topPlayers[0]?.boost_label} 
+                          color={topPlayers[0]?.squad_color || '#6B7280'}
+                          showLabel={false} 
+                          size="XS" 
+                        />
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-gray-900 dark:text-white text-xs whitespace-nowrap ml-2">
+                    {topPlayers[0]?.fantasy_points} pts
+                  </span>
+                </div>
+              )}
+              
+              {/* Player 2 */}
+              {topPlayers.length > 1 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="text-gray-900 dark:text-white text-xs truncate max-w-[150px]">
+                      {topPlayers[1]?.player_name}
+                    </span>
+                    {topPlayers[1]?.boost_label && (
+                      <span className='ml-1'>
+                        <BoostInlineElement
+                          boostName={topPlayers[1]?.boost_label} 
+                          color={topPlayers[1]?.squad_color || '#6B7280'}
+                          showLabel={false} 
+                          size="XS" 
+                        />
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-gray-900 dark:text-white text-xs whitespace-nowrap ml-2">
+                    {topPlayers[1]?.fantasy_points} pts
                   </span>
                 </div>
               )}
