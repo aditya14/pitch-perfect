@@ -7,7 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from api.models import (
-    IPLMatch, IPLPlayer, IPLTeam, IPLPlayerEvent, FantasySquad, FantasyPlayerEvent, FantasyBoostRole
+    IPLMatch, IPLPlayer, IPLTeam, IPLPlayerEvent, FantasySquad, FantasyPlayerEvent, FantasyBoostRole, FantasyMatchEvent, FantasyLeague
 )
 
 logger = logging.getLogger(__name__)
@@ -101,6 +101,11 @@ class CricketDataService:
             fantasy_events = self._update_fantasy_events(match, updated_events)
             logger.info(f"Updated {len(fantasy_events)} fantasy events")
             
+            # Update fantasy match events (new)
+            logger.info(f"Updating fantasy match events for {match_id}")
+            match_events = self._update_fantasy_match_events(match, fantasy_events)
+            logger.info(f"Updated {len(match_events)} fantasy match events")
+            
             # Update total points for each fantasy squad
             logger.info(f"Updating fantasy squad totals for {match_id}")
             updated_squads = self._update_fantasy_squad_totals(match.season)
@@ -110,6 +115,7 @@ class CricketDataService:
                 "match": match.id,
                 "player_events_updated": len(updated_events),
                 "fantasy_events_updated": len(fantasy_events),
+                "fantasy_match_events_updated": len(match_events),
                 "fantasy_squads_updated": len(updated_squads)
             }
         except Exception as e:
@@ -789,3 +795,167 @@ class CricketDataService:
             return self._find_team_by_name(team_name)
         
         return None
+    
+
+    def _update_fantasy_match_events(self, match, fantasy_player_events):
+        """
+        Create or update FantasyMatchEvent records for all squads in this match.
+        Uses existing FantasyPlayerEvent records with their pre-calculated boost points.
+        
+        Args:
+            match: The IPLMatch object
+            fantasy_player_events: List of FantasyPlayerEvent objects for this match
+        
+        Returns:
+            List of updated FantasyMatchEvent objects
+        """
+        print(f"Updating fantasy match events for {match}")
+        
+        # Group events by fantasy squad
+        squad_events = {}
+        for event in fantasy_player_events:
+            squad_id = event.fantasy_squad_id
+            if squad_id not in squad_events:
+                squad_events[squad_id] = []
+            squad_events[squad_id].append(event)
+        
+        match_events = []
+        
+        # Process each squad
+        for squad_id, events in squad_events.items():
+            # Get or create a FantasyMatchEvent for this squad and match
+            try:
+                match_event = FantasyMatchEvent.objects.get(
+                    match=match,
+                    fantasy_squad_id=squad_id
+                )
+            except FantasyMatchEvent.DoesNotExist:
+                match_event = FantasyMatchEvent(
+                    match=match,
+                    fantasy_squad_id=squad_id
+                )
+            
+            # Calculate totals using the existing FantasyPlayerEvent records
+            base_points = sum(event.match_event.total_points_all for event in events)
+            boost_points = sum(event.boost_points for event in events)
+            total_points = base_points + boost_points
+            
+            # Update the event
+            match_event.total_base_points = base_points
+            match_event.total_boost_points = boost_points
+            match_event.total_points = total_points
+            match_event.players_count = len(events)
+            match_event.save()
+            
+            match_events.append(match_event)
+        
+        # Calculate match ranks within each league
+        self._update_match_ranks(match)
+        
+        # Calculate running ranks
+        self._update_running_ranks(match)
+        
+        return match_events
+
+    def _update_match_ranks(self, match):
+        """
+        Update match_rank for all FantasyMatchEvents in this match.
+        Events are ranked by total_points in descending order within each league.
+        
+        Args:
+            match: The IPLMatch object
+        """
+        print(f"Updating match ranks for {match}")
+        
+        # Get all fantasy match events for this match
+        match_events = FantasyMatchEvent.objects.filter(match=match)
+        
+        # Get the unique leagues represented in this match
+        league_ids = set(
+            FantasySquad.objects.filter(
+                id__in=match_events.values_list('fantasy_squad_id', flat=True)
+            ).values_list('league_id', flat=True)
+        )
+        
+        # Process rankings for each league separately
+        for league_id in league_ids:
+            # Get events for this match and league, ordered by total points
+            league_events = match_events.filter(
+                fantasy_squad__league_id=league_id
+            ).order_by('-total_points')
+            
+            # Assign ranks within this league
+            for i, event in enumerate(league_events):
+                event.match_rank = i + 1
+                event.save()
+
+    def _update_running_ranks(self, match):
+        """
+        Calculate and update running ranks for all squads in this match's league.
+        The running rank is the squad's position in the league as of this match.
+        
+        Args:
+            match: The IPLMatch object
+        """
+        print(f"Updating running ranks for {match}")
+        
+        # Get all FantasyMatchEvents for this match
+        match_events = FantasyMatchEvent.objects.filter(match=match)
+        
+        if not match_events.exists():
+            return
+        
+        # Get the unique leagues represented in this match
+        league_ids = set(
+            FantasySquad.objects.filter(
+                id__in=match_events.values_list('fantasy_squad_id', flat=True)
+            ).values_list('league_id', flat=True)
+        )
+        
+        # Process each league separately
+        for league_id in league_ids:
+            # Get all squads in this league
+            squads = FantasySquad.objects.filter(league_id=league_id)
+            
+            # Get all matches up to and including the current match for this league's season
+            league = FantasyLeague.objects.get(id=league_id)
+            season = league.season
+            all_season_matches = IPLMatch.objects.filter(
+                season=season,
+                date__lte=match.date
+            ).order_by('date')
+            
+            # Dictionary to track running totals for each squad
+            running_totals = {squad.id: 0 for squad in squads}
+            
+            # For each match up to the current one, update running totals
+            for m in all_season_matches:
+                # Get all FantasyMatchEvents for this match
+                events = FantasyMatchEvent.objects.filter(
+                    match=m,
+                    fantasy_squad__league_id=league_id
+                )
+                
+                # Update running totals
+                for event in events:
+                    squad_id = event.fantasy_squad_id
+                    if squad_id in running_totals:
+                        running_totals[squad_id] += event.total_points
+                
+                # If this is the current match, update running_ranks
+                if m.id == match.id:
+                    # Sort squads by total points
+                    sorted_squads = sorted(
+                        running_totals.items(),
+                        key=lambda x: x[1],
+                        reverse=True  # Descending order
+                    )
+                    
+                    # Update running ranks for each squad
+                    for rank, (squad_id, total) in enumerate(sorted_squads, 1):
+                        # Find the corresponding FantasyMatchEvent
+                        event = match_events.filter(fantasy_squad_id=squad_id).first()
+                        if event:
+                            event.running_rank = rank
+                            event.running_total_points = total
+                            event.save()

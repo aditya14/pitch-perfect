@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
     Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, 
-    IPLMatch, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, IPLPlayerEvent, FantasyTrade
+    IPLMatch, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, IPLPlayerEvent, FantasyTrade, FantasyMatchEvent
 )
 from .serializers import (
     SeasonSerializer, IPLTeamSerializer, TeamSeasonSerializer,
@@ -21,7 +21,7 @@ from .serializers import (
     CreateLeagueRequestSerializer, LeagueDetailSerializer,
     FantasySquadSerializer, CreateSquadSerializer, SquadDetailSerializer,
     CoreSquadUpdateSerializer, FantasyPlayerEventSerializer, IPLPlayerEventSerializer,
-    FantasyTradeSerializer
+    FantasyTradeSerializer, FantasyMatchEventSerializer
 )
 from .roster_serializers import PlayerRosterSerializer
 from .draft_serializers import FantasyDraftSerializer, OptimizedFantasyDraftSerializer
@@ -1889,6 +1889,43 @@ def season_recent_matches(request, season_id):
     
     except Exception as e:
         print(f"Error in season_recent_matches: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def match_standings(request, match_id):
+    """
+    Get match standings for all fantasy squads in a specific match.
+    Optionally filter by league ID.
+    """
+    try:
+        match = get_object_or_404(IPLMatch, id=match_id)
+        
+        # Get filter parameters
+        league_id = request.query_params.get('league_id')
+        
+        # Build the query
+        query = FantasyMatchEvent.objects.filter(match=match)
+        if league_id:
+            query = query.filter(fantasy_squad__league_id=league_id)
+        
+        # Get standings, ordered by match rank
+        standings = query.select_related(
+            'fantasy_squad',
+            'match'
+        ).order_by('match_rank')
+        
+        # Serialize and return
+        serializer = FantasyMatchEventSerializer(standings, many=True)
+        return Response(serializer.data)
+    
+    except Exception as e:
+        print(f"Error in match_standings: {str(e)}")
         import traceback
         print(traceback.format_exc())
         return Response(

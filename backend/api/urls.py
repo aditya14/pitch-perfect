@@ -38,6 +38,7 @@ urlpatterns = [
     path('update-match-points/', views.update_match_points, name='update-match-points'),
     path('seasons/<int:season_id>/matches/recent/', views.season_recent_matches),
     path('matches/<int:match_id>/stats/', views.match_fantasy_stats),
+    path('matches/<int:match_id>/standings/', views.match_standings, name='match-standings'),
     path('leagues/<int:league_id>/matches/<int:match_id>/stats/', views.match_fantasy_stats),
     
     # Admin endpoints
