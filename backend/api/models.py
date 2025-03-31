@@ -348,7 +348,7 @@ class IPLPlayerEvent(models.Model):
     
     def _calculate_sr_bonus(self):
         """Calculate strike rate bonus/penalty"""
-        if self.bat_balls < 6:  # Minimum 6 balls required
+        if self.bat_balls < 10:  # Minimum 10 balls required
             return 0
             
         sr = self.bat_strike_rate
