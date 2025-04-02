@@ -162,8 +162,8 @@ const LeagueTable = ({ league }) => {
       return <span className="text-neutral-400">-</span>;
     }
     
-    // Sort by most recent first (if not already sorted)
-    const sortedFormData = [...formData].sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Sort by most recent last (if not already sorted)
+    const sortedFormData = [...formData].sort((a, b) => new Date(a.date) - new Date(b.date));
     
     return (
       <div className="flex items-center space-x-1">
@@ -196,7 +196,7 @@ const LeagueTable = ({ league }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-neutral-90 shadow rounded-lg overflow-hidden">
       <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
           League Standings
