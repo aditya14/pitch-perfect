@@ -708,3 +708,211 @@ def league_stats_running_total(request, league_id):
         return Response({'error': 'League not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def league_table_stats(request, league_id):
+    """
+    Get consolidated stats for the league table in a single optimized query
+    Includes:
+    - Basic squad info
+    - Points (total, base, boost)
+    - Rank changes
+    - Total active players
+    - Caps (times being #1 in matches)
+    - MVP for each squad
+    - Recent form (last 5 matches)
+    """
+    try:
+        # Get the league
+        league = FantasyLeague.objects.get(id=league_id)
+        
+        # Get all squads in the league with points data
+        squads = FantasySquad.objects.filter(
+            league=league
+        ).select_related(
+            'user'
+        ).values(
+            'id', 'name', 'color', 'total_points'
+        )
+        
+        # Initialize response data
+        squad_dict = {}
+        for squad in squads:
+            squad_dict[squad['id']] = {
+                'id': squad['id'],
+                'name': squad['name'],
+                'color': squad['color'],
+                'total_points': float(squad['total_points']) if squad['total_points'] else 0,
+                'base_points': 0,
+                'boost_points': 0,
+                'total_actives': 0,
+                'caps': 0,
+                'mvp': None,
+                'rank_change': 0,
+                'recent_form': []
+            }
+        
+        # Get match events data - separate base points and boost points
+        match_events = FantasyMatchEvent.objects.filter(
+            fantasy_squad__league=league
+        ).values(
+            'fantasy_squad_id'
+        ).annotate(
+            base_points=Sum('total_base_points'),
+            boost_points=Sum('total_boost_points'),
+            total_actives=Sum('players_count')
+        )
+        
+        # Update squad data with points breakdown and actives
+        for me in match_events:
+            squad_id = me['fantasy_squad_id']
+            if squad_id in squad_dict:
+                squad_dict[squad_id]['base_points'] = float(me['base_points'] or 0)
+                squad_dict[squad_id]['boost_points'] = float(me['boost_points'] or 0)
+                squad_dict[squad_id]['total_actives'] = me['total_actives'] or 0
+        
+        # Get MVP data - need to handle this separately
+        # First, get all player events
+        player_events = FantasyPlayerEvent.objects.filter(
+            fantasy_squad__league=league
+        ).select_related(
+            'match_event__player',
+            'fantasy_squad'
+        )
+        
+        # Process in Python to find MVP for each squad
+        player_totals = {}
+        for pe in player_events:
+            player_id = pe.match_event.player_id
+            squad_id = pe.fantasy_squad_id
+            
+            key = (squad_id, player_id)
+            if key not in player_totals:
+                player_totals[key] = {
+                    'squad_id': squad_id,
+                    'player_id': player_id,
+                    'player_name': pe.match_event.player.name,
+                    'base_points': 0,
+                    'boost_points': 0,
+                    'total_points': 0
+                }
+            
+            # Update totals
+            player_totals[key]['base_points'] += pe.match_event.total_points_all
+            player_totals[key]['boost_points'] += pe.boost_points
+            player_totals[key]['total_points'] += pe.match_event.total_points_all + pe.boost_points
+        
+        # Find MVP for each squad
+        squad_mvps = {}
+        for key, data in player_totals.items():
+            squad_id = key[0]
+            if squad_id not in squad_mvps or data['total_points'] > squad_mvps[squad_id]['total_points']:
+                squad_mvps[squad_id] = data
+        
+        # Add MVPs to squad data
+        for squad_id, mvp_data in squad_mvps.items():
+            if squad_id in squad_dict:
+                squad_dict[squad_id]['mvp'] = {
+                    'player_id': mvp_data['player_id'],
+                    'player_name': mvp_data['player_name'],
+                    'points': mvp_data['total_points']
+                }
+        
+        # Count caps (times a squad was #1 in a match)
+        match_ids = FantasyMatchEvent.objects.filter(
+            fantasy_squad__league=league
+        ).values_list('match_id', flat=True).distinct()
+        
+        # For each match, find the top squad
+        caps_count = {}
+        for match_id in match_ids:
+            top_squad = FantasyMatchEvent.objects.filter(
+                match_id=match_id,
+                fantasy_squad__league=league
+            ).order_by('-total_points').values_list('fantasy_squad_id', flat=True).first()
+            
+            if top_squad:
+                caps_count[top_squad] = caps_count.get(top_squad, 0) + 1
+        
+        # Add caps to squad data
+        for squad_id, count in caps_count.items():
+            if squad_id in squad_dict:
+                squad_dict[squad_id]['caps'] = count
+        
+        # Calculate rank changes
+        # Get the most recent two completed matches
+        recent_matches = IPLMatch.objects.filter(
+            fantasymatchevent__fantasy_squad__league=league,
+            status='COMPLETED'
+        ).distinct().order_by('-date')[:2]
+        
+        if len(recent_matches) >= 2:
+            last_match, previous_match = recent_matches[0], recent_matches[1]
+            
+            # Get the match events for each match
+            last_match_events = FantasyMatchEvent.objects.filter(
+                match=last_match,
+                fantasy_squad__league=league
+            ).select_related('fantasy_squad')
+            
+            previous_match_events = FantasyMatchEvent.objects.filter(
+                match=previous_match,
+                fantasy_squad__league=league
+            ).select_related('fantasy_squad')
+            
+            # Create dictionaries mapping squad ID to running rank for each match
+            last_ranks = {me.fantasy_squad_id: me.running_rank for me in last_match_events if me.running_rank}
+            previous_ranks = {me.fantasy_squad_id: me.running_rank for me in previous_match_events if me.running_rank}
+            
+            # Calculate rank changes and add to squad data
+            for squad_id in squad_dict:
+                if squad_id in last_ranks and squad_id in previous_ranks:
+                    # Calculate change - positive means improvement (moved up in rankings)
+                    squad_dict[squad_id]['rank_change'] = previous_ranks[squad_id] - last_ranks[squad_id]
+        
+        # Get recent form data (last 5 matches)
+        recent_matches = IPLMatch.objects.filter(
+            fantasymatchevent__fantasy_squad__league=league,
+            status='COMPLETED'
+        ).distinct().order_by('-date')[:5]
+        
+        for match in recent_matches:
+            match_events = FantasyMatchEvent.objects.filter(
+                match=match,
+                fantasy_squad__league=league
+            ).select_related('fantasy_squad')
+            
+            for me in match_events:
+                squad_id = me.fantasy_squad_id
+                if squad_id in squad_dict:
+                    squad_dict[squad_id]['recent_form'].append({
+                        'match_id': match.id,
+                        'match_number': match.match_number,
+                        'date': match.date,
+                        'match_rank': me.match_rank
+                    })
+        
+        # Sort recent form by date (newest first)
+        for squad_id in squad_dict:
+            squad_dict[squad_id]['recent_form'] = sorted(
+                squad_dict[squad_id]['recent_form'],
+                key=lambda x: x['date'],
+                reverse=True
+            )
+        
+        # Convert dict to list for response
+        response_data = list(squad_dict.values())
+        
+        # Sort by total points descending
+        response_data.sort(key=lambda x: x['total_points'], reverse=True)
+        
+        return Response(response_data)
+    
+    except FantasyLeague.DoesNotExist:
+        return Response({'error': 'League not found'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Error in league_table_stats: {str(e)}")
+        print(traceback.format_exc())
+        return Response({'error': str(e)}, status=500)

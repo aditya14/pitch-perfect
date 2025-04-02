@@ -4,6 +4,7 @@ import { Trophy, Clock, Calendar } from 'lucide-react';
 import api from '../../utils/axios';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import BoostInlineElement from '../elements/BoostInlineElement';
+import CapIcon from '../elements/icons/CapIcon';
 
 // Utility function to convert hex color to rgba with opacity
 const hexToRgba = (hex, opacity) => {
@@ -269,9 +270,11 @@ const MatchCard = ({ match, leagueId }) => {
             {topSquads.length > 0 && (
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
-                  <div 
-                    className="h-4 w-1 mr-1.5 rounded-sm"
-                    style={{ backgroundColor: topSquads[0]?.color || '#6B7280' }}
+                  <CapIcon
+                    size={24}
+                    strokeWidth={30}
+                    color={topSquads[0]?.color || '#6B7280'} 
+                    className="mr-1.5" 
                   />
                   <span className="text-neutral-900 dark:text-white text-md font-bold truncate max-w-[150px]">
                     {topSquads[0]?.name}

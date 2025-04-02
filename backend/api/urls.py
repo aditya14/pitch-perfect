@@ -51,6 +51,8 @@ urlpatterns = [
     path('leagues/<int:league_id>/stats/rank-breakdown/', views_stats.league_stats_rank_breakdown, name='league-stats-rank-breakdown'),
     path('leagues/<int:league_id>/stats/domination/', views_stats.league_stats_domination, name='league-stats-domination'),
     path('leagues/<int:league_id>/stats/running-total/', views_stats.league_stats_running_total, name='league-stats-running-total'),
+    path('leagues/<int:league_id>/stats/table', views_stats.league_table_stats, name='league_table_stats'),
+
     
     # Admin endpoints
     path('admin/run-fantasy-draft/', admin_views.run_fantasy_draft, name='run-fantasy-draft'),

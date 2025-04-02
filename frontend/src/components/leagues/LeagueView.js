@@ -94,6 +94,7 @@ const LeagueView = () => {
     { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
     { id: 'matches', label: 'Matches', component: MatchList },
     { id: 'squads', label: 'Squads', component: LeagueSquads },
+    { id: 'table', label: 'Standings', component: LeagueTable },
     { id: 'stats', label: 'Stats', component: LeagueStats },
   ];
 
