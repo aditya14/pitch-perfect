@@ -114,7 +114,7 @@ class Command(BaseCommand):
                         bat_points += 16  # 100+ bonus
                     
                     # Strike rate bonus/penalty
-                    if event.bat_balls and event.bat_balls >= 6:
+                    if event.bat_balls and event.bat_balls >= 10:
                         sr = (event.bat_runs / event.bat_balls) * 100
                         if sr >= 200:
                             bat_points += 6
@@ -260,7 +260,7 @@ class Command(BaseCommand):
                     
                     # Strike rate bonus/penalty
                     sr_points = 0
-                    if (ipl_event.bat_balls or 0) >= 6:
+                    if (ipl_event.bat_balls or 0) >= 10:
                         sr = (ipl_event.bat_runs / ipl_event.bat_balls) * 100
                         if sr >= 200:
                             sr_points += 6
