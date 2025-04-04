@@ -378,6 +378,7 @@ class Command(BaseCommand):
                         fantasy_squad_id=squad_id,
                         match_event__match_id=match_id
                     ).select_related('match_event')
+                    print(f"Squad {squad_id} has {squad_events.count()} events")
                     
                     # Calculate totals
                     base_points = sum(e.match_event.total_points_all for e in squad_events)
@@ -395,6 +396,9 @@ class Command(BaseCommand):
                             'players_count': squad_events.count()
                         }
                     )
+
+                    print(f"Match event for match {match_id}, squad {squad_id} "
+                          f"{'created' if created else 'exists'}")
                     
                     # Update if existing
                     if not created:

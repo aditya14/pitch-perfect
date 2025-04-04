@@ -512,10 +512,11 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             # Do not re-raise the exception to prevent the admin from crashing
     
     def _update_fantasy_events(self, ipl_event, request):
-        """Update related fantasy player events when an IPL event changes"""
+        """Update related fantasy events when an IPL event changes"""
         try:
-            from .models import FantasyPlayerEvent, FantasySquad
+            from .models import FantasyPlayerEvent, FantasySquad, FantasyMatchEvent
             from django.db.models import F, Sum
+            from .services.cricket_data_service import CricketDataService
             
             # Find all related fantasy events
             fantasy_events = FantasyPlayerEvent.objects.filter(match_event=ipl_event)
@@ -523,6 +524,9 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             
             # Keep track of affected fantasy squads
             affected_squads = set()
+            
+            # Create service instance for boost calculations
+            service = CricketDataService()
             
             # Update each fantasy event
             for fantasy_event in fantasy_events:
@@ -537,21 +541,57 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
                         fantasy_event.boost_points = (multiplier - 1.0) * ipl_event.total_points_all
                     else:
                         # For specialized roles, we need to do more detailed calculations
-                        from .services.cricket_data_service import CricketDataService
-                        service = CricketDataService()
                         fantasy_event.boost_points = service._calculate_boost_points(ipl_event, boost)
                     
                     fantasy_event.save(update_fields=['boost_points'])
                     affected_squads.add(fantasy_event.fantasy_squad_id)
                     updated_count += 1
             
-            # Update total points for affected squads using a more efficient approach
+            # Get the match
+            match = ipl_event.match
+            
+            # Update match events for affected squads
             for squad_id in affected_squads:
                 try:
                     squad = FantasySquad.objects.get(id=squad_id)
                     
-                    # Calculate new total points with a single query
-                    total_points = FantasyPlayerEvent.objects.filter(
+                    # Get all fantasy player events for this squad and match
+                    squad_events = FantasyPlayerEvent.objects.filter(
+                        fantasy_squad=squad,
+                        match_event__match=match
+                    ).select_related('match_event')
+                    
+                    # Calculate totals
+                    base_points = sum(e.match_event.total_points_all for e in squad_events)
+                    boost_points = sum(e.boost_points for e in squad_events)
+                    total_points = base_points + boost_points
+                    
+                    # Update or create match event
+                    match_event, created = FantasyMatchEvent.objects.get_or_create(
+                        match=match,
+                        fantasy_squad=squad,
+                        defaults={
+                            'total_base_points': base_points,
+                            'total_boost_points': boost_points,
+                            'total_points': total_points,
+                            'players_count': squad_events.count()
+                        }
+                    )
+                    
+                    if not created:
+                        match_event.total_base_points = base_points
+                        match_event.total_boost_points = boost_points
+                        match_event.total_points = total_points
+                        match_event.players_count = squad_events.count()
+                        match_event.save()
+                    
+                    # Update match ranks
+                    if service:
+                        service._update_match_ranks(match)
+                        service._update_running_ranks(match)
+                    
+                    # Calculate new total points for the squad
+                    new_total = FantasyPlayerEvent.objects.filter(
                         fantasy_squad=squad
                     ).annotate(
                         event_total=F('match_event__total_points_all') + F('boost_points')
@@ -560,8 +600,12 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
                     )['total'] or 0
                     
                     # Update the squad's total points
-                    squad.total_points = total_points
+                    squad.total_points = new_total
                     squad.save(update_fields=['total_points'])
+                    
+                    if request:
+                        from django.contrib import messages
+                        messages.info(request, f"Updated squad {squad.name}: total points now {new_total}")
                     
                 except Exception as squad_e:
                     import logging
@@ -579,6 +623,8 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error updating fantasy events: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             if request:
                 from django.contrib import messages
                 messages.warning(request, f"Player event was saved, but could not update fantasy events: {str(e)}")
