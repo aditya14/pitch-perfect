@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import api from '../../utils/axios';
+import CapIcon from '../elements/icons/CapIcon';
 
 const LeagueTable = ({ league }) => {
   const navigate = useNavigate();
@@ -142,16 +143,16 @@ const LeagueTable = ({ league }) => {
     if (change > 0) {
       return (
         <span className="ml-1 text-emerald-500 flex items-center">
-          <ChevronUp size={14} className="stroke-2" />
-          <span className="text-xs ml-0.5">{change}</span>
+          <ChevronUp size={12} className="stroke-2" />
+          <span className="font-semibold" style={{fontSize:'0.6rem'}}>{change}</span>
         </span>
       );
     }
     
     return (
       <span className="ml-1 text-rose-500 flex items-center">
-        <ChevronDown size={14} className="stroke-2" />
-        <span className="text-xs ml-0.5">{Math.abs(change)}</span>
+        <ChevronDown size={12} className="stroke-2" />
+        <span className="font-semibold" style={{fontSize:'0.6rem'}}>{Math.abs(change)}</span>
       </span>
     );
   };
@@ -259,6 +260,25 @@ const LeagueTable = ({ league }) => {
                   {getSortDirectionIcon('boost_points')}
                 </div>
               </th>
+
+              {/* Caps */}
+              <th 
+                scope="col" 
+                className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer"
+                onClick={() => requestSort('caps')}
+              >
+                <div className="flex items-center">
+                  <span>
+                    Caps
+                    {/* <CapIcon
+                      size={14}
+                      strokeWidth={40}
+                      color='#6B7280'
+                    /> */}
+                  </span>
+                  {getSortDirectionIcon('caps')}
+                </div>
+              </th>
               
               {/* Total Actives */}
               <th 
@@ -269,18 +289,6 @@ const LeagueTable = ({ league }) => {
                 <div className="flex items-center">
                   <span>Actives</span>
                   {getSortDirectionIcon('total_actives')}
-                </div>
-              </th>
-              
-              {/* Caps */}
-              <th 
-                scope="col" 
-                className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider cursor-pointer"
-                onClick={() => requestSort('caps')}
-              >
-                <div className="flex items-center">
-                  <span>Caps</span>
-                  {getSortDirectionIcon('caps')}
                 </div>
               </th>
               
@@ -373,17 +381,17 @@ const LeagueTable = ({ league }) => {
                       </span>
                     </td>
                     
-                    {/* Total Actives */}
-                    <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap">
-                      <span className="text-xs sm:text-sm text-neutral-900 dark:text-white">
-                        {squad.total_actives || 0}
-                      </span>
-                    </td>
-                    
                     {/* Caps */}
                     <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap">
                       <span className="text-xs sm:text-sm text-neutral-900 dark:text-white">
                         {squad.caps || 0}
+                      </span>
+                    </td>
+                    
+                    {/* Total Actives */}
+                    <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap">
+                      <span className="text-xs sm:text-sm text-neutral-900 dark:text-white">
+                        {squad.total_actives || 0}
                       </span>
                     </td>
                     

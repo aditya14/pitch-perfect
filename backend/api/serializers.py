@@ -259,7 +259,7 @@ class IPLPlayerEventSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'player_name', 'team_name', 'team_color',
             # Batting
-            'bat_runs', 'bat_balls', 'bat_strike_rate', 'bat_fours', 'bat_sixes',
+            'bat_runs', 'bat_not_out', 'bat_balls', 'bat_strike_rate', 'bat_fours', 'bat_sixes',
             'batting_points_total',
             # Bowling
             'bowl_balls', 'bowl_maidens', 'bowl_runs', 'bowl_wickets', 'bowl_economy',

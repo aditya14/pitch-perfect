@@ -319,7 +319,7 @@ const DetailedMatchPerformance = ({
                         </span>
                       </td>
                       <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">
-                        {data.boost_points > 0 ? data.boost_points : '-'}
+                        {data.boost_points !== 0 ? data.boost_points : '-'}
                       </td>
                       <td className="px-1 py-2 whitespace-nowrap text-xs text-left font-bold text-neutral-900 dark:text-white">
                         {data.fantasy_points}
@@ -336,9 +336,9 @@ const DetailedMatchPerformance = ({
                   {/* Batting stats */}
                   <td className={`
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white border-l dark:border-neutral-600
-                    ${data.bat_runs ? 'font-medium' : 'opacity-30'}
+                    ${data.bat_balls ? 'font-medium' : 'opacity-30'}
                   `}>
-                    {data.bat_runs ? data.bat_runs : '-'}
+                    {data.bat_balls ? `${data.bat_runs}${data.bat_not_out ? '*' : ''}` : '-'}
                   </td>
                   <td className={`
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
@@ -399,7 +399,7 @@ const DetailedMatchPerformance = ({
                   `}>
                     {data.bowl_wickets ? data.bowl_wickets : data.bowl_balls ? 0 : '-'}
                   </td>
-                  <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">
+                  <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${!data.bowl_balls && 'opacity-30'}`}>
                     <div className="flex items-center">
                       {data.bowl_economy ? data.bowl_economy?.toFixed(2) : '-'}
                       {renderEconomyChevrons(data.bowl_economy, data.bowl_balls)}
@@ -410,13 +410,13 @@ const DetailedMatchPerformance = ({
                   </td>
                   
                   {/* Fielding stats */}
-                  <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white border-l dark:border-neutral-600">
+                  <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white border-l dark:border-neutral-600 ${(!data.field_catch && !data.wk_catch) && 'opacity-30'}`}>
                     {(data.field_catch || 0) + (data.wk_catch || 0) || '-'}
                   </td>
-                  <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">
+                  <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${(!data.run_out_solo && !data.run_out_collab) && 'opacity-30'}`}>
                     {(data.run_out_solo || 0) + (data.run_out_collab || 0) || '-'}
                   </td>
-                  <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">
+                  <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${!data.wk_stumping && 'opacity-30'}`}>
                     {data.wk_stumping || '-'}
                   </td>
                   <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">

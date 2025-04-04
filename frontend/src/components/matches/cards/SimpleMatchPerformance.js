@@ -66,7 +66,7 @@ const SimpleMatchPerformance = ({
     
     // Add batting info if player batted
     if (data.bat_runs > 0) {
-      performance.push(`${data.bat_runs}(${data.bat_balls})`);
+      performance.push(`${data.bat_runs}${data.bat_not_out ? '*' : ''}(${data.bat_balls})`);
     }
     
     // Add bowling info if player bowled
@@ -192,7 +192,7 @@ const SimpleMatchPerformance = ({
                           <span className={`text-xs ${getPointsColorClass(data.base_points)}`}>
                             {data.base_points}
                           </span>
-                          {data.boost_points > 0 && <span className='text-xs'> + {data.boost_points}</span>}
+                          {data.boost_points !== 0 && <span className='text-xs'> {data.boost_points > 0 && '+'}{data.boost_points}</span>}
                         </div>
                       </div>
                     ) : (
