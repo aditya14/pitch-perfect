@@ -821,21 +821,26 @@ class CricketDataService:
         
         match_events = []
         
-        # Process each squad
-        for squad_id, events in squad_events.items():
+        # Get all squads that should have a match event (from all leagues for this season)
+        all_squads = FantasySquad.objects.filter(league__season=match.season)
+        
+        # Create FantasyMatchEvent for all squads, even those without active players
+        for squad in all_squads:
             # Get or create a FantasyMatchEvent for this squad and match
             try:
                 match_event = FantasyMatchEvent.objects.get(
                     match=match,
-                    fantasy_squad_id=squad_id
+                    fantasy_squad=squad
                 )
             except FantasyMatchEvent.DoesNotExist:
                 match_event = FantasyMatchEvent(
                     match=match,
-                    fantasy_squad_id=squad_id
+                    fantasy_squad=squad
                 )
+                match_event.save()
             
-            # Calculate totals using the existing FantasyPlayerEvent records
+            # Calculate totals
+            events = squad_events.get(squad.id, [])
             base_points = sum(event.match_event.total_points_all for event in events)
             boost_points = sum(event.boost_points for event in events)
             total_points = base_points + boost_points
