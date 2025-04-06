@@ -396,88 +396,69 @@ class IPLMatchAdmin(admin.ModelAdmin):
                     
                     print(f"Updated FantasySquad {squad.name} total points: {old_total} -> {total_points}")
 
+@admin.register(IPLPlayerEvent)
 class IPLPlayerEventAdmin(admin.ModelAdmin):
-    # Efficient list display with limited columns
-    list_display = ['id', 'player_name', 'match_description', 'team_name', 'total_points_all']
-    list_display_links = ['id', 'player_name']
+    # Select only the fields you need to display in the list view
+    list_display = ('id', 'player_name', 'match_info', 'total_points_all')
     
-    # Optimize with limited search fields
-    search_fields = ['player__name', 'match__team_1__name', 'match__team_2__name']
+    # Add search capability
+    search_fields = ('player__name', 'match__match_number')
     
-    # Add filters to help narrow down records
-    list_filter = ['player_of_match', 'match__season__year', 'match__stage']
+    # Add list filtering
+    list_filter = ('player__role', 'match__status')
     
-    # Define what fields are readonly to prevent accidental changes
-    readonly_fields = [
-        'batting_points_total', 'bowling_points_total', 
-        'fielding_points_total', 'other_points_total', 
-        'total_points_all', 'bat_strike_rate', 'bowl_economy'
-    ]
-    
-    # Custom field sets to organize the edit form
-    fieldsets = [
-        ('Match Information', {
-            'fields': ['player', 'match', 'for_team', 'vs_team']
-        }),
-        ('Batting', {
-            'fields': ['bat_runs', 'bat_balls', 'bat_fours', 'bat_sixes', 'bat_not_out', 'bat_innings', 'bat_strike_rate']
-        }),
-        ('Bowling', {
-            'fields': ['bowl_balls', 'bowl_maidens', 'bowl_runs', 'bowl_wickets', 'bowl_innings', 'bowl_economy']
-        }),
-        ('Fielding', {
-            'fields': ['field_catch', 'wk_catch', 'wk_stumping', 'run_out_solo', 'run_out_collab']
-        }),
-        ('Other', {
-            'fields': ['player_of_match']
-        }),
-        ('Points (Calculated)', {
-            'fields': ['batting_points_total', 'bowling_points_total', 'fielding_points_total', 
-                      'other_points_total', 'total_points_all']
-        }),
-    ]
-    
-    # Override to efficiently load related objects
+    # Optimize the queryset with select_related
     def get_queryset(self, request):
-        try:
-            qs = super().get_queryset(request)
-            # Use select_related for ForeignKey relationships
-            return qs.select_related(
-                'player', 
-                'match', 
-                'match__team_1', 
-                'match__team_2', 
-                'match__season',
-                'for_team', 
-                'vs_team'
-            )
-        except Exception as e:
-            # Log error but return basic queryset to prevent admin crash
-            logger.error(f"Error in IPLPlayerEventAdmin.get_queryset: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            return super().get_queryset(request)
+        return super().get_queryset(request).select_related(
+            'player', 
+            'match',
+            'for_team', 
+            'vs_team'
+        )
     
-    # Custom methods to display related info without additional queries
+    # Custom display methods
     def player_name(self, obj):
         try:
-            return obj.player.name if obj.player else None
-        except Exception:
-            return "Error loading player"
+            return obj.player.name if obj.player else "N/A"
+        except:
+            return f"Player {obj.player_id}"
     player_name.short_description = 'Player'
-    player_name.admin_order_field = 'player__name'
     
-    def match_description(self, obj):
+    def match_info(self, obj):
         try:
             if obj.match:
-                team1 = obj.match.team_1.short_name if obj.match.team_1 else 'TBD'
-                team2 = obj.match.team_2.short_name if obj.match.team_2 else 'TBD'
-                return f"{team1} vs {team2} - Match {obj.match.match_number}"
-            return None
-        except Exception:
-            return "Error loading match"
-    match_description.short_description = 'Match'
-    match_description.admin_order_field = 'match__match_number'
+                return f"Match {obj.match.match_number} - {obj.for_team.short_name} vs {obj.vs_team.short_name}"
+            return "N/A"
+        except:
+            return f"Match {obj.match_id}"
+    match_info.short_description = 'Match'
+    
+    # Use raw_id_fields to prevent Django from loading full querysets
+    raw_id_fields = ('player', 'match', 'for_team', 'vs_team')
+    
+    # Limit fields shown in the admin form
+    fields = (
+        'player', 'match', 'for_team', 'vs_team',
+        'bat_runs', 'bat_balls', 'bat_fours', 'bat_sixes', 'bat_not_out',
+        'bowl_balls', 'bowl_maidens', 'bowl_runs', 'bowl_wickets',
+        'field_catch', 'wk_catch', 'wk_stumping', 'run_out_solo', 'run_out_collab',
+        'player_of_match',
+        'total_points_all'
+    )
+    
+    # Make some fields read-only
+    readonly_fields = ('total_points_all',)
+    
+    # Customize the way the change form loads data
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        # This is optional - disable some fields for better performance
+        if obj:  # Only on edit, not on create
+            form.base_fields['player'].queryset = form.base_fields['player'].queryset.select_related('playerteamhistory_set__team')
+            form.base_fields['match'].queryset = form.base_fields['match'].queryset.select_related('team_1', 'team_2')
+            
+        return form
     
     def team_name(self, obj):
         try:
@@ -653,9 +634,6 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             logger.error(f"Error in formfield_for_foreignkey: {str(e)}")
             
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-# Register with the admin site
-admin.site.register(IPLPlayerEvent, IPLPlayerEventAdmin)
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
