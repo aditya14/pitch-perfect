@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasySquad, FantasyBoostRole
+from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasySquad, FantasyBoostRole, FantasyMatchEvent
 from django.db.models import F, Sum
 from django.db import transaction
 import logging
@@ -33,10 +33,21 @@ class Command(BaseCommand):
             action='store_true',
             help='Skip FantasySquad point totals recalculation'
         )
+        parser.add_argument(
+            '--sync-only',
+            action='store_true',
+            help='Only sync total_points with match event totals'
+        )
 
     def handle(self, *args, **options):
         batch_size = options['batch_size']
+        sync_only = options.get('sync_only', False)
         
+        if sync_only:
+            self.stdout.write('Syncing FantasySquad total points with match events...')
+            self.sync_squad_totals_with_match_events()
+            return
+            
         if not options['skip_ipl']:
             self.stdout.write('Recalculating IPLPlayerEvent points...')
             self.recalculate_ipl_player_events(batch_size)
@@ -54,10 +65,14 @@ class Command(BaseCommand):
             self.recalculate_fantasy_squad_points()
         else:
             self.stdout.write('Skipping FantasySquad recalculation')
+            
+        # Always check for discrepancies
+        self.sync_squad_totals_with_match_events()
         
         self.stdout.write(self.style.SUCCESS('Points recalculation completed successfully'))
     
     def recalculate_ipl_player_events(self, batch_size):
+        # [Your existing implementation]
         count = 0
         total = IPLPlayerEvent.objects.count()
         self.stdout.write(f'Found {total} IPLPlayerEvent records to process')
@@ -139,7 +154,7 @@ class Command(BaseCommand):
                         if event.bowl_wickets is not None or event.bowl_maidens is not None:
                             bowl_points += ((event.bowl_wickets or 0) * 25)  # Wickets
                             bowl_points += ((event.bowl_maidens or 0) * 8)  # Maidens
-                            bowl_points += (8 if (event.bowl_wickets or 0) >= 4 else 0)  # 4+ wickets bonus
+                            bowl_points += (8 if (event.bowl_wickets or 0) >= 3 else 0)  # 3+ wickets bonus
                             bowl_points += (16 if (event.bowl_wickets or 0) >= 5 else 0)  # 5+ wickets bonus
                             bowl_points += eco_bonus  # Economy bonus/penalty
                         
@@ -181,6 +196,7 @@ class Command(BaseCommand):
             self.stdout.write(f'Processed {min(count, total)} of {total} IPLPlayerEvents')
     
     def recalculate_fantasy_player_events(self, batch_size):
+        # [Your existing implementation]
         count = 0
         total = FantasyPlayerEvent.objects.count()
         self.stdout.write(f'Found {total} FantasyPlayerEvent records to process')
@@ -278,7 +294,7 @@ class Command(BaseCommand):
                                 
                                 # Milestones
                                 bowl_milestones = 0
-                                if (ipl_event.bowl_wickets or 0) >= 4:
+                                if (ipl_event.bowl_wickets or 0) >= 3:
                                     bowl_milestones += 8
                                 if (ipl_event.bowl_wickets or 0) >= 5:
                                     bowl_milestones += 16
@@ -315,6 +331,7 @@ class Command(BaseCommand):
             self.stdout.write(f'Processed {min(count, total)} of {total} FantasyPlayerEvents')
     
     def recalculate_fantasy_squad_points(self):
+        # [Your existing implementation]
         # Recalculate total points for all fantasy squads
         squads = FantasySquad.objects.all()
         count = 0
@@ -345,3 +362,57 @@ class Command(BaseCommand):
                     self.stderr.write(f"Error processing FantasySquad {squad.id}: {str(e)}")
         
         self.stdout.write(f'Successfully updated points for all {count} FantasySquads')
+        
+    def sync_squad_totals_with_match_events(self):
+        """
+        Fix discrepancies between FantasySquad.total_points and the sum of match events
+        """
+        # Get all fantasy squads
+        squads = FantasySquad.objects.all()
+        
+        self.stdout.write(f"Checking {squads.count()} fantasy squads for total points discrepancies...")
+        
+        fixed_count = 0
+        for squad in squads:
+            try:
+                # Calculate the sum of total_points from match events
+                match_events_sum = FantasyMatchEvent.objects.filter(
+                    fantasy_squad=squad
+                ).aggregate(
+                    total=Sum('total_points')
+                )['total'] or 0
+                
+                # Round to 1 decimal place to handle floating point precision issues
+                match_events_sum = round(float(match_events_sum), 1)
+                current_total = round(float(squad.total_points), 1) if squad.total_points else 0
+                
+                # Check if there's a discrepancy
+                if match_events_sum != current_total:
+                    self.stdout.write(f"Fixing {squad.name} (ID: {squad.id}):")
+                    self.stdout.write(f"  Current total_points: {current_total}")
+                    self.stdout.write(f"  Sum of match events: {match_events_sum}")
+                    self.stdout.write(f"  Difference: {match_events_sum - current_total}")
+                    
+                    # Update the squad's total_points
+                    squad.total_points = match_events_sum
+                    squad.save(update_fields=['total_points'])
+                    
+                    # Check running total in last match event
+                    last_match_event = FantasyMatchEvent.objects.filter(
+                        fantasy_squad=squad
+                    ).order_by('-match__date').first()
+                    
+                    if last_match_event and last_match_event.running_total_points != match_events_sum:
+                        self.stdout.write(f"  Also fixing running total in last match event: "
+                                        f"{last_match_event.running_total_points} -> {match_events_sum}")
+                        last_match_event.running_total_points = match_events_sum
+                        last_match_event.save(update_fields=['running_total_points'])
+                    
+                    fixed_count += 1
+            except Exception as e:
+                self.stderr.write(f"Error checking squad {squad.id}: {str(e)}")
+        
+        if fixed_count > 0:
+            self.stdout.write(self.style.SUCCESS(f"Fixed {fixed_count} squads with total_points discrepancies"))
+        else:
+            self.stdout.write(self.style.SUCCESS("All squad total points are consistent with match events"))
