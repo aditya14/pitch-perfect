@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Clock, Calendar } from 'lucide-react';
+import { Trophy, Clock, Calendar, Hourglass } from 'lucide-react';
 import api from '../../utils/axios';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import BoostInlineElement from '../elements/BoostInlineElement';
@@ -199,16 +199,19 @@ const MatchCard = ({ match, leagueId }) => {
         {/* Teams and scores - Batting First Team */}
         <div className="flex items-center justify-between mb-3">
           {battingFirstTeam ? (
-            <span 
-              className="px-2 py-1 rounded text-sm font-bold w-16 text-center text-neutral-900 dark:text-white"
-              style={{ 
-                backgroundColor: battingFirstTeam.primary_color ? `${hexToRgba('#' + battingFirstTeam.primary_color, 0.5)}` : 'rgba(209, 213, 219, 0.5)'
-              }}
-            >
-              {battingFirstTeam.short_name || battingFirstTeam.name}
-            </span>
+            <div className="flex items-center">
+              <div className='h-2.5 w-2.5 mr-1.5 rounded-sm'
+                style={{
+                    backgroundColor: battingFirstTeam.primary_color ? `${'#' + battingFirstTeam.primary_color}` : '#6B7280',
+                    opacity: battingFirstTeam?.short_name === match?.winner?.short_name ? 1 : 0.5
+                }}
+              />
+              <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingFirstTeam?.short_name === match?.winner?.short_name ? 'font-bold' : ''}`}>
+                {battingFirstTeam.short_name || battingFirstTeam.name}
+              </span>
+            </div>
           ) : (
-            <span className="text-neutral-900 dark:text-white font-bold">TBD</span>
+            <span className="text-neutral-900 dark:text-white">TBD</span>
           )}
           
           <div className="text-neutral-900 dark:text-white text-sm">
@@ -221,16 +224,19 @@ const MatchCard = ({ match, leagueId }) => {
         {/* Teams and scores - Batting Second Team */}
         <div className="flex items-center justify-between mb-3">
           {battingSecondTeam ? (
-            <span 
-              className="px-2 py-1 rounded text-sm font-bold w-16 text-center text-neutral-900 dark:text-white"
-              style={{ 
-                backgroundColor: battingSecondTeam.primary_color ? `${hexToRgba('#' + battingSecondTeam.primary_color, 0.5)}` : 'rgba(209, 213, 219, 0.5)'
-              }}
-            >
-              {battingSecondTeam.short_name || battingSecondTeam.name}
-            </span>
+            <div className="flex items-center">
+              <div className='h-2.5 w-2.5 mr-1.5 rounded-sm'
+                style={{
+                  backgroundColor: battingSecondTeam.primary_color ? `${'#' + battingSecondTeam.primary_color}` : '#6B7280',
+                  opacity: battingSecondTeam?.short_name === match?.winner?.short_name ? 1 : 0.5
+                }}
+              />
+              <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingSecondTeam?.short_name === match?.winner?.short_name ? 'font-bold' : ''}`}>
+                {battingSecondTeam.short_name || battingSecondTeam.name}
+              </span>
+            </div>
           ) : (
-            <span className="text-neutral-900 dark:text-white font-bold">TBD</span>
+            <span className="text-neutral-900 dark:text-white">TBD</span>
           )}
           
           <div className="text-neutral-900 dark:text-white text-sm">
@@ -252,12 +258,16 @@ const MatchCard = ({ match, leagueId }) => {
         
         {/* Countdown for upcoming matches */}
         {match.status === 'SCHEDULED' && timeRemaining && (
-          <div className="flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 py-2 rounded-md mb-3">
-            <span className="text-sm text-neutral-700 dark:text-neutral-300">
-              Starting in: {formattedCountdown}
+          <div className="flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 py-2 rounded-md mt-auto">
+            <span className="text-sm text-neutral-500 dark:text-neutral-500 flex items-center">
+              <Hourglass className="h-4 w-4 inline mr-1 text-neutral-400 dark:text-neutral-600" />
+              {formattedCountdown}
             </span>
           </div>
         )}
+
+        {/* Horizontal line separating match details from fantasy stats */}
+        <div className="border-t border-neutral-200 dark:border-neutral-800 my-2" />
 
         {/* Fantasy Stats Section - Top Squads */}
         {!loading && topSquads.length > 0 && (
