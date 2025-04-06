@@ -28,7 +28,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
   // Countdown Timer Component
   const CountdownTimer = ({ onExpire }) => {
     const [timeLeft, setTimeLeft] = useState({});
-    const lockDate = new Date('2025-04-05T10:00:00Z'); // April 5, 2025, 10am UTC
+    const lockDate = new Date('2025-04-12T10:00:00Z'); // April 12, 2025, 10am UTC
   
     useEffect(() => {
       const calculateTimeLeft = () => {
@@ -200,7 +200,7 @@ const BoostSelection = ({
       {/* Header */}
       <div className="p-4 md:p-6 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4">
-          Week 3 (Apr 5 - Apr 11)
+          Week 4 (Apr 12 - Apr 18)
         </h2>
         
         {/* Countdown */}
