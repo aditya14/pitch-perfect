@@ -323,12 +323,57 @@ class IPLPlayerEvent(models.Model):
     total_points_all = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        self.batting_points_total = self.bat_points
-        self.bowling_points_total = self.bowl_points
-        self.fielding_points_total = self.field_points
-        self.other_points_total = self.other_points
-        self.total_points_all = self.base_points
+        # Calculate point totals only if necessary fields have changed or object is new
+        if not self.pk or self._state.adding or self._has_point_fields_changed():
+            self.batting_points_total = self.bat_points
+            self.bowling_points_total = self.bowl_points  
+            self.fielding_points_total = self.field_points
+            self.other_points_total = self.other_points
+            self.total_points_all = (self.batting_points_total + 
+                                    self.bowling_points_total + 
+                                    self.fielding_points_total + 
+                                    self.other_points_total)
+        
         super().save(*args, **kwargs)
+
+    def _has_point_fields_changed(self):
+        """Check if any fields affecting point calculations have changed"""
+        if not self.pk:
+            return True
+            
+        try:
+            old_obj = IPLPlayerEvent.objects.get(pk=self.pk)
+            
+            # Check batting fields
+            if (self.bat_runs != old_obj.bat_runs or
+                self.bat_balls != old_obj.bat_balls or
+                self.bat_fours != old_obj.bat_fours or
+                self.bat_sixes != old_obj.bat_sixes or
+                self.bat_not_out != old_obj.bat_not_out):
+                return True
+                
+            # Check bowling fields
+            if (self.bowl_balls != old_obj.bowl_balls or
+                self.bowl_maidens != old_obj.bowl_maidens or
+                self.bowl_runs != old_obj.bowl_runs or
+                self.bowl_wickets != old_obj.bowl_wickets):
+                return True
+                
+            # Check fielding fields
+            if (self.field_catch != old_obj.field_catch or
+                self.wk_catch != old_obj.wk_catch or
+                self.wk_stumping != old_obj.wk_stumping or
+                self.run_out_solo != old_obj.run_out_solo or
+                self.run_out_collab != old_obj.run_out_collab):
+                return True
+                
+            # Check other fields
+            if self.player_of_match != old_obj.player_of_match:
+                return True
+                
+            return False
+        except IPLPlayerEvent.DoesNotExist:
+            return True
     
     # Calculated Fields
     @property

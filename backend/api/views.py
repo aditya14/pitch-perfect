@@ -114,125 +114,138 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
-        """Get historical IPL performance for a player"""
+        """Get historical IPL performance for a player with optimized queries"""
         try:
             player = self.get_object()
-        
-            # Get all player events
-            events = IPLPlayerEvent.objects.filter(
+            
+            # Try to get from cache first
+            cache_key = f'player_history_{player.id}'
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return Response(cached_data)
+            
+            # Use efficient database-level aggregation for season stats
+            season_stats = IPLPlayerEvent.objects.filter(
                 player=player,
-                match__status=IPLMatch.Status.COMPLETED  # Only completed matches
+                match__status='COMPLETED'
+            ).values(
+                'match__season__year'
+            ).annotate(
+                year=F('match__season__year'),
+                matches=Count('id'),
+                runs=Sum('bat_runs'),
+                balls_faced=Sum('bat_balls'),
+                wickets=Sum('bowl_wickets'),
+                runs_conceded=Sum('bowl_runs'),
+                balls_bowled=Sum('bowl_balls'),
+                catches=Sum(
+                    Case(
+                        When(field_catch__isnull=False, then=F('field_catch')),
+                        default=0
+                    ) + 
+                    Case(
+                        When(wk_catch__isnull=False, then=F('wk_catch')),
+                        default=0
+                    )
+                ),
+                runouts=Sum(
+                    Case(
+                        When(run_out_solo__isnull=False, then=F('run_out_solo')),
+                        default=0
+                    ) +
+                    Case(
+                        When(run_out_collab__isnull=False, then=F('run_out_collab')),
+                        default=0
+                    )
+                ),
+                total_points=Sum('total_points_all')
+            ).order_by('-year')
+            
+            # Post-process to calculate rates that are complex in pure SQL
+            for stat in season_stats:
+                # Calculate points per match
+                stat['points_per_match'] = round(stat['total_points'] / stat['matches'], 2) if stat['matches'] > 0 else 0
+                
+                # Strike rate calculation
+                stat['strike_rate'] = round((stat['runs'] * 100.0 / stat['balls_faced']), 2) if stat.get('balls_faced') and stat['balls_faced'] > 0 else None
+                
+                # Economy rate calculation (runs per over)
+                if stat.get('balls_bowled') and stat['balls_bowled'] > 0:
+                    overs = stat['balls_bowled'] / 6.0
+                    stat['economy'] = round(stat['runs_conceded'] / overs, 2)
+                else:
+                    stat['economy'] = None
+                    
+                # Batting average
+                if stat.get('matches') and stat['matches'] > 0:
+                    stat['batting_average'] = round(stat['runs'] / stat['matches'], 2)
+                else:
+                    stat['batting_average'] = 0
+            
+            # Fetch match details with a single efficient query
+            match_events = IPLPlayerEvent.objects.filter(
+                player=player,
+                match__status='COMPLETED'
             ).select_related(
                 'match', 
                 'match__season', 
                 'for_team', 
                 'vs_team'
-            ).order_by('-match__date')
-
-            # Calculate season stats
-            season_stats = {}
-            for event in events:
-                season = event.match.season.year
-                if season not in season_stats:
-                    season_stats[season] = {
-                        'year': season,
-                        'matches': 0,
-                        'runs': 0,
-                        'balls_faced': 0,
-                        'wickets': 0,
-                        'runs_conceded': 0,
-                        'balls_bowled': 0,
-                        'catches': 0,
-                        'runouts': 0,
-                        'total_points': 0
+            ).order_by('-match__date')[:20]  # Limit to most recent 20 matches for performance
+            
+            # Format the match details efficiently
+            match_details = []
+            for event in match_events:
+                match_detail = {
+                    'match': {
+                        'date': event.match.date,
+                        'season': {'year': event.match.season.year},
+                        'id': event.match.id
+                    },
+                    'opponent': event.vs_team.short_name,
+                    'for_team': event.for_team.short_name,
+                    'points': event.total_points_all
+                }
+                
+                # Only add details if they exist
+                if event.bat_runs is not None or event.bat_balls is not None:
+                    match_detail['batting'] = {
+                        'runs': event.bat_runs,
+                        'balls': event.bat_balls,
+                        'fours': event.bat_fours,
+                        'sixes': event.bat_sixes,
+                        'not_out': event.bat_not_out,
+                        'strike_rate': event.bat_strike_rate
                     }
-                
-                stats = season_stats[season]
-                stats['matches'] += 1
-                
-                # Batting stats
-                stats['runs'] += event.bat_runs or 0
-                stats['balls_faced'] += event.bat_balls or 0
-                
-                # Bowling stats
-                stats['wickets'] += event.bowl_wickets or 0
-                stats['runs_conceded'] += event.bowl_runs or 0
-                stats['balls_bowled'] += event.bowl_balls or 0
-                
-                # Fielding stats
-                stats['catches'] += (event.field_catch or 0) + (event.wk_catch or 0)
-                stats['runouts'] += (event.run_out_solo or 0) + (event.run_out_collab or 0)
-                
-                # Points
-                stats['total_points'] += event.total_points_all
+                    
+                if event.bowl_balls is not None and event.bowl_balls > 0:
+                    match_detail['bowling'] = {
+                        'overs': f"{event.bowl_balls // 6}.{event.bowl_balls % 6}",
+                        'maidens': event.bowl_maidens,
+                        'runs': event.bowl_runs,
+                        'wickets': event.bowl_wickets,
+                        'economy': event.bowl_economy
+                    }
+                    
+                if any(filter(None, [event.field_catch, event.wk_catch, 
+                    event.wk_stumping, event.run_out_solo, event.run_out_collab])):
+                    match_detail['fielding'] = {
+                        'catches': (event.field_catch or 0) + (event.wk_catch or 0),
+                        'stumpings': event.wk_stumping or 0,
+                        'runouts': (event.run_out_solo or 0) + (event.run_out_collab or 0)
+                    }
+                    
+                match_details.append(match_detail)
 
-            # Calculate averages and rates
-            for stats in season_stats.values():
-                # Batting averages
-                if stats['matches'] > 0:
-                    stats['batting_average'] = stats['runs'] / stats['matches']
-                    stats['points_per_match'] = stats['total_points'] / stats['matches']
-                else:
-                    stats['batting_average'] = 0
-                    stats['points_per_match'] = 0
-                    
-                # Strike rate
-                if stats['balls_faced'] > 0:
-                    stats['strike_rate'] = (stats['runs'] / stats['balls_faced']) * 100
-                else:
-                    stats['strike_rate'] = 0
-                    
-                # Bowling average & economy
-                if stats['wickets'] > 0:
-                    stats['bowling_average'] = stats['runs_conceded'] / stats['wickets']
-                else:
-                    stats['bowling_average'] = None
-                    
-                if stats['balls_bowled'] > 0:
-                    stats['economy'] = (stats['runs_conceded'] / (stats['balls_bowled']/6))
-                else:
-                    stats['economy'] = None
-
+            # Compile final response
             response = {
-                'seasonStats': list(season_stats.values()),
-                'matches': [
-                    {
-                        'match': {
-                            'date': event.match.date,
-                            'season': {'year': event.match.season.year},
-                            'id': event.match.id
-                        },
-                        'opponent': event.vs_team.short_name,
-                        'for_team': event.for_team.short_name,
-                        'batting': {
-                            'runs': event.bat_runs,
-                            'balls': event.bat_balls,
-                            'fours': event.bat_fours,
-                            'sixes': event.bat_sixes,
-                            'not_out': event.bat_not_out,
-                            'strike_rate': event.bat_strike_rate
-                        } if event.bat_runs or event.bat_balls else None,
-                        'bowling': {
-                            'overs': f"{event.bowl_balls // 6}.{event.bowl_balls % 6}",
-                            'maidens': event.bowl_maidens,
-                            'runs': event.bowl_runs,
-                            'wickets': event.bowl_wickets,
-                            'economy': event.bowl_economy
-                        } if event.bowl_balls else None,
-                        'fielding': {
-                            'catches': (event.field_catch or 0) + (event.wk_catch or 0),
-                            'stumpings': event.wk_stumping or 0,
-                            'runouts': (event.run_out_solo or 0) + (event.run_out_collab or 0)
-                        } if event.field_catch or event.wk_catch or event.wk_stumping or event.run_out_solo or event.run_out_collab else None,
-                        'player_of_match': event.player_of_match,
-                        'points': event.total_points_all
-                    }
-                    for event in events
-                ]
+                'seasonStats': list(season_stats),
+                'matches': match_details
             }
-
-            print("RESPONSE", response)
-
+            
+            # Cache the response for 1 hour
+            cache.set(cache_key, response, 60 * 60)
+            
             return Response(response)
 
         except Exception as e:
@@ -293,13 +306,20 @@ class IPLMatchViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def events(self, request, pk=None):
-        """Get all player events for a specific match"""
+        """Get all player events for a specific match with optimized queries"""
         try:
             match = self.get_object()
             league_id = request.query_params.get('league_id')
             
+            # Define cache key
+            cache_key = f'match_events_{match.id}_{league_id or "no_league"}'
+            cached_data = cache.get(cache_key)
+            
+            if cached_data:
+                return Response(cached_data)
+            
             if league_id:
-                # Get fantasy events if they exist
+                # Get fantasy events if they exist using optimized query
                 fantasy_events = FantasyPlayerEvent.objects.filter(
                     match_event__match=match,
                     fantasy_squad__league_id=league_id
@@ -308,23 +328,29 @@ class IPLMatchViewSet(viewsets.ModelViewSet):
                     'match_event__player',
                     'match_event__for_team',
                     'fantasy_squad'
+                ).prefetch_related(
+                    'boost'
                 )
                 
                 if fantasy_events.exists():
                     serializer = FantasyPlayerEventSerializer(fantasy_events, many=True)
-                    return Response(serializer.data)
+                    data = serializer.data
+                    cache.set(cache_key, data, 60 * 15)  # Cache for 15 minutes
+                    return Response(data)
             
-            # If no league_id or no fantasy events, return IPL events
+            # If no league_id or no fantasy events, return IPL events with an optimized query
             ipl_events = IPLPlayerEvent.objects.filter(
                 match=match
             ).select_related(
                 'player',
                 'for_team'
-            )
+            ).order_by('-total_points_all')  # Order by points for better UX
             
             serializer = IPLPlayerEventSerializer(ipl_events, many=True)
-            return Response(serializer.data)
-            
+            data = serializer.data
+            cache.set(cache_key, data, 60 * 15)  # Cache for 15 minutes
+            return Response(data)
+                
         except Exception as e:
             print(f"Error in match events: {str(e)}")
             import traceback

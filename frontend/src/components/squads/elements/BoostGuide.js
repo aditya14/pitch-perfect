@@ -43,10 +43,10 @@ const BoostGuide = ({ boostRoles, showGuide, setShowGuide, squadColor }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 mb-6">
+    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6">
       <button
         onClick={() => setShowGuide(!showGuide)}
-        className="w-full flex justify-between items-center mb-4"
+        className="w-full flex justify-between items-center"
       >
         <div className="flex items-center">
           <Info className="h-5 w-5 text-blue-500 dark:text-blue-400 mr-2" />
@@ -56,7 +56,7 @@ const BoostGuide = ({ boostRoles, showGuide, setShowGuide, squadColor }) => {
       </button>
       
       {showGuide && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-5 mt-4">
           {boostRoles.map(role => {
             const formattedMultipliers = formatMultipliers(role.multipliers);
             

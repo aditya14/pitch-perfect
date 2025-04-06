@@ -7,6 +7,7 @@ import { getRoleIcon } from '../../../utils/roleUtils';
 
 const CurrentBoosts = ({ 
   currentCoreSquad, 
+  boostRoles,
   getRoleById, 
   getPlayerById, 
   leagueId, 
@@ -21,11 +22,17 @@ const CurrentBoosts = ({
     return null;
   }
   
+  // Create a map of role ID to assignment for quick lookup
+  const assignmentMap = {};
+  currentCoreSquad.forEach(assignment => {
+    assignmentMap[assignment.boost_id] = assignment;
+  });
+  
   return (
     <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6">
       <button
         onClick={() => setShowCurrent(!showCurrent)}
-        className="w-full flex justify-between items-center mb-4"
+        className="w-full flex justify-between items-center"
       >
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
           Current Week Boosts
@@ -36,12 +43,12 @@ const CurrentBoosts = ({
       {showCurrent && (
         <>
           {currentCoreSquad?.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {currentCoreSquad.map(assignment => {
-                const player = getPlayerById(assignment.player_id);
-                const role = getRoleById(assignment.boost_id);
-                if (!role) return null;
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              {/* Iterate through boostRoles array instead of currentCoreSquad */}
+              {boostRoles.map(role => {
+                const assignment = assignmentMap[role.id];
+                const player = assignment ? getPlayerById(assignment.player_id) : null;
+                
                 return (
                   <div key={role.id} className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 border border-neutral-100 dark:border-neutral-800">
                     <div className="flex items-center gap-2 mb-2">

@@ -84,6 +84,7 @@ const BoostTab = ({
       {/* Current Week's Core Squad Section */}
       <CurrentBoosts 
         currentCoreSquad={currentCoreSquad}
+        boostRoles={boostRoles}
         getRoleById={getRoleById}
         getPlayerById={getPlayerById}
         leagueId={leagueId}
