@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../utils/axios';
-import { Calendar, ArrowUp, ArrowDown } from 'lucide-react';
-import { getRoleIcon } from '../../utils/roleUtils';
+import { Calendar, ChevronUp, ChevronDown, Medal, Shield, Anchor, Zap, Handshake, Sparkles, Crown, Bomb, EarthLock, Swords } from 'lucide-react';
 
 // Helper function to get appropriate text color based on background color
 const getTextColor = (hexColor) => {
@@ -51,9 +50,9 @@ const getDarkerColor = (hexColor) => {
   
   // Make it darker by reducing each component by 30%
   const darker = {
-    r: Math.max(0, Math.floor(r * 0.7)),
-    g: Math.max(0, Math.floor(g * 0.7)),
-    b: Math.max(0, Math.floor(b * 0.7))
+    r: Math.max(0, Math.floor(r * 0.85)),
+    g: Math.max(0, Math.floor(g * 0.85)),
+    b: Math.max(0, Math.floor(b * 0.85))
   };
   
   return `#${darker.r.toString(16).padStart(2, '0')}${darker.g.toString(16).padStart(2, '0')}${darker.b.toString(16).padStart(2, '0')}`;
@@ -66,205 +65,342 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-// Enhanced MatchCard component
+// Helper function to get role icon
+const getRoleIcon = (roleName, size = 16, squadColor) => {
+  // Add outline styles for better contrast
+  const outlineStyle = {
+    color: squadColor || 'currentColor',
+    filter: 'drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.5))',
+  };
+
+  switch(roleName) {
+    case 'Captain':
+      return <Crown size={size} style={outlineStyle} className="text-primary-600 dark:text-primary-400" />;
+    case 'Vice-Captain':
+      return <Swords size={size} style={outlineStyle} className="text-primary-500 dark:text-primary-300" />;
+    case 'Slogger':
+      return <Zap size={size} style={outlineStyle} className="text-red-500 dark:text-red-400" />;
+    case 'Accumulator':
+      return <Anchor size={size} style={outlineStyle} className="text-yellow-500 dark:text-yellow-400" />;
+    case 'Safe Hands':
+      return <Handshake size={size} style={outlineStyle} className="text-cyan-500 dark:text-cyan-400" />;
+    case 'Rattler':
+      return <Bomb size={size} style={outlineStyle} className="text-green-500 dark:text-green-400" />;
+    case 'Constrictor':
+      return <EarthLock size={size} style={outlineStyle} className="text-emerald-500 dark:text-emerald-400" />;
+    default: // Virtuoso
+      return <Sparkles size={size} style={outlineStyle} className="text-purple-500 dark:text-purple-400" />;
+  }
+};
+
+// Enhanced MatchCard component with our finalized design
 const MatchCard = ({ match }) => {
   const squadColor = match.squad_color || '#3B82F6'; // Default to blue
-  const textColor = getTextColor(squadColor);
   const darkerColor = getDarkerColor(squadColor);
+  const lighterSquadColor = getLighterColor(squadColor, 0.8);
   const matchDate = formatDate(match.match?.date);
   
   // Extract points data
   const basePoints = match.basePoints || 0;
   const boostPoints = match.boostPoints || 0;
   const totalPoints = match.totalPoints || match.points || 0;
+  const textColor = getTextColor(squadColor);
+  
+  // Function to render strike rate chevrons based on DetailedMatchPerformance implementation
+  const renderSRChevrons = (sr, ballsFaced) => {
+    if (!sr || ballsFaced < 10) return null;
+    
+    if (sr >= 200) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (sr >= 175) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (sr >= 150) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+        </span>
+      );
+    } else if (sr < 50) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (sr < 75) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (sr < 100) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+        </span>
+      );
+    }
+    
+    return null;
+  };
+
+  // Function to render economy chevrons based on DetailedMatchPerformance implementation
+  const renderEconomyChevrons = (economy, ballsBowled) => {
+    if (!economy || ballsBowled < 10) return null;
+    
+    if (economy <= 5) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (economy <= 6) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (economy <= 7) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+        </span>
+      );
+    } else if (economy >= 12) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (economy >= 11) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+          <ChevronDown className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (economy >= 10) {
+      return (
+        <span className="inline-flex flex-col text-red-500 ml-1">
+          <ChevronDown className="h-2 w-2" />
+        </span>
+      );
+    }
+    
+    return null;
+  };
   
   return (
-    <div 
-      className="rounded-xl overflow-hidden shadow-lg mb-4 bg-white dark:bg-neutral-800 relative"
-      style={{ 
-        boxShadow: `0 4px 6px ${getLighterColor(squadColor, 0.3)}, 0 1px 3px ${getLighterColor(squadColor, 0.2)}`
-      }}
-    >
-      {/* Top accent bar */}
-      <div 
-        className="h-1.5 w-full"
-        style={{ 
-          background: `linear-gradient(90deg, ${squadColor}, ${darkerColor})`
-        }}
-      ></div>
-      
-      {/* Card Header */}
-      <div className="px-4 pt-3 pb-2 flex justify-between items-center border-b"
-           style={{ borderColor: getLighterColor(squadColor, 0.2) }}>
-        <div>
-          <h3 className="font-bold text-neutral-900 dark:text-white text-sm sm:text-base">
-            {match.for_team}
-          </h3>
+    <div className="w-full mb-4 max-w-md">
+      {/* Card container with subtle hover effect */}
+      <div className="relative rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950">
+        {/* Top accent strip */}
+        <div 
+          className="h-1.5 w-full"
+          style={{ backgroundColor: squadColor }}
+        ></div>
+        
+        {/* Header with squad info */}
+        <div 
+          className="px-3 py-2 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800"
+          style={{ 
+            background: `linear-gradient(to right, ${squadColor}, ${darkerColor})`,
+            color: textColor
+          }}
+        >
+          {/* Team branding with shield icon */}
           <div className="flex items-center">
-            <div 
-              className="w-1 h-4 rounded-sm mr-1.5"
-              style={{ backgroundColor: squadColor }}
-            ></div>
-            <span className="text-sm text-neutral-600 dark:text-neutral-300">{match.squad}</span>
+            {/* <Shield size={16} className="mr-2 filter drop-shadow-sm" /> */}
+            <span className="font-bold tracking-wide text-sm">{match.squad}</span>
+          </div>
+          
+          {/* Match info in compact format */}
+          <div className="flex items-center text-xs opacity-90">
+            <Calendar size={12} className="mr-1" />
+            <span>{matchDate}</span>
+            <span className="mx-1.5">•</span>
+            <span>vs {match.opponent}</span>
+            
+            {/* MVP Badge - only show if player of match */}
+            {match.player_of_match && (
+              <>
+                <span className="mx-1.5">•</span>
+                <div 
+                  className="flex items-center text-xs px-2 py-0.5 rounded-full" 
+                  style={{ backgroundColor: "#FFD700", color: '#000' }}
+                >
+                  <Medal size={12} className="mr-0.5" />
+                  <span className="font-semibold">MVP</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Main content grid */}
+        <div className="grid grid-cols-12">
+          {/* Points Column */}
+          <div className="col-span-4 row-span-2 border-r border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center p-2 relative overflow-hidden">
+            {/* Role badge at top (if exists) */}
+            {match.boost_label && (
+              <div 
+                className="inline-flex items-center px-2 py-1 text-xs rounded mb-2"
+                style={{ 
+                  background: `linear-gradient(135deg, ${lighterSquadColor}, ${squadColor})`,
+                  color: textColor,
+                  boxShadow: `0 2px 4px ${getLighterColor(squadColor, 0.3)}`
+                }}
+              >
+                {getRoleIcon(match.boost_label, 12, textColor)}
+                <span className="font-medium ml-1.5">{match.boost_label}</span>
+              </div>
+            )}
+            
+            {/* Points display with glow effect */}
+            <div className="text-4xl font-bold text-neutral-900 dark:text-white relative">
+              <span className="relative z-10">{totalPoints}</span>
+              <div 
+                className="absolute inset-0 rounded-full opacity-10" 
+                style={{ 
+                  background: `radial-gradient(circle, ${squadColor}, transparent)`,
+                  transform: "scale(1.5)",
+                  filter: "blur(8px)"
+                }}
+              ></div>
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-3">points</div>
+            
+            {/* Points breakdown */}
+            <div className="w-full flex justify-center items-center text-xs">
+              <span className={`font-bold text-lg ${
+                basePoints >= 60 ? 'text-green-600 dark:text-green-400' :
+                basePoints >= 35 ? 'text-blue-600 dark:text-blue-400' :
+                basePoints < 10 ? 'text-red-600 dark:text-red-400' :
+                'text-yellow-600 dark:text-yellow-400'
+              }`}>{basePoints}</span>
+              {boostPoints > 0 && (
+                <>
+                  <span className="text-neutral-400 dark:text-neutral-500 font-medium text-lg mx-1">+</span>
+                  <span className="text-neutral-800 dark:text-neutral-200 font-bold text-lg">{boostPoints}</span>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {/* Stats section header */}
+          <div className="col-span-8 flex justify-evenly items-center border-b border-neutral-200 dark:border-neutral-800">
+            <div className="text-xs uppercase font-medium py-1 px-3 tracking-wider text-neutral-600 dark:text-neutral-300">Batting</div>
+            <div className="text-xs uppercase font-medium py-1 px-3 tracking-wider text-neutral-600 dark:text-neutral-300">Bowling</div>
+            <div className="text-xs uppercase font-medium py-1 px-3 tracking-wider text-neutral-600 dark:text-neutral-300">Fielding</div>
+          </div>
+          
+          {/* Performance Stats Section */}
+          <div className="col-span-8 grid grid-cols-3 divide-x divide-neutral-200 dark:divide-neutral-800">
+            {/* Batting Column */}
+            <div className="flex flex-col items-center justify-center p-2 text-center">
+              {match.batting ? (
+                <>
+                  <div className="flex flex-col items-center">
+                    <div className="text-2xl font-bold text-neutral-900 dark:text-white">
+                      {match.batting.runs}{match.batting.not_out ? '*' : ''}
+                    </div>
+                    <div className="text-xs text-neutral-400">({match.batting.balls} balls)</div>
+                  </div>
+                  
+                  <div className="text-xs text-neutral-500 dark:text-neutral-500 my-2">
+                    {match.batting.fours > 0 && `${match.batting.fours}×4`} 
+                    {match.batting.fours > 0 && match.batting.sixes > 0 && ' • '}
+                    {match.batting.sixes > 0 && `${match.batting.sixes}×6`}
+                  </div>
+                  
+                  <div className="text-xs text-neutral-700 dark:text-neutral-300 flex items-center">
+                    <span>SR {match.batting.strike_rate?.toFixed(2) || '-'}</span>
+                    {renderSRChevrons(match.batting.strike_rate, match.batting.balls)}
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-neutral-500 dark:text-neutral-500">-</div>
+              )}
+            </div>
+            
+            {/* Bowling Column */}
+            <div className="flex flex-col items-center justify-center p-2 text-center">
+              {match.bowling ? (
+                <>
+                  <div className="flex flex-col items-center">
+                    <div className="text-2xl font-bold text-neutral-900 dark:text-white">
+                      {match.bowling.wickets}/{match.bowling.runs}
+                    </div>
+                    <div className="text-xs text-neutral-400">({match.bowling.overs})</div>
+                  </div>
+                  
+                  <div className="text-xs text-neutral-500 dark:text-neutral-500 my-2">
+                    {match.bowling.maidens || 0} maiden{match.bowling.maidens !== 1 ? 's' : ''}
+                  </div>
+                  
+                  <div className="text-xs text-neutral-700 dark:text-neutral-300 flex items-center">
+                    <span>Econ {match.bowling.economy?.toFixed(2) || '-'}</span>
+                    {renderEconomyChevrons(match.bowling.economy, parseFloat(match.bowling.overs) * 6)}
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-neutral-500 dark:text-neutral-500">-</div>
+              )}
+            </div>
+            
+            {/* Fielding Column */}
+            <div className="flex flex-col items-center justify-center p-2 text-center">
+              {match.fielding && (match.fielding.catches > 0 || match.fielding.stumpings > 0 || match.fielding.runouts > 0) ? (
+                <div className="flex flex-col space-y-1 my-2">
+                  {match.fielding.catches > 0 && (
+                    <div className="text-xs text-neutral-500 dark:text-neutral-500">
+                      {match.fielding.catches} Catch{match.fielding.catches !== 1 ? 'es' : ''}
+                    </div>
+                  )}
+                  
+                  {match.fielding.stumpings > 0 && (
+                    <div className="text-xs text-neutral-500 dark:text-neutral-500">
+                      {match.fielding.stumpings} Stump{match.fielding.stumpings !== 1 ? 's' : ''}
+                    </div>
+                  )}
+                  
+                  {match.fielding.runouts > 0 && (
+                    <div className="text-xs text-neutral-500 dark:text-neutral-500">
+                      {match.fielding.runouts} Run Out{match.fielding.runouts !== 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-xs text-neutral-500 dark:text-neutral-500">-</div>
+              )}
+            </div>
           </div>
         </div>
         
-        <div className="text-right">
-          <div className="flex items-center text-xs text-neutral-500 dark:text-neutral-400 mb-1 justify-end">
-            <Calendar className="h-3.5 w-3.5 mr-1" />
-            {matchDate}
-          </div>
-          
-          {/* Opponent */}
-          <div className="text-xs text-neutral-600 dark:text-neutral-300">
-            vs {match.opponent}
-          </div>
-        </div>
+        {/* Bottom accent line with gradient */}
+        <div 
+          className="h-1 w-full" 
+          style={{ background: `linear-gradient(to right, ${darkerColor}, ${squadColor}, ${darkerColor})` }}
+        ></div>
       </div>
-      
-      <div className="p-4">
-        {/* Points Summary Section */}
-        <div className="mb-4 border rounded-md overflow-hidden">
-          <div className="bg-neutral-50 dark:bg-neutral-700/50 px-3 py-2 flex justify-between items-center">
-            <div className="text-xs font-light text-neutral-500 dark:text-neutral-500">Base Points</div>
-            <div className={`text-sm font-medium ${basePoints >= 60 ? 'text-green-600 dark:text-green-400' :
-                 basePoints >= 35 ? 'text-blue-600 dark:text-blue-400' :
-                 basePoints < 10 ? 'text-red-600 dark:text-red-400' :
-                 'text-yellow-600 dark:text-yellow-400'}`}>
-              {basePoints}
-            </div>
-          </div>
-          
-          {/* Boosted Points - Emphasize with squad color */}
-          {match.boost_label && (
-            <div 
-              className="px-3 py-2 flex justify-between items-center border-t border-b"
-              style={{ 
-                backgroundColor: getLighterColor(squadColor, 0.15),
-                borderColor: getLighterColor(squadColor, 0.3)
-              }}
-            >
-              <div className="flex items-center">
-                <span className="text-xs font-semibold mr-1.5 text-neutral-800 dark:text-neutral-200">
-                  Boost: {match.boost_label}
-                </span>
-                {getRoleIcon(match.boost_label, 16, squadColor)}
-              </div>
-              <div className="text-sm font-medium text-neutral-800 dark:text-neutral-200">+{boostPoints}</div>
-            </div>
-          )}
-          
-          <div className="bg-neutral-50 dark:bg-neutral-700/50 px-3 py-2 flex justify-between items-center">
-            <div className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">TOTAL POINTS</div>
-            <div className="text-lg font-bold text-neutral-900 dark:text-white">{totalPoints}</div>
-          </div>
-        </div>
-        
-        {/* Performance Stats Section - Using CSS grid for consistent layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {/* Batting Stats */}
-          {match.batting && (
-            <div className="bg-neutral-50 dark:bg-neutral-700/30 rounded-lg p-3 h-full">
-              <div className="flex justify-between items-center mb-1">
-                <h4 className="text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">BATTING</h4>
-              </div>
-              
-              <div className="text-sm sm:text-base font-semibold text-neutral-800 dark:text-neutral-200 mb-1">
-                {match.batting.runs}({match.batting.balls})
-                {match.batting.not_out && <span className="ml-1">*</span>}
-              </div>
-              
-              <div className="flex flex-wrap gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                {match.batting.fours > 0 && (
-                  <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded whitespace-nowrap">
-                    <span>{match.batting.fours}×4</span>
-                  </div>
-                )}
-                {match.batting.sixes > 0 && (
-                  <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded whitespace-nowrap">
-                    <span>{match.batting.sixes}×6</span>
-                  </div>
-                )}
-                <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded whitespace-nowrap">
-                  <span className="mr-0.5">SR: {match.batting.strike_rate?.toFixed(1) || '-'}</span>
-                  {match.batting.strike_rate >= 150 ? <ArrowUp className="h-3 w-3 text-green-500" /> : 
-                   match.batting.strike_rate < 100 ? <ArrowDown className="h-3 w-3 text-red-500" /> : null}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Empty placeholder if no batting data */}
-          {!match.batting && <div className="hidden sm:block"></div>}
-          
-          {/* Bowling Stats */}
-          {match.bowling && (
-            <div className="bg-neutral-50 dark:bg-neutral-700/30 rounded-lg p-3 h-full">
-              <div className="flex justify-between items-center mb-1">
-                <h4 className="text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">BOWLING</h4>
-              </div>
-              
-              <div className="text-sm sm:text-base font-semibold text-neutral-800 dark:text-neutral-200 mb-1">
-                {match.bowling.wickets}/{match.bowling.runs} ({match.bowling.overs})
-              </div>
-              
-              <div className="flex flex-wrap gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                {match.bowling.maidens > 0 && (
-                  <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded whitespace-nowrap">
-                    <span>{match.bowling.maidens}M</span>
-                  </div>
-                )}
-                <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded whitespace-nowrap">
-                  <span className="mr-0.5">Econ: {match.bowling.economy?.toFixed(2) || '-'}</span>
-                  {match.bowling.economy < 6 ? <ArrowUp className="h-3 w-3 text-green-500" /> : 
-                   match.bowling.economy > 9 ? <ArrowDown className="h-3 w-3 text-red-500" /> : null}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Empty placeholder if no bowling data */}
-          {!match.bowling && <div className="hidden sm:block"></div>}
-          
-          {/* Fielding Stats */}
-          {match.fielding && (
-            <div className="bg-neutral-50 dark:bg-neutral-700/30 rounded-lg p-3 h-full">
-              <div className="flex justify-between items-center mb-1">
-                <h4 className="text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">FIELDING</h4>
-              </div>
-              
-              <div className="flex flex-wrap gap-1.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-                {match.fielding.catches > 0 && (
-                  <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-2 py-1 rounded whitespace-nowrap">
-                    <span>{match.fielding.catches} catch{match.fielding.catches > 1 ? 'es' : ''}</span>
-                  </div>
-                )}
-                {match.fielding.stumpings > 0 && (
-                  <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-2 py-1 rounded whitespace-nowrap">
-                    <span>{match.fielding.stumpings} stump{match.fielding.stumpings > 1 ? 's' : ''}</span>
-                  </div>
-                )}
-                {match.fielding.runouts > 0 && (
-                  <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-2 py-1 rounded whitespace-nowrap">
-                    <span>{match.fielding.runouts} run out{match.fielding.runouts > 1 ? 's' : ''}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {/* Empty placeholder if no fielding data */}
-          {!match.fielding && <div className="hidden sm:block"></div>}
-        </div>
-      </div>
-      
-      {/* Bottom stripe */}
-      <div 
-        className="h-1"
-        style={{ 
-          background: `linear-gradient(90deg, ${squadColor}, transparent)`
-        }}
-      ></div>
     </div>
   );
 };
@@ -287,7 +423,7 @@ const MatchGrid = ({ matches }) => {
   });
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {sortedMatches.map((match, index) => (
         <div key={`match-${index}`}>
           <MatchCard match={match} />
