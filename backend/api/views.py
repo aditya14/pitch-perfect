@@ -844,7 +844,8 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     'basePoints': base_points,
                     'boostPoints': boost_points,
                     'boost_label': event.boost.label if event.boost else None,
-                    'totalPoints': base_points + boost_points
+                    'totalPoints': base_points + boost_points,
+                    'player_of_match': match_event.player_of_match,
                 }
 
                 # Add batting details if exists

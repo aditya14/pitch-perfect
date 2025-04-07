@@ -248,7 +248,7 @@ const MatchCard = ({ match }) => {
                   style={{ backgroundColor: "#FFD700", color: '#000' }}
                 >
                   <Medal size={12} className="mr-0.5" />
-                  <span className="font-semibold">MVP</span>
+                  <span className="font-semibold"></span>
                 </div>
               </>
             )}
