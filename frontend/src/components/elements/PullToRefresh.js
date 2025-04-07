@@ -105,7 +105,7 @@ const PullToRefresh = ({ onRefresh, children, threshold = 80, maxPull = 120 }) =
             opacity: Math.min(pullDistance / threshold, 1)
           }}
         >
-          <div className="flex items-center justify-center p-3 bg-primary-600 dark:bg-primary-500 text-white rounded-full shadow-lg">
+          <div className="flex items-center justify-center p-3 bg-neutral-600 dark:bg-neutral-500 text-white rounded-full shadow-lg">
             <RefreshCw 
               className={`h-6 w-6 ${isRefreshing ? 'animate-spin' : pullDistance >= threshold ? 'rotate-180' : `rotate-${Math.min(Math.floor((pullDistance / threshold) * 180), 180)}`}`}
             />

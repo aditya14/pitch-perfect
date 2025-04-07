@@ -238,7 +238,7 @@ const Profile = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${
+                    className={`px-4 py-2 bg-neutral-600 hover:bg-neutral-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${
                       loading ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                   >
@@ -299,7 +299,7 @@ const Profile = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${
+                    className={`px-4 py-2 bg-neutral-600 hover:bg-neutral-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${
                       loading ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                   >

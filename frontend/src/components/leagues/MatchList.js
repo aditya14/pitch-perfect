@@ -117,7 +117,7 @@ const MatchList = ({ league }) => {
             onClick={() => setFilter('all')}
             className={`px-3 py-1 rounded-md text-sm font-medium ${
               filter === 'all'
-                ? 'bg-primary-600 text-white'
+                ? 'bg-neutral-600 text-white'
                 : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
             }`}
           >
@@ -127,7 +127,7 @@ const MatchList = ({ league }) => {
             onClick={() => setFilter('upcoming')}
             className={`px-3 py-1 rounded-md text-sm font-medium ${
               filter === 'upcoming'
-                ? 'bg-primary-600 text-white'
+                ? 'bg-neutral-600 text-white'
                 : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
             }`}
           >
@@ -137,7 +137,7 @@ const MatchList = ({ league }) => {
             onClick={() => setFilter('completed')}
             className={`px-3 py-1 rounded-md text-sm font-medium ${
               filter === 'completed'
-                ? 'bg-primary-600 text-white'
+                ? 'bg-neutral-600 text-white'
                 : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
             }`}
           >

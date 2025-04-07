@@ -104,7 +104,7 @@ const RosterView = () => {
               className={`px-4 py-2 rounded-md font-medium mb-2 ${
                 draftMode 
                   ? 'bg-neutral-200 text-neutral-800 hover:bg-neutral-300'
-                  : 'bg-primary-600 text-white hover:bg-primary-700'
+                  : 'bg-neutral-600 text-white hover:bg-neutral-700'
               }`}
             >
               {draftMode ? "View Roster" : "Update Draft Order"}

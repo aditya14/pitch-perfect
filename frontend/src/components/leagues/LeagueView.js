@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
-import { Trophy, Users, ChevronRight, RefreshCw, FileEdit, Clock, ArrowLeft } from 'lucide-react';
+import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import api from '../../utils/axios';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 
@@ -17,64 +16,6 @@ import LeagueSquads from './LeagueSquads';
 // Constants 
 const DRAFT_DEADLINE = new Date('2025-03-21T14:00:00Z'); // March 21, 2025 10:00 AM ET
 
-// Countdown component
-const DraftCountdown = () => {
-  const [timeLeft, setTimeLeft] = useState({});
-  const [isExpired, setIsExpired] = useState(false);
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const difference = DRAFT_DEADLINE - new Date();
-      
-      if (difference <= 0) {
-        setIsExpired(true);
-        return {
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0
-        };
-      }
-
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60)
-      };
-    };
-
-    setTimeLeft(calculateTimeLeft());
-    
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  if (isExpired) {
-    return (
-      <div className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1.5">
-        <span className="h-2 w-2 bg-red-600 rounded-full animate-pulse"></span>
-        Draft order locked
-      </div>
-    );
-  }
-
-  return (
-    <div className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1.5">
-      <Clock className="h-4 w-4" />
-      <span>
-        Draft locks in: 
-        {timeLeft.days > 0 && <span className="font-medium ml-1">{timeLeft.days}d</span>}
-        {timeLeft.hours > 0 && <span className="font-medium ml-1">{timeLeft.hours}h</span>}
-        <span className="font-medium ml-1">{timeLeft.minutes}m</span>
-      </span>
-    </div>
-  );
-};
-
 const LeagueView = () => {
   const { leagueId } = useParams();
   const navigate = useNavigate();
@@ -82,13 +23,23 @@ const LeagueView = () => {
   const [league, setLeague] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
   const [players, setPlayers] = useState([]);
   const [draftOrder, setDraftOrder] = useState(null);
   const [draftLoading, setDraftLoading] = useState(false);
   const [draftSaveError, setDraftSaveError] = useState(null);
   const [isDraftDeadlinePassed, setIsDraftDeadlinePassed] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Handle responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Define the core tabs that are always available
   const coreTabs = [
@@ -163,7 +114,6 @@ const LeagueView = () => {
   const fetchLeagueData = async () => {
     try {
       const response = await api.get(`/leagues/${leagueId}/`);
-      console.log('League:', response.data);
       setLeague(response.data);
       
       // Update tabs based on draft status
@@ -226,7 +176,6 @@ const LeagueView = () => {
     }
   };
   
-
   const handleDraftModalOpen = () => {
     // Open the modal immediately
     setIsDraftModalOpen(true);
@@ -246,7 +195,7 @@ const LeagueView = () => {
         await fetchDraftOrder();
       } catch (err) {
         console.error("Error loading draft data:", err);
-        setDraftSaveError("Failed to load draft data. Please try again.");
+        setDraftSaveError("Failed to load data. Please try again.");
       } finally {
         setDraftLoading(false);
       }
@@ -254,11 +203,6 @@ const LeagueView = () => {
     
     // Start the loading process
     loadData();
-  };
-
-  // Handle tab change
-  const handleTabChange = (tabId) => {
-    navigate(`/leagues/${leagueId}/${tabId}`);
   };
 
   useEffect(() => {
@@ -280,100 +224,15 @@ const LeagueView = () => {
       </div>
     );
   }
-
-  const isUpcomingSeason = league?.season?.status === 'UPCOMING';
-  const isDraftCompleted = league?.draft_completed;
-  const canUpdateDraft = !isDraftCompleted && !isDraftDeadlinePassed;
   
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* League Header */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-          <nav className="flex items-center mb-4">
-          <Link to="/" className="flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 transition-colors">
-            <ArrowLeft size={20} className="mr-1" />
-            Back to Dashboard
-          </Link>
-        </nav>
-            <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
-              {league?.name}
-            </h1>
-            <p className="text-neutral-600 dark:text-neutral-400">
-              {league?.season?.name ? `${league.season.name}` : 'Loading season...'}
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:items-start md:items-end">
-            {/* Draft Countdown - Always visible if draft not completed */}
-            {/* {!isDraftCompleted && !isDraftCompleted && (
-              <DraftCountdown />
-            )} */}
-            
-            {/* Buttons row */}
-            <div className="flex flex-wrap gap-3">
-              {/* Draft Order Button - Show only if draft not yet completed */}
-              {/* {!isDraftCompleted && (
-                <button 
-                  onClick={handleDraftModalOpen}
-                  disabled={isDraftDeadlinePassed}
-                  className={`inline-flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium 
-                    ${isDraftDeadlinePassed 
-                      ? 'border-neutral-300 dark:border-neutral-600 text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-700 cursor-not-allowed'
-                      : 'border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-neutral-900'
-                    }
-                  `}
-                >
-                  <FileEdit className={`h-4 w-4 ${isDraftDeadlinePassed ? 'text-neutral-400 dark:text-neutral-500' : ''}`} />
-                  Update Draft Order
-                </button>
-              )} */}
-              <Link 
-                to={league?.my_squad && isDraftCompleted ? `/squads/${league.my_squad.id}` : '#'}
-                className={`inline-flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium
-                          ${(isDraftCompleted && league?.my_squad) 
-                            ? 'bg-primary-600 text-white border-transparent hover:bg-primary-700 focus:ring-primary-500' 
-                            : 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-500'
-                          }
-                          focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-neutral-900`}
-                onClick={e => (!isDraftCompleted || !league?.my_squad) && e.preventDefault()}
-              >
-                <Trophy className="h-4 w-4" />
-                My Squad
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="border-b border-neutral-200 dark:border-neutral-700 mb-6">
-        <nav className="-mb-px flex space-x-8 overflow-x-auto">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`
-                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
-                ${activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
-                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300 dark:text-neutral-400 dark:hover:text-neutral-300 dark:hover:border-neutral-300'
-                }
-              `}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
+    <div className="container mx-auto px-4 py-4">
       {/* Tab Content */}
       {ActiveComponent && <ActiveComponent league={league} />}
       
-      {/* This is where nested routes would render, but we handle that manually above */}
+      {/* This is where nested routes would render */}
       <Outlet />
       
       {/* Draft Order Modal */}

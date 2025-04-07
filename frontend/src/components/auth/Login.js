@@ -62,7 +62,7 @@ const Login = () => {
       <style dangerouslySetInnerHTML={{ __html: safeTopStyle }} />
       {/* Background decoration */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary-100 dark:bg-primary-900/20 blur-3xl opacity-50"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-neutral-100 dark:bg-neutral-900/20 blur-3xl opacity-50"></div>
         <div className="absolute top-1/2 -left-24 w-80 h-80 rounded-full bg-blue-100 dark:bg-blue-900/20 blur-3xl opacity-40"></div>
         <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 w-screen h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-30"></div>
       </div>
@@ -90,7 +90,7 @@ const Login = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
                 {features.map((feature, index) => (
                   <div key={index} className="flex items-start p-3 sm:p-4 bg-white dark:bg-neutral-800/50 rounded-lg shadow-sm border border-neutral-100 dark:border-neutral-700 hover:shadow-md transition-all">
-                    <div className="flex-shrink-0 p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400 mr-3">
+                    <div className="flex-shrink-0 p-2 bg-neutral-100 dark:bg-neutral-900/50 rounded-lg text-primary-600 dark:text-primary-400 mr-3">
                       {feature.icon}
                     </div>
                     <div>
@@ -186,9 +186,9 @@ const Login = () => {
                     type="submit"
                     disabled={isSubmitting}
                     className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                      bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 
+                      bg-neutral-600 hover:bg-neutral-700 dark:bg-neutral-500 dark:hover:bg-neutral-600 
                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 
-                      disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors duration-200"
+                      disabled:bg-neutral-400 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {isSubmitting ? 'Signing in...' : 'Sign in'}
                   </button>

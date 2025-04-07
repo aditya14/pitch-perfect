@@ -204,7 +204,7 @@ const DraftList = ({ players, draftOrder, onSaveOrder }) => {
                       <div className="flex-1 mx-4">
                         <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full">
                           <div
-                            className="h-2 bg-primary-600 rounded-full"
+                            className="h-2 bg-neutral-600 rounded-full"
                             style={{ width: `${getPercentage(count)}%` }}
                           />
                         </div>
@@ -231,7 +231,7 @@ const DraftList = ({ players, draftOrder, onSaveOrder }) => {
                       <div className="flex-1 mx-4">
                         <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full">
                           <div
-                            className="h-2 bg-primary-600 rounded-full"
+                            className="h-2 bg-neutral-600 rounded-full"
                             style={{ width: `${getPercentage(count)}%` }}
                           />
                         </div>

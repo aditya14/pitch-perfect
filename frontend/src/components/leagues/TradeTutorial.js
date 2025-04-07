@@ -53,7 +53,7 @@ const TradeTutorial = ({ league }) => {
                     </p>
                   </div>
                   
-                  <div className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 bg-primary-50 dark:bg-primary-900/30">
+                  <div className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 bg-neutral-50 dark:bg-neutral-900/30">
                     <div className="flex items-center">
                       <div className="ml-3 flex-grow">
                         <p className="text-sm font-medium text-neutral-900 dark:text-white flex items-center">

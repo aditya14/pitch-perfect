@@ -123,7 +123,7 @@ const AppContent = () => {
         <div className={`
           theme-transition 
           dark:bg-neutral-900
-          ${user ? 'pt-4' : ''}
+          ${user ? '' : ''}
         `}>
           <Routes>
             <Route 

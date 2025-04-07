@@ -136,7 +136,7 @@ const TradeList = ({ league }) => {
           </h2>
           <button
             onClick={() => setShowTradeForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-neutral-600 hover:bg-neutral-700"
           >
             Propose Trade
           </button>
@@ -440,7 +440,7 @@ const TradeList = ({ league }) => {
                             onClick={() => paginate(page)}
                             className={`relative inline-flex items-center px-4 py-2 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-sm font-medium ${
                               currentPage === page
-                                ? 'z-10 bg-primary-50 dark:bg-primary-900/30 border-primary-500 dark:border-primary-500 text-primary-600 dark:text-primary-300'
+                                ? 'z-10 bg-neutral-50 dark:bg-neutral-900/30 border-primary-500 dark:border-primary-500 text-primary-600 dark:text-primary-300'
                                 : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                             }`}
                           >

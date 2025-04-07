@@ -142,7 +142,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             onClick={() => requestSort('name')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'name' 
-                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
+                ? 'bg-neutral-100 text-primary-800 dark:bg-neutral-900 dark:text-primary-200' 
                 : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
             }`}
           >
@@ -152,7 +152,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             onClick={() => requestSort('total_points')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'total_points' 
-                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
+                ? 'bg-neutral-100 text-primary-800 dark:bg-neutral-900 dark:text-primary-200' 
                 : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
             }`}
           >
@@ -162,7 +162,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             onClick={() => requestSort('matches')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'matches' 
-                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
+                ? 'bg-neutral-100 text-primary-800 dark:bg-neutral-900 dark:text-primary-200' 
                 : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
             }`}
           >
@@ -172,7 +172,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             onClick={() => requestSort('role')}
             className={`px-3 py-1 text-xs rounded-full ${
               sortConfig.key === 'role' 
-                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200' 
+                ? 'bg-neutral-100 text-primary-800 dark:bg-neutral-900 dark:text-primary-200' 
                 : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
             }`}
           >

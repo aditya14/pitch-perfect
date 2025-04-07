@@ -507,7 +507,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                       </div>
                       <button 
                         onClick={handleAddTradePair}
-                        className="px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-md"
+                        className="px-3 py-1.5 text-sm bg-neutral-600 hover:bg-neutral-700 text-white rounded-md"
                       >
                         Add Pair
                       </button>
@@ -716,8 +716,8 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
                   tradePairs.length === 0 || 
                   tradePairs.some(pair => !pair.myPlayer || !pair.theirPlayer) ||
                   Object.keys(validationErrors).length > 0
-                    ? 'bg-primary-300 dark:bg-primary-700 cursor-not-allowed'
-                    : 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600'
+                    ? 'bg-neutral-300 dark:bg-neutral-700 cursor-not-allowed'
+                    : 'bg-neutral-600 hover:bg-neutral-700 dark:bg-neutral-500 dark:hover:bg-neutral-600'
                 }`}
             >
               Propose Trade

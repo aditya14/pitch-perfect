@@ -479,7 +479,7 @@ const HowItWorksComponent = () => {
             </div>
             
             {/* Vice Captain */}
-            <div className="bg-primary-50 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-800 rounded-lg p-4 shadow-sm">
+            <div className="bg-neutral-50 dark:bg-neutral-900/40 border border-primary-200 dark:border-primary-800 rounded-lg p-4 shadow-sm">
               <div className="flex items-center mb-2">
                 <Swords className="text-primary-600 dark:text-primary-400 mr-2" size={20} />
                 <h3 className="font-bold text-lg text-primary-700 dark:text-primary-300">Vice Captain</h3>
