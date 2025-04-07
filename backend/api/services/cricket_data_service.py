@@ -3,7 +3,7 @@ import logging
 from typing import Dict, List, Optional, Union, Tuple
 from decimal import Decimal
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
 
 from api.models import (
@@ -421,6 +421,8 @@ class CricketDataService:
     def _update_fantasy_squad_totals(self, season) -> List[FantasySquad]:
         """
         Update total points for all fantasy squads in the season.
+        Ensures that total_points is exactly the sum of base_points and boost_points 
+        from all FantasyMatchEvent objects.
         
         Args:
             season: The Season object
@@ -434,18 +436,28 @@ class CricketDataService:
         squads = FantasySquad.objects.filter(league__season=season)
         
         for squad in squads:
-            # Sum base points and boost points from all fantasy player events
-            total_points = FantasyPlayerEvent.objects.filter(
+            # Calculate points based on FantasyMatchEvent totals (which have already been calculated)
+            # This ensures total_points is correctly the sum of base + boost points
+            match_events_totals = FantasyMatchEvent.objects.filter(
                 fantasy_squad=squad,
-                match_event__match__season=season
-            ).values_list('match_event__total_points_all', 'boost_points')
+                match__season=season
+            ).aggregate(
+                total_base=models.Sum('total_base_points'),
+                total_boost=models.Sum('total_boost_points')
+            )
             
-            # Calculate total points
-            squad_total = sum(base + boost for base, boost in total_points)
+            base_points = match_events_totals.get('total_base') or 0
+            boost_points = match_events_totals.get('total_boost') or 0
             
-            # Update the squad total
-            squad.total_points = squad_total
-            squad.save()
+            # Ensure total is exactly the sum of base and boost
+            squad_total = base_points + boost_points
+            
+            # Update the squad total only if it's different
+            if abs(float(squad.total_points) - squad_total) > 0.01:  # Small epsilon for float comparison
+                logger.info(f"Updating {squad.name} points from {squad.total_points} to {squad_total}")
+                squad.total_points = squad_total
+                squad.save()
+                
             updated_squads.append(squad)
         
         return updated_squads
