@@ -197,7 +197,7 @@ const LeagueTable = ({ league }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-90 shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
       <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
           League Standings
