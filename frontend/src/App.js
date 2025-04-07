@@ -26,7 +26,7 @@ const AppContent = () => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   // Set default document title
-  useDocumentTitle('Fantasy Cricket');
+  useDocumentTitle('Home');
 
   // Apply theme immediately on component mount
   useEffect(() => {
