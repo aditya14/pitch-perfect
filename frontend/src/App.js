@@ -19,10 +19,14 @@ import MatchView from './components/matches/MatchView';
 import LoadingScreen from './components/elements/LoadingScreen';
 import PullToRefresh from './components/elements/PullToRefresh';
 import HowItWorksComponent from './components/HowItWorksComponent';
+import useDocumentTitle from './hooks/useDocumentTitle';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  // Set default document title
+  useDocumentTitle('Fantasy Cricket');
 
   // Apply theme immediately on component mount
   useEffect(() => {

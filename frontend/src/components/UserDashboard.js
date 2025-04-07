@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import UpdatePointsButton from './UpdatePointsButton';
 import TimelineComponent from './TimelineComponent';
 import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle } from 'lucide-react';
@@ -298,6 +299,9 @@ const UserDashboard = () => {
   const [leagues, setLeagues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Set document title for dashboard
+  useDocumentTitle('Home');
 
   useEffect(() => {
     fetchLeagues();

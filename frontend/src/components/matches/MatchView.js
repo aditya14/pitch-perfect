@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../utils/axios';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import MatchOverview from './cards/MatchOverview';
 import MatchPerformanceContainer from './cards/MatchPerformanceContainer';
 import SquadPerformance from './cards/SquadPerformance';
@@ -15,6 +16,27 @@ const MatchView = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'total_points_all', direction: 'desc' });
   const [activeSquadId, setActiveSquadId] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [leagueName, setLeagueName] = useState('');
+
+  // Dynamic document title
+  const getPageTitle = () => {
+    console.log('Match Overview:', matchOverview);
+    if (!matchOverview) return 'Match Details';
+    
+    const date = new Date(matchOverview.date);
+    const formattedDate = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+    const matchTitle = matchOverview.title ||
+              `${matchOverview.team_1?.short_name || 'Team 1'} vs ${matchOverview.team_2?.short_name || 'Team 2'}, ${formattedDate}`;
+    
+    if (leagueId && leagueName) {
+      return `${matchTitle} (${leagueName})`;
+    }
+    
+    return matchTitle;
+  };
+  
+  // Apply the document title
+  useDocumentTitle(getPageTitle());
 
   useEffect(() => {
     const checkMobile = () => {
@@ -34,8 +56,20 @@ const MatchView = () => {
     // If we're viewing in league context, get the active user's squad ID
     if (leagueId) {
       fetchActiveSquad();
+      fetchLeagueInfo();
     }
   }, [matchId, leagueId]);
+
+  const fetchLeagueInfo = async () => {
+    if (!leagueId) return;
+    
+    try {
+      const response = await api.get(`/leagues/${leagueId}/`);
+      setLeagueName(response.data.name);
+    } catch (err) {
+      console.error('Error fetching league info:', err);
+    }
+  };
 
   const fetchActiveSquad = async () => {
     try {

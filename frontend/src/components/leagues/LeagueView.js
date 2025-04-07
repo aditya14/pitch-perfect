@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
 import { Trophy, Users, ChevronRight, RefreshCw, FileEdit, Clock, ArrowLeft } from 'lucide-react';
 import api from '../../utils/axios';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 // Import tab components
 import LeagueDashboard from './LeagueDashboard';
@@ -129,6 +130,21 @@ const LeagueView = () => {
     // Default to dashboard if not found
     return 'dashboard';
   };
+
+  // Get active tab from URL path
+  const activeTab = getActiveTabFromPath();
+  
+  // Set the dynamic document title based on league name and active tab
+  const getPageTitle = () => {
+    if (!league) return 'League';
+    
+    const foundLabel = tabs.find(tab => tab.id === activeTab)?.label || '';
+    const activeTabLabel = foundLabel === 'Dashboard' ? '' : foundLabel;
+    return `${league.name}${activeTabLabel ? ' - ' + activeTabLabel : ''}`;
+  };
+  
+  // Apply the document title
+  useDocumentTitle(getPageTitle());
 
   // Check if draft deadline has passed
   useEffect(() => {
@@ -269,8 +285,6 @@ const LeagueView = () => {
   const isDraftCompleted = league?.draft_completed;
   const canUpdateDraft = !isDraftCompleted && !isDraftDeadlinePassed;
   
-  // Get active tab from URL path
-  const activeTab = getActiveTabFromPath();
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
 
   return (

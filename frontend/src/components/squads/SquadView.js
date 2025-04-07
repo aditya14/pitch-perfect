@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../utils/axios';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import PlayerListTab from './PlayerListTab';
 import BoostTab from './BoostTab';
 import { useAuth } from '../../context/AuthContext';
@@ -22,6 +23,16 @@ const SquadView = () => {
   const [isOwnSquad, setIsOwnSquad] = useState(false);
 
   const [rankInfo, setRankInfo] = useState({ rank: null, totalSquads: null });
+  
+  // Set document title based on squad name and active tab
+  const getPageTitle = () => {
+    if (!squadData) return 'Squad Details';
+    console.log('Squad Data:', squadData);
+    return `${squadData.name} (${squadData.league_name})`;
+  };
+  
+  // Apply the document title
+  useDocumentTitle(getPageTitle());
 
   useEffect(() => {
     const fetchSquadData = async () => {
