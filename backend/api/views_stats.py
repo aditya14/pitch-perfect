@@ -821,7 +821,8 @@ def league_table_stats(request, league_id):
         
         # Count caps (times a squad was #1 in a match)
         match_ids = FantasyMatchEvent.objects.filter(
-            fantasy_squad__league=league
+            fantasy_squad__league=league,
+            match__status='COMPLETED'  # Ensure only completed matches are considered
         ).values_list('match_id', flat=True).distinct()
         
         # For each match, find the top squad
