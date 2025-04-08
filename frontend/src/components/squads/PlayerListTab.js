@@ -213,7 +213,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
         {/* Filter controls */}
         <div className="flex flex-wrap items-center mb-3 gap-1.5">
           <div className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mr-1.5">
-            Filter:
+            Group:
           </div>
           <div className="flex flex-wrap gap-1.5">
             <button
@@ -388,7 +388,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                     <tr className="bg-neutral-100 dark:bg-neutral-900">
                       <td 
                         colSpan={showTeamColumn && showRoleColumn ? 7 : showTeamColumn || showRoleColumn ? 6 : 5} 
-                        className="px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300"
+                        className="px-2 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300"
                       >
                         {groupName}
                       </td>
@@ -417,7 +417,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                               />
                             )}
                             <span 
-                              className={`text-2xs sm:text-xs font-medium ${isTraded ? 'text-neutral-600 dark:text-neutral-500' : 'text-neutral-900 dark:text-neutral-200'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 truncate max-w-[100px] sm:max-w-[200px] md:max-w-none`}
+                              className={`text-2xs sm:text-xs font-light ${isTraded ? 'text-neutral-600 dark:text-neutral-500' : 'text-neutral-900 dark:text-neutral-200'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 truncate max-w-[100px] sm:max-w-[200px] md:max-w-none`}
                               onClick={() => openPlayerModal(player.id, leagueId)}
                             >
                               {player.name}

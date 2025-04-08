@@ -80,7 +80,7 @@ const DetailedMatchPerformance = ({
   const renderEconomyChevrons = (economy, ballsBowled) => {
     if (!economy || ballsBowled < 10) return null;
     
-    if (economy <= 5) {
+    if (economy < 5) {
       return (
         <span className="inline-flex flex-col text-green-500 ml-1">
           <ChevronUp className="h-2 w-2" />
@@ -88,14 +88,14 @@ const DetailedMatchPerformance = ({
           <ChevronUp className="h-2 w-2 -mt-1" />
         </span>
       );
-    } else if (economy <= 6) {
+    } else if (economy < 6) {
       return (
         <span className="inline-flex flex-col text-green-500 ml-1">
           <ChevronUp className="h-2 w-2" />
           <ChevronUp className="h-2 w-2 -mt-1" />
         </span>
       );
-    } else if (economy <= 7) {
+    } else if (economy < 7) {
       return (
         <span className="inline-flex flex-col text-green-500 ml-1">
           <ChevronUp className="h-2 w-2" />
