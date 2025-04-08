@@ -39,6 +39,30 @@ class Command(BaseCommand):
             help='Only sync total_points with match event totals'
         )
 
+    def decimal_compare(self, value, threshold, operation='<'):
+        """Compare decimals reliably across environments"""
+        from decimal import Decimal, ROUND_HALF_UP
+        
+        # Convert both to Decimal strings first, then to Decimal
+        val_dec = Decimal(str(value))
+        threshold_dec = Decimal(str(threshold))
+        
+        # Round to 2 decimal places to avoid precision issues
+        val_dec = val_dec.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        # Use string comparison for exact boundaries
+        val_str = str(val_dec)
+        threshold_str = str(threshold_dec)
+        
+        if operation == '<':
+            return val_str < threshold_str
+        elif operation == '<=':
+            return val_str <= threshold_str
+        elif operation == '>':
+            return val_str > threshold_str
+        elif operation == '>=':
+            return val_str >= threshold_str
+
     def handle(self, *args, **options):
         batch_size = options['batch_size']
         sync_only = options.get('sync_only', False)
@@ -106,23 +130,23 @@ class Command(BaseCommand):
                         else:
                             bowl_eco = None
                             
-                        # Strike rate calculation
+                        # Calculate SR bonus
                         sr_bonus = 0
                         if bat_sr is not None and event.bat_balls >= 10:
                             from decimal import Decimal, ROUND_HALF_UP
                             sr = Decimal(str(bat_sr)).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
                             
-                            if sr >= Decimal('200'):
+                            if self.decimal_compare(sr, 200, '>='):
                                 sr_bonus = 6
-                            elif sr >= Decimal('175'):
+                            elif self.decimal_compare(sr, 175, '>='):
                                 sr_bonus = 4
-                            elif sr >= Decimal('150'):
+                            elif self.decimal_compare(sr, 150, '>='):
                                 sr_bonus = 2
-                            elif sr < Decimal('50'):
+                            elif self.decimal_compare(sr, 50, '<'):
                                 sr_bonus = -6
-                            elif sr < Decimal('75'):
+                            elif self.decimal_compare(sr, 75, '<'):
                                 sr_bonus = -4
-                            elif sr < Decimal('100'):
+                            elif self.decimal_compare(sr, 100, '<'):
                                 sr_bonus = -2
                                 
                         # Economy rate calculation
@@ -131,17 +155,17 @@ class Command(BaseCommand):
                             from decimal import Decimal, ROUND_HALF_UP
                             eco = Decimal(str(bowl_eco)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                             
-                            if eco < Decimal('5'):
+                            if self.decimal_compare(eco, 5, '<'):
                                 eco_bonus = 6
-                            elif eco < Decimal('6'):
+                            elif self.decimal_compare(eco, 6, '<'):
                                 eco_bonus = 4
-                            elif eco < Decimal('7'):
+                            elif self.decimal_compare(eco, 7, '<'):
                                 eco_bonus = 2
-                            elif eco >= Decimal('12'):
+                            elif self.decimal_compare(eco, 12, '>='):
                                 eco_bonus = -6
-                            elif eco >= Decimal('11'):
+                            elif self.decimal_compare(eco, 11, '>='):
                                 eco_bonus = -4
-                            elif eco >= Decimal('10'):
+                            elif self.decimal_compare(eco, 10, '>='):
                                 eco_bonus = -2
                                 
                         # Calculate batting points
@@ -252,20 +276,21 @@ class Command(BaseCommand):
                                 # SR bonus calculation
                                 sr_bonus = 0
                                 if ipl_event.bat_balls and ipl_event.bat_balls >= 10:
+                                    from decimal import Decimal, ROUND_HALF_UP
                                     sr = Decimal(str(ipl_event.bat_runs)) / Decimal(str(ipl_event.bat_balls)) * Decimal('100')
                                     sr = sr.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
                                     
-                                    if sr >= Decimal('200'):
+                                    if self.decimal_compare(sr, 200, '>='):
                                         sr_bonus = 6
-                                    elif sr >= Decimal('175'):
+                                    elif self.decimal_compare(sr, 175, '>='):
                                         sr_bonus = 4
-                                    elif sr >= Decimal('150'):
+                                    elif self.decimal_compare(sr, 150, '>='):
                                         sr_bonus = 2
-                                    elif sr < Decimal('50'):
+                                    elif self.decimal_compare(sr, 50, '<'):
                                         sr_bonus = -6
-                                    elif sr < Decimal('75'):
+                                    elif self.decimal_compare(sr, 75, '<'):
                                         sr_bonus = -4
-                                    elif sr < Decimal('100'):
+                                    elif self.decimal_compare(sr, 100, '<'):
                                         sr_bonus = -2
                                 
                                 bat_boost += (boost.multiplier_sr - 1.0) * sr_bonus
@@ -293,17 +318,17 @@ class Command(BaseCommand):
                                     eco = Decimal(str(ipl_event.bowl_runs)) / overs
                                     eco = eco.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                                     
-                                    if eco < Decimal('5'):
+                                    if self.decimal_compare(eco, 5, '<'):
                                         eco_bonus = 6
-                                    elif eco < Decimal('6'):
+                                    elif self.decimal_compare(eco, 6, '<'):
                                         eco_bonus = 4
-                                    elif eco < Decimal('7'):
+                                    elif self.decimal_compare(eco, 7, '<'):
                                         eco_bonus = 2
-                                    elif eco >= Decimal('12'):
+                                    elif self.decimal_compare(eco, 12, '>='):
                                         eco_bonus = -6
-                                    elif eco >= Decimal('11'):
+                                    elif self.decimal_compare(eco, 11, '>='):
                                         eco_bonus = -4
-                                    elif eco >= Decimal('10'):
+                                    elif self.decimal_compare(eco, 10, '>='):
                                         eco_bonus = -2
                                 
                                 bowl_boost += (boost.multiplier_economy - 1.0) * eco_bonus

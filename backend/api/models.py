@@ -322,6 +322,32 @@ class IPLPlayerEvent(models.Model):
     other_points_total = models.IntegerField(default=0)
     total_points_all = models.IntegerField(default=0)
 
+    def decimal_compare(self, value, threshold, operation='<'):
+        """
+        Compare decimals reliably across environments
+        """
+        from decimal import Decimal, ROUND_HALF_UP
+        
+        # Convert both to Decimal strings first, then to Decimal
+        val_dec = Decimal(str(value))
+        threshold_dec = Decimal(str(threshold))
+        
+        # Round to 2 decimal places to avoid precision issues
+        val_dec = val_dec.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        # Use string comparison for exact boundaries
+        val_str = str(val_dec)
+        threshold_str = str(threshold_dec)
+        
+        if operation == '<':
+            return val_str < threshold_str
+        elif operation == '<=':
+            return val_str <= threshold_str
+        elif operation == '>':
+            return val_str > threshold_str
+        elif operation == '>=':
+            return val_str >= threshold_str
+
     def save(self, *args, **kwargs):
         # Calculate point totals only if necessary fields have changed or object is new
         if not self.pk or self._state.adding or self._has_point_fields_changed():
@@ -399,23 +425,21 @@ class IPLPlayerEvent(models.Model):
         """Calculate strike rate bonus/penalty"""
         if self.bat_balls < 10:  # Minimum 10 balls required
             return 0
-        
+            
         from decimal import Decimal
         sr = self.bat_strike_rate
-        if not isinstance(sr, Decimal):
-            sr = Decimal(str(sr))
-            
-        if sr >= Decimal('200'):
+        
+        if self.decimal_compare(sr, 200, '>='):
             return 6
-        elif sr >= Decimal('175'):
+        elif self.decimal_compare(sr, 175, '>='):
             return 4
-        elif sr >= Decimal('150'):
+        elif self.decimal_compare(sr, 150, '>='):
             return 2
-        elif sr < Decimal('50'):
+        elif self.decimal_compare(sr, 50, '<'):
             return -6
-        elif sr < Decimal('75'):
+        elif self.decimal_compare(sr, 75, '<'):
             return -4
-        elif sr < Decimal('100'):
+        elif self.decimal_compare(sr, 100, '<'):
             return -2
         return 0
     
@@ -426,20 +450,18 @@ class IPLPlayerEvent(models.Model):
             
         from decimal import Decimal
         economy = self.bowl_economy
-        if not isinstance(economy, Decimal):
-            economy = Decimal(str(economy))
-            
-        if economy < Decimal('5'):
+        
+        if self.decimal_compare(economy, 5, '<'):
             return 6
-        elif economy < Decimal('6'):
+        elif self.decimal_compare(economy, 6, '<'):
             return 4
-        elif economy < Decimal('7'):
+        elif self.decimal_compare(economy, 7, '<'):
             return 2
-        elif economy >= Decimal('12'):
+        elif self.decimal_compare(economy, 12, '>='):
             return -6
-        elif economy >= Decimal('11'):
+        elif self.decimal_compare(economy, 11, '>='):
             return -4
-        elif economy >= Decimal('10'):
+        elif self.decimal_compare(economy, 10, '>='):
             return -2
         return 0
 

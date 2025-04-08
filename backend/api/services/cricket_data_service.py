@@ -16,6 +16,30 @@ class CricketDataService:
     """
     Service to fetch cricket match data from CricketData API and update database.
     """
+
+    def decimal_compare(self, value, threshold, operation='<'):
+        """Compare decimals reliably across environments"""
+        from decimal import Decimal, ROUND_HALF_UP
+        
+        # Convert both to Decimal strings first, then to Decimal
+        val_dec = Decimal(str(value))
+        threshold_dec = Decimal(str(threshold))
+        
+        # Round to 2 decimal places to avoid precision issues
+        val_dec = val_dec.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        # Use string comparison for exact boundaries
+        val_str = str(val_dec)
+        threshold_str = str(threshold_dec)
+        
+        if operation == '<':
+            return val_str < threshold_str
+        elif operation == '<=':
+            return val_str <= threshold_str
+        elif operation == '>':
+            return val_str > threshold_str
+        elif operation == '>=':
+            return val_str >= threshold_str
     
     def __init__(self, api_key=None):
         self.api_key = api_key or settings.CRICDATA_API_KEY
@@ -520,17 +544,17 @@ class CricketDataService:
             sr = Decimal(str(event.bat_runs)) / Decimal(str(event.bat_balls)) * Decimal('100')
             sr = sr.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
             
-            if sr >= Decimal('200'):
+            if self.decimal_compare(sr, 200, '>='):
                 sr_bonus = 6
-            elif sr >= Decimal('175'):
+            elif self.decimal_compare(sr, 175, '>='):
                 sr_bonus = 4
-            elif sr >= Decimal('150'):
+            elif self.decimal_compare(sr, 150, '>='):
                 sr_bonus = 2
-            elif sr < Decimal('50'):
+            elif self.decimal_compare(sr, 50, '<'):
                 sr_bonus = -6
-            elif sr < Decimal('75'):
+            elif self.decimal_compare(sr, 75, '<'):
                 sr_bonus = -4
-            elif sr < Decimal('100'):
+            elif self.decimal_compare(sr, 100, '<'):
                 sr_bonus = -2
         
         # Calculate batting boost     
@@ -562,17 +586,17 @@ class CricketDataService:
             eco = Decimal(str(event.bowl_runs)) / overs
             eco = eco.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             
-            if eco < Decimal('5'):
+            if self.decimal_compare(eco, 5, '<'):
                 eco_bonus = 6
-            elif eco < Decimal('6'):
+            elif self.decimal_compare(eco, 6, '<'):
                 eco_bonus = 4
-            elif eco < Decimal('7'):
+            elif self.decimal_compare(eco, 7, '<'):
                 eco_bonus = 2
-            elif eco >= Decimal('12'):
+            elif self.decimal_compare(eco, 12, '>='):
                 eco_bonus = -6
-            elif eco >= Decimal('11'):
+            elif self.decimal_compare(eco, 11, '>='):
                 eco_bonus = -4
-            elif eco >= Decimal('10'):
+            elif self.decimal_compare(eco, 10, '>='):
                 eco_bonus = -2
         
         # Calculate bowling boost        
