@@ -221,7 +221,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               className={`px-2 py-1 text-xs rounded-md ${
                 filterType === 'All' 
                   ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 font-medium' 
-                  : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
+                  : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200'
               }`}
             >
               All
@@ -231,7 +231,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               className={`px-2 py-1 text-xs rounded-md ${
                 filterType === 'By IPL Team' 
                   ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 font-medium' 
-                  : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
+                  : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200'
               }`}
             >
               By IPL Team
@@ -241,7 +241,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               className={`px-2 py-1 text-xs rounded-md ${
                 filterType === 'By Role' 
                   ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 font-medium' 
-                  : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200'
+                  : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200'
               }`}
             >
               By Role
@@ -251,7 +251,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
           {/* Toggle for traded players */}
           {tradedCount > 0 && (
             <div className="ml-auto flex items-center">
-              <span className="mr-1.5 text-xs text-neutral-600 dark:text-neutral-300">
+              <span className="mr-1.5 text-xs text-neutral-600 dark:text-neutral-400">
                 {showTraded ? 'Show' : 'Hide'} Traded ({tradedCount})
               </span>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -261,7 +261,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                   onChange={() => setShowTraded(!showTraded)}
                   className="sr-only peer" 
                 />
-                <div className="w-8 h-4 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-neutral-600 peer-checked:bg-primary-600"></div>
+                <div className="w-8 h-4 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-neutral-700 peer-checked:bg-primary-600"></div>
               </label>
             </div>
           )}
@@ -269,35 +269,32 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
       </div>
 
       {/* Main content */}
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-neutral-950 shadow rounded-lg overflow-hidden">
         {/* Table layout for all screen sizes */}
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse text-xs sm:text-sm">
             {/* Fixed header - with column group headers */}
-            <thead className="bg-neutral-50 dark:bg-neutral-700 sticky top-0 z-10">
-              <tr className="border-b border-neutral-200 dark:border-neutral-600">
+            <thead className="bg-neutral-50 dark:bg-neutral-900 sticky top-0 z-10">
+              <tr className="border-b border-neutral-200 dark:border-neutral-800">
                 {/* Group Headers */}
-                <th scope="col" className="px-2 py-1.5 text-center text-2xs sm:text-xs font-medium text-neutral-600 dark:text-neutral-300 uppercase tracking-wider bg-neutral-100 dark:bg-neutral-750 border-r border-neutral-200 dark:border-neutral-600">
-                  <Users size={12} className="inline mr-0.5" />
+                <th scope="col" className="px-2 py-1.5 text-center text-2xs sm:text-xs font-medium text-neutral-600 dark:text-neutral-300 uppercase tracking-wider bg-neutral-100 dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800">
                   Player
                 </th>
                 
-                <th scope="col" colSpan="3" className="px-2 py-1.5 text-center text-2xs sm:text-xs font-medium text-neutral-600 dark:text-neutral-300 uppercase tracking-wider bg-neutral-100 dark:bg-neutral-750 border-r border-neutral-200 dark:border-neutral-600">
-                  <Trophy size={12} className="inline mr-0.5" />
+                <th scope="col" colSpan="3" className="px-2 py-1.5 text-center text-2xs sm:text-xs font-medium text-neutral-600 dark:text-neutral-300 uppercase tracking-wider bg-neutral-100 dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800">
                   Points
                 </th>
                 
-                <th scope="col" colSpan={showTeamColumn && showRoleColumn ? 3 : showTeamColumn || showRoleColumn ? 2 : 1} className="px-2 py-1.5 text-center text-2xs sm:text-xs font-medium text-neutral-600 dark:text-neutral-300 uppercase tracking-wider bg-neutral-100 dark:bg-neutral-750">
-                  <Award size={12} className="inline mr-0.5" />
+                <th scope="col" colSpan={showTeamColumn && showRoleColumn ? 3 : showTeamColumn || showRoleColumn ? 2 : 1} className="px-2 py-1.5 text-center text-2xs sm:text-xs font-medium text-neutral-600 dark:text-neutral-300 uppercase tracking-wider bg-neutral-100 dark:bg-neutral-950">
                   Details
                 </th>
               </tr>
               
-              <tr className="bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+              <tr className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
                 {/* Player name column */}
                 <th 
                   scope="col" 
-                  className="px-2 py-1 text-left text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider cursor-pointer whitespace-nowrap border-r border-neutral-200 dark:border-neutral-600"
+                  className="px-2 py-1 text-left text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider cursor-pointer whitespace-nowrap border-r border-neutral-200 dark:border-neutral-800"
                   onClick={() => requestSort('name')}
                 >
                   <div className="flex items-center space-x-0.5">
@@ -309,18 +306,18 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                 {/* Points columns - grouped together */}
                 <th 
                   scope="col" 
-                  className="px-1.5 py-1 text-right text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider cursor-pointer whitespace-nowrap bg-neutral-50/50 dark:bg-neutral-700/50"
+                  className="px-1.5 py-1 text-right text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider cursor-pointer whitespace-nowrap bg-neutral-50/50 dark:bg-neutral-900"
                   onClick={() => requestSort('total_points')}
                 >
                   <div className="flex items-center justify-end space-x-0.5">
-                    <span className="font-semibold">Tot</span>
+                    <span className="font-semibold">Total</span>
                     <span>{getSortDirection('total_points')}</span>
                   </div>
                 </th>
                 
                 <th 
                   scope="col" 
-                  className="px-1.5 py-1 text-right text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider cursor-pointer whitespace-nowrap bg-neutral-50/50 dark:bg-neutral-700/50"
+                  className="px-1.5 py-1 text-right text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider cursor-pointer whitespace-nowrap bg-neutral-50/50 dark:bg-neutral-900"
                   onClick={() => requestSort('base_points')}
                 >
                   <div className="flex items-center justify-end space-x-0.5">
@@ -331,11 +328,11 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                 
                 <th 
                   scope="col" 
-                  className="px-1.5 py-1 text-right text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider cursor-pointer whitespace-nowrap border-r border-neutral-200 dark:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-700/50"
+                  className="px-1.5 py-1 text-right text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider cursor-pointer whitespace-nowrap border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900"
                   onClick={() => requestSort('boost_points')}
                 >
                   <div className="flex items-center justify-end space-x-0.5">
-                    <span>Bst</span>
+                    <span>Boost</span>
                     <span>{getSortDirection('boost_points')}</span>
                   </div>
                 </th>
@@ -343,7 +340,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                 {/* Matches */}
                 <th 
                   scope="col" 
-                  className="px-1.5 py-1 text-center text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider cursor-pointer whitespace-nowrap"
+                  className="px-1.5 py-1 text-center text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider cursor-pointer whitespace-nowrap"
                   onClick={() => requestSort('matches')}
                 >
                   <div className="flex items-center justify-center space-x-0.5">
@@ -356,7 +353,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                 {showTeamColumn && (
                   <th 
                     scope="col" 
-                    className="px-1.5 py-1 text-center text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider cursor-pointer whitespace-nowrap"
+                    className="px-1.5 py-1 text-center text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider cursor-pointer whitespace-nowrap"
                     onClick={() => requestSort('team')}
                   >
                     <div className="flex items-center justify-center space-x-0.5">
@@ -370,7 +367,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                 {showRoleColumn && (
                   <th 
                     scope="col" 
-                    className="px-1.5 py-1 text-center text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider cursor-pointer whitespace-nowrap"
+                    className="px-1.5 py-1 text-center text-2xs sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider cursor-pointer whitespace-nowrap"
                     onClick={() => requestSort('role')}
                   >
                     <div className="flex items-center justify-center space-x-0.5">
@@ -383,15 +380,15 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
             </thead>
             
             {/* Table body with grouped players */}
-            <tbody className="bg-white dark:bg-neutral-800 divide-y divide-neutral-200 dark:divide-neutral-700">
+            <tbody className="bg-white dark:bg-neutral-950 divide-y divide-neutral-200 dark:divide-neutral-800">
               {Object.entries(groupedPlayers).map(([groupName, groupPlayers]) => (
                 <React.Fragment key={groupName}>
                   {/* Group header row when grouping is applied */}
                   {(filterType === 'By IPL Team' || filterType === 'By Role') && (
-                    <tr className="bg-neutral-100 dark:bg-neutral-750">
+                    <tr className="bg-neutral-100 dark:bg-neutral-900">
                       <td 
                         colSpan={showTeamColumn && showRoleColumn ? 7 : showTeamColumn || showRoleColumn ? 6 : 5} 
-                        className="px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-200"
+                        className="px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300"
                       >
                         {groupName}
                       </td>
@@ -408,10 +405,10 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                     return (
                       <tr 
                         key={player.id} 
-                        className={`hover:bg-neutral-50 dark:hover:bg-neutral-700 ${isTraded ? 'bg-neutral-50/70 dark:bg-neutral-750/70' : isEven ? 'bg-white dark:bg-neutral-800' : 'bg-neutral-50/30 dark:bg-neutral-800/80'}`}
+                        className={`hover:bg-neutral-50 dark:hover:bg-neutral-900 ${isTraded ? 'bg-neutral-50/70 dark:bg-neutral-900/70' : isEven ? 'bg-white dark:bg-neutral-950' : 'bg-neutral-50/30 dark:bg-neutral-950/80'}`}
                       >
                         {/* Name with boost icon */}
-                        <td className="px-2 py-1 whitespace-nowrap border-r border-neutral-200 dark:border-neutral-600">
+                        <td className="px-2 py-1 whitespace-nowrap border-r border-neutral-200 dark:border-neutral-800">
                           <div className="flex items-center">
                             {isTraded && (
                               <ArrowRightCircle 
@@ -420,7 +417,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                               />
                             )}
                             <span 
-                              className={`text-2xs sm:text-xs font-medium ${isTraded ? 'text-neutral-600 dark:text-neutral-400' : 'text-neutral-900 dark:text-white'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 truncate max-w-[100px] sm:max-w-[200px] md:max-w-none`}
+                              className={`text-2xs sm:text-xs font-medium ${isTraded ? 'text-neutral-600 dark:text-neutral-500' : 'text-neutral-900 dark:text-neutral-200'} cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 truncate max-w-[100px] sm:max-w-[200px] md:max-w-none`}
                               onClick={() => openPlayerModal(player.id, leagueId)}
                             >
                               {player.name}
@@ -436,29 +433,29 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                           </div>
                         </td>
                         
-                        {/* Points group has light background */}
-                        <td className="px-1.5 py-1 text-right whitespace-nowrap bg-neutral-50/50 dark:bg-neutral-750/30">
-                          <span className={`text-2xs sm:text-xs font-semibold ${isTraded ? 'text-neutral-600 dark:text-neutral-400' : 'text-neutral-900 dark:text-white'}`}>
+                        {/* Points group - no different background in dark mode */}
+                        <td className="px-1.5 py-1 text-right whitespace-nowrap bg-neutral-50/50 dark:bg-transparent">
+                          <span className={`text-2xs sm:text-xs font-semibold ${isTraded ? 'text-neutral-600 dark:text-neutral-500' : 'text-neutral-900 dark:text-neutral-200'}`}>
                             {Number.isInteger(stats.totalPoints) ? stats.totalPoints : stats.totalPoints.toFixed(1)}
                           </span>
                         </td>
                         
-                        <td className="px-1.5 py-1 text-right whitespace-nowrap text-2xs sm:text-xs text-neutral-600 dark:text-neutral-300 bg-neutral-50/50 dark:bg-neutral-750/30">
+                        <td className="px-1.5 py-1 text-right whitespace-nowrap text-2xs sm:text-xs text-neutral-600 dark:text-neutral-400 bg-neutral-50/50 dark:bg-transparent">
                           {Number.isInteger(stats.basePoints) ? stats.basePoints : stats.basePoints.toFixed(1)}
                         </td>
                         
-                        <td className="px-1.5 py-1 text-right whitespace-nowrap text-2xs sm:text-xs text-neutral-600 dark:text-neutral-300 border-r border-neutral-200 dark:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-750/30">
+                        <td className="px-1.5 py-1 text-right whitespace-nowrap text-2xs sm:text-xs text-neutral-600 dark:text-neutral-400 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-transparent">
                           {Number.isInteger(stats.boostPoints) ? stats.boostPoints : stats.boostPoints.toFixed(1)}
                         </td>
                         
                         {/* Matches */}
-                        <td className="px-1.5 py-1 text-center whitespace-nowrap text-2xs sm:text-xs text-neutral-600 dark:text-neutral-300">
+                        <td className="px-1.5 py-1 text-center whitespace-nowrap text-2xs sm:text-xs text-neutral-600 dark:text-neutral-400">
                           {stats.matches}
                         </td>
                         
                         {/* Team (conditionally shown) */}
                         {showTeamColumn && (
-                          <td className="px-1.5 py-1 text-center whitespace-nowrap text-2xs sm:text-xs text-neutral-500 dark:text-neutral-400">
+                          <td className="px-1.5 py-1 text-center whitespace-nowrap text-2xs sm:text-xs text-neutral-500 dark:text-neutral-500">
                             {player.current_team?.short_name || '-'}
                           </td>
                         )}
@@ -479,7 +476,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
                     <tr>
                       <td 
                         colSpan={showTeamColumn && showRoleColumn ? 7 : showTeamColumn || showRoleColumn ? 6 : 5} 
-                        className="px-2 py-1.5 text-center text-2xs sm:text-xs text-neutral-500 dark:text-neutral-400"
+                        className="px-2 py-1.5 text-center text-2xs sm:text-xs text-neutral-500 dark:text-neutral-500"
                       >
                         No players found in this group
                       </td>

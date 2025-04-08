@@ -366,7 +366,7 @@ const Header = ({ theme, onThemeChange }) => {
       
       {/* League Navigation Tabs (consistent across all devices) */}
       {isLeagueView && (
-        <div className="border-t border-primary-100 dark:border-primary-800 overflow-x-auto">
+        <div className="border-t border-primary-100 dark:border-primary-800 overflow-x-auto dark:bg-neutral-950">
           <div className="container mx-auto px-4">
             <nav className="flex">
               {leagueTabs.map(tab => (
