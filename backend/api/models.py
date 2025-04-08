@@ -381,33 +381,41 @@ class IPLPlayerEvent(models.Model):
         """Calculate batting strike rate"""
         if self.bat_runs is None or self.bat_balls is None or self.bat_balls == 0:
             return None
-        return Decimal(str(round((self.bat_runs / self.bat_balls) * 100, 1)))
+        from decimal import Decimal, ROUND_HALF_UP
+        sr = Decimal(str(self.bat_runs)) / Decimal(str(self.bat_balls)) * Decimal('100')
+        return sr.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
     
     @property
     def bowl_economy(self):
         """Calculate bowling economy rate"""
         if self.bowl_runs is None or self.bowl_balls is None or self.bowl_balls == 0:
             return None
-        overs = self.bowl_balls / 6
-        return Decimal(str(round(self.bowl_runs / overs, 2)))
+        from decimal import Decimal, ROUND_HALF_UP
+        overs = Decimal(str(self.bowl_balls)) / Decimal('6')
+        eco = Decimal(str(self.bowl_runs)) / overs
+        return eco.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
     
     def _calculate_sr_bonus(self):
         """Calculate strike rate bonus/penalty"""
         if self.bat_balls < 10:  # Minimum 10 balls required
             return 0
-            
+        
+        from decimal import Decimal
         sr = self.bat_strike_rate
-        if sr >= 200:
+        if not isinstance(sr, Decimal):
+            sr = Decimal(str(sr))
+            
+        if sr >= Decimal('200'):
             return 6
-        elif sr >= 175:
+        elif sr >= Decimal('175'):
             return 4
-        elif sr >= 150:
+        elif sr >= Decimal('150'):
             return 2
-        elif sr <= 50:
+        elif sr < Decimal('50'):
             return -6
-        elif sr <= 75:
+        elif sr < Decimal('75'):
             return -4
-        elif sr <= 100:
+        elif sr < Decimal('100'):
             return -2
         return 0
     
@@ -416,18 +424,22 @@ class IPLPlayerEvent(models.Model):
         if self.bowl_balls < 10:  # Minimum 10 balls required
             return 0
             
+        from decimal import Decimal
         economy = self.bowl_economy
-        if economy <= 5:
+        if not isinstance(economy, Decimal):
+            economy = Decimal(str(economy))
+            
+        if economy < Decimal('5'):
             return 6
-        elif economy <= 6:
+        elif economy < Decimal('6'):
             return 4
-        elif economy <= 7:
+        elif economy < Decimal('7'):
             return 2
-        elif economy >= 12:
+        elif economy >= Decimal('12'):
             return -6
-        elif economy >= 11:
+        elif economy >= Decimal('11'):
             return -4
-        elif economy >= 10:
+        elif economy >= Decimal('10'):
             return -2
         return 0
 
@@ -447,7 +459,7 @@ class IPLPlayerEvent(models.Model):
         
         # Duck penalty for non-bowlers
         if (self.bat_runs == 0 and not self.bat_not_out and 
-            getattr(self.player, 'role', None) != 'BOWL'):
+            hasattr(self.player, 'role') and self.player.role != 'BOWL'):
             points -= 2
             
         return points

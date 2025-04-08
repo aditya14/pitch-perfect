@@ -510,25 +510,28 @@ class CricketDataService:
         batting_milestones = 0
         if (event.bat_runs or 0) >= 100:
             batting_milestones += 16  # Century
-        elif (event.bat_runs or 0) >= 50:
+        if (event.bat_runs or 0) >= 50:
             batting_milestones += 8  # Half-century
             
-        # Strike rate bonus/penalty
-        sr_points = 0
-        if (event.bat_balls or 0) >= 10:
-            sr = event.bat_strike_rate
-            if sr >= 200:
-                sr_points += 6
-            elif sr >= 175:
-                sr_points += 4
-            elif sr >= 150:
-                sr_points += 2
-            elif sr < 100:
-                sr_points -= 2
-            elif sr < 75:
-                sr_points -= 4
-            elif sr < 50:
-                sr_points -= 6
+        # Strike rate calculation
+        sr_bonus = 0
+        if (event.bat_balls or 0) >= 10 and event.bat_runs is not None:
+            from decimal import Decimal, ROUND_HALF_UP
+            sr = Decimal(str(event.bat_runs)) / Decimal(str(event.bat_balls)) * Decimal('100')
+            sr = sr.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
+            
+            if sr >= Decimal('200'):
+                sr_bonus = 6
+            elif sr >= Decimal('175'):
+                sr_bonus = 4
+            elif sr >= Decimal('150'):
+                sr_bonus = 2
+            elif sr < Decimal('50'):
+                sr_bonus = -6
+            elif sr < Decimal('75'):
+                sr_bonus = -4
+            elif sr < Decimal('100'):
+                sr_bonus = -2
         
         # Calculate batting boost     
         # Separately calculate boost for each component
@@ -536,7 +539,7 @@ class CricketDataService:
         fours_boost = batting_fours * (boost.multiplier_fours - 1.0)
         sixes_boost = (2 * batting_sixes) * (boost.multiplier_sixes - 1.0)
         milestone_boost = batting_milestones * (boost.multiplier_bat_milestones - 1.0)
-        sr_boost = sr_points * (boost.multiplier_sr - 1.0)
+        sr_boost = sr_bonus * (boost.multiplier_sr - 1.0)
         
         total_boost_points += (runs_boost + fours_boost + sixes_boost + milestone_boost + sr_boost)
         
@@ -548,31 +551,35 @@ class CricketDataService:
         bowling_milestones = 0
         if (event.bowl_wickets or 0) >= 5:
             bowling_milestones += 16  # 5-wicket haul
-        elif (event.bowl_wickets or 0) >= 3:
+        if (event.bowl_wickets or 0) >= 3:
             bowling_milestones += 8  # 3-wicket haul
             
-        # Economy bonus/penalty
-        economy_points = 0
-        if (event.bowl_balls or 0) >= 10:
-            economy = event.bowl_economy
-            if economy <= 5:
-                economy_points += 6
-            elif economy <= 6:
-                economy_points += 4
-            elif economy <= 7:
-                economy_points += 2
-            elif economy >= 12:
-                economy_points -= 6
-            elif economy >= 11:
-                economy_points -= 4
-            elif economy >= 10:
-                economy_points -= 2
+        # Economy bonus calculation
+        eco_bonus = 0
+        if (event.bowl_balls or 0) >= 10 and event.bowl_runs is not None:
+            from decimal import Decimal, ROUND_HALF_UP
+            overs = Decimal(str(event.bowl_balls)) / Decimal('6')
+            eco = Decimal(str(event.bowl_runs)) / overs
+            eco = eco.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            
+            if eco < Decimal('5'):
+                eco_bonus = 6
+            elif eco < Decimal('6'):
+                eco_bonus = 4
+            elif eco < Decimal('7'):
+                eco_bonus = 2
+            elif eco >= Decimal('12'):
+                eco_bonus = -6
+            elif eco >= Decimal('11'):
+                eco_bonus = -4
+            elif eco >= Decimal('10'):
+                eco_bonus = -2
         
         # Calculate bowling boost        
         wickets_boost = bowling_wickets * (boost.multiplier_wickets - 1.0)
         maidens_boost = bowling_maidens * (boost.multiplier_maidens - 1.0)
         bowl_milestone_boost = bowling_milestones * (boost.multiplier_bowl_milestones - 1.0)
-        economy_boost = economy_points * (boost.multiplier_economy - 1.0)
+        economy_boost = eco_bonus * (boost.multiplier_economy - 1.0)
         
         total_boost_points += (wickets_boost + maidens_boost + bowl_milestone_boost + economy_boost)
         

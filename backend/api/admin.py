@@ -14,6 +14,7 @@ from .forms import CSVUploadForm
 import csv
 from io import TextIOWrapper
 from django.db.models import Q, Avg, F
+from decimal import Decimal, ROUND_HALF_UP
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -334,10 +335,15 @@ class IPLMatchAdmin(admin.ModelAdmin):
                         match_event__match=obj
                     ).select_related('match_event')
                     
-                    # Calculate totals (using fresh data)
-                    base_points = sum(e.match_event.total_points_all for e in squad_events)
-                    boost_points = sum(e.boost_points for e in squad_events)
-                    total_points = base_points + boost_points
+                    # Calculate totals with Decimal precision
+                    base_decimal = sum(Decimal(str(e.match_event.total_points_all)) for e in squad_events)
+                    boost_decimal = sum(Decimal(str(e.boost_points)) for e in squad_events)
+                    total_decimal = base_decimal + boost_decimal
+
+                    # Round to 1 decimal place with consistent rounding
+                    base_points = float(base_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    boost_points = float(boost_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    total_points = float(total_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
                     
                     # Get existing match event if any
                     try:
@@ -542,10 +548,15 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
                         match_event__match=match
                     ).select_related('match_event')
                     
-                    # Calculate totals
-                    base_points = sum(e.match_event.total_points_all for e in squad_events)
-                    boost_points = sum(e.boost_points for e in squad_events)
-                    total_points = base_points + boost_points
+                    # Calculate totals with Decimal precision
+                    base_decimal = sum(Decimal(str(e.match_event.total_points_all)) for e in squad_events)
+                    boost_decimal = sum(Decimal(str(e.boost_points)) for e in squad_events)
+                    total_decimal = base_decimal + boost_decimal
+
+                    # Round to 1 decimal place with consistent rounding
+                    base_points = float(base_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    boost_points = float(boost_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    total_points = float(total_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
                     
                     # Update or create match event
                     match_event, created = FantasyMatchEvent.objects.get_or_create(

@@ -140,7 +140,7 @@ class Command(BaseCommand):
                     bowl_points += ((event.bowl_wickets or 0) * 25)  # Wickets
                     bowl_points += ((event.bowl_maidens or 0) * 8)  # Maidens
                     
-                    # Milestones - FIXED to use 3+ wickets
+                    # Milestones
                     if (event.bowl_wickets or 0) >= 3:
                         bowl_points += 8  # 3+ wickets bonus
                     if (event.bowl_wickets or 0) >= 5:

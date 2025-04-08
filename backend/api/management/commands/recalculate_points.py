@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasySquad, FantasyBoostRole, FantasyMatchEvent
+from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasySquad, FantasyBoostRole, FantasyMatchEvent, IPLMatch
 from django.db.models import F, Sum
 from django.db import transaction
 import logging
@@ -59,6 +59,10 @@ class Command(BaseCommand):
             self.recalculate_fantasy_player_events(batch_size)
         else:
             self.stdout.write('Skipping FantasyPlayerEvent recalculation')
+
+        # Recalculate FantasyMatchEvent points
+        self.stdout.write('Recalculating FantasyMatchEvent points...')
+        self.recalculate_fantasy_match_events()
         
         if not options['skip_squads']:
             self.stdout.write('Recalculating FantasySquad total points...')
@@ -102,36 +106,42 @@ class Command(BaseCommand):
                         else:
                             bowl_eco = None
                             
-                        # Calculate SR bonus
+                        # Strike rate calculation
                         sr_bonus = 0
-                        if bat_sr is not None and event.bat_balls >= 6:
-                            if bat_sr >= 200:
+                        if bat_sr is not None and event.bat_balls >= 10:
+                            from decimal import Decimal, ROUND_HALF_UP
+                            sr = Decimal(str(bat_sr)).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
+                            
+                            if sr >= Decimal('200'):
                                 sr_bonus = 6
-                            elif bat_sr >= 175:
+                            elif sr >= Decimal('175'):
                                 sr_bonus = 4
-                            elif bat_sr >= 150:
+                            elif sr >= Decimal('150'):
                                 sr_bonus = 2
-                            elif bat_sr <= 50:
+                            elif sr < Decimal('50'):
                                 sr_bonus = -6
-                            elif bat_sr <= 75:
+                            elif sr < Decimal('75'):
                                 sr_bonus = -4
-                            elif bat_sr <= 100:
+                            elif sr < Decimal('100'):
                                 sr_bonus = -2
                                 
-                        # Calculate economy bonus
+                        # Economy rate calculation
                         eco_bonus = 0
                         if bowl_eco is not None and event.bowl_balls >= 10:
-                            if bowl_eco <= 5:
+                            from decimal import Decimal, ROUND_HALF_UP
+                            eco = Decimal(str(bowl_eco)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                            
+                            if eco < Decimal('5'):
                                 eco_bonus = 6
-                            elif bowl_eco <= 6:
+                            elif eco < Decimal('6'):
                                 eco_bonus = 4
-                            elif bowl_eco <= 7:
+                            elif eco < Decimal('7'):
                                 eco_bonus = 2
-                            elif bowl_eco >= 12:
+                            elif eco >= Decimal('12'):
                                 eco_bonus = -6
-                            elif bowl_eco >= 11:
+                            elif eco >= Decimal('11'):
                                 eco_bonus = -4
-                            elif bowl_eco >= 10:
+                            elif eco >= Decimal('10'):
                                 eco_bonus = -2
                                 
                         # Calculate batting points
@@ -196,7 +206,6 @@ class Command(BaseCommand):
             self.stdout.write(f'Processed {min(count, total)} of {total} IPLPlayerEvents')
     
     def recalculate_fantasy_player_events(self, batch_size):
-        # [Your existing implementation]
         count = 0
         total = FantasyPlayerEvent.objects.count()
         self.stdout.write(f'Found {total} FantasyPlayerEvent records to process')
@@ -234,35 +243,39 @@ class Command(BaseCommand):
                             # Batting boosts
                             bat_boost = 0
                             if ipl_event.bat_runs is not None:
+                                from decimal import Decimal, ROUND_HALF_UP
+                                
                                 bat_boost += (boost.multiplier_runs - 1.0) * ipl_event.bat_runs
                                 bat_boost += (boost.multiplier_fours - 1.0) * (ipl_event.bat_fours or 0)
                                 bat_boost += (boost.multiplier_sixes - 1.0) * 2 * (ipl_event.bat_sixes or 0)
                                 
                                 # SR bonus calculation
                                 sr_bonus = 0
-                                if ipl_event.bat_balls and ipl_event.bat_balls >= 6:
-                                    sr = (ipl_event.bat_runs / ipl_event.bat_balls) * 100
-                                    if sr >= 200:
+                                if ipl_event.bat_balls and ipl_event.bat_balls >= 10:
+                                    sr = Decimal(str(ipl_event.bat_runs)) / Decimal(str(ipl_event.bat_balls)) * Decimal('100')
+                                    sr = sr.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
+                                    
+                                    if sr >= Decimal('200'):
                                         sr_bonus = 6
-                                    elif sr >= 175:
+                                    elif sr >= Decimal('175'):
                                         sr_bonus = 4
-                                    elif sr >= 150:
+                                    elif sr >= Decimal('150'):
                                         sr_bonus = 2
-                                    elif sr <= 50:
+                                    elif sr < Decimal('50'):
                                         sr_bonus = -6
-                                    elif sr <= 75:
+                                    elif sr < Decimal('75'):
                                         sr_bonus = -4
-                                    elif sr <= 100:
+                                    elif sr < Decimal('100'):
                                         sr_bonus = -2
                                 
                                 bat_boost += (boost.multiplier_sr - 1.0) * sr_bonus
                                 
                                 # Milestones
                                 bat_milestones = 0
-                                if ipl_event.bat_runs >= 50:
-                                    bat_milestones += 8
                                 if ipl_event.bat_runs >= 100:
                                     bat_milestones += 16
+                                if ipl_event.bat_runs >= 50:
+                                    bat_milestones += 8
                                 
                                 bat_boost += (boost.multiplier_bat_milestones - 1.0) * bat_milestones
                             
@@ -275,29 +288,32 @@ class Command(BaseCommand):
                                 # Economy bonus calculation
                                 eco_bonus = 0
                                 if ipl_event.bowl_balls and ipl_event.bowl_balls >= 10 and ipl_event.bowl_runs is not None:
-                                    overs = ipl_event.bowl_balls / 6
-                                    eco = ipl_event.bowl_runs / overs
-                                    if eco <= 5:
+                                    from decimal import Decimal, ROUND_HALF_UP
+                                    overs = Decimal(str(ipl_event.bowl_balls)) / Decimal('6')
+                                    eco = Decimal(str(ipl_event.bowl_runs)) / overs
+                                    eco = eco.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                                    
+                                    if eco < Decimal('5'):
                                         eco_bonus = 6
-                                    elif eco <= 6:
+                                    elif eco < Decimal('6'):
                                         eco_bonus = 4
-                                    elif eco <= 7:
+                                    elif eco < Decimal('7'):
                                         eco_bonus = 2
-                                    elif eco >= 12:
+                                    elif eco >= Decimal('12'):
                                         eco_bonus = -6
-                                    elif eco >= 11:
+                                    elif eco >= Decimal('11'):
                                         eco_bonus = -4
-                                    elif eco >= 10:
+                                    elif eco >= Decimal('10'):
                                         eco_bonus = -2
                                 
                                 bowl_boost += (boost.multiplier_economy - 1.0) * eco_bonus
                                 
                                 # Milestones
                                 bowl_milestones = 0
-                                if (ipl_event.bowl_wickets or 0) >= 3:
-                                    bowl_milestones += 8
                                 if (ipl_event.bowl_wickets or 0) >= 5:
                                     bowl_milestones += 16
+                                if (ipl_event.bowl_wickets or 0) >= 3:
+                                    bowl_milestones += 8
                                 
                                 bowl_boost += (boost.multiplier_bowl_milestones - 1.0) * bowl_milestones
                             
@@ -318,8 +334,10 @@ class Command(BaseCommand):
                             playing_boost = (boost.multiplier_playing - 1.0) * 4  # Participation points
                             other_boost = potm_boost + playing_boost
                             
-                            # Total boost points
-                            event.boost_points = float(bat_boost + bowl_boost + field_boost + other_boost)
+                            # Total boost points - convert to exact decimal for consistent results
+                            from decimal import Decimal, ROUND_HALF_UP
+                            boost_total = Decimal(str(bat_boost + bowl_boost + field_boost + other_boost))
+                            event.boost_points = float(boost_total.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
                         
                         event.save(update_fields=['boost_points'])
                         batch_count += 1
@@ -329,39 +347,101 @@ class Command(BaseCommand):
                 count += batch_count
             
             self.stdout.write(f'Processed {min(count, total)} of {total} FantasyPlayerEvents')
+
+    def recalculate_fantasy_match_events(self):
+        """
+        Recalculate all FantasyMatchEvents based on their FantasyPlayerEvents.
+        """
+        self.stdout.write('Recalculating FantasyMatchEvent points...')
+        
+        # Get all matches with fantasy events
+        matches = IPLMatch.objects.filter(
+            id__in=FantasyPlayerEvent.objects.values('match_event__match').distinct()
+        ).order_by('date')
+        
+        match_count = 0
+        updated_count = 0
+        
+        for match in matches:
+            # Get all fantasy squads that participated in this match
+            squad_ids = FantasyPlayerEvent.objects.filter(
+                match_event__match=match
+            ).values('fantasy_squad').distinct()
+            
+            # For each squad, recalculate match event
+            for sq in squad_ids:
+                squad_id = sq['fantasy_squad']
+                # Get all player events for this squad and match
+                player_events = FantasyPlayerEvent.objects.filter(
+                    fantasy_squad_id=squad_id,
+                    match_event__match=match
+                ).select_related('match_event')
+                
+                # Calculate totals using Decimal for precision
+                from decimal import Decimal, ROUND_HALF_UP
+                base_decimal = sum(Decimal(str(e.match_event.total_points_all)) for e in player_events)
+                boost_decimal = sum(Decimal(str(e.boost_points)) for e in player_events)
+                total_decimal = base_decimal + boost_decimal
+                
+                # Round to 1 decimal place
+                base_points = float(base_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                boost_points = float(boost_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                total_points = float(total_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                
+                # Update match event
+                match_event, created = FantasyMatchEvent.objects.update_or_create(
+                    match=match,
+                    fantasy_squad_id=squad_id,
+                    defaults={
+                        'total_base_points': base_points,
+                        'total_boost_points': boost_points,
+                        'total_points': total_points,
+                        'players_count': player_events.count()
+                    }
+                )
+                
+                updated_count += 1
+                
+            match_count += 1
+            if match_count % 10 == 0:
+                self.stdout.write(f'Processed {match_count} matches')
+        
+        self.stdout.write(f'Successfully updated {updated_count} match events')
+        
+        # Update match and running ranks
+        self._update_all_ranks()
+        
+    def _update_all_ranks(self):
+        """Update match and running ranks for all matches"""
+        from api.services.cricket_data_service import CricketDataService
+        
+        service = CricketDataService()
+        matches = IPLMatch.objects.filter(
+            id__in=FantasyMatchEvent.objects.values('match').distinct()
+        ).order_by('date')
+        
+        for match in matches:
+            service._update_match_ranks(match)
+            service._update_running_ranks(match)
     
     def recalculate_fantasy_squad_points(self):
-        # [Your existing implementation]
-        # Recalculate total points for all fantasy squads
+        """Calculate FantasySquad totals from FantasyMatchEvents"""
         squads = FantasySquad.objects.all()
         count = 0
-        total = squads.count()
         
-        if total == 0:
-            self.stdout.write('No FantasySquad records to process')
-            return
+        for squad in squads:
+            # Calculate from match events instead of player events
+            match_events_sum = FantasyMatchEvent.objects.filter(
+                fantasy_squad=squad
+            ).aggregate(
+                total=Sum('total_points')
+            )['total'] or 0
+            
+            squad.total_points = match_events_sum
+            squad.save(update_fields=['total_points'])
+            count += 1
         
-        with transaction.atomic():
-            for squad in squads:
-                try:
-                    # Calculate total points from all fantasy player events
-                    events = FantasyPlayerEvent.objects.filter(fantasy_squad=squad)
-                    total_points = 0
-                    
-                    for event in events:
-                        event_points = event.match_event.total_points_all + event.boost_points
-                        total_points += event_points
-                    
-                    squad.total_points = total_points
-                    squad.save(update_fields=['total_points'])
-                    count += 1
-                    
-                    if count % 10 == 0:
-                        self.stdout.write(f'Processed {count} of {total} FantasySquads')
-                except Exception as e:
-                    self.stderr.write(f"Error processing FantasySquad {squad.id}: {str(e)}")
-        
-        self.stdout.write(f'Successfully updated points for all {count} FantasySquads')
+        self.stdout.write(f'Successfully updated points for {count} FantasySquads')
         
     def sync_squad_totals_with_match_events(self):
         """
