@@ -38,45 +38,49 @@ class Command(BaseCommand):
             action='store_true',
             help='Only sync total_points with match event totals'
         )
+        parser.add_argument(
+            '--season',
+            type=int,
+            help='Only recalculate for specific season year (e.g., 2025)'
+        )
 
     def handle(self, *args, **options):
         batch_size = options['batch_size']
         sync_only = options.get('sync_only', False)
+        season = options.get('season')
+        
+        if season:
+            self.stdout.write(f'Filtering calculations to season year: {season}')
         
         if sync_only:
             self.stdout.write('Syncing FantasySquad total points with match events...')
-            self.sync_squad_totals_with_match_events()
+            self.sync_squad_totals_with_match_events(season=season)
             return
             
         if not options['skip_ipl']:
-            self.stdout.write('Recalculating IPLPlayerEvent points...')
-            self.recalculate_ipl_player_events(batch_size)
-        else:
-            self.stdout.write('Skipping IPLPlayerEvent recalculation')
+            self.recalculate_ipl_player_events(batch_size, season=season)
         
         if not options['skip_fantasy']:
-            self.stdout.write('Recalculating FantasyPlayerEvent points...')
-            self.recalculate_fantasy_player_events(batch_size)
-        else:
-            self.stdout.write('Skipping FantasyPlayerEvent recalculation')
+            self.recalculate_fantasy_player_events(batch_size, season=season)
         
-        # Always recalculate match events - this was missing before!
-        self.stdout.write('Recalculating FantasyMatchEvent points...')
-        self.recalculate_fantasy_match_events()
+        # Always recalculate match events
+        self.recalculate_fantasy_match_events(season=season)
         
         if not options['skip_squads']:
-            self.stdout.write('Recalculating FantasySquad total points...')
-            self.recalculate_fantasy_squad_points()
-        else:
-            self.stdout.write('Skipping FantasySquad recalculation')
+            self.recalculate_fantasy_squad_points(season=season)
         
         self.stdout.write(self.style.SUCCESS('Points recalculation completed successfully'))
     
-    def recalculate_ipl_player_events(self, batch_size):
-        """Recalculates points for all IPLPlayerEvent objects"""
+    def recalculate_ipl_player_events(self, batch_size, season=None):
+        # Create filtered queryset if season is specified
+        queryset = IPLPlayerEvent.objects.all()
+        if season:
+            queryset = queryset.filter(match__season__year=season)
+        
         count = 0
-        total = IPLPlayerEvent.objects.count()
-        self.stdout.write(f'Found {total} IPLPlayerEvent records to process')
+        total = queryset.count()
+        self.stdout.write(f'Found {total} IPLPlayerEvent records to process for season {season or "all"}')
+        
         
         if total == 0:
             self.stdout.write('No IPLPlayerEvent records to process')
@@ -85,7 +89,7 @@ class Command(BaseCommand):
         # Process in batches to avoid memory issues
         for i in range(0, total, batch_size):
             with transaction.atomic():
-                batch = IPLPlayerEvent.objects.all()[i:i+batch_size]
+                batch = queryset[i:i+batch_size]
                 batch_count = 0
                 
                 for event in batch:
@@ -106,21 +110,25 @@ class Command(BaseCommand):
                             
                             # Strike Rate Bonus/Penalty (min 10 balls)
                             if event.bat_balls and event.bat_balls >= 10:
-                                # Manually calculate SR to ensure precision
-                                sr = float(event.bat_runs) / float(event.bat_balls) * 100.0
+                                # Use string comparison for exact precision at boundaries
+                                sr_raw = float(event.bat_runs) / float(event.bat_balls) * 100.0
+                                sr_rounded = round(sr_raw, 2)
                                 
-                                # Check using '<' and '>=' for exact boundary conditions
-                                if sr >= 200.0:
+                                # Explicit handling for boundary case
+                                if sr_rounded == 100.00:
+                                    # Exactly 100.00 - NO penalty
+                                    pass
+                                elif sr_rounded >= 200.00:
                                     bat_points += 6
-                                elif sr >= 175.0:
+                                elif sr_rounded >= 175.00:
                                     bat_points += 4
-                                elif sr >= 150.0:
+                                elif sr_rounded >= 150.00:
                                     bat_points += 2
-                                elif sr < 50.0:
+                                elif sr_rounded < 50.00:
                                     bat_points -= 6
-                                elif sr < 75.0:
+                                elif sr_rounded < 75.00:
                                     bat_points -= 4
-                                elif sr < 100.0:  # IMPORTANT: SR=100 gets NO penalty
+                                elif sr_rounded < 100.00:
                                     bat_points -= 2
                             
                             # Duck Penalty (0 runs, not not-out, non-bowler)
@@ -144,22 +152,26 @@ class Command(BaseCommand):
                             
                             # Economy Bonus/Penalty (min 10 balls)
                             if event.bowl_balls and event.bowl_balls >= 10 and event.bowl_runs is not None:
-                                # Manually calculate economy to ensure precision
+                                # Use string comparison for exact precision at boundaries
                                 overs = float(event.bowl_balls) / 6.0
-                                eco = float(event.bowl_runs) / overs
+                                eco_raw = float(event.bowl_runs) / overs
+                                eco_rounded = round(eco_raw, 2)
                                 
-                                # Check using '<' and '>=' for exact boundary conditions
-                                if eco < 5.0:
+                                # Explicit handling for boundary case
+                                if eco_rounded == 7.00:
+                                    # Exactly 7.00 - NO bonus
+                                    pass
+                                elif eco_rounded < 5.00:
                                     bowl_points += 6
-                                elif eco < 6.0:
+                                elif eco_rounded < 6.00:
                                     bowl_points += 4
-                                elif eco < 7.0:  # IMPORTANT: Eco=7.0 gets NO bonus
+                                elif eco_rounded < 7.00:
                                     bowl_points += 2
-                                elif eco >= 12.0:
+                                elif eco_rounded >= 12.00:
                                     bowl_points -= 6
-                                elif eco >= 11.0:
+                                elif eco_rounded >= 11.00:
                                     bowl_points -= 4
-                                elif eco >= 10.0:
+                                elif eco_rounded >= 10.00:
                                     bowl_points -= 2
                         
                         # === FIELDING POINTS ===
@@ -202,10 +214,17 @@ class Command(BaseCommand):
             
             self.stdout.write(f'Processed {min(count, total)} of {total} IPLPlayerEvents')
     
-    def recalculate_fantasy_player_events(self, batch_size):
+    def recalculate_fantasy_player_events(self, batch_size, season=None):
+        # Initialize count variable
         count = 0
-        total = FantasyPlayerEvent.objects.count()
-        self.stdout.write(f'Found {total} FantasyPlayerEvent records to process')
+        
+        # Filter by season if specified
+        base_query = FantasyPlayerEvent.objects.select_related('match_event', 'boost')
+        if season:
+            base_query = base_query.filter(match_event__match__season__year=season)
+        
+        total = base_query.count()
+        self.stdout.write(f'Found {total} FantasyPlayerEvent records to process for season {season or "all"}')
         
         if total == 0:
             self.stdout.write('No FantasyPlayerEvent records to process')
@@ -214,9 +233,7 @@ class Command(BaseCommand):
         # Process in batches
         for i in range(0, total, batch_size):
             with transaction.atomic():
-                batch = FantasyPlayerEvent.objects.select_related(
-                    'match_event', 'boost'
-                )[i:i+batch_size]
+                batch = base_query[i:i+batch_size]
                 
                 batch_count = 0
                 for event in batch:
@@ -333,16 +350,18 @@ class Command(BaseCommand):
             
             self.stdout.write(f'Processed {min(count, total)} of {total} FantasyPlayerEvents')
 
-    def recalculate_fantasy_match_events(self):
-        """
-        Recalculate all FantasyMatchEvents based on their FantasyPlayerEvents.
-        """
-        self.stdout.write('Recalculating FantasyMatchEvent points...')
+    def recalculate_fantasy_match_events(self, season=None):
+        """Recalculate match events with optional season filter"""
+        self.stdout.write(f'Recalculating FantasyMatchEvent points for season {season or "all"}...')
         
-        # Get all matches with fantasy events
-        matches = IPLMatch.objects.filter(
+        # Get matches with optional season filter
+        matches_query = IPLMatch.objects.filter(
             id__in=FantasyPlayerEvent.objects.values('match_event__match').distinct()
-        ).order_by('date')
+        )
+        if season:
+            matches_query = matches_query.filter(season__year=season)
+        
+        matches = matches_query.order_by('date')
         
         match_count = 0
         updated_count = 0
@@ -408,16 +427,27 @@ class Command(BaseCommand):
             service._update_match_ranks(match)
             service._update_running_ranks(match)
     
-    def recalculate_fantasy_squad_points(self):
+    def recalculate_fantasy_squad_points(self, season=None):
         """Calculate FantasySquad totals from FantasyMatchEvents"""
-        squads = FantasySquad.objects.all()
+        # Get relevant squads
+        if season:
+            # Only get squads with events in this season
+            squad_ids = FantasyPlayerEvent.objects.filter(
+                match_event__match__season__year=season
+            ).values_list('fantasy_squad_id', flat=True).distinct()
+            squads = FantasySquad.objects.filter(id__in=squad_ids)
+        else:
+            squads = FantasySquad.objects.all()
+            
         count = 0
         
         for squad in squads:
-            # Calculate from match events instead of player events
-            match_events_sum = FantasyMatchEvent.objects.filter(
-                fantasy_squad=squad
-            ).aggregate(
+            # Base match events query
+            match_events_query = FantasyMatchEvent.objects.filter(fantasy_squad=squad)
+            
+            # If filtering by season, update squad totals based on ALL seasons
+            # This ensures squad totals stay accurate
+            match_events_sum = match_events_query.aggregate(
                 total=Sum('total_points')
             )['total'] or 0
             
