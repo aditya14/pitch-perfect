@@ -59,8 +59,8 @@ class Command(BaseCommand):
             self.recalculate_fantasy_player_events(batch_size)
         else:
             self.stdout.write('Skipping FantasyPlayerEvent recalculation')
-
-        # Recalculate FantasyMatchEvent points
+        
+        # Always recalculate match events - this was missing before!
         self.stdout.write('Recalculating FantasyMatchEvent points...')
         self.recalculate_fantasy_match_events()
         
@@ -69,14 +69,11 @@ class Command(BaseCommand):
             self.recalculate_fantasy_squad_points()
         else:
             self.stdout.write('Skipping FantasySquad recalculation')
-            
-        # Always check for discrepancies
-        self.sync_squad_totals_with_match_events()
         
         self.stdout.write(self.style.SUCCESS('Points recalculation completed successfully'))
     
     def recalculate_ipl_player_events(self, batch_size):
-        # [Your existing implementation]
+        """Recalculates points for all IPLPlayerEvent objects"""
         count = 0
         total = IPLPlayerEvent.objects.count()
         self.stdout.write(f'Found {total} IPLPlayerEvent records to process')
@@ -93,96 +90,95 @@ class Command(BaseCommand):
                 
                 for event in batch:
                     try:
-                        # Safely calculate strike rate
-                        if event.bat_balls and event.bat_balls > 0 and event.bat_runs is not None:
-                            bat_sr = (event.bat_runs / event.bat_balls) * 100
-                        else:
-                            bat_sr = None
-                            
-                        # Safely calculate economy
-                        if event.bowl_balls and event.bowl_balls > 0 and event.bowl_runs is not None:
-                            overs = event.bowl_balls / 6
-                            bowl_eco = event.bowl_runs / overs
-                        else:
-                            bowl_eco = None
-                            
-                        # Strike rate calculation
-                        sr_bonus = 0
-                        if bat_sr is not None and event.bat_balls >= 10:
-                            from decimal import Decimal, ROUND_HALF_UP
-                            sr = Decimal(str(bat_sr)).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
-                            
-                            if sr >= Decimal('200'):
-                                sr_bonus = 6
-                            elif sr >= Decimal('175'):
-                                sr_bonus = 4
-                            elif sr >= Decimal('150'):
-                                sr_bonus = 2
-                            elif sr < Decimal('50'):
-                                sr_bonus = -6
-                            elif sr < Decimal('75'):
-                                sr_bonus = -4
-                            elif sr < Decimal('100'):
-                                sr_bonus = -2
-                                
-                        # Economy rate calculation
-                        eco_bonus = 0
-                        if bowl_eco is not None and event.bowl_balls >= 10:
-                            from decimal import Decimal, ROUND_HALF_UP
-                            eco = Decimal(str(bowl_eco)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                            
-                            if eco < Decimal('5'):
-                                eco_bonus = 6
-                            elif eco < Decimal('6'):
-                                eco_bonus = 4
-                            elif eco < Decimal('7'):
-                                eco_bonus = 2
-                            elif eco >= Decimal('12'):
-                                eco_bonus = -6
-                            elif eco >= Decimal('11'):
-                                eco_bonus = -4
-                            elif eco >= Decimal('10'):
-                                eco_bonus = -2
-                                
-                        # Calculate batting points
+                        # === BATTING POINTS ===
                         bat_points = 0
                         if event.bat_runs is not None:
+                            # Runs & boundaries
                             bat_points += event.bat_runs  # Runs
-                            bat_points += (event.bat_fours or 0)  # Boundaries
-                            bat_points += (2 * (event.bat_sixes or 0))  # Six bonus
-                            bat_points += (8 if event.bat_runs >= 50 else 0)  # 50+ bonus
-                            bat_points += (16 if event.bat_runs >= 100 else 0)  # 100+ bonus
-                            bat_points += sr_bonus  # Strike rate bonus/penalty
+                            bat_points += (event.bat_fours or 0)  # Fours
+                            bat_points += (2 * (event.bat_sixes or 0))  # Sixes (2 points each)
                             
-                            # Duck penalty for non-bowlers
-                            if (event.bat_runs == 0 and not event.bat_not_out and 
-                                hasattr(event.player, 'role') and event.player.role != 'BOWL'):
-                                bat_points -= 2
+                            # Milestones (50+, 100+)
+                            if event.bat_runs >= 100:
+                                bat_points += 16  # 100+ bonus
+                            if event.bat_runs >= 50:
+                                bat_points += 8   # 50+ bonus
+                            
+                            # Strike Rate Bonus/Penalty (min 10 balls)
+                            if event.bat_balls and event.bat_balls >= 10:
+                                # Manually calculate SR to ensure precision
+                                sr = float(event.bat_runs) / float(event.bat_balls) * 100.0
                                 
-                        # Calculate bowling points
+                                # Check using '<' and '>=' for exact boundary conditions
+                                if sr >= 200.0:
+                                    bat_points += 6
+                                elif sr >= 175.0:
+                                    bat_points += 4
+                                elif sr >= 150.0:
+                                    bat_points += 2
+                                elif sr < 50.0:
+                                    bat_points -= 6
+                                elif sr < 75.0:
+                                    bat_points -= 4
+                                elif sr < 100.0:  # IMPORTANT: SR=100 gets NO penalty
+                                    bat_points -= 2
+                            
+                            # Duck Penalty (0 runs, not not-out, non-bowler)
+                            if event.bat_runs == 0 and not event.bat_not_out:
+                                # Only check role if player exists and has a role attribute
+                                if hasattr(event.player, 'role') and event.player.role != 'BOWL':
+                                    bat_points -= 2
+                        
+                        # === BOWLING POINTS ===
                         bowl_points = 0
                         if event.bowl_wickets is not None or event.bowl_maidens is not None:
-                            bowl_points += ((event.bowl_wickets or 0) * 25)  # Wickets
-                            bowl_points += ((event.bowl_maidens or 0) * 8)  # Maidens
-                            bowl_points += (8 if (event.bowl_wickets or 0) >= 3 else 0)  # 3+ wickets bonus
-                            bowl_points += (16 if (event.bowl_wickets or 0) >= 5 else 0)  # 5+ wickets bonus
-                            bowl_points += eco_bonus  # Economy bonus/penalty
+                            # Base bowling points
+                            bowl_points += ((event.bowl_wickets or 0) * 25)  # Wickets (25 points each)
+                            bowl_points += ((event.bowl_maidens or 0) * 8)   # Maidens (8 points each)
+                            
+                            # Milestone bonuses
+                            if (event.bowl_wickets or 0) >= 5:
+                                bowl_points += 16  # 5+ wickets bonus
+                            if (event.bowl_wickets or 0) >= 3:
+                                bowl_points += 8   # 3+ wickets bonus
+                            
+                            # Economy Bonus/Penalty (min 10 balls)
+                            if event.bowl_balls and event.bowl_balls >= 10 and event.bowl_runs is not None:
+                                # Manually calculate economy to ensure precision
+                                overs = float(event.bowl_balls) / 6.0
+                                eco = float(event.bowl_runs) / overs
+                                
+                                # Check using '<' and '>=' for exact boundary conditions
+                                if eco < 5.0:
+                                    bowl_points += 6
+                                elif eco < 6.0:
+                                    bowl_points += 4
+                                elif eco < 7.0:  # IMPORTANT: Eco=7.0 gets NO bonus
+                                    bowl_points += 2
+                                elif eco >= 12.0:
+                                    bowl_points -= 6
+                                elif eco >= 11.0:
+                                    bowl_points -= 4
+                                elif eco >= 10.0:
+                                    bowl_points -= 2
                         
-                        # Calculate fielding points
+                        # === FIELDING POINTS ===
                         field_points = 0
                         if any(v is not None for v in [event.wk_stumping, event.field_catch, event.wk_catch, event.run_out_solo, event.run_out_collab]):
                             field_points = (
-                                ((event.wk_stumping or 0) * 12) +  # Stumpings
-                                ((event.field_catch or 0) * 8) +  # Catches
-                                ((event.wk_catch or 0) * 8) +  # Keeper catches
-                                ((event.run_out_solo or 0) * 8) +  # Solo run outs
-                                ((event.run_out_collab or 0) * 4)  # Collaborative run outs
+                                ((event.wk_stumping or 0) * 12) +     # Stumpings (12 pts)
+                                ((event.field_catch or 0) * 8) +      # Catches (8 pts)
+                                ((event.wk_catch or 0) * 8) +         # Keeper catches (8 pts)
+                                ((event.run_out_solo or 0) * 8) +     # Solo run outs (8 pts)
+                                ((event.run_out_collab or 0) * 4)     # Collaborative run outs (4 pts)
                             )
                         
-                        # Calculate other points
-                        other_points = (50 if event.player_of_match else 0) + 4  # POTM + participation
+                        # === OTHER POINTS ===
+                        other_points = 4  # Participation (always 4)
+                        if event.player_of_match:
+                            other_points += 50  # Player of the match (50 pts)
                         
-                        # Calculate total points
+                        # === TOTAL POINTS ===
                         total_points = bat_points + bowl_points + field_points + other_points
                         
                         # Update the event
@@ -198,6 +194,7 @@ class Command(BaseCommand):
                             'total_points_all'
                         ])
                         batch_count += 1
+                        
                     except Exception as e:
                         self.stderr.write(f"Error processing IPLPlayerEvent {event.id}: {str(e)}")
                 
@@ -243,29 +240,25 @@ class Command(BaseCommand):
                             # Batting boosts
                             bat_boost = 0
                             if ipl_event.bat_runs is not None:
-                                from decimal import Decimal, ROUND_HALF_UP
-                                
                                 bat_boost += (boost.multiplier_runs - 1.0) * ipl_event.bat_runs
                                 bat_boost += (boost.multiplier_fours - 1.0) * (ipl_event.bat_fours or 0)
                                 bat_boost += (boost.multiplier_sixes - 1.0) * 2 * (ipl_event.bat_sixes or 0)
                                 
-                                # SR bonus calculation
+                                # SR bonus calculation - use exact float math
                                 sr_bonus = 0
                                 if ipl_event.bat_balls and ipl_event.bat_balls >= 10:
-                                    sr = Decimal(str(ipl_event.bat_runs)) / Decimal(str(ipl_event.bat_balls)) * Decimal('100')
-                                    sr = sr.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
-                                    
-                                    if sr >= Decimal('200'):
+                                    sr = float(ipl_event.bat_runs) / float(ipl_event.bat_balls) * 100.0
+                                    if sr >= 200.0:
                                         sr_bonus = 6
-                                    elif sr >= Decimal('175'):
+                                    elif sr >= 175.0:
                                         sr_bonus = 4
-                                    elif sr >= Decimal('150'):
+                                    elif sr >= 150.0:
                                         sr_bonus = 2
-                                    elif sr < Decimal('50'):
+                                    elif sr < 50.0:
                                         sr_bonus = -6
-                                    elif sr < Decimal('75'):
+                                    elif sr < 75.0:
                                         sr_bonus = -4
-                                    elif sr < Decimal('100'):
+                                    elif sr < 100.0:  # SR=100 gets NO penalty
                                         sr_bonus = -2
                                 
                                 bat_boost += (boost.multiplier_sr - 1.0) * sr_bonus
@@ -285,25 +278,22 @@ class Command(BaseCommand):
                                 bowl_boost += (boost.multiplier_wickets - 1.0) * 25 * (ipl_event.bowl_wickets or 0)
                                 bowl_boost += (boost.multiplier_maidens - 1.0) * 8 * (ipl_event.bowl_maidens or 0)
                                 
-                                # Economy bonus calculation
+                                # Economy bonus calculation - use exact float math
                                 eco_bonus = 0
                                 if ipl_event.bowl_balls and ipl_event.bowl_balls >= 10 and ipl_event.bowl_runs is not None:
-                                    from decimal import Decimal, ROUND_HALF_UP
-                                    overs = Decimal(str(ipl_event.bowl_balls)) / Decimal('6')
-                                    eco = Decimal(str(ipl_event.bowl_runs)) / overs
-                                    eco = eco.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                                    
-                                    if eco < Decimal('5'):
+                                    overs = float(ipl_event.bowl_balls) / 6.0
+                                    eco = float(ipl_event.bowl_runs) / overs
+                                    if eco < 5.0:
                                         eco_bonus = 6
-                                    elif eco < Decimal('6'):
+                                    elif eco < 6.0:
                                         eco_bonus = 4
-                                    elif eco < Decimal('7'):
+                                    elif eco < 7.0:  # Eco=7.0 gets NO bonus
                                         eco_bonus = 2
-                                    elif eco >= Decimal('12'):
+                                    elif eco >= 12.0:
                                         eco_bonus = -6
-                                    elif eco >= Decimal('11'):
+                                    elif eco >= 11.0:
                                         eco_bonus = -4
-                                    elif eco >= Decimal('10'):
+                                    elif eco >= 10.0:
                                         eco_bonus = -2
                                 
                                 bowl_boost += (boost.multiplier_economy - 1.0) * eco_bonus
@@ -319,12 +309,9 @@ class Command(BaseCommand):
                             
                             # Fielding boosts
                             field_boost = 0
-                            # Catches
                             catches = (ipl_event.field_catch or 0) + (ipl_event.wk_catch or 0)
                             field_boost += (boost.multiplier_catches - 1.0) * 8 * catches
-                            # Stumpings
                             field_boost += (boost.multiplier_stumpings - 1.0) * 12 * (ipl_event.wk_stumping or 0)
-                            # Run outs
                             run_out_points = 8 * (ipl_event.run_out_solo or 0) + 4 * (ipl_event.run_out_collab or 0)
                             field_boost += (boost.multiplier_run_outs - 1.0) * run_out_points
                             
@@ -334,10 +321,8 @@ class Command(BaseCommand):
                             playing_boost = (boost.multiplier_playing - 1.0) * 4  # Participation points
                             other_boost = potm_boost + playing_boost
                             
-                            # Total boost points - convert to exact decimal for consistent results
-                            from decimal import Decimal, ROUND_HALF_UP
-                            boost_total = Decimal(str(bat_boost + bowl_boost + field_boost + other_boost))
-                            event.boost_points = float(boost_total.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                            # Total boost points
+                            event.boost_points = float(bat_boost + bowl_boost + field_boost + other_boost)
                         
                         event.save(update_fields=['boost_points'])
                         batch_count += 1
@@ -377,16 +362,15 @@ class Command(BaseCommand):
                     match_event__match=match
                 ).select_related('match_event')
                 
-                # Calculate totals using Decimal for precision
-                from decimal import Decimal, ROUND_HALF_UP
-                base_decimal = sum(Decimal(str(e.match_event.total_points_all)) for e in player_events)
-                boost_decimal = sum(Decimal(str(e.boost_points)) for e in player_events)
-                total_decimal = base_decimal + boost_decimal
+                # Calculate totals using direct sums
+                base_points = sum(float(e.match_event.total_points_all) for e in player_events)
+                boost_points = sum(float(e.boost_points) for e in player_events)
+                total_points = base_points + boost_points
                 
                 # Round to 1 decimal place
-                base_points = float(base_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
-                boost_points = float(boost_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
-                total_points = float(total_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                base_points = round(base_points, 1)
+                boost_points = round(boost_points, 1)
+                total_points = round(total_points, 1)
                 
                 # Update match event
                 match_event, created = FantasyMatchEvent.objects.update_or_create(
@@ -410,7 +394,7 @@ class Command(BaseCommand):
         
         # Update match and running ranks
         self._update_all_ranks()
-        
+
     def _update_all_ranks(self):
         """Update match and running ranks for all matches"""
         from api.services.cricket_data_service import CricketDataService
