@@ -186,7 +186,7 @@ const Login = () => {
                     type="submit"
                     disabled={isSubmitting}
                     className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                      bg-neutral-600 hover:bg-neutral-700 dark:bg-neutral-500 dark:hover:bg-neutral-600 
+                      bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 
                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 
                       disabled:bg-neutral-400 disabled:cursor-not-allowed transition-colors duration-200"
                   >

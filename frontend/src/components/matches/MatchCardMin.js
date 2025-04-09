@@ -204,9 +204,14 @@ const MatchCardMin = ({ match, leagueId }) => {
               <div className="flex items-center">
                 <div className='h-2.5 w-2.5 mr-1.5 rounded-sm'
                   style={{
-                     backgroundColor: battingFirstTeam.primary_color ? `${'#' + battingFirstTeam.primary_color}` : '#6B7280',
-                     opacity: battingFirstTeam?.short_name === match?.winner?.short_name ? 1 : 0.5
-                  }}
+                    backgroundColor: battingFirstTeam.primary_color ? `${'#' + battingFirstTeam.primary_color}` : '#6B7280',
+                    opacity: match.winner 
+                      ? (battingFirstTeam?.short_name === match?.winner?.short_name ? 1 : 0.1) 
+                      : 1,
+                    boxShadow: match.winner && battingFirstTeam?.short_name === match?.winner?.short_name 
+                      ? `1px 1px 5px ${hexToRgba(battingFirstTeam.primary_color, 0.9)}` 
+                      : 'none'
+                   }}
                 />
                 <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingFirstTeam?.short_name === match?.winner?.short_name ? 'font-bold' : ''}`}>
                   {battingFirstTeam.short_name || battingFirstTeam.name}
@@ -229,8 +234,13 @@ const MatchCardMin = ({ match, leagueId }) => {
               <div className="flex items-center">
                 <div className='h-2.5 w-2.5 mr-1.5 rounded-sm'
                   style={{
-                     backgroundColor: battingSecondTeam.primary_color ? `${'#' + battingSecondTeam.primary_color}` : '#6B7280',
-                     opacity: battingSecondTeam?.short_name === match?.winner?.short_name ? 1 : 0.5
+                    backgroundColor: battingSecondTeam.primary_color ? `${'#' + battingSecondTeam.primary_color}` : '#6B7280',
+                    opacity: match.winner 
+                      ? (battingSecondTeam?.short_name === match?.winner?.short_name ? 1 : 0.1) 
+                      : 1,
+                    boxShadow: match.winner && battingSecondTeam?.short_name === match?.winner?.short_name 
+                      ? `1px 1px 5px ${hexToRgba(battingSecondTeam.primary_color, 0.9)}` 
+                      : 'none'
                   }}
                 />
                 <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingSecondTeam?.short_name === match?.winner?.short_name ? 'font-bold' : ''}`}>
