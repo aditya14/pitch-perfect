@@ -349,7 +349,7 @@ class IPLMatchViewSet(viewsets.ModelViewSet):
             ).order_by('-total_points_all')  # Order by points for better UX
             
             serializer = IPLPlayerEventSerializer(ipl_events, many=True)
-            data = serializer.data
+            data = [{**item, 'player_id': item.pop('id')} for item in serializer.data]
             cache.set(cache_key, data, 60 * 15)  # Cache for 15 minutes
             return Response(data)
                 
