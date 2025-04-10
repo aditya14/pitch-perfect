@@ -193,11 +193,12 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
                 'match__season', 
                 'for_team', 
                 'vs_team'
-            ).order_by('-match__date')[:20]  # Limit to most recent 20 matches for performance
+            ).order_by('-match__date')  # Limit to most recent 20 matches for performance
             
             # Format the match details efficiently
             match_details = []
             for event in match_events:
+                print("event", event)
                 match_detail = {
                     'match': {
                         'date': event.match.date,
@@ -380,7 +381,7 @@ def league_match_events(request, league_id, match_id):
         
         if fantasy_events.exists():
             serializer = FantasyPlayerEventSerializer(fantasy_events, many=True)
-            print("Fantasy events found", serializer.data)
+            # print("Fantasy events found", serializer.data)
             return Response(serializer.data)
         
         # If no fantasy events, return IPL events
