@@ -198,7 +198,6 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
             # Format the match details efficiently
             match_details = []
             for event in match_events:
-                print("event", event)
                 match_detail = {
                     'match': {
                         'date': event.match.date,
