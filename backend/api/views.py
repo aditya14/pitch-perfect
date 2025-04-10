@@ -1945,3 +1945,181 @@ def match_standings(request, match_id):
             {'error': str(e)}, 
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def mid_season_draft_pool(request, league_id):
+    """Get all players available in the mid-season draft pool with stats"""
+    try:
+        league = get_object_or_404(FantasyLeague, id=league_id)
+        squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+        
+        # Get the draft pool
+        if not league.draft_pool:
+            return Response(
+                {'error': 'Draft pool has not been compiled yet'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get player details with season stats
+        from django.db.models import Avg, Count, Q
+        
+        players = IPLPlayer.objects.filter(
+            id__in=league.draft_pool
+        ).annotate(
+            matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season=league.season)),
+            avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season=league.season))
+        )
+        
+        # Get existing draft order if any
+        draft = FantasyDraft.objects.filter(
+            league=league,
+            squad=squad,
+            type='Mid-Season'
+        ).first()
+        
+        # Prepare response with player details
+        player_data = []
+        for player in players:
+            # Get current team
+            team = player.playerteamhistory_set.filter(
+                season=league.season
+            ).select_related('team').first()
+            
+            # Calculate draft position if available
+            draft_position = None
+            if draft and draft.order:
+                try:
+                    draft_position = draft.order.index(player.id)
+                except ValueError:
+                    draft_position = None
+            
+            # For players with no current season data, get historical average
+            historical_avg = None
+            if player.avg_points is None:
+                historical_stats = IPLPlayerEvent.objects.filter(
+                    player=player,
+                    match__season__year__in=range(2021, 2025)  # 2021-2024
+                ).aggregate(
+                    matches=Count('id'),
+                    avg_points=Avg('total_points_all')
+                )
+                historical_avg = historical_stats['avg_points']
+            
+            player_data.append({
+                'id': player.id,
+                'name': player.name,
+                'role': player.role,
+                'team': team.team.short_name if team else None,
+                'matches': player.matches or 0,
+                'avg_points': player.avg_points or historical_avg or 0,
+                'draft_position': draft_position
+            })
+        
+        # Sort by average points
+        player_data.sort(key=lambda x: x['avg_points'], reverse=True)
+        
+        # Add rank
+        for i, player in enumerate(player_data):
+            player['rank'] = i + 1
+        
+        return Response(player_data)
+        
+    except Exception as e:
+        print(f"Error in mid_season_draft_pool: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def mid_season_draft_order(request, league_id):
+    """Get or update draft preferences for mid-season draft"""
+    try:
+        league = get_object_or_404(FantasyLeague, id=league_id)
+        squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+        
+        # Get or create draft order
+        draft, created = FantasyDraft.objects.get_or_create(
+            league=league,
+            squad=squad,
+            type='Mid-Season',
+            defaults={'order': []}
+        )
+        
+        if request.method == 'GET':
+            # If empty order and we need to create a default
+            if not draft.order:
+                # Create default order based on current season points
+                from django.db.models import Avg, Count, Q
+                
+                default_order = list(IPLPlayer.objects.filter(
+                    id__in=league.draft_pool
+                ).annotate(
+                    matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season=league.season)),
+                    avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season=league.season))
+                ).order_by('-avg_points').values_list('id', flat=True))
+                
+                # For players with no matches this season, append sorted by historical data
+                no_matches_players = IPLPlayer.objects.filter(
+                    id__in=league.draft_pool
+                ).exclude(
+                    id__in=default_order
+                ).annotate(
+                    hist_matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season__year__in=range(2021, 2025))),
+                    hist_avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season__year__in=range(2021, 2025)))
+                ).order_by('-hist_avg_points').values_list('id', flat=True)
+                
+                default_order.extend(list(no_matches_players))
+                
+                # Save the default order
+                draft.order = default_order
+                draft.save()
+            
+            serializer = FantasyDraftSerializer(draft)
+            return Response(serializer.data)
+            
+        elif request.method == 'POST':
+            # Update draft order
+            order = request.data.get('order')
+            
+            if not order:
+                return Response(
+                    {'error': 'No order provided'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate all IDs are in the draft pool
+            invalid_ids = [pid for pid in order if pid not in league.draft_pool]
+            if invalid_ids:
+                return Response(
+                    {'error': f'Invalid player IDs in order: {invalid_ids}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate all draft pool players are included
+            missing_ids = [pid for pid in league.draft_pool if pid not in order]
+            if missing_ids:
+                return Response(
+                    {'error': f'Missing player IDs in order: {missing_ids}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update the order
+            draft.order = order
+            draft.save()
+            
+            serializer = FantasyDraftSerializer(draft)
+            return Response(serializer.data)
+        
+    except Exception as e:
+        print(f"Error in mid_season_draft_order: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )

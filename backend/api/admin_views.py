@@ -3,7 +3,7 @@ from django.core.management import call_command
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.contrib import messages
 import json
 import random
@@ -217,3 +217,29 @@ def save_draft_results(results):
         squad = FantasySquad.objects.get(id=squad_id)
         squad.current_squad = player_ids
         squad.save()
+
+@staff_member_required
+def run_mid_season_draft(request):
+    """Admin view to run mid-season fantasy draft for a specific league"""
+    # Get all leagues
+    leagues = FantasyLeague.objects.all()
+    
+    if request.method == 'POST':
+        league_id = request.POST.get('league_id')
+        if league_id:
+            # Call the management command programmatically
+            from django.core.management import call_command
+            
+            try:
+                call_command('execute_mid_season_draft', league_id)
+                messages.success(request, f"Mid-season draft executed successfully for league {league_id}")
+            except Exception as e:
+                messages.error(request, f"Error executing mid-season draft: {str(e)}")
+        else:
+            messages.error(request, "Please select a league")
+    
+    # Render the admin form
+    return render(request, 'admin/run_mid_season_draft.html', {
+        'leagues': leagues,
+        'title': 'Run Mid-Season Fantasy Draft',
+    })

@@ -318,8 +318,8 @@ const DetailedMatchPerformance = ({
                           {data.base_points}
                         </span>
                       </td>
-                      <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">
-                        {data.boost_points !== 0 ? data.boost_points : '-'}
+                      <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${data.boost_label ? 'font-medium' : 'opacity-30'}`}>
+                        {data.boost_label ? data.boost_points : '-'}
                       </td>
                       <td className="px-1 py-2 whitespace-nowrap text-xs text-left font-bold text-neutral-900 dark:text-white">
                         {data.fantasy_points}
@@ -348,27 +348,27 @@ const DetailedMatchPerformance = ({
                   </td>
                   <td className={`
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                    ${!data.bat_fours && 'opacity-30'}
+                    ${!data.bat_balls && 'opacity-30'}
                   `}>
-                    {data.bat_fours ? data.bat_fours : '-'}
+                    {(data.bat_balls && data.bat_balls > 0) ? data.bat_fours : '-'}
                   </td>
                   <td className={`
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                    ${!data.bat_sixes && 'opacity-30'}
+                    ${!data.bat_balls && 'opacity-30'}
                   `}>
-                    {data.bat_sixes ? data.bat_sixes : '-'}
+                    {(data.bat_balls && data.bat_balls > 0) ? data.bat_sixes : '-'}
                   </td>
                   <td className={`
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                    ${!data.bat_strike_rate && 'opacity-30'}
+                    ${!data.bat_balls && 'opacity-30'}
                   `}>
                     <div className="flex items-center">
-                      {data.bat_strike_rate ? data.bat_strike_rate?.toFixed(2) : '-'}
+                      {(data.bat_balls > 0) ? data.bat_strike_rate?.toFixed(2) : '-'}
                       {renderSRChevrons(data.bat_strike_rate, data.bat_balls)}
                     </div>
                   </td>
                   <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">
-                    {data.batting_points_total || '-'}
+                    {data.bat_balls ? data.batting_points_total : '-'}
                   </td>
                   
                   {/* Bowling stats */}
@@ -383,9 +383,9 @@ const DetailedMatchPerformance = ({
                   </td>
                   <td className={`
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                    ${(!data.bowl_maidens && !data.bowl_balls) && 'opacity-30'}
+                    ${!data.bowl_balls && 'opacity-30'}
                   `}>
-                    {data.bowl_maidens ? data.bowl_maidens : data.bowl_balls ? 0 : '-'}
+                    {data.bowl_balls ? data.bowl_maidens : '-'}
                   </td>
                   <td className={`
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight

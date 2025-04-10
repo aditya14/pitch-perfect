@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div class="module">
+    <h2>Run Mid-Season Fantasy Draft</h2>
+    <div class="description">
+        <p>
+            This will execute the mid-season draft for the selected league. The draft will assign players based on:
+            <ul>
+                <li>Team standings (worst to best for snake order)</li>
+                <li>User draft preferences</li>
+                <li>Current core squad players will be retained</li>
+            </ul>
+            <strong>Warning: This action cannot be undone!</strong>
+        </p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            <div class="form-row">
+                <label for="league_id">Select League:</label>
+                <select name="league_id" id="league_id" required>
+                    <option value="">---------</option>
+                    {% for league in leagues %}
+                    <option value="{{ league.id }}">{{ league.name }} ({{ league.season }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" class="default" value="Run Draft">
+        </div>
+    </form>
+</div>
+{% endblock %}

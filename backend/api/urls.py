@@ -53,7 +53,11 @@ urlpatterns = [
     path('leagues/<int:league_id>/stats/running-total/', views_stats.league_stats_running_total, name='league-stats-running-total'),
     path('leagues/<int:league_id>/stats/table', views_stats.league_table_stats, name='league_table_stats'),
 
+    # Mid-season draft endpoints
+    path('leagues/<int:league_id>/mid-season-draft/pool/', views.mid_season_draft_pool, name='mid_season_draft_pool'),
+    path('leagues/<int:league_id>/mid-season-draft/order/', views.mid_season_draft_order, name='mid_season_draft_order'),
     
     # Admin endpoints
     path('admin/run-fantasy-draft/', admin_views.run_fantasy_draft, name='run-fantasy-draft'),
+    path('admin/run-mid-season-draft/', admin_views.run_mid_season_draft, name='run-mid-season-draft'),
 ]

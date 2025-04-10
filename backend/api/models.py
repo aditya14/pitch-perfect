@@ -537,6 +537,7 @@ class FantasyLeague(models.Model):
     draft_completed = models.BooleanField(default=False)
     snake_draft_order = models.JSONField(default=list, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    draft_pool = models.JSONField(default=list, blank=True, null=True)
 
     class Meta:
         indexes = [
