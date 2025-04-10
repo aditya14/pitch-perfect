@@ -114,7 +114,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   
   return (
     <div className="bg-white dark:bg-black overflow-hidden h-full shadow rounded-lg">
-      <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-700">
+      <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
           Squad Points
         </h2>

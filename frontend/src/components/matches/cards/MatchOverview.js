@@ -49,7 +49,7 @@ const MatchOverview = ({ matchData }) => {
   return (
     <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center bg-gradient-to-r from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800">
+      <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center bg-gradient-to-r from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800">
         <div className="flex items-center">
           <Info className="w-4 h-4 mr-2 text-neutral-500 dark:text-neutral-400" />
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">

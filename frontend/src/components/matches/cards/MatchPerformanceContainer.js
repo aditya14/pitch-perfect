@@ -65,7 +65,7 @@ const MatchPerformanceContainer = ({
 
   return (
     <div className="bg-white dark:bg-neutral-900 shadow rounded-lg overflow-hidden">
-      <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
+      <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
           Player Points
         </h2>
