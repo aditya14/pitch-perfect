@@ -27,7 +27,7 @@ const SquadView = () => {
   // Set document title based on squad name and active tab
   const getPageTitle = () => {
     if (!squadData) return 'Squad Details';
-    console.log('Squad Data:', squadData);
+    // console.log('Squad Data:', squadData);
     return `${squadData.name} (${squadData.league_name})`;
   };
   
@@ -40,7 +40,7 @@ const SquadView = () => {
         setLoading(true);
         
         const squadResponse = await api.get(`/squads/${squadId}/`);
-        console.log('Squad Response:', squadResponse.data);
+        // console.log('Squad Response:', squadResponse.data);
         const squadData = squadResponse.data;
         setSquadData(squadData);
         
@@ -141,7 +141,7 @@ const SquadView = () => {
           </button>
           <h1 className="flex items-center text-2xl font-bold mb-2">
             <span className="inline-block h-8 w-2 mr-2 rounded-md" style={{backgroundColor: squadData.color}}></span>
-            <span>{squadData.name}</span>
+            <span className="text-base">{squadData.name}</span>
           </h1>
         </div>
         

@@ -28,7 +28,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
   // Countdown Timer Component
   const CountdownTimer = ({ onExpire }) => {
     const [timeLeft, setTimeLeft] = useState({});
-    const lockDate = new Date('2025-04-12T10:00:00Z'); // April 12, 2025, 10am UTC
+    const lockDate = new Date('2025-04-19T10:00:00Z'); // April 19, 2025, 10am UTC
   
     useEffect(() => {
       const calculateTimeLeft = () => {
@@ -200,12 +200,33 @@ const BoostSelection = ({
       {/* Header */}
       <div className="p-4 md:p-6 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4">
-          Week 4 (Apr 12 - Apr 18)
+          Week 5 (Apr 19 - Apr 25)
         </h2>
         
-        {/* Countdown */}
+        {/* Countdown and retention info */}
         <div className="flex flex-col lg:flex-row gap-4">
-          <CountdownTimer onExpire={() => {}} />
+          <div className="lg:w-1/2">
+            <CountdownTimer onExpire={() => {}} />
+          </div>
+          <div className="lg:w-1/2 bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 border border-blue-100 dark:border-blue-800">
+            <div className="flex items-start gap-2">
+              <div className="mt-0.5 text-blue-600 dark:text-blue-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-blue-800 dark:text-blue-300 text-sm">
+                  Mid-Season Draft Retention
+                </h3>
+                <p className="text-xs text-blue-700 dark:text-blue-200 mt-1">
+                  Your Week 5 boost selections will be automatically retained during the mid-season draft.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
         
         {error && (

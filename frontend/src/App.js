@@ -20,6 +20,8 @@ import LoadingScreen from './components/elements/LoadingScreen';
 import PullToRefresh from './components/elements/PullToRefresh';
 import HowItWorksComponent from './components/HowItWorksComponent';
 import useDocumentTitle from './hooks/useDocumentTitle';
+import { DraftModalProvider } from './context/DraftModalContext';
+import DraftModalContainer from './components/leagues/modals/DraftModalContainer';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
