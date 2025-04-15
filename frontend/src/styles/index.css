@@ -29,7 +29,7 @@ html {
 }
 
 html.dark {
-  background-color: #111827; /* Tailwind dark:bg-gray-900 */
+  background-color: #0a0a0a; /* Tailwind dark:bg-gray-900 */
   color-scheme: dark;
 }
 
@@ -54,7 +54,7 @@ body {
 
 /* Dark mode body styling */
 html.dark body {
-  background-color: #111827; /* Tailwind dark:bg-gray-900 */
+  background-color: #0a0a0a; /* Tailwind dark:bg-gray-900 */
   color: #ffffff;
 }
 

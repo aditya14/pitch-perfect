@@ -64,41 +64,41 @@ const formatDate = (dateString) => {
 };
 
 const SeasonOverview = ({ seasonStats }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700">
-    <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-200 dark:border-gray-700">
-      <h3 className="text-xs sm:text-base font-semibold leading-6 text-gray-900 dark:text-white">
+  <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm ring-1 ring-neutral-900/5 dark:ring-neutral-700">
+    <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-neutral-200 dark:border-neutral-700">
+      <h3 className="text-xs sm:text-base font-semibold leading-6 text-neutral-900 dark:text-white">
         Career Overview
       </h3>
     </div>
-    <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-      <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
+    <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600">
+      <table className="w-full divide-y divide-neutral-200 dark:divide-neutral-700 table-fixed">
         <thead>
-          <tr className="bg-gray-50 dark:bg-gray-900/50">
-            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[15%]">Year</th>
-            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[15%]">Mat</th>
-            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[20%]">Runs (SR)</th>
-            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[20%]">Wkt (Eco)</th>
-            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[15%]">C/St</th>
-            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[15%]">Pts/M</th>
+          <tr className="bg-neutral-50 dark:bg-neutral-900/50">
+            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[15%]">Year</th>
+            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[15%]">Mat</th>
+            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[20%]">Runs (SR)</th>
+            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[20%]">Wkt (Eco)</th>
+            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[15%]">C/St</th>
+            <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[15%]">Pts/M</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
           {seasonStats.map((season) => (
             <tr 
               key={season.year} 
-              className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+              className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
             >
-              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm font-medium text-gray-900 dark:text-white">{season.year}</td>
-              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">{season.matches}</td>
-              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
+              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm font-medium text-neutral-900 dark:text-white">{season.year}</td>
+              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-700 dark:text-neutral-300">{season.matches}</td>
+              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-700 dark:text-neutral-300">
                 <span className="font-medium">{season.runs}</span>
-                <span className="text-gray-500 dark:text-gray-400 text-[9px]"> ({season.strike_rate?.toFixed(1) || 0})</span>
+                <span className="text-neutral-500 dark:text-neutral-400 text-[9px]"> ({season.strike_rate?.toFixed(1) || 0})</span>
               </td>
-              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
+              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-700 dark:text-neutral-300">
                 <span className="font-medium">{season.wickets}</span>
-                <span className="text-gray-500 dark:text-gray-400 text-[9px]"> ({season.economy?.toFixed(1) || 0})</span>
+                <span className="text-neutral-500 dark:text-neutral-400 text-[9px]"> ({season.economy?.toFixed(1) || 0})</span>
               </td>
-              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">{season.catches}</td>
+              <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-700 dark:text-neutral-300">{season.catches}</td>
               <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm font-medium">
                 <span className={`
                   ${season.points_per_match >= 60 ? 'text-green-600 dark:text-green-400' :
@@ -141,7 +141,7 @@ const MatchCard = ({ match }) => {
   
   return (
     <div 
-      className="rounded-xl overflow-hidden shadow-lg dark:shadow-gray-900/30 relative bg-white dark:bg-gray-800 mb-4"
+      className="rounded-xl overflow-hidden shadow-lg dark:shadow-neutral-900/30 relative bg-white dark:bg-neutral-800 mb-4"
       style={{ 
         boxShadow: `0 4px 6px ${shadowColor}, 0 1px 3px ${shadowColor}`
       }}
@@ -171,17 +171,17 @@ const MatchCard = ({ match }) => {
           </div>
           
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">
+            <h3 className="font-bold text-neutral-900 dark:text-white text-sm sm:text-base">
               {match.for_team}
             </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-300">
+            <p className="text-xs text-neutral-600 dark:text-neutral-300">
               vs {match.opponent}
             </p>
           </div>
         </div>
         
         <div className="text-right">
-          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-1 justify-end">
+          <div className="flex items-center text-xs text-neutral-500 dark:text-neutral-400 mb-1 justify-end">
             <Calendar className="h-3.5 w-3.5 mr-1" />
             {matchDate}
           </div>
@@ -207,29 +207,29 @@ const MatchCard = ({ match }) => {
         <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Batting stats */}
           {match.batting && (
-            <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
+            <div className="bg-neutral-50 dark:bg-neutral-700/40 rounded-lg p-3">
               <div className="flex justify-between items-center mb-1">
-                <h4 className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">BATTING</h4>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{match.batting.points} pts</span>
+                <h4 className="text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">BATTING</h4>
+                <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">{match.batting.points} pts</span>
               </div>
               
-              <div className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-200 mb-1">
+              <div className="text-sm sm:text-base font-semibold text-neutral-800 dark:text-neutral-200 mb-1">
                 {match.batting.runs}({match.batting.balls})
                 {match.batting.not_out && <span className="ml-1">*</span>}
               </div>
               
-              <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex flex-wrap gap-2 text-xs text-neutral-600 dark:text-neutral-400">
                 {match.batting.fours > 0 && (
-                  <div className="flex items-center bg-gray-100 dark:bg-gray-600/50 px-1.5 py-0.5 rounded">
+                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
                     <span>{match.batting.fours}×4</span>
                   </div>
                 )}
                 {match.batting.sixes > 0 && (
-                  <div className="flex items-center bg-gray-100 dark:bg-gray-600/50 px-1.5 py-0.5 rounded">
+                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
                     <span>{match.batting.sixes}×6</span>
                   </div>
                 )}
-                <div className="flex items-center bg-gray-100 dark:bg-gray-600/50 px-1.5 py-0.5 rounded">
+                <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
                   <span>SR: {match.batting.strike_rate?.toFixed(1) || '-'}</span>
                   <span className="ml-1">
                     {match.batting.strike_rate >= 150 ? <ArrowUp className="h-3 w-3 text-green-500" /> : 
@@ -242,23 +242,23 @@ const MatchCard = ({ match }) => {
           
           {/* Bowling stats */}
           {match.bowling && (
-            <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
+            <div className="bg-neutral-50 dark:bg-neutral-700/40 rounded-lg p-3">
               <div className="flex justify-between items-center mb-1">
-                <h4 className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">BOWLING</h4>
-                <span className="text-xs font-medium text-right text-gray-600 dark:text-gray-400">{match.bowling.points} pts</span>
+                <h4 className="text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">BOWLING</h4>
+                <span className="text-xs font-medium text-right text-neutral-600 dark:text-neutral-400">{match.bowling.points} pts</span>
               </div>
               
-              <div className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-200 mb-1">
+              <div className="text-sm sm:text-base font-semibold text-neutral-800 dark:text-neutral-200 mb-1">
                 {match.bowling.wickets}/{match.bowling.runs} ({match.bowling.overs})
               </div>
               
-              <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex flex-wrap gap-2 text-xs text-neutral-600 dark:text-neutral-400">
                 {match.bowling.maidens > 0 && (
-                  <div className="flex items-center bg-gray-100 dark:bg-gray-600/50 px-1.5 py-0.5 rounded">
+                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
                     <span>{match.bowling.maidens} maiden{match.bowling.maidens > 1 ? 's' : ''}</span>
                   </div>
                 )}
-                <div className="flex items-center bg-gray-100 dark:bg-gray-600/50 px-1.5 py-0.5 rounded">
+                <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
                   <span>Econ: {match.bowling.economy?.toFixed(2) || '-'}</span>
                   <span className="ml-1">
                     {match.bowling.economy < 6 ? <ArrowUp className="h-3 w-3 text-green-500" /> : 
@@ -271,25 +271,25 @@ const MatchCard = ({ match }) => {
           
           {/* Fielding stats */}
           {match.fielding && (
-            <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
+            <div className="bg-neutral-50 dark:bg-neutral-700/40 rounded-lg p-3">
               <div className="flex justify-between items-center mb-1">
-                <h4 className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">FIELDING</h4>
-                <span className="text-xs font-medium text-right text-gray-600 dark:text-gray-400">{match.fielding.points} pts</span>
+                <h4 className="text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">FIELDING</h4>
+                <span className="text-xs font-medium text-right text-neutral-600 dark:text-neutral-400">{match.fielding.points} pts</span>
               </div>
               
-              <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400 mt-1">
+              <div className="flex flex-wrap gap-2 text-xs text-neutral-600 dark:text-neutral-400 mt-1">
                 {match.fielding.catches > 0 && (
-                  <div className="flex items-center bg-gray-100 dark:bg-gray-600/50 px-1.5 py-0.5 rounded">
+                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
                     <span>{match.fielding.catches} catch{match.fielding.catches > 1 ? 'es' : ''}</span>
                   </div>
                 )}
                 {match.fielding.stumpings > 0 && (
-                  <div className="flex items-center bg-gray-100 dark:bg-gray-600/50 px-1.5 py-0.5 rounded">
+                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
                     <span>{match.fielding.stumpings} stumping{match.fielding.stumpings > 1 ? 's' : ''}</span>
                   </div>
                 )}
                 {match.fielding.runouts > 0 && (
-                  <div className="flex items-center bg-gray-100 dark:bg-gray-600/50 px-1.5 py-0.5 rounded">
+                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
                     <span>{match.fielding.runouts} run out{match.fielding.runouts > 1 ? 's' : ''}</span>
                   </div>
                 )}
@@ -324,7 +324,7 @@ const MatchCard = ({ match }) => {
             
             {/* Base and boost points */}
             {match.basePoints && (
-              <div className="text-xs text-gray-600 dark:text-gray-400 flex flex-col items-center">
+              <div className="text-xs text-neutral-600 dark:text-neutral-400 flex flex-col items-center">
                 <div className="flex items-center gap-1">
                   <span>Base:</span>
                   <span className="font-medium">{match.basePoints}</span>
@@ -347,7 +347,7 @@ const MatchCard = ({ match }) => {
 const MatchCards = ({ matches }) => {
   if (matches.length === 0) {
     return (
-      <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+      <div className="text-center py-10 text-neutral-500 dark:text-neutral-400">
         No match history available for this player.
       </div>
     );
@@ -373,16 +373,16 @@ const MatchHistory = ({ matches, currentSeason, onSeasonChange, seasons }) => {
   const seasonMatches = matches.filter(m => m.match.season.year === currentSeason);
   
   return (
-    <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700">
-      <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-200 dark:border-gray-700">
+    <div className="mt-6 bg-white dark:bg-neutral-800 rounded-lg shadow-sm ring-1 ring-neutral-900/5 dark:ring-neutral-700">
+      <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-neutral-200 dark:border-neutral-700">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs sm:text-base font-semibold leading-6 text-gray-900 dark:text-white">
+          <h3 className="text-xs sm:text-base font-semibold leading-6 text-neutral-900 dark:text-white">
             Match History ({seasonMatches.length})
           </h3>
           <select 
             value={currentSeason}
             onChange={(e) => onSeasonChange(Number(e.target.value))}
-            className="rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[10px] sm:text-xs py-1"
+            className="rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white text-[10px] sm:text-xs py-1"
           >
             {seasons.map(year => (
               <option key={year} value={year}>{year}</option>
@@ -391,25 +391,25 @@ const MatchHistory = ({ matches, currentSeason, onSeasonChange, seasons }) => {
         </div>
       </div>
       
-      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
+      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600">
+        <table className="w-full divide-y divide-neutral-200 dark:divide-neutral-700 table-fixed">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-900/50">
-              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[15%]">Date</th>
-              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[15%]">Teams</th>
-              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[25%]">Batting</th>
-              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[25%]">Bowling</th>
-              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[10%]">Field</th>
-              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[10%]">Pts</th>
+            <tr className="bg-neutral-50 dark:bg-neutral-900/50">
+              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[15%]">Date</th>
+              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[15%]">Teams</th>
+              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[25%]">Batting</th>
+              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[25%]">Bowling</th>
+              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[10%]">Field</th>
+              <th className="px-1 sm:px-4 py-1 sm:py-3 text-left text-[9px] sm:text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-[10%]">Pts</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
             {seasonMatches.map((match, index) => (
               <tr 
                 key={index} 
-                className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
               >
-                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-900 dark:text-white">
+                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-900 dark:text-white">
                   <a
                     href={`/matches/${match.match.id}`}
                     target="_blank"
@@ -419,15 +419,15 @@ const MatchHistory = ({ matches, currentSeason, onSeasonChange, seasons }) => {
                     {new Date(match.match.date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                   </a>
                 </td>
-                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
+                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-700 dark:text-neutral-300">
                   <div className="font-medium truncate">{match.for_team.split(' ').slice(0, 2).join(' ')}</div>
-                  <div className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">vs {match.opponent.split(' ').slice(0, 2).join(' ')}</div>
+                  <div className="text-[9px] sm:text-xs text-neutral-500 dark:text-neutral-400 truncate">vs {match.opponent.split(' ').slice(0, 2).join(' ')}</div>
                 </td>
-                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
+                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-700 dark:text-neutral-300">
                   {match.batting ? (
                     <div className="flex flex-col">
                       <span className="font-medium">{match.batting.runs}({match.batting.balls})</span>
-                      <span className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-[9px] sm:text-xs text-neutral-500 dark:text-neutral-400">
                         {match.batting.fours > 0 && `${match.batting.fours}×4 `}
                         {match.batting.sixes > 0 && `${match.batting.sixes}×6 `}
                         SR: {match.batting.strike_rate?.toFixed(1)}
@@ -435,20 +435,20 @@ const MatchHistory = ({ matches, currentSeason, onSeasonChange, seasons }) => {
                     </div>
                   ) : '-'}
                 </td>
-                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
+                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-700 dark:text-neutral-300">
                   {match.bowling ? (
                     <div className="flex flex-col">
                       <span className="font-medium">
                         {match.bowling.wickets}/{match.bowling.runs} ({match.bowling.overs})
                       </span>
-                      <span className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-[9px] sm:text-xs text-neutral-500 dark:text-neutral-400">
                         {match.bowling.maidens > 0 && `${match.bowling.maidens}M `}
                         Econ: {match.bowling.economy?.toFixed(1)}
                       </span>
                     </div>
                   ) : '-'}
                 </td>
-                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-gray-700 dark:text-gray-300">
+                <td className="px-1 sm:px-4 py-1 sm:py-3 text-[10px] sm:text-sm text-neutral-700 dark:text-neutral-300">
                   {match.fielding ? (
                     <div className="whitespace-nowrap">
                       {match.fielding.catches > 0 && <span>{match.fielding.catches}c </span>}

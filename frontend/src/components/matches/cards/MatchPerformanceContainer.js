@@ -39,13 +39,13 @@ const MatchPerformanceContainer = ({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-4">
         <div className="animate-pulse flex space-x-4">
           <div className="flex-1 space-y-4 py-1">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4"></div>
             <div className="space-y-2">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-5/6"></div>
             </div>
           </div>
         </div>
@@ -55,7 +55,7 @@ const MatchPerformanceContainer = ({
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-4">
         <div className="text-red-500 dark:text-red-400">
           {error}
         </div>
@@ -64,14 +64,14 @@ const MatchPerformanceContainer = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden">
-      <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+    <div className="bg-white dark:bg-neutral-900 shadow rounded-lg overflow-hidden">
+      <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
           Player Points
         </h2>
         <button
           onClick={toggleViewMode}
-          className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+          className="p-1 rounded-md text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
           title={viewMode === 'simple' ? 'Show detailed view' : 'Show simple view'}
         >
           {viewMode === 'simple' ? (

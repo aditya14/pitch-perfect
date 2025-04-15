@@ -19,10 +19,16 @@ import MatchView from './components/matches/MatchView';
 import LoadingScreen from './components/elements/LoadingScreen';
 import PullToRefresh from './components/elements/PullToRefresh';
 import HowItWorksComponent from './components/HowItWorksComponent';
+import useDocumentTitle from './hooks/useDocumentTitle';
+import { DraftModalProvider } from './context/DraftModalContext';
+import DraftModalContainer from './components/leagues/modals/DraftModalContainer';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  // Set default document title
+  useDocumentTitle('Home');
 
   // Apply theme immediately on component mount
   useEffect(() => {
@@ -106,8 +112,8 @@ const AppContent = () => {
       <div className={`
         min-h-screen 
         theme-transition
-        bg-white dark:bg-gray-900 
-        text-gray-900 dark:text-white
+        bg-white dark:bg-neutral-900 
+        text-neutral-900 dark:text-white
         relative
       `}>
         {user && (
@@ -118,8 +124,8 @@ const AppContent = () => {
         )}
         <div className={`
           theme-transition 
-          dark:bg-gray-900
-          ${user ? 'pt-4' : ''}
+          dark:bg-neutral-900
+          ${user ? '' : ''}
         `}>
           <Routes>
             <Route 

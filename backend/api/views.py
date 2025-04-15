@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
     Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, 
-    IPLMatch, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, IPLPlayerEvent, FantasyTrade
+    IPLMatch, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, IPLPlayerEvent, FantasyTrade, FantasyMatchEvent
 )
 from .serializers import (
     SeasonSerializer, IPLTeamSerializer, TeamSeasonSerializer,
@@ -21,7 +21,7 @@ from .serializers import (
     CreateLeagueRequestSerializer, LeagueDetailSerializer,
     FantasySquadSerializer, CreateSquadSerializer, SquadDetailSerializer,
     CoreSquadUpdateSerializer, FantasyPlayerEventSerializer, IPLPlayerEventSerializer,
-    FantasyTradeSerializer
+    FantasyTradeSerializer, FantasyMatchEventSerializer
 )
 from .roster_serializers import PlayerRosterSerializer
 from .draft_serializers import FantasyDraftSerializer, OptimizedFantasyDraftSerializer
@@ -30,6 +30,8 @@ from functools import reduce
 from operator import or_
 from django.utils import timezone
 from api.services.cricket_data_service import CricketDataService
+from django.core.cache import cache
+from django.db.models import F, Case, When, BooleanField, Value, DecimalField, ExpressionWrapper
 
 class SeasonViewSet(viewsets.ModelViewSet):
     queryset = Season.objects.all()
@@ -114,125 +116,138 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
-        """Get historical IPL performance for a player"""
+        """Get historical IPL performance for a player with optimized queries"""
         try:
             player = self.get_object()
-        
-            # Get all player events
-            events = IPLPlayerEvent.objects.filter(
+            
+            # Try to get from cache first
+            cache_key = f'player_history_{player.id}'
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return Response(cached_data)
+            
+            # Use efficient database-level aggregation for season stats
+            season_stats = IPLPlayerEvent.objects.filter(
                 player=player,
-                match__status=IPLMatch.Status.COMPLETED  # Only completed matches
+                match__status='COMPLETED'
+            ).values(
+                'match__season__year'
+            ).annotate(
+                year=F('match__season__year'),
+                matches=Count('id'),
+                runs=Sum('bat_runs'),
+                balls_faced=Sum('bat_balls'),
+                wickets=Sum('bowl_wickets'),
+                runs_conceded=Sum('bowl_runs'),
+                balls_bowled=Sum('bowl_balls'),
+                catches=Sum(
+                    Case(
+                        When(field_catch__isnull=False, then=F('field_catch')),
+                        default=0
+                    ) + 
+                    Case(
+                        When(wk_catch__isnull=False, then=F('wk_catch')),
+                        default=0
+                    )
+                ),
+                runouts=Sum(
+                    Case(
+                        When(run_out_solo__isnull=False, then=F('run_out_solo')),
+                        default=0
+                    ) +
+                    Case(
+                        When(run_out_collab__isnull=False, then=F('run_out_collab')),
+                        default=0
+                    )
+                ),
+                total_points=Sum('total_points_all')
+            ).order_by('-year')
+            
+            # Post-process to calculate rates that are complex in pure SQL
+            for stat in season_stats:
+                # Calculate points per match
+                stat['points_per_match'] = round(stat['total_points'] / stat['matches'], 2) if stat['matches'] > 0 else 0
+                
+                # Strike rate calculation
+                stat['strike_rate'] = round((stat['runs'] * 100.0 / stat['balls_faced']), 2) if stat.get('balls_faced') and stat['balls_faced'] > 0 else None
+                
+                # Economy rate calculation (runs per over)
+                if stat.get('balls_bowled') and stat['balls_bowled'] > 0:
+                    overs = stat['balls_bowled'] / 6.0
+                    stat['economy'] = round(stat['runs_conceded'] / overs, 2)
+                else:
+                    stat['economy'] = None
+                    
+                # Batting average
+                if stat.get('matches') and stat['matches'] > 0:
+                    stat['batting_average'] = round(stat['runs'] / stat['matches'], 2)
+                else:
+                    stat['batting_average'] = 0
+            
+            # Fetch match details with a single efficient query
+            match_events = IPLPlayerEvent.objects.filter(
+                player=player,
+                match__status='COMPLETED'
             ).select_related(
                 'match', 
                 'match__season', 
                 'for_team', 
                 'vs_team'
-            ).order_by('-match__date')
-
-            # Calculate season stats
-            season_stats = {}
-            for event in events:
-                season = event.match.season.year
-                if season not in season_stats:
-                    season_stats[season] = {
-                        'year': season,
-                        'matches': 0,
-                        'runs': 0,
-                        'balls_faced': 0,
-                        'wickets': 0,
-                        'runs_conceded': 0,
-                        'balls_bowled': 0,
-                        'catches': 0,
-                        'runouts': 0,
-                        'total_points': 0
+            ).order_by('-match__date')  # Limit to most recent 20 matches for performance
+            
+            # Format the match details efficiently
+            match_details = []
+            for event in match_events:
+                match_detail = {
+                    'match': {
+                        'date': event.match.date,
+                        'season': {'year': event.match.season.year},
+                        'id': event.match.id
+                    },
+                    'opponent': event.vs_team.short_name,
+                    'for_team': event.for_team.short_name,
+                    'points': event.total_points_all
+                }
+                
+                # Only add details if they exist
+                if event.bat_runs is not None or event.bat_balls is not None:
+                    match_detail['batting'] = {
+                        'runs': event.bat_runs,
+                        'balls': event.bat_balls,
+                        'fours': event.bat_fours,
+                        'sixes': event.bat_sixes,
+                        'not_out': event.bat_not_out,
+                        'strike_rate': event.bat_strike_rate
                     }
-                
-                stats = season_stats[season]
-                stats['matches'] += 1
-                
-                # Batting stats
-                stats['runs'] += event.bat_runs or 0
-                stats['balls_faced'] += event.bat_balls or 0
-                
-                # Bowling stats
-                stats['wickets'] += event.bowl_wickets or 0
-                stats['runs_conceded'] += event.bowl_runs or 0
-                stats['balls_bowled'] += event.bowl_balls or 0
-                
-                # Fielding stats
-                stats['catches'] += (event.field_catch or 0) + (event.wk_catch or 0)
-                stats['runouts'] += (event.run_out_solo or 0) + (event.run_out_collab or 0)
-                
-                # Points
-                stats['total_points'] += event.total_points_all
+                    
+                if event.bowl_balls is not None and event.bowl_balls > 0:
+                    match_detail['bowling'] = {
+                        'overs': f"{event.bowl_balls // 6}.{event.bowl_balls % 6}",
+                        'maidens': event.bowl_maidens,
+                        'runs': event.bowl_runs,
+                        'wickets': event.bowl_wickets,
+                        'economy': event.bowl_economy
+                    }
+                    
+                if any(filter(None, [event.field_catch, event.wk_catch, 
+                    event.wk_stumping, event.run_out_solo, event.run_out_collab])):
+                    match_detail['fielding'] = {
+                        'catches': (event.field_catch or 0) + (event.wk_catch or 0),
+                        'stumpings': event.wk_stumping or 0,
+                        'runouts': (event.run_out_solo or 0) + (event.run_out_collab or 0)
+                    }
+                    
+                match_details.append(match_detail)
 
-            # Calculate averages and rates
-            for stats in season_stats.values():
-                # Batting averages
-                if stats['matches'] > 0:
-                    stats['batting_average'] = stats['runs'] / stats['matches']
-                    stats['points_per_match'] = stats['total_points'] / stats['matches']
-                else:
-                    stats['batting_average'] = 0
-                    stats['points_per_match'] = 0
-                    
-                # Strike rate
-                if stats['balls_faced'] > 0:
-                    stats['strike_rate'] = (stats['runs'] / stats['balls_faced']) * 100
-                else:
-                    stats['strike_rate'] = 0
-                    
-                # Bowling average & economy
-                if stats['wickets'] > 0:
-                    stats['bowling_average'] = stats['runs_conceded'] / stats['wickets']
-                else:
-                    stats['bowling_average'] = None
-                    
-                if stats['balls_bowled'] > 0:
-                    stats['economy'] = (stats['runs_conceded'] / (stats['balls_bowled']/6))
-                else:
-                    stats['economy'] = None
-
+            # Compile final response
             response = {
-                'seasonStats': list(season_stats.values()),
-                'matches': [
-                    {
-                        'match': {
-                            'date': event.match.date,
-                            'season': {'year': event.match.season.year},
-                            'id': event.match.id
-                        },
-                        'opponent': event.vs_team.short_name,
-                        'for_team': event.for_team.short_name,
-                        'batting': {
-                            'runs': event.bat_runs,
-                            'balls': event.bat_balls,
-                            'fours': event.bat_fours,
-                            'sixes': event.bat_sixes,
-                            'not_out': event.bat_not_out,
-                            'strike_rate': event.bat_strike_rate
-                        } if event.bat_runs or event.bat_balls else None,
-                        'bowling': {
-                            'overs': f"{event.bowl_balls // 6}.{event.bowl_balls % 6}",
-                            'maidens': event.bowl_maidens,
-                            'runs': event.bowl_runs,
-                            'wickets': event.bowl_wickets,
-                            'economy': event.bowl_economy
-                        } if event.bowl_balls else None,
-                        'fielding': {
-                            'catches': (event.field_catch or 0) + (event.wk_catch or 0),
-                            'stumpings': event.wk_stumping or 0,
-                            'runouts': (event.run_out_solo or 0) + (event.run_out_collab or 0)
-                        } if event.field_catch or event.wk_catch or event.wk_stumping or event.run_out_solo or event.run_out_collab else None,
-                        'player_of_match': event.player_of_match,
-                        'points': event.total_points_all
-                    }
-                    for event in events
-                ]
+                'seasonStats': list(season_stats),
+                'matches': match_details
             }
-
-            print("RESPONSE", response)
-
+            
+            # Cache the response for 1 hour
+            cache.set(cache_key, response, 60 * 60)
+            
             return Response(response)
 
         except Exception as e:
@@ -293,13 +308,20 @@ class IPLMatchViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def events(self, request, pk=None):
-        """Get all player events for a specific match"""
+        """Get all player events for a specific match with optimized queries"""
         try:
             match = self.get_object()
             league_id = request.query_params.get('league_id')
             
+            # Define cache key
+            cache_key = f'match_events_{match.id}_{league_id or "no_league"}'
+            cached_data = cache.get(cache_key)
+            
+            if cached_data:
+                return Response(cached_data)
+            
             if league_id:
-                # Get fantasy events if they exist
+                # Get fantasy events if they exist using optimized query
                 fantasy_events = FantasyPlayerEvent.objects.filter(
                     match_event__match=match,
                     fantasy_squad__league_id=league_id
@@ -308,23 +330,29 @@ class IPLMatchViewSet(viewsets.ModelViewSet):
                     'match_event__player',
                     'match_event__for_team',
                     'fantasy_squad'
+                ).prefetch_related(
+                    'boost'
                 )
                 
                 if fantasy_events.exists():
                     serializer = FantasyPlayerEventSerializer(fantasy_events, many=True)
-                    return Response(serializer.data)
+                    data = serializer.data
+                    cache.set(cache_key, data, 60 * 15)  # Cache for 15 minutes
+                    return Response(data)
             
-            # If no league_id or no fantasy events, return IPL events
+            # If no league_id or no fantasy events, return IPL events with an optimized query
             ipl_events = IPLPlayerEvent.objects.filter(
                 match=match
             ).select_related(
                 'player',
                 'for_team'
-            )
+            ).order_by('-total_points_all')  # Order by points for better UX
             
             serializer = IPLPlayerEventSerializer(ipl_events, many=True)
-            return Response(serializer.data)
-            
+            data = [{**item, 'player_id': item.pop('id')} for item in serializer.data]
+            cache.set(cache_key, data, 60 * 15)  # Cache for 15 minutes
+            return Response(data)
+                
         except Exception as e:
             print(f"Error in match events: {str(e)}")
             import traceback
@@ -352,7 +380,7 @@ def league_match_events(request, league_id, match_id):
         
         if fantasy_events.exists():
             serializer = FantasyPlayerEventSerializer(fantasy_events, many=True)
-            print("Fantasy events found", serializer.data)
+            # print("Fantasy events found", serializer.data)
             return Response(serializer.data)
         
         # If no fantasy events, return IPL events
@@ -816,7 +844,8 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     'basePoints': base_points,
                     'boostPoints': boost_points,
                     'boost_label': event.boost.label if event.boost else None,
-                    'totalPoints': base_points + boost_points
+                    'totalPoints': base_points + boost_points,
+                    'player_of_match': match_event.player_of_match,
                 }
 
                 # Add batting details if exists
@@ -1732,9 +1761,14 @@ def update_match_points(request):
 def match_fantasy_stats(request, match_id, league_id=None):
     """
     Fetch top performers and top squads for a specific match.
-    This can be used in context of a league or globally.
+    Uses FantasyMatchEvent for more efficient squad data retrieval.
     
-    League ID can be provided either in the URL path or as a query parameter.
+    Args:
+        match_id: ID of the match to get stats for
+        league_id: Optional league ID to filter results by league
+    
+    Returns:
+        Dictionary with top_players and top_squads lists
     """
     try:
         match = get_object_or_404(IPLMatch, id=match_id)
@@ -1742,37 +1776,58 @@ def match_fantasy_stats(request, match_id, league_id=None):
         # Get league_id from URL parameter or query parameter
         league_id = league_id or request.query_params.get('league_id')
         
+        # Initialize response data
         top_players = []
         top_squads = []
         
         if league_id:
-            # Get stats in the context of a specific league
+            # For league-specific data
             league = get_object_or_404(FantasyLeague, id=league_id)
             
-            # Fetch all fantasy player events for this match in this league
-            fantasy_events = FantasyPlayerEvent.objects.filter(
+            # Get top squads directly from FantasyMatchEvent
+            match_events = FantasyMatchEvent.objects.filter(
+                match=match,
+                fantasy_squad__league=league
+            ).select_related(
+                'fantasy_squad'
+            ).order_by('match_rank')[:5]
+            
+            top_squads = [{
+                'id': event.fantasy_squad.id,
+                'name': event.fantasy_squad.name,
+                'color': event.fantasy_squad.color,
+                'match_points': event.total_points,
+                'match_rank': event.match_rank,
+                'base_points': event.total_base_points,
+                'boost_points': event.total_boost_points
+            } for event in match_events]
+            
+            # Get top players (this part still needs player events)
+            player_events = FantasyPlayerEvent.objects.filter(
                 match_event__match=match,
                 fantasy_squad__league=league
             ).select_related(
-                'match_event', 
                 'match_event__player',
                 'match_event__for_team',
                 'fantasy_squad',
                 'boost'
             )
             
-            # Get top performing players
+            # Use a more efficient approach with a single pass
             player_performances = {}
-            for event in fantasy_events:
-                player_id = event.match_event.player_id
+            
+            for event in player_events:
+                player = event.match_event.player
+                points = event.match_event.total_points_all + event.boost_points
                 
-                if player_id not in player_performances:
-                    player_performances[player_id] = {
-                        'player_id': player_id,
-                        'player_name': event.match_event.player.name,
+                # Store only the best performance for each player
+                if player.id not in player_performances or points > player_performances[player.id]['fantasy_points']:
+                    player_performances[player.id] = {
+                        'player_id': player.id,
+                        'player_name': player.name,
                         'base_points': event.match_event.total_points_all,
                         'boost_points': event.boost_points,
-                        'fantasy_points': event.match_event.total_points_all + event.boost_points,
+                        'fantasy_points': points,
                         'squad_id': event.fantasy_squad.id,
                         'squad_name': event.fantasy_squad.name,
                         'squad_color': event.fantasy_squad.color,
@@ -1781,76 +1836,34 @@ def match_fantasy_stats(request, match_id, league_id=None):
                         'team_name': event.match_event.for_team.name,
                         'team_color': event.match_event.for_team.primary_color
                     }
-                # If this event has higher points than what we've seen before, update it
-                elif (event.match_event.total_points_all + event.boost_points) > player_performances[player_id]['fantasy_points']:
-                    player_performances[player_id].update({
-                        'base_points': event.match_event.total_points_all,
-                        'boost_points': event.boost_points,
-                        'fantasy_points': event.match_event.total_points_all + event.boost_points,
-                        'squad_id': event.fantasy_squad.id,
-                        'squad_name': event.fantasy_squad.name,
-                        'squad_color': event.fantasy_squad.color,
-                        'boost_label': event.boost.label if event.boost else None
-                    })
             
-            # Sort players by fantasy points and take top 5
+            # Sort and get top 5 players
             top_players = sorted(
                 player_performances.values(),
                 key=lambda x: x['fantasy_points'],
                 reverse=True
             )[:5]
             
-            # Get top performing squads
-            squad_performances = {}
-            for event in fantasy_events:
-                squad_id = event.fantasy_squad_id
-                
-                if squad_id not in squad_performances:
-                    squad_performances[squad_id] = {
-                        'id': squad_id,
-                        'name': event.fantasy_squad.name,
-                        'color': event.fantasy_squad.color,
-                        'match_points': 0
-                    }
-                
-                # Add points to the squad's total
-                squad_performances[squad_id]['match_points'] += (
-                    event.match_event.total_points_all + event.boost_points
-                )
-            
-            # Sort squads by match points and take top 5
-            top_squads = sorted(
-                squad_performances.values(),
-                key=lambda x: x['match_points'],
-                reverse=True
-            )[:5]
-        
         else:
-            # Get global stats (not specific to a league)
-            # This is simpler since we don't need to handle boosts
-            
-            # Get all IPL player events for this match
+            # For global (non-league) stats
+            # Get top players directly from IPLPlayerEvent
             player_events = IPLPlayerEvent.objects.filter(
                 match=match
             ).select_related(
                 'player',
                 'for_team'
-            ).order_by('-total_points_all')[:5]  # Get top 5 directly
+            ).order_by('-total_points_all')[:5]
             
-            # Format player data
-            top_players = [
-                {
-                    'player_id': event.player_id,
-                    'player_name': event.player.name,
-                    'base_points': event.total_points_all,
-                    'boost_points': 0,  # No boosts in the global context
-                    'fantasy_points': event.total_points_all,
-                    'team_id': event.for_team.id,
-                    'team_name': event.for_team.name,
-                    'team_color': event.for_team.primary_color
-                }
-                for event in player_events
-            ]
+            top_players = [{
+                'player_id': event.player_id,
+                'player_name': event.player.name,
+                'base_points': event.total_points_all,
+                'boost_points': 0,
+                'fantasy_points': event.total_points_all,
+                'team_id': event.for_team.id,
+                'team_name': event.for_team.name,
+                'team_color': event.for_team.primary_color
+            } for event in player_events]
         
         return Response({
             'top_players': top_players,
@@ -1889,6 +1902,221 @@ def season_recent_matches(request, season_id):
     
     except Exception as e:
         print(f"Error in season_recent_matches: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def match_standings(request, match_id):
+    """
+    Get match standings for all fantasy squads in a specific match.
+    Optionally filter by league ID.
+    """
+    try:
+        match = get_object_or_404(IPLMatch, id=match_id)
+        
+        # Get filter parameters
+        league_id = request.query_params.get('league_id')
+        
+        # Build the query
+        query = FantasyMatchEvent.objects.filter(match=match)
+        if league_id:
+            query = query.filter(fantasy_squad__league_id=league_id)
+        
+        # Get standings, ordered by match rank
+        standings = query.select_related(
+            'fantasy_squad',
+            'match'
+        ).order_by('match_rank')
+        
+        # Serialize and return
+        serializer = FantasyMatchEventSerializer(standings, many=True)
+        return Response(serializer.data)
+    
+    except Exception as e:
+        print(f"Error in match_standings: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def mid_season_draft_pool(request, league_id):
+    """Get all players available in the mid-season draft pool with stats"""
+    try:
+        league = get_object_or_404(FantasyLeague, id=league_id)
+        squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+        
+        # Get the draft pool
+        if not league.draft_pool:
+            return Response(
+                {'error': 'Draft pool has not been compiled yet'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get player details with season stats
+        from django.db.models import Avg, Count, Q
+        
+        players = IPLPlayer.objects.filter(
+            id__in=league.draft_pool
+        ).annotate(
+            matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season=league.season)),
+            avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season=league.season))
+        )
+        
+        # Get existing draft order if any
+        draft = FantasyDraft.objects.filter(
+            league=league,
+            squad=squad,
+            type='Mid-Season'
+        ).first()
+        
+        # Prepare response with player details
+        player_data = []
+        for player in players:
+            # Get current team
+            team = player.playerteamhistory_set.filter(
+                season=league.season
+            ).select_related('team').first()
+            
+            # Calculate draft position if available
+            draft_position = None
+            if draft and draft.order:
+                try:
+                    draft_position = draft.order.index(player.id)
+                except ValueError:
+                    draft_position = None
+            
+            # For players with no current season data, get historical average
+            historical_avg = None
+            if player.avg_points is None:
+                historical_stats = IPLPlayerEvent.objects.filter(
+                    player=player,
+                    match__season__year__in=range(2021, 2025)  # 2021-2024
+                ).aggregate(
+                    matches=Count('id'),
+                    avg_points=Avg('total_points_all')
+                )
+                historical_avg = historical_stats['avg_points']
+            
+            player_data.append({
+                'id': player.id,
+                'name': player.name,
+                'role': player.role,
+                'team': team.team.short_name if team else None,
+                'matches': player.matches or 0,
+                'avg_points': player.avg_points or historical_avg or 0,
+                'draft_position': draft_position
+            })
+        
+        # Sort by average points
+        player_data.sort(key=lambda x: x['avg_points'], reverse=True)
+        
+        # Add rank
+        for i, player in enumerate(player_data):
+            player['rank'] = i + 1
+        
+        return Response(player_data)
+        
+    except Exception as e:
+        print(f"Error in mid_season_draft_pool: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def mid_season_draft_order(request, league_id):
+    """Get or update draft preferences for mid-season draft"""
+    try:
+        league = get_object_or_404(FantasyLeague, id=league_id)
+        squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+        
+        # Get or create draft order
+        draft, created = FantasyDraft.objects.get_or_create(
+            league=league,
+            squad=squad,
+            type='Mid-Season',
+            defaults={'order': []}
+        )
+        
+        if request.method == 'GET':
+            # If empty order and we need to create a default
+            if not draft.order:
+                # Create default order based on current season points
+                from django.db.models import Avg, Count, Q
+                
+                default_order = list(IPLPlayer.objects.filter(
+                    id__in=league.draft_pool
+                ).annotate(
+                    matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season=league.season)),
+                    avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season=league.season))
+                ).order_by('-avg_points').values_list('id', flat=True))
+                
+                # For players with no matches this season, append sorted by historical data
+                no_matches_players = IPLPlayer.objects.filter(
+                    id__in=league.draft_pool
+                ).exclude(
+                    id__in=default_order
+                ).annotate(
+                    hist_matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season__year__in=range(2021, 2025))),
+                    hist_avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season__year__in=range(2021, 2025)))
+                ).order_by('-hist_avg_points').values_list('id', flat=True)
+                
+                default_order.extend(list(no_matches_players))
+                
+                # Save the default order
+                draft.order = default_order
+                draft.save()
+            
+            serializer = FantasyDraftSerializer(draft)
+            return Response(serializer.data)
+            
+        elif request.method == 'POST':
+            # Update draft order
+            order = request.data.get('order')
+            
+            if not order:
+                return Response(
+                    {'error': 'No order provided'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate all IDs are in the draft pool
+            invalid_ids = [pid for pid in order if pid not in league.draft_pool]
+            if invalid_ids:
+                return Response(
+                    {'error': f'Invalid player IDs in order: {invalid_ids}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate all draft pool players are included
+            missing_ids = [pid for pid in league.draft_pool if pid not in order]
+            if missing_ids:
+                return Response(
+                    {'error': f'Missing player IDs in order: {missing_ids}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update the order
+            draft.order = order
+            draft.save()
+            
+            serializer = FantasyDraftSerializer(draft)
+            return Response(serializer.data)
+        
+    except Exception as e:
+        print(f"Error in mid_season_draft_order: {str(e)}")
         import traceback
         print(traceback.format_exc())
         return Response(

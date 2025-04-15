@@ -22,7 +22,7 @@ const BoostTab = ({
 
   // Check if current time is past deadline
   useEffect(() => {
-    const lockDate = new Date('2025-03-29T14:00:00Z'); // March 29, 2025, 2pm UTC
+    const lockDate = new Date('2025-9T10:00:00Z'); // April 19, 2025, 10am UTC
     const currentTime = new Date();
     setIsDeadlinePassed(currentTime >= lockDate);
   }, []);
@@ -84,6 +84,7 @@ const BoostTab = ({
       {/* Current Week's Core Squad Section */}
       <CurrentBoosts 
         currentCoreSquad={currentCoreSquad}
+        boostRoles={boostRoles}
         getRoleById={getRoleById}
         getPlayerById={getPlayerById}
         leagueId={leagueId}
@@ -114,14 +115,14 @@ const BoostTab = ({
       
       {/* Show message if squad is empty */}
       {isOwnSquad && isSquadEmpty && (
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 text-center">
-          <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-            <User className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+        <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 text-center">
+          <div className="mx-auto w-16 h-16 bg-neutral-100 dark:bg-neutral-700 rounded-full flex items-center justify-center mb-4">
+            <User className="h-8 w-8 text-neutral-400 dark:text-neutral-500" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          <h3 className="text-lg font-medium text-neutral-900 dark:text-white mb-2">
             Draft hasn't started yet
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md mx-auto">
             Once the draft is complete and you have players in your squad, you'll be able to assign boost roles to your players for the upcoming week.
           </p>
         </div>

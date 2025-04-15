@@ -123,20 +123,20 @@ const TradeList = ({ league }) => {
       case 'Closed':
         return 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-300';
     }
   };
   
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-      <div className="px-6 py-3 border-b border-gray-00 dark:border-gray-700">
+    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
+      <div className="px-6 py-3 border-b border-neutral-00 dark:border-neutral-700">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
             Trades
           </h2>
           <button
             onClick={() => setShowTradeForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-neutral-600 hover:bg-neutral-700"
           >
             Propose Trade
           </button>
@@ -165,14 +165,14 @@ const TradeList = ({ league }) => {
       )}
       
       {/* Filter Controls */}
-      <div className="px-6 py-2 bg-gray-50 dark:bg-gray-700">
+      <div className="px-6 py-2 bg-neutral-50 dark:bg-neutral-700">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'all' 
-                ? 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-100' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                ? 'bg-neutral-200 text-neutral-800 dark:bg-neutral-600 dark:text-neutral-100' 
+                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
             }`}
           >
             All
@@ -182,7 +182,7 @@ const TradeList = ({ league }) => {
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'Pending' 
                 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
             }`}
           >
             Pending
@@ -192,7 +192,7 @@ const TradeList = ({ league }) => {
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'Accepted' 
                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
             }`}
           >
             Accepted
@@ -202,7 +202,7 @@ const TradeList = ({ league }) => {
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'Rejected' 
                 ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
             }`}
           >
             Rejected
@@ -212,7 +212,7 @@ const TradeList = ({ league }) => {
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'Closed' 
                 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
             }`}
           >
             Closed
@@ -224,25 +224,25 @@ const TradeList = ({ league }) => {
       <div className="p-6">
         {loading ? (
           <div className="text-center py-8">
-            <div className="inline-block animate-spin h-8 w-8 border-4 border-gray-300 dark:border-gray-600 rounded-full border-t-primary-600 dark:border-t-primary-400"></div>
-            <p className="mt-2 text-gray-500 dark:text-gray-400">Loading trades...</p>
+            <div className="inline-block animate-spin h-8 w-8 border-4 border-neutral-300 dark:border-neutral-600 rounded-full border-t-primary-600 dark:border-t-primary-400"></div>
+            <p className="mt-2 text-neutral-500 dark:text-neutral-400">Loading trades...</p>
           </div>
         ) : filteredTrades.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">No trades found</p>
+            <p className="text-neutral-500 dark:text-neutral-400">No trades found</p>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {currentTrades.map((trade) => (
-                <div key={trade.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+                <div key={trade.id} className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm overflow-hidden">
                   {/* Trade Header */}
-                  <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                  <div className="p-3 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
                     <div className="flex items-center">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(trade.status)}`}>
                         {trade.status}
                       </span>
-                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
                         {formatDate(trade.created_at)}
                       </span>
                     </div>
@@ -289,7 +289,7 @@ const TradeList = ({ league }) => {
                               backgroundColor: trade.initiator_color || '#6366F1' 
                             }}
                           ></div>
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                             {trade.initiator_name}
                             {isTradeInitiator(trade) && <span className="ml-1 text-xs">(You)</span>}
                           </span>
@@ -302,7 +302,7 @@ const TradeList = ({ league }) => {
                               backgroundColor: trade.receiver_color || '#8B5CF6' 
                             }}
                           ></div>
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                             {trade.receiver_name}
                             {isTradeReceiver(trade) && <span className="ml-1 text-xs">(You)</span>}
                           </span>
@@ -311,16 +311,16 @@ const TradeList = ({ league }) => {
                       
                       {/* Players moving RIGHT (from initiator to receiver) */}
                       {trade.players_given_details?.length > 0 && (
-                        <div className="border-t border-gray-100 dark:border-gray-700">
+                        <div className="border-t border-neutral-100 dark:border-neutral-700">
                           {trade.players_given_details.map(player => (
                             <div key={player.id} className="grid grid-cols-9 items-center">
                               <div className="col-span-4">
-                                <span className="text-sm text-gray-300 dark:text-gray-600">
+                                <span className="text-sm text-neutral-300 dark:text-neutral-600">
                                   {player.name}
                                 </span>
                               </div>
                               <div className="col-span-1 flex justify-center">
-                                <ArrowRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                                <ArrowRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
                               </div>
                               <div className="col-span-4">
                                 <span className="text-sm font-medium text-green-600 dark:text-green-400">
@@ -334,7 +334,7 @@ const TradeList = ({ league }) => {
                       
                       {/* Players moving LEFT (from receiver to initiator) */}
                       {trade.players_received_details?.length > 0 && (
-                        <div className={`${trade.players_given_details?.length > 0 ? '' : 'border-t border-gray-100 dark:border-gray-700'}`}>
+                        <div className={`${trade.players_given_details?.length > 0 ? '' : 'border-t border-neutral-100 dark:border-neutral-700'}`}>
                           {trade.players_received_details.map(player => (
                             <div key={player.id} className="grid grid-cols-9 items-center">
                               <div className="col-span-4">
@@ -343,10 +343,10 @@ const TradeList = ({ league }) => {
                                 </span>
                               </div>
                               <div className="col-span-1 flex justify-center">
-                                <ArrowLeft className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                                <ArrowLeft className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
                               </div>
                               <div className="col-span-4">
-                                <span className="text-sm text-gray-300 dark:text-gray-600">
+                                <span className="text-sm text-neutral-300 dark:text-neutral-600">
                                   {player.name}
                                 </span>
                               </div>
@@ -357,8 +357,8 @@ const TradeList = ({ league }) => {
                       
                       {/* No players message */}
                       {trade.players_given_details?.length === 0 && trade.players_received_details?.length === 0 && (
-                        <div className="border-t border-gray-100 dark:border-gray-700 pt-3 text-center">
-                          <span className="text-sm text-gray-500 dark:text-gray-400 italic">
+                        <div className="border-t border-neutral-100 dark:border-neutral-700 pt-3 text-center">
+                          <span className="text-sm text-neutral-500 dark:text-neutral-400 italic">
                             No players in this trade
                           </span>
                         </div>
@@ -376,10 +376,10 @@ const TradeList = ({ league }) => {
                   <button
                     onClick={goToPrevPage}
                     disabled={currentPage === 1}
-                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                    className={`relative inline-flex items-center px-4 py-2 border border-neutral-300 dark:border-neutral-600 text-sm font-medium rounded-md ${
                       currentPage === 1 
-                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' 
+                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                     }`}
                   >
                     Previous
@@ -387,10 +387,10 @@ const TradeList = ({ league }) => {
                   <button
                     onClick={goToNextPage}
                     disabled={currentPage === totalPages}
-                    className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                    className={`ml-3 relative inline-flex items-center px-4 py-2 border border-neutral-300 dark:border-neutral-600 text-sm font-medium rounded-md ${
                       currentPage === totalPages 
-                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' 
+                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                     }`}
                   >
                     Next
@@ -398,7 +398,7 @@ const TradeList = ({ league }) => {
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300">
                       Showing <span className="font-medium">{indexOfFirstTrade + 1}</span> to{' '}
                       <span className="font-medium">
                         {Math.min(indexOfLastTrade, filteredTrades.length)}
@@ -411,10 +411,10 @@ const TradeList = ({ league }) => {
                       <button
                         onClick={goToPrevPage}
                         disabled={currentPage === 1}
-                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-sm font-medium ${
                           currentPage === 1 
-                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
-                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' 
+                            : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                         }`}
                       >
                         <span className="sr-only">Previous</span>
@@ -438,10 +438,10 @@ const TradeList = ({ league }) => {
                           <button
                             key={page}
                             onClick={() => paginate(page)}
-                            className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                            className={`relative inline-flex items-center px-4 py-2 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-sm font-medium ${
                               currentPage === page
-                                ? 'z-10 bg-primary-50 dark:bg-primary-900/30 border-primary-500 dark:border-primary-500 text-primary-600 dark:text-primary-300'
-                                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                ? 'z-10 bg-neutral-50 dark:bg-neutral-900/30 border-primary-500 dark:border-primary-500 text-primary-600 dark:text-primary-300'
+                                : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                             }`}
                           >
                             {page}
@@ -452,10 +452,10 @@ const TradeList = ({ league }) => {
                       <button
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
-                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-sm font-medium ${
                           currentPage === totalPages 
-                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
-                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            ? 'text-neutral-300 dark:text-neutral-600 cursor-not-allowed' 
+                            : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                         }`}
                       >
                         <span className="sr-only">Next</span>

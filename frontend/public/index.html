@@ -19,7 +19,7 @@
         if (theme === 'dark' || (!theme && prefersDarkMode)) {
           document.documentElement.classList.add('dark');
           // Add a background color to the HTML element to prevent white flash
-          document.documentElement.style.backgroundColor = '#111827'; // Tailwind dark:bg-gray-900 color
+          document.documentElement.style.backgroundColor = '#0a0a0a'; // Tailwind dark:bg-neutral-900 color
         } else {
           document.documentElement.classList.remove('dark');
           document.documentElement.style.backgroundColor = '#ffffff'; // White background for light mode
@@ -85,7 +85,7 @@
       }
       
       html.dark body {
-        background-color: #111827; /* Same as Tailwind's dark:bg-gray-900 */
+        background-color: #0a0a0a; /* Same as Tailwind's dark:bg-gray-900 */
         color: #ffffff;
       }
     </style>

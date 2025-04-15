@@ -148,17 +148,17 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Account Settings</h1>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white mb-4">Account Settings</h1>
           
           {/* Tabs */}
-          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+          <div className="flex border-b border-neutral-200 dark:border-neutral-700 mb-6">
             <button
               className={`py-2 px-4 font-medium ${
                 activeTab === 'profile'
                   ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
               }`}
               onClick={() => setActiveTab('profile')}
             >
@@ -168,7 +168,7 @@ const Profile = () => {
               className={`py-2 px-4 font-medium ${
                 activeTab === 'password'
                   ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
               }`}
               onClick={() => setActiveTab('password')}
             >
@@ -193,7 +193,7 @@ const Profile = () => {
             <form onSubmit={handleProfileSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="first_name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     First Name
                   </label>
                   <input
@@ -202,11 +202,11 @@ const Profile = () => {
                     name="first_name"
                     value={formData.first_name}
                     onChange={handleProfileChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-white text-sm"
+                    className="mt-1 block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-white text-sm"
                   />
                 </div>
                 <div>
-                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="last_name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Last Name
                   </label>
                   <input
@@ -215,11 +215,11 @@ const Profile = () => {
                     name="last_name"
                     value={formData.last_name}
                     onChange={handleProfileChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-white text-sm"
+                    className="mt-1 block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-white text-sm"
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Email Address
                   </label>
                   <input
@@ -228,9 +228,9 @@ const Profile = () => {
                     name="email"
                     value={formData.email}
                     disabled
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm cursor-not-allowed"
+                    className="mt-1 block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm bg-neutral-100 dark:bg-neutral-600 text-neutral-500 dark:text-neutral-400 text-sm cursor-not-allowed"
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
                     Email cannot be changed. Contact support if you need to update your email.
                   </p>
                 </div>
@@ -238,7 +238,7 @@ const Profile = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${
+                    className={`px-4 py-2 bg-neutral-600 hover:bg-neutral-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${
                       loading ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                   >
@@ -254,7 +254,7 @@ const Profile = () => {
             <form onSubmit={handlePasswordSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="current_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="current_password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Current Password
                   </label>
                   <input
@@ -264,11 +264,11 @@ const Profile = () => {
                     value={passwordData.current_password}
                     onChange={handlePasswordChange}
                     required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-white text-sm"
+                    className="mt-1 block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-white text-sm"
                   />
                 </div>
                 <div>
-                  <label htmlFor="new_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="new_password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     New Password
                   </label>
                   <input
@@ -278,11 +278,11 @@ const Profile = () => {
                     value={passwordData.new_password}
                     onChange={handlePasswordChange}
                     required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-white text-sm"
+                    className="mt-1 block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-white text-sm"
                   />
                 </div>
                 <div>
-                  <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="confirm_password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Confirm New Password
                   </label>
                   <input
@@ -292,14 +292,14 @@ const Profile = () => {
                     value={passwordData.confirm_password}
                     onChange={handlePasswordChange}
                     required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-700 dark:text-white text-sm"
+                    className="mt-1 block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-neutral-700 text-neutral-700 dark:text-white text-sm"
                   />
                 </div>
                 <div className="flex justify-end">
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${
+                    className={`px-4 py-2 bg-neutral-600 hover:bg-neutral-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors ${
                       loading ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                   >

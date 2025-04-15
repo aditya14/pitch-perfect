@@ -3,11 +3,11 @@ import logging
 from typing import Dict, List, Optional, Union, Tuple
 from decimal import Decimal
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
 
 from api.models import (
-    IPLMatch, IPLPlayer, IPLTeam, IPLPlayerEvent, FantasySquad, FantasyPlayerEvent, FantasyBoostRole
+    IPLMatch, IPLPlayer, IPLTeam, IPLPlayerEvent, FantasySquad, FantasyPlayerEvent, FantasyBoostRole, FantasyMatchEvent, FantasyLeague
 )
 
 logger = logging.getLogger(__name__)
@@ -101,6 +101,11 @@ class CricketDataService:
             fantasy_events = self._update_fantasy_events(match, updated_events)
             logger.info(f"Updated {len(fantasy_events)} fantasy events")
             
+            # Update fantasy match events (new)
+            logger.info(f"Updating fantasy match events for {match_id}")
+            match_events = self._update_fantasy_match_events(match, fantasy_events)
+            logger.info(f"Updated {len(match_events)} fantasy match events")
+            
             # Update total points for each fantasy squad
             logger.info(f"Updating fantasy squad totals for {match_id}")
             updated_squads = self._update_fantasy_squad_totals(match.season)
@@ -110,6 +115,7 @@ class CricketDataService:
                 "match": match.id,
                 "player_events_updated": len(updated_events),
                 "fantasy_events_updated": len(fantasy_events),
+                "fantasy_match_events_updated": len(match_events),
                 "fantasy_squads_updated": len(updated_squads)
             }
         except Exception as e:
@@ -268,7 +274,7 @@ class CricketDataService:
                 event.bat_balls = batting.get("b", 0)
                 event.bat_fours = batting.get("4s", 0)
                 event.bat_sixes = batting.get("6s", 0)
-                event.bat_not_out = batting.get("dismissal-text") == "not out"
+                event.bat_not_out = batting.get("dismissal-text") in ["not out", "batting"]
                 event.bat_innings = 1
                 
                 event.save()
@@ -415,6 +421,8 @@ class CricketDataService:
     def _update_fantasy_squad_totals(self, season) -> List[FantasySquad]:
         """
         Update total points for all fantasy squads in the season.
+        Ensures that total_points is exactly the sum of base_points and boost_points 
+        from all FantasyMatchEvent objects.
         
         Args:
             season: The Season object
@@ -428,18 +436,28 @@ class CricketDataService:
         squads = FantasySquad.objects.filter(league__season=season)
         
         for squad in squads:
-            # Sum base points and boost points from all fantasy player events
-            total_points = FantasyPlayerEvent.objects.filter(
+            # Calculate points based on FantasyMatchEvent totals (which have already been calculated)
+            # This ensures total_points is correctly the sum of base + boost points
+            match_events_totals = FantasyMatchEvent.objects.filter(
                 fantasy_squad=squad,
-                match_event__match__season=season
-            ).values_list('match_event__total_points_all', 'boost_points')
+                match__season=season
+            ).aggregate(
+                total_base=models.Sum('total_base_points'),
+                total_boost=models.Sum('total_boost_points')
+            )
             
-            # Calculate total points
-            squad_total = sum(base + boost for base, boost in total_points)
+            base_points = match_events_totals.get('total_base') or 0
+            boost_points = match_events_totals.get('total_boost') or 0
             
-            # Update the squad total
-            squad.total_points = squad_total
-            squad.save()
+            # Ensure total is exactly the sum of base and boost
+            squad_total = base_points + boost_points
+            
+            # Update the squad total only if it's different
+            if abs(float(squad.total_points) - squad_total) > 0.01:  # Small epsilon for float comparison
+                logger.info(f"Updating {squad.name} points from {squad.total_points} to {squad_total}")
+                squad.total_points = squad_total
+                squad.save()
+                
             updated_squads.append(squad)
         
         return updated_squads
@@ -492,25 +510,28 @@ class CricketDataService:
         batting_milestones = 0
         if (event.bat_runs or 0) >= 100:
             batting_milestones += 16  # Century
-        elif (event.bat_runs or 0) >= 50:
+        if (event.bat_runs or 0) >= 50:
             batting_milestones += 8  # Half-century
             
-        # Strike rate bonus/penalty
-        sr_points = 0
-        if (event.bat_balls or 0) >= 10:
-            sr = event.bat_strike_rate
-            if sr >= 200:
-                sr_points += 6
-            elif sr >= 175:
-                sr_points += 4
-            elif sr >= 150:
-                sr_points += 2
-            elif sr < 100:
-                sr_points -= 2
-            elif sr < 75:
-                sr_points -= 4
-            elif sr < 50:
-                sr_points -= 6
+        # Strike rate calculation
+        sr_bonus = 0
+        if (event.bat_balls or 0) >= 10 and event.bat_runs is not None:
+            from decimal import Decimal, ROUND_HALF_UP
+            sr = Decimal(str(event.bat_runs)) / Decimal(str(event.bat_balls)) * Decimal('100')
+            sr = sr.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
+            
+            if sr >= Decimal('200'):
+                sr_bonus = 6
+            elif sr >= Decimal('175'):
+                sr_bonus = 4
+            elif sr >= Decimal('150'):
+                sr_bonus = 2
+            elif sr < Decimal('50'):
+                sr_bonus = -6
+            elif sr < Decimal('75'):
+                sr_bonus = -4
+            elif sr < Decimal('100'):
+                sr_bonus = -2
         
         # Calculate batting boost     
         # Separately calculate boost for each component
@@ -518,7 +539,7 @@ class CricketDataService:
         fours_boost = batting_fours * (boost.multiplier_fours - 1.0)
         sixes_boost = (2 * batting_sixes) * (boost.multiplier_sixes - 1.0)
         milestone_boost = batting_milestones * (boost.multiplier_bat_milestones - 1.0)
-        sr_boost = sr_points * (boost.multiplier_sr - 1.0)
+        sr_boost = sr_bonus * (boost.multiplier_sr - 1.0)
         
         total_boost_points += (runs_boost + fours_boost + sixes_boost + milestone_boost + sr_boost)
         
@@ -530,31 +551,35 @@ class CricketDataService:
         bowling_milestones = 0
         if (event.bowl_wickets or 0) >= 5:
             bowling_milestones += 16  # 5-wicket haul
-        elif (event.bowl_wickets or 0) >= 3:
+        if (event.bowl_wickets or 0) >= 3:
             bowling_milestones += 8  # 3-wicket haul
             
-        # Economy bonus/penalty
-        economy_points = 0
-        if (event.bowl_balls or 0) >= 10:
-            economy = event.bowl_economy
-            if economy <= 5:
-                economy_points += 6
-            elif economy <= 6:
-                economy_points += 4
-            elif economy <= 7:
-                economy_points += 2
-            elif economy >= 12:
-                economy_points -= 6
-            elif economy >= 11:
-                economy_points -= 4
-            elif economy >= 10:
-                economy_points -= 2
+        # Economy bonus calculation
+        eco_bonus = 0
+        if (event.bowl_balls or 0) >= 10 and event.bowl_runs is not None:
+            from decimal import Decimal, ROUND_HALF_UP
+            overs = Decimal(str(event.bowl_balls)) / Decimal('6')
+            eco = Decimal(str(event.bowl_runs)) / overs
+            eco = eco.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            
+            if eco < Decimal('5'):
+                eco_bonus = 6
+            elif eco < Decimal('6'):
+                eco_bonus = 4
+            elif eco < Decimal('7'):
+                eco_bonus = 2
+            elif eco >= Decimal('12'):
+                eco_bonus = -6
+            elif eco >= Decimal('11'):
+                eco_bonus = -4
+            elif eco >= Decimal('10'):
+                eco_bonus = -2
         
         # Calculate bowling boost        
         wickets_boost = bowling_wickets * (boost.multiplier_wickets - 1.0)
         maidens_boost = bowling_maidens * (boost.multiplier_maidens - 1.0)
         bowl_milestone_boost = bowling_milestones * (boost.multiplier_bowl_milestones - 1.0)
-        economy_boost = economy_points * (boost.multiplier_economy - 1.0)
+        economy_boost = eco_bonus * (boost.multiplier_economy - 1.0)
         
         total_boost_points += (wickets_boost + maidens_boost + bowl_milestone_boost + economy_boost)
         
@@ -789,3 +814,172 @@ class CricketDataService:
             return self._find_team_by_name(team_name)
         
         return None
+    
+
+    def _update_fantasy_match_events(self, match, fantasy_player_events):
+        """
+        Create or update FantasyMatchEvent records for all squads in this match.
+        Uses existing FantasyPlayerEvent records with their pre-calculated boost points.
+        
+        Args:
+            match: The IPLMatch object
+            fantasy_player_events: List of FantasyPlayerEvent objects for this match
+        
+        Returns:
+            List of updated FantasyMatchEvent objects
+        """
+        print(f"Updating fantasy match events for {match}")
+        
+        # Group events by fantasy squad
+        squad_events = {}
+        for event in fantasy_player_events:
+            squad_id = event.fantasy_squad_id
+            if squad_id not in squad_events:
+                squad_events[squad_id] = []
+            squad_events[squad_id].append(event)
+        
+        match_events = []
+        
+        # Get all squads that should have a match event (from all leagues for this season)
+        all_squads = FantasySquad.objects.filter(league__season=match.season)
+        
+        # Create FantasyMatchEvent for all squads, even those without active players
+        for squad in all_squads:
+            # Get or create a FantasyMatchEvent for this squad and match
+            try:
+                match_event = FantasyMatchEvent.objects.get(
+                    match=match,
+                    fantasy_squad=squad
+                )
+            except FantasyMatchEvent.DoesNotExist:
+                match_event = FantasyMatchEvent(
+                    match=match,
+                    fantasy_squad=squad
+                )
+                match_event.save()
+            
+            # Calculate totals
+            events = squad_events.get(squad.id, [])
+            base_points = sum(event.match_event.total_points_all for event in events)
+            boost_points = sum(event.boost_points for event in events)
+            total_points = base_points + boost_points
+            
+            # Update the event
+            match_event.total_base_points = base_points
+            match_event.total_boost_points = boost_points
+            match_event.total_points = total_points
+            match_event.players_count = len(events)
+            match_event.save()
+            
+            match_events.append(match_event)
+        
+        # Calculate match ranks within each league
+        self._update_match_ranks(match)
+        
+        # Calculate running ranks
+        self._update_running_ranks(match)
+        
+        return match_events
+
+    def _update_match_ranks(self, match):
+        """
+        Update match_rank for all FantasyMatchEvents in this match.
+        Events are ranked by total_points in descending order within each league.
+        
+        Args:
+            match: The IPLMatch object
+        """
+        print(f"Updating match ranks for {match}")
+        
+        # Get all fantasy match events for this match
+        match_events = FantasyMatchEvent.objects.filter(match=match)
+        
+        # Get the unique leagues represented in this match
+        league_ids = set(
+            FantasySquad.objects.filter(
+                id__in=match_events.values_list('fantasy_squad_id', flat=True)
+            ).values_list('league_id', flat=True)
+        )
+        
+        # Process rankings for each league separately
+        for league_id in league_ids:
+            # Get events for this match and league, ordered by total points
+            league_events = match_events.filter(
+                fantasy_squad__league_id=league_id
+            ).order_by('-total_points')
+            
+            # Assign ranks within this league
+            for i, event in enumerate(league_events):
+                event.match_rank = i + 1
+                event.save()
+
+    def _update_running_ranks(self, match):
+        """
+        Calculate and update running ranks for all squads in this match's league.
+        The running rank is the squad's position in the league as of this match.
+        
+        Args:
+            match: The IPLMatch object
+        """
+        print(f"Updating running ranks for {match}")
+        
+        # Get all FantasyMatchEvents for this match
+        match_events = FantasyMatchEvent.objects.filter(match=match)
+        
+        if not match_events.exists():
+            return
+        
+        # Get the unique leagues represented in this match
+        league_ids = set(
+            FantasySquad.objects.filter(
+                id__in=match_events.values_list('fantasy_squad_id', flat=True)
+            ).values_list('league_id', flat=True)
+        )
+        
+        # Process each league separately
+        for league_id in league_ids:
+            # Get all squads in this league
+            squads = FantasySquad.objects.filter(league_id=league_id)
+            
+            # Get all matches up to and including the current match for this league's season
+            league = FantasyLeague.objects.get(id=league_id)
+            season = league.season
+            all_season_matches = IPLMatch.objects.filter(
+                season=season,
+                date__lte=match.date
+            ).order_by('date')
+            
+            # Dictionary to track running totals for each squad
+            running_totals = {squad.id: 0 for squad in squads}
+            
+            # For each match up to the current one, update running totals
+            for m in all_season_matches:
+                # Get all FantasyMatchEvents for this match
+                events = FantasyMatchEvent.objects.filter(
+                    match=m,
+                    fantasy_squad__league_id=league_id
+                )
+                
+                # Update running totals
+                for event in events:
+                    squad_id = event.fantasy_squad_id
+                    if squad_id in running_totals:
+                        running_totals[squad_id] += event.total_points
+                
+                # If this is the current match, update running_ranks
+                if m.id == match.id:
+                    # Sort squads by total points
+                    sorted_squads = sorted(
+                        running_totals.items(),
+                        key=lambda x: x[1],
+                        reverse=True  # Descending order
+                    )
+                    
+                    # Update running ranks for each squad
+                    for rank, (squad_id, total) in enumerate(sorted_squads, 1):
+                        # Find the corresponding FantasyMatchEvent
+                        event = match_events.filter(fantasy_squad_id=squad_id).first()
+                        if event:
+                            event.running_rank = rank
+                            event.running_total_points = total
+                            event.save()

@@ -56,7 +56,7 @@ const SimpleMatchPerformance = ({
       className="cursor-pointer group flex items-center text-left"
     >
       <span>{label}</span>
-      <ArrowUpDown className="h-4 w-4 ml-1 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <ArrowUpDown className="h-4 w-4 ml-1 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
   
@@ -66,7 +66,7 @@ const SimpleMatchPerformance = ({
     
     // Add batting info if player batted
     if (data.bat_runs > 0) {
-      performance.push(`${data.bat_runs}(${data.bat_balls})`);
+      performance.push(`${data.bat_runs}${data.bat_not_out ? '*' : ''}(${data.bat_balls})`);
     }
     
     // Add bowling info if player bowled
@@ -98,22 +98,22 @@ const SimpleMatchPerformance = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-20">
+      <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 mb-4">
+        <thead className="bg-neutral-50 dark:bg-neutral-950 sticky top-0 z-20">
           <tr>
-            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
               <SortableHeader label="Team" sortKey="team_name" />
             </th>
-            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
               <div className="flex flex-col">
                 <SortableHeader label="Player" sortKey="player_name" />
                 <SortableHeader label="Squad" sortKey="squad_name" />
               </div>
             </th>
-            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
               <span>Performance</span>
             </th>
-            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
               {hasFantasyData && leagueId ? (
                 <SortableHeader label="Points" sortKey="fantasy_points" />
               ) : (
@@ -122,10 +122,10 @@ const SimpleMatchPerformance = ({
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="bg-white dark:bg-black divide-y divide-neutral-200 dark:divide-neutral-900">
           {localSortedEvents.length === 0 ? (
             <tr>
-              <td colSpan={4} className="px-4 py-4 text-center text-gray-500 dark:text-gray-400">
+              <td colSpan={4} className="px-4 py-4 text-center text-neutral-500 dark:text-neutral-400">
                 No player data available for this match
               </td>
             </tr>
@@ -136,7 +136,7 @@ const SimpleMatchPerformance = ({
               return (
                 <tr 
                   key={`simple-row-${data.id || data.player_id || index}`}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="hover:bg-neutral-50 dark:hover:bg-black"
                   style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
                 >
                   {/* Team column */}
@@ -149,13 +149,13 @@ const SimpleMatchPerformance = ({
                   {/* Player column */}
                   <td className="px-2 py-3 whitespace-nowrap">
                     <div 
-                      className="text-sm text-gray-900 dark:text-white cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
+                      className="text-sm text-neutral-900 dark:text-white cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
                       onClick={() => openPlayerModal(data.player_id, leagueId)}
                     >
                       {data.player_name} {data.player_of_match && '🏅'}
                     </div>
                     {data.squad_name && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                      <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center">
                         <div 
                           className="h-3 w-1 mr-1 rounded-sm"
                           style={{ backgroundColor: data.squad_color }}
@@ -177,7 +177,7 @@ const SimpleMatchPerformance = ({
                   </td>
                   
                   {/* Performance column */}
-                  <td className="px-2 py-3 text-sm text-sm text-gray-900 dark:text-white">
+                  <td className="px-2 py-3 text-sm text-sm text-neutral-900 dark:text-white">
                     {formatPerformance(data)}
                   </td>
                   
@@ -185,14 +185,14 @@ const SimpleMatchPerformance = ({
                   <td className="px-2 py-3 whitespace-nowrap text-sm font-medium">
                     {hasFantasyData && leagueId ? (
                       <div className="flex flex-col">
-                        <span className="font-bold text-gray-900 dark:text-white text-base">
+                        <span className="font-bold text-neutral-900 dark:text-white text-base">
                           {data.fantasy_points}
                         </span>
                         <div className='flex items-center gap-1'>
                           <span className={`text-xs ${getPointsColorClass(data.base_points)}`}>
                             {data.base_points}
                           </span>
-                          {data.boost_points > 0 && <span className='text-xs'> + {data.boost_points}</span>}
+                          {data.boost_points !== 0 && <span className='text-xs'> {data.boost_points > 0 && '+'}{data.boost_points}</span>}
                         </div>
                       </div>
                     ) : (

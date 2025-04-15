@@ -57,12 +57,12 @@ const Login = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-primary-950 pt-10 pb-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-primary-950 pt-10 pb-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Inject safe-area CSS */}
       <style dangerouslySetInnerHTML={{ __html: safeTopStyle }} />
       {/* Background decoration */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary-100 dark:bg-primary-900/20 blur-3xl opacity-50"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-neutral-100 dark:bg-neutral-900/20 blur-3xl opacity-50"></div>
         <div className="absolute top-1/2 -left-24 w-80 h-80 rounded-full bg-blue-100 dark:bg-blue-900/20 blur-3xl opacity-40"></div>
         <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 w-screen h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-30"></div>
       </div>
@@ -71,7 +71,7 @@ const Login = () => {
         {/* App Logo - Always at the top on all screens with safe spacing */}
         <div className="flex items-center justify-center lg:justify-start mb-8 safe-top">
           <img src="/icon.png" alt="PitchPerfect Logo" className="h-12 w-12 sm:h-16 sm:w-16 mr-3" />
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white">
             <span className="text-primary-500 dark:text-primary-500">Pitch</span>Perfect
           </h1>
         </div>
@@ -80,22 +80,22 @@ const Login = () => {
           {/* App Info Section - After login on mobile, side-by-side on desktop */}
           <div className="w-full lg:w-1/2 space-y-6 lg:space-y-8 text-center lg:text-left order-last lg:order-first">
             <div>
-              <h2 className="text-xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-3">
+              <h2 className="text-xl sm:text-3xl font-bold text-neutral-800 dark:text-neutral-100 mb-3">
                 Fantasy Cricket Reimagined
               </h2>
-              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 mb-6 max-w-xl mx-auto lg:mx-0">
+              <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-300 mb-6 max-w-xl mx-auto lg:mx-0">
                 The premier draft-based fantasy cricket platform for IPL enthusiasts. Build your squad, deploy strategic roles, and compete throughout the season.
               </p>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
                 {features.map((feature, index) => (
-                  <div key={index} className="flex items-start p-3 sm:p-4 bg-white dark:bg-gray-800/50 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all">
-                    <div className="flex-shrink-0 p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400 mr-3">
+                  <div key={index} className="flex items-start p-3 sm:p-4 bg-white dark:bg-neutral-800/50 rounded-lg shadow-sm border border-neutral-100 dark:border-neutral-700 hover:shadow-md transition-all">
+                    <div className="flex-shrink-0 p-2 bg-neutral-100 dark:bg-neutral-900/50 rounded-lg text-primary-600 dark:text-primary-400 mr-3">
                       {feature.icon}
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white text-sm sm:text-md mb-1">{feature.title}</h3>
-                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{feature.description}</p>
+                      <h3 className="font-medium text-neutral-900 dark:text-white text-sm sm:text-md mb-1">{feature.title}</h3>
+                      <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">{feature.description}</p>
                     </div>
                   </div>
                 ))}
@@ -103,7 +103,7 @@ const Login = () => {
             </div>
 
             <div className="hidden lg:block">
-              <div className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400">
                 <Zap className="h-4 w-4 mr-2 text-yellow-500" />
                 <span>Ready for the 2025 IPL season</span>
               </div>
@@ -112,12 +112,12 @@ const Login = () => {
 
           {/* Mobile Onboarding - Login First Approach */}
           <div className="w-full sm:max-w-md mx-auto order-first mb-8 lg:mb-0 lg:order-last lg:w-5/12">
-            <div className="bg-white dark:bg-gray-800 shadow-xl rounded-xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-neutral-800 shadow-xl rounded-xl p-6 sm:p-8 border border-neutral-200 dark:border-neutral-700">
               <div className="mb-4 sm:mb-6 text-center">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-white">
                   Sign in to your account
                 </h2>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
                   Or{' '}
                   <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
                     create a new account
@@ -136,16 +136,16 @@ const Login = () => {
                 <div className="space-y-4">
                   {/* Username/Email */}
                   <div>
-                    <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="username" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                       Email Address
                     </label>
                     <input
                       id="username"
                       type="text"
                       required
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 
+                      className="appearance-none block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm placeholder-neutral-400 
                         focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                        dark:bg-gray-700 dark:text-white sm:text-sm bg-gray-100 text-black"
+                        dark:bg-neutral-700 dark:text-white sm:text-sm bg-neutral-100 text-black"
                       placeholder="you@example.com"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
@@ -154,7 +154,7 @@ const Login = () => {
                   
                   {/* Password */}
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                       Password
                     </label>
                     <div className="relative">
@@ -162,16 +162,16 @@ const Login = () => {
                         id="password"
                         type={showPassword ? "text" : "password"}
                         required
-                        className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 
+                        className="appearance-none block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm placeholder-neutral-400 
                           focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                          dark:bg-gray-700 dark:text-white sm:text-sm bg-gray-100 text-black"
+                          dark:bg-neutral-700 dark:text-white sm:text-sm bg-neutral-100 text-black"
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >
@@ -188,7 +188,7 @@ const Login = () => {
                     className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
                       bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 
                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 
-                      disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors duration-200"
+                      disabled:bg-neutral-400 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {isSubmitting ? 'Signing in...' : 'Sign in'}
                   </button>
@@ -198,10 +198,10 @@ const Login = () => {
               <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                    <div className="w-full border-t border-neutral-300 dark:border-neutral-600"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                    <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
                       Fantasy Cricket at its finest
                     </span>
                   </div>
@@ -210,7 +210,7 @@ const Login = () => {
             </div>
 
             <div className="mt-4 text-center lg:hidden">
-              <div className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400">
                 <Zap className="h-4 w-4 mr-2 text-yellow-500" />
                 <span>Ready for the 2025 IPL season</span>
               </div>
@@ -219,7 +219,7 @@ const Login = () => {
         </div>
         
         {/* Footer */}
-        <div className="mt-8 lg:mt-12 text-center text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-8 lg:mt-12 text-center text-xs text-neutral-500 dark:text-neutral-400">
           <p>© 2025 PitchPerfect. All rights reserved.</p>
         </div>
       </div>

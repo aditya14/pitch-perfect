@@ -157,13 +157,13 @@ const Register = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-primary-950 pt-10 pb-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-primary-950 pt-10 pb-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Inject safe-area CSS */}
       <style dangerouslySetInnerHTML={{ __html: safeTopStyle }} />
       
       {/* Background decoration */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary-100 dark:bg-primary-900/20 blur-3xl opacity-50"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-neutral-100 dark:bg-neutral-900/20 blur-3xl opacity-50"></div>
         <div className="absolute top-1/2 -left-24 w-80 h-80 rounded-full bg-blue-100 dark:bg-blue-900/20 blur-3xl opacity-40"></div>
         <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 w-screen h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-30"></div>
       </div>
@@ -172,7 +172,7 @@ const Register = () => {
         {/* App Logo - Always at the top on all screens with safe spacing */}
         <div className="flex items-center justify-center mb-8 safe-top">
           <img src="/icon.png" alt="PitchPerfect Logo" className="h-12 w-12 sm:h-16 sm:w-16 mr-3" />
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white">
             <span className="text-primary-500 dark:text-primary-500">Pitch</span>Perfect
           </h1>
         </div>
@@ -180,12 +180,12 @@ const Register = () => {
         <div className="flex flex-col items-center justify-center">
           {/* Registration Form */}
           <div className="w-full max-w-md mx-auto">
-            <div className="bg-white dark:bg-gray-800 shadow-xl rounded-xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-neutral-800 shadow-xl rounded-xl p-6 sm:p-8 border border-neutral-200 dark:border-neutral-700">
               <div className="mb-6 text-center">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">
                   Create your account
                 </h2>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
                   Or{' '}
                   <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
                     sign in to your existing account
@@ -204,7 +204,7 @@ const Register = () => {
                 <div className="space-y-4">
                   {/* Email */}
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                       Email Address <span className="text-red-600">*</span>
                     </label>
                     <input
@@ -215,10 +215,10 @@ const Register = () => {
                       className={`appearance-none block w-full px-3 py-2 border ${
                         validations.email === false 
                           ? 'border-red-300 dark:border-red-700' 
-                          : 'border-gray-300 dark:border-gray-600'
-                      } rounded-md shadow-sm placeholder-gray-400 
+                          : 'border-neutral-300 dark:border-neutral-600'
+                      } rounded-md shadow-sm placeholder-neutral-400 
                       focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                      dark:bg-gray-700 dark:text-white sm:text-sm bg-gray-100 text-black`}
+                      dark:bg-neutral-700 dark:text-white sm:text-sm bg-neutral-100 text-black`}
                       placeholder="you@example.com"
                       value={formData.email}
                       onChange={handleChange}
@@ -231,7 +231,7 @@ const Register = () => {
                   
                   {/* Password */}
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                       Password <span className="text-red-600">*</span>
                     </label>
                     <div className="relative">
@@ -243,17 +243,17 @@ const Register = () => {
                         className={`appearance-none block w-full px-3 py-2 border ${
                           validations.password === false 
                             ? 'border-red-300 dark:border-red-700' 
-                            : 'border-gray-300 dark:border-gray-600'
-                        } rounded-md shadow-sm placeholder-gray-400 
+                            : 'border-neutral-300 dark:border-neutral-600'
+                        } rounded-md shadow-sm placeholder-neutral-400 
                         focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                        dark:bg-gray-700 dark:text-white sm:text-sm bg-gray-100 text-black`}
+                        dark:bg-neutral-700 dark:text-white sm:text-sm bg-neutral-100 text-black`}
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={handleChange}
                       />
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >
@@ -268,7 +268,7 @@ const Register = () => {
                   
                   {/* Confirm Password */}
                   <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                       Confirm Password <span className="text-red-600">*</span>
                     </label>
                     <div className="relative">
@@ -280,17 +280,17 @@ const Register = () => {
                         className={`appearance-none block w-full px-3 py-2 border ${
                           validations.passwordMatch === false 
                             ? 'border-red-300 dark:border-red-700' 
-                            : 'border-gray-300 dark:border-gray-600'
-                        } rounded-md shadow-sm placeholder-gray-400 
+                            : 'border-neutral-300 dark:border-neutral-600'
+                        } rounded-md shadow-sm placeholder-neutral-400 
                         focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                        dark:bg-gray-700 dark:text-white sm:text-sm bg-gray-100 text-black`}
+                        dark:bg-neutral-700 dark:text-white sm:text-sm bg-neutral-100 text-black`}
                         placeholder="••••••••"
                         value={formData.confirmPassword}
                         onChange={handleChange}
                       />
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                       >
@@ -311,7 +311,7 @@ const Register = () => {
                     className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
                       bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 
                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 
-                      disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors duration-200"
+                      disabled:bg-neutral-400 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {isSubmitting ? 'Creating Account...' : 'Sign up'}
                   </button>
@@ -321,10 +321,10 @@ const Register = () => {
               <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                    <div className="w-full border-t border-neutral-300 dark:border-neutral-600"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                    <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
                       Join the community
                     </span>
                   </div>
@@ -333,11 +333,11 @@ const Register = () => {
             </div>
             
             <div className="mt-6 text-center">
-              <div className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400">
                 <Users className="h-4 w-4 mr-2 text-primary-500" />
                 <span>Join thousands of fantasy cricket enthusiasts</span>
               </div>
-              <div className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+              <div className="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400 mt-2">
                 <Zap className="h-4 w-4 mr-2 text-yellow-500" />
                 <span>Ready for the 2025 IPL season</span>
               </div>
@@ -346,7 +346,7 @@ const Register = () => {
         </div>
         
         {/* Footer */}
-        <div className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-8 text-center text-xs text-neutral-500 dark:text-neutral-400">
           <p>© 2025 PitchPerfect. All rights reserved.</p>
         </div>
       </div>

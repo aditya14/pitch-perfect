@@ -28,7 +28,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
   // Countdown Timer Component
   const CountdownTimer = ({ onExpire }) => {
     const [timeLeft, setTimeLeft] = useState({});
-    const lockDate = new Date('2025-03-29T14:00:00Z'); // March 29, 2025, 2pm UTC
+    const lockDate = new Date('2025-04-19T10:00:00Z'); // April 19, 2025, 10am UTC
   
     useEffect(() => {
       const calculateTimeLeft = () => {
@@ -73,24 +73,24 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
     }
   
     return (
-      <div className="rounded-lg bg-primary-50 dark:bg-primary-900 px-4 py-3 w-full">
-        <div className="text-xs text-primary-600 dark:text-primary-300 mb-1">Boost Picks Lock For The Week In:</div>
+      <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 px-4 py-3 w-full">
+        <div className="text-xs text-neutral-600 dark:text-neutral-300 mb-1">Boost Picks Lock For The Week In:</div>
         <div className="flex space-x-2 text-center justify-center md:justify-start">
-          <div className="bg-white dark:bg-gray-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-primary-600 dark:text-primary-400">{timeLeft.days}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">days</div>
+          <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
+            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.days}</div>
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">days</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-primary-600 dark:text-primary-400">{timeLeft.hours}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">hrs</div>
+          <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
+            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.hours}</div>
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">hrs</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-primary-600 dark:text-primary-400">{timeLeft.minutes}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">min</div>
+          <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
+            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.minutes}</div>
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">min</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-primary-600 dark:text-primary-400">{timeLeft.seconds}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">sec</div>
+          <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
+            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.seconds}</div>
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">sec</div>
           </div>
         </div>
       </div>
@@ -196,16 +196,37 @@ const BoostSelection = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="p-4 md:p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          Week 2 (Mar 29 - Apr 4)
+      <div className="p-4 md:p-6 border-b border-neutral-200 dark:border-neutral-700">
+        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4">
+          Week 5 (Apr 19 - Apr 25)
         </h2>
         
-        {/* Countdown */}
+        {/* Countdown and retention info */}
         <div className="flex flex-col lg:flex-row gap-4">
-          <CountdownTimer onExpire={() => {}} />
+          <div className="lg:w-1/2">
+            <CountdownTimer onExpire={() => {}} />
+          </div>
+          <div className="lg:w-1/2 bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 border border-blue-100 dark:border-blue-800">
+            <div className="flex items-start gap-2">
+              <div className="mt-0.5 text-blue-600 dark:text-blue-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-blue-800 dark:text-blue-300 text-sm">
+                  Mid-Season Draft Retention
+                </h3>
+                <p className="text-xs text-blue-700 dark:text-blue-200 mt-1">
+                  Your Week 5 boost selections will be automatically retained during the mid-season draft.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
         
         {error && (
@@ -216,8 +237,8 @@ const BoostSelection = ({
       </div>
 
       {/* Summary of next week's assignments */}
-      <div className="bg-gray-50 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="font-medium text-gray-900 dark:text-white mb-3">Next Week's Boosts</h3>
+      <div className="bg-neutral-50 dark:bg-neutral-700 p-4 border-b border-neutral-200 dark:border-neutral-700">
+        <h3 className="font-medium text-neutral-900 dark:text-white mb-3">Next Week's Boosts</h3>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {boostRoles.map(role => {
@@ -225,18 +246,18 @@ const BoostSelection = ({
             const player = assignment ? getPlayerById(assignment.player_id) : null;
             
             return (
-              <div key={role.id} className="flex items-center p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+              <div key={role.id} className="flex items-center p-2 bg-white dark:bg-black rounded border border-neutral-200 dark:border-neutral-600">
                 <div className="h-6 w-6 flex-shrink-0 mr-2">
                   {getRoleIcon(role.name, 16, squadColor)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{role.name}</div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400">{role.name}</div>
                   {player ? (
-                    <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <div className="text-sm font-medium text-neutral-900 dark:text-white truncate">
                       {player.name}
                     </div>
                   ) : (
-                    <div className="text-xs italic text-gray-400 dark:text-gray-500">Empty</div>
+                    <div className="text-xs italic text-neutral-400 dark:text-neutral-500">Empty</div>
                   )}
                 </div>
               </div>
@@ -252,24 +273,24 @@ const BoostSelection = ({
           {/* Back button */}
           <button 
             onClick={handleBackToPlayerList}
-            className="flex items-center text-primary-600 dark:text-primary-400 mb-4"
+            className="flex items-center text-neutral-600 dark:text-neutral-400 mb-4"
           >
             <ArrowLeft size={16} className="mr-1" />
             <span>Back to Players</span>
           </button>
 
           {/* Selected Player Header */}
-          <div className="mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+          <div className="mb-5 pb-4 border-b border-neutral-200 dark:border-neutral-700">
+            <h3 className="text-lg font-medium text-neutral-900 dark:text-white">
               {selectedPlayer.name}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {selectedPlayer.role} • {selectedPlayer.current_team?.name || 'No team'}
             </p>
           </div>
 
           {/* Eligible Roles */}
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
             Eligible Boosts
           </h4>
           
@@ -287,17 +308,17 @@ const BoostSelection = ({
                     className={`
                       w-full flex items-start p-3 rounded-lg text-left transition-all
                       ${isCurrentlyAssigned 
-                        ? 'bg-primary-50 dark:bg-primary-900 border border-primary-200 dark:border-primary-800' 
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/30'}
+                        ? 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800' 
+                        : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/30'}
                       ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
                     `}
                   >
-                    <div className="h-10 w-10 flex items-center justify-center bg-white dark:bg-gray-900 rounded-full shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mr-3 flex-shrink-0">
+                    <div className="h-10 w-10 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700 mr-3 flex-shrink-0">
                       {getRoleIcon(role.name, 20, squadColor)}
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="text-lg font-medium text-gray-900 dark:text-white">
+                      <div className="text-lg font-medium text-neutral-900 dark:text-white">
                         {role.name}
                       </div>
                       
@@ -306,11 +327,11 @@ const BoostSelection = ({
                           Currently Assigned
                         </div>
                       ) : hasOtherPlayerAssigned ? (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                           Currently: {getPlayerById(currentAssignment.player_id)?.name}
                         </div>
                       ) : (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                           Available
                         </div>
                       )}
@@ -321,7 +342,7 @@ const BoostSelection = ({
             })}
 
             {getEligibleRolesForPlayer(selectedPlayer).length === 0 && (
-              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-4 text-neutral-500 dark:text-neutral-400">
                 This player is not eligible for any boost roles
               </div>
             )}
@@ -331,22 +352,22 @@ const BoostSelection = ({
         /* Mobile Player List View */
         <div>
           {/* Search and Filters */}
-          <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-4 bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-700">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-5 w-5 text-neutral-400" />
               </div>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search players..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                className="block w-full pl-10 pr-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-600 text-neutral-900 dark:text-white"
               />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 dark:text-gray-300"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-500 dark:text-neutral-300"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -358,7 +379,7 @@ const BoostSelection = ({
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
-                className="flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 text-gray-700 dark:text-white text-sm p-2"
+                className="flex-1 rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
               >
                 <option value="all">All Roles</option>
                 <option value="BAT">Batters</option>
@@ -370,7 +391,7 @@ const BoostSelection = ({
               <select
                 value={filterAssigned}
                 onChange={(e) => setFilterAssigned(e.target.value)}
-                className="flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 text-gray-700 dark:text-white text-sm p-2"
+                className="flex-1 rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
               >
                 <option value="all">All Players</option>
                 <option value="assigned">Assigned</option>
@@ -378,7 +399,7 @@ const BoostSelection = ({
               </select>
             </div>
             
-            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
               {filteredPlayers.length} players found
             </div>
           </div>
@@ -400,23 +421,23 @@ const BoostSelection = ({
                     onClick={() => !isDeadlinePassed && handlePlayerSelect(player)}
                     className={`
                       rounded-lg p-3 cursor-pointer border transition-all
-                      border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700
+                      border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700
                       ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
                     `}
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium text-gray-900 dark:text-white">
+                        <div className="font-medium text-neutral-900 dark:text-white">
                           {player.name}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
                           {player.role} • {player.current_team?.name || 'No team'}
                         </div>
                       </div>
 
                       {/* Current assignment indicator - just the icon */}
                       {isAssigned && assignedRole && (
-                        <div className="h-6 w-6 flex items-center justify-center bg-white dark:bg-gray-900 rounded-full shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+                        <div className="h-6 w-6 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700">
                           {getRoleIcon(assignedRole.name, 16, squadColor)}
                         </div>
                       )}
@@ -426,7 +447,7 @@ const BoostSelection = ({
               })}
 
               {filteredPlayers.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
                   No players match your filters
                 </div>
               )}
@@ -437,25 +458,25 @@ const BoostSelection = ({
         /* Desktop Two-panel View (Original UI) */
         <div className="flex flex-col lg:flex-row">
           {/* Left Panel - Player Selection */}
-          <div className="lg:w-3/5 border-r border-gray-200 dark:border-gray-700">
+          <div className="lg:w-3/5 border-r border-neutral-200 dark:border-neutral-700">
             {/* Search and Filters */}
-            <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-4 bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-700">
               <div className="flex flex-col md:flex-row gap-3">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
+                    <Search className="h-5 w-5 text-neutral-400" />
                   </div>
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search players..."
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
+                    className="block w-full pl-10 pr-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-600 text-neutral-900 dark:text-white"
                   />
                   {searchQuery && (
                     <button 
                       onClick={() => setSearchQuery('')}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 dark:text-gray-300"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-500 dark:text-neutral-300"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -468,7 +489,7 @@ const BoostSelection = ({
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className="rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 text-gray-700 dark:text-white text-sm p-2"
+                  className="rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
                 >
                   <option value="all">All Roles</option>
                   <option value="BAT">Batters</option>
@@ -480,7 +501,7 @@ const BoostSelection = ({
                 <select
                   value={filterTeam}
                   onChange={(e) => setFilterTeam(e.target.value)}
-                  className="rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 text-gray-700 dark:text-white text-sm p-2"
+                  className="rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
                 >
                   <option value="all">All Teams</option>
                   {teams.map(team => (
@@ -491,7 +512,7 @@ const BoostSelection = ({
                 <select
                   value={filterAssigned}
                   onChange={(e) => setFilterAssigned(e.target.value)}
-                  className="rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 text-gray-700 dark:text-white text-sm p-2"
+                  className="rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
                 >
                   <option value="all">All Players</option>
                   <option value="assigned">Assigned</option>
@@ -499,7 +520,7 @@ const BoostSelection = ({
                 </select>
               </div>
               
-              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
                 {filteredPlayers.length} players found
               </div>
             </div>
@@ -521,24 +542,24 @@ const BoostSelection = ({
                     className={`
                       rounded-lg p-3 cursor-pointer border transition-all
                       ${isSelected 
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900 dark:border-primary-700' 
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'}
+                        ? 'border-neutral-500 bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700' 
+                        : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700'}
                       ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
                     `}
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium text-gray-900 dark:text-white">
+                        <div className="font-medium text-neutral-900 dark:text-white">
                           {player.name}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
                           {player.role} • {player.current_team?.name || 'No team'}
                         </div>
                       </div>
 
                       {/* Current assignment indicator - just the icon */}
                       {isAssigned && assignedRole && (
-                        <div className="h-6 w-6 flex items-center justify-center bg-white dark:bg-gray-900 rounded-full shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+                        <div className="h-6 w-6 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700">
                           {getRoleIcon(assignedRole.name, 16, squadColor)}
                         </div>
                       )}
@@ -548,7 +569,7 @@ const BoostSelection = ({
               })}
 
               {filteredPlayers.length === 0 && (
-                <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="col-span-full text-center py-8 text-neutral-500 dark:text-neutral-400">
                   No players match your filters
                 </div>
               )}
@@ -560,32 +581,32 @@ const BoostSelection = ({
             {/* Player Details or No Selection State */}
             {!selectedPlayer ? (
               <div className="p-6 text-center">
-                <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                  <User className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                <div className="mx-auto w-16 h-16 bg-neutral-100 dark:bg-neutral-700 rounded-full flex items-center justify-center mb-4">
+                  <User className="h-8 w-8 text-neutral-400 dark:text-neutral-500" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <h3 className="text-lg font-medium text-neutral-900 dark:text-white mb-2">
                   Select a player
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
                   Choose a player from the list to assign boost roles
                 </p>
               </div>
             ) : (
               <div className="p-5">
                 {/* Selected Player Header */}
-                <div className="mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="mb-5 pb-4 border-b border-neutral-200 dark:border-neutral-700">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-medium text-neutral-900 dark:text-white">
                       {selectedPlayer.name}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
                       {selectedPlayer.role} • {selectedPlayer.current_team?.name || 'No team'}
                     </p>
                   </div>
                 </div>
 
                 {/* Eligible Roles */}
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
                   Eligible Boosts
                 </h4>
                 
@@ -603,17 +624,17 @@ const BoostSelection = ({
                           className={`
                             w-full flex items-start p-3 rounded-lg text-left transition-all
                             ${isCurrentlyAssigned 
-                              ? 'bg-primary-50 dark:bg-primary-900 border border-primary-200 dark:border-primary-800' 
-                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/30'}
+                              ? 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800' 
+                              : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/30'}
                             ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
                           `}
                         >
-                          <div className="h-10 w-10 flex items-center justify-center bg-white dark:bg-gray-900 rounded-full shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mr-3 flex-shrink-0">
+                          <div className="h-10 w-10 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700 mr-3 flex-shrink-0">
                             {getRoleIcon(role.name, 20, squadColor)}
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className="text-lg font-medium text-gray-900 dark:text-white">
+                            <div className="text-lg font-medium text-neutral-900 dark:text-white">
                               {role.name}
                             </div>
                             
@@ -622,11 +643,11 @@ const BoostSelection = ({
                                 Currently Assigned
                               </div>
                             ) : hasOtherPlayerAssigned ? (
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                                 Currently: {getPlayerById(currentAssignment.player_id)?.name}
                               </div>
                             ) : (
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                                 Available
                               </div>
                             )}
@@ -637,7 +658,7 @@ const BoostSelection = ({
                   })}
 
                   {getEligibleRolesForPlayer(selectedPlayer).length === 0 && (
-                    <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    <div className="text-center py-4 text-neutral-500 dark:text-neutral-400">
                       This player is not eligible for any boost roles
                     </div>
                   )}

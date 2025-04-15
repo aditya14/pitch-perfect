@@ -323,12 +323,57 @@ class IPLPlayerEvent(models.Model):
     total_points_all = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        self.batting_points_total = self.bat_points
-        self.bowling_points_total = self.bowl_points
-        self.fielding_points_total = self.field_points
-        self.other_points_total = self.other_points
-        self.total_points_all = self.base_points
+        # Calculate point totals only if necessary fields have changed or object is new
+        if not self.pk or self._state.adding or self._has_point_fields_changed():
+            self.batting_points_total = self.bat_points
+            self.bowling_points_total = self.bowl_points  
+            self.fielding_points_total = self.field_points
+            self.other_points_total = self.other_points
+            self.total_points_all = (self.batting_points_total + 
+                                    self.bowling_points_total + 
+                                    self.fielding_points_total + 
+                                    self.other_points_total)
+        
         super().save(*args, **kwargs)
+
+    def _has_point_fields_changed(self):
+        """Check if any fields affecting point calculations have changed"""
+        if not self.pk:
+            return True
+            
+        try:
+            old_obj = IPLPlayerEvent.objects.get(pk=self.pk)
+            
+            # Check batting fields
+            if (self.bat_runs != old_obj.bat_runs or
+                self.bat_balls != old_obj.bat_balls or
+                self.bat_fours != old_obj.bat_fours or
+                self.bat_sixes != old_obj.bat_sixes or
+                self.bat_not_out != old_obj.bat_not_out):
+                return True
+                
+            # Check bowling fields
+            if (self.bowl_balls != old_obj.bowl_balls or
+                self.bowl_maidens != old_obj.bowl_maidens or
+                self.bowl_runs != old_obj.bowl_runs or
+                self.bowl_wickets != old_obj.bowl_wickets):
+                return True
+                
+            # Check fielding fields
+            if (self.field_catch != old_obj.field_catch or
+                self.wk_catch != old_obj.wk_catch or
+                self.wk_stumping != old_obj.wk_stumping or
+                self.run_out_solo != old_obj.run_out_solo or
+                self.run_out_collab != old_obj.run_out_collab):
+                return True
+                
+            # Check other fields
+            if self.player_of_match != old_obj.player_of_match:
+                return True
+                
+            return False
+        except IPLPlayerEvent.DoesNotExist:
+            return True
     
     # Calculated Fields
     @property
@@ -336,33 +381,41 @@ class IPLPlayerEvent(models.Model):
         """Calculate batting strike rate"""
         if self.bat_runs is None or self.bat_balls is None or self.bat_balls == 0:
             return None
-        return Decimal(str(round((self.bat_runs / self.bat_balls) * 100, 1)))
+        from decimal import Decimal, ROUND_HALF_UP
+        sr = Decimal(str(self.bat_runs)) / Decimal(str(self.bat_balls)) * Decimal('100')
+        return sr.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
     
     @property
     def bowl_economy(self):
         """Calculate bowling economy rate"""
         if self.bowl_runs is None or self.bowl_balls is None or self.bowl_balls == 0:
             return None
-        overs = self.bowl_balls / 6
-        return Decimal(str(round(self.bowl_runs / overs, 2)))
+        from decimal import Decimal, ROUND_HALF_UP
+        overs = Decimal(str(self.bowl_balls)) / Decimal('6')
+        eco = Decimal(str(self.bowl_runs)) / overs
+        return eco.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
     
     def _calculate_sr_bonus(self):
         """Calculate strike rate bonus/penalty"""
-        if self.bat_balls < 6:  # Minimum 6 balls required
+        if self.bat_balls < 10:  # Minimum 10 balls required
             return 0
-            
+        
+        from decimal import Decimal
         sr = self.bat_strike_rate
-        if sr >= 200:
+        if not isinstance(sr, Decimal):
+            sr = Decimal(str(sr))
+            
+        if sr >= Decimal('200'):
             return 6
-        elif sr >= 175:
+        elif sr >= Decimal('175'):
             return 4
-        elif sr >= 150:
+        elif sr >= Decimal('150'):
             return 2
-        elif sr <= 50:
+        elif sr < Decimal('50'):
             return -6
-        elif sr <= 75:
+        elif sr < Decimal('75'):
             return -4
-        elif sr <= 100:
+        elif sr < Decimal('100'):
             return -2
         return 0
     
@@ -371,18 +424,22 @@ class IPLPlayerEvent(models.Model):
         if self.bowl_balls < 10:  # Minimum 10 balls required
             return 0
             
+        from decimal import Decimal
         economy = self.bowl_economy
-        if economy <= 5:
+        if not isinstance(economy, Decimal):
+            economy = Decimal(str(economy))
+            
+        if economy < Decimal('5'):
             return 6
-        elif economy <= 6:
+        elif economy < Decimal('6'):
             return 4
-        elif economy <= 7:
+        elif economy < Decimal('7'):
             return 2
-        elif economy >= 12:
+        elif economy >= Decimal('12'):
             return -6
-        elif economy >= 11:
+        elif economy >= Decimal('11'):
             return -4
-        elif economy >= 10:
+        elif economy >= Decimal('10'):
             return -2
         return 0
 
@@ -402,7 +459,7 @@ class IPLPlayerEvent(models.Model):
         
         # Duck penalty for non-bowlers
         if (self.bat_runs == 0 and not self.bat_not_out and 
-            getattr(self.player, 'role', None) != 'BOWL'):
+            hasattr(self.player, 'role') and self.player.role != 'BOWL'):
             points -= 2
             
         return points
@@ -416,7 +473,7 @@ class IPLPlayerEvent(models.Model):
         points = 0
         points += ((self.bowl_wickets or 0) * 25)  # Wickets
         points += ((self.bowl_maidens or 0) * 8)  # Maidens
-        points += (8 if (self.bowl_wickets or 0) >= 4 else 0)  # 4+ wickets bonus
+        points += (8 if (self.bowl_wickets or 0) >= 3 else 0)  # 3+ wickets bonus
         points += (16 if (self.bowl_wickets or 0) >= 5 else 0)  # 5+ wickets bonus
         points += self._calculate_economy_bonus()  # Economy bonus/penalty
         return points
@@ -480,6 +537,7 @@ class FantasyLeague(models.Model):
     draft_completed = models.BooleanField(default=False)
     snake_draft_order = models.JSONField(default=list, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    draft_pool = models.JSONField(default=list, blank=True, null=True)
 
     class Meta:
         indexes = [
@@ -595,3 +653,25 @@ class FantasyTrade(models.Model):
 
     def __str__(self):
         return f"{self.initiator.name} -> {self.receiver.name}"
+    
+class FantasyMatchEvent(models.Model):
+    match = models.ForeignKey(IPLMatch, on_delete=models.CASCADE)
+    fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='match_events')
+    total_base_points = models.FloatField(default=0)
+    total_boost_points = models.FloatField(default=0)
+    total_points = models.FloatField(default=0)
+    match_rank = models.IntegerField(null=True, blank=True)  # Rank in this match
+    running_rank = models.IntegerField(null=True, blank=True)  # Overall league rank as of this match
+    running_total_points = models.FloatField(default=0)  # Cumulative squad points as of this match
+    players_count = models.IntegerField(default=0)  # Number of players who participated
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('match', 'fantasy_squad')
+        indexes = [
+            models.Index(fields=['match', 'total_points']),
+            models.Index(fields=['fantasy_squad', 'match']),
+            models.Index(fields=['fantasy_squad', 'running_rank']),
+            models.Index(fields=['match', 'match_rank']),
+        ]

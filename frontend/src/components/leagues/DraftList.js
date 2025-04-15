@@ -43,12 +43,12 @@ const SortableRow = ({ player, index, leagueId }) => {
       ref={setNodeRef}
       style={style}
       className={`${
-        isDragging ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
-      } hover:bg-gray-50 dark:hover:bg-gray-700`}
+        isDragging ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'
+      } hover:bg-neutral-50 dark:hover:bg-neutral-700`}
     >
       <td className="w-8 pl-4" {...attributes} {...listeners}>
         <svg
-          className="w-4 h-4 text-gray-400"
+          className="w-4 h-4 text-neutral-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -61,10 +61,10 @@ const SortableRow = ({ player, index, leagueId }) => {
           />
         </svg>
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+      <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
         {index + 1}
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+      <td className="px-4 py-3 text-sm font-medium text-neutral-900 dark:text-neutral-100">
         <button 
           onClick={() => openPlayerModal(player.id, leagueId)}
           className="text-blue-600 hover:underline"
@@ -72,13 +72,13 @@ const SortableRow = ({ player, index, leagueId }) => {
           {player.name}
         </button>
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+      <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
         {player.team}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+      <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
         {roleMap[player.role] || player.role}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 text-right">
+      <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100 text-right">
         {player.avg_points?.toFixed(1) ?? '-'}
       </td>
     </tr>
@@ -168,48 +168,48 @@ const DraftList = ({ players, draftOrder, onSaveOrder }) => {
   const orderedPlayers = draftOrder.order.map(id => getPlayerById(id)).filter(Boolean);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div className="bg-white dark:bg-neutral-800 rounded-lg shadow">
       <div className="p-6">
         {/* Breakdown Section */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
               Show Breakdown of Top
             </label>
             <select
               value={breakdownCount}
               onChange={(e) => setBreakdownCount(Number(e.target.value))}
-              className="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+              className="rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-neutral-700 dark:border-neutral-600"
             >
               {BREAKDOWN_OPTIONS.map(option => (
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
-            <span className="text-sm text-gray-700 dark:text-gray-300">Players</span>
+            <span className="text-sm text-neutral-700 dark:text-neutral-300">Players</span>
           </div>
 
           {breakdownStats && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Role Breakdown */}
               <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
                   Role Distribution
                 </h3>
                 <div className="space-y-2">
                   {Object.entries(breakdownStats.roles).map(([role, count]) => (
                     <div key={role} className="flex items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 w-24">
+                      <span className="text-sm text-neutral-600 dark:text-neutral-400 w-24">
                         {roleMap[role] || role}
                       </span>
                       <div className="flex-1 mx-4">
-                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                        <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full">
                           <div
-                            className="h-2 bg-primary-600 rounded-full"
+                            className="h-2 bg-neutral-600 rounded-full"
                             style={{ width: `${getPercentage(count)}%` }}
                           />
                         </div>
                       </div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400 w-20">
+                      <span className="text-sm text-neutral-600 dark:text-neutral-400 w-20">
                         {count} ({getPercentage(count)}%)
                       </span>
                     </div>
@@ -219,24 +219,24 @@ const DraftList = ({ players, draftOrder, onSaveOrder }) => {
 
               {/* Team Breakdown */}
               <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
                   Team Distribution
                 </h3>
                 <div className="space-y-2">
                   {Object.entries(breakdownStats.teams).map(([team, count]) => (
                     <div key={team} className="flex items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 w-24">
+                      <span className="text-sm text-neutral-600 dark:text-neutral-400 w-24">
                         {team}
                       </span>
                       <div className="flex-1 mx-4">
-                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                        <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full">
                           <div
-                            className="h-2 bg-primary-600 rounded-full"
+                            className="h-2 bg-neutral-600 rounded-full"
                             style={{ width: `${getPercentage(count)}%` }}
                           />
                         </div>
                       </div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400 w-20">
+                      <span className="text-sm text-neutral-600 dark:text-neutral-400 w-20">
                         {count} ({getPercentage(count)}%)
                       </span>
                     </div>
@@ -266,36 +266,36 @@ const DraftList = ({ players, draftOrder, onSaveOrder }) => {
           >
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                <tr className="bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
                   <th className="w-8"></th>
                   <th className="px-4 py-3 text-left">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">
                       Draft Order
                     </span>
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">
                       Name
                     </span>
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">
                       IPL Team
                     </span>
                   </th>
                   <th className="px-4 py-3 text-left">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">
                       Role
                     </span>
                   </th>
                   <th className="px-4 py-3 text-right">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">
                       2021-24 Avg
                     </span>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-600">
                 <SortableContext
                   items={orderedPlayers.map(p => p.id)}
                   strategy={verticalListSortingStrategy}

@@ -8,16 +8,16 @@ from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, 
-                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade)
+                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade, FantasyMatchEvent)
 
 from .forms import CSVUploadForm
 import csv
 from io import TextIOWrapper
 from django.db.models import Q, Avg, F
+from decimal import Decimal, ROUND_HALF_UP
 
 import logging
 _logger = logging.getLogger(__name__)
-
 
 @admin.action(description="Update default draft order based on current roster and historical performance")
 def update_default_draft_order(modeladmin, request, queryset):
@@ -230,177 +230,241 @@ class IPLMatchAdmin(admin.ModelAdmin):
     formatted_match.short_description = "Match"
 
     def save_model(self, request, obj, form, change):
-        # Track the old player_of_match value before saving
-        if change:  # if this is an edit
-            old_obj = IPLMatch.objects.get(pk=obj.pk)
-            old_potm = old_obj.player_of_match
-        else:
-            old_potm = None
-
-        # Save the match object first
+        # Track if player_of_match was changed
+        player_of_match_changed = False
+        old_player_of_match = None
+        
+        # Check if this is an update and if player_of_match field changed
+        if change and 'player_of_match' in form.changed_data:
+            # Get the original object from database to find old player_of_match
+            old_obj = self.model.objects.get(pk=obj.pk)
+            old_player_of_match = old_obj.player_of_match
+            player_of_match_changed = True
+        
+        # Save the match
         super().save_model(request, obj, form, change)
-
-        # Handle player_of_match updates
-        if obj.player_of_match != old_potm:
-            # If there was a previous POTM, set their event's player_of_match to False
-            if old_potm:
-                IPLPlayerEvent.objects.filter(
-                    match=obj,
-                    player=old_potm
-                ).update(player_of_match=False)
-
-            # If there's a new POTM, set their event's player_of_match to True
+        
+        # If player_of_match field was changed, update related events
+        if player_of_match_changed:
+            from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasyMatchEvent, FantasySquad
+            from api.services.cricket_data_service import CricketDataService
+            
+            # Create service instance
+            service = CricketDataService()
+            
+            # Get all player events for this match
+            all_player_events = IPLPlayerEvent.objects.filter(match=obj)
+            
+            # First reset player_of_match for all events
+            for event in all_player_events:
+                if event.player_of_match:
+                    event.player_of_match = False
+                    # We need to force recalculation of the point totals
+                    # First store the current values for our debugging
+                    old_total = event.total_points_all
+                    old_other = event.other_points_total
+                    
+                    # Trigger a full recalculation by calling save()
+                    event.save()
+                    
+                    # For debugging, check if values changed
+                    event.refresh_from_db()
+                    print(f"Old POM: Total points changed from {old_total} to {event.total_points_all}")
+                    print(f"Old POM: Other points changed from {old_other} to {event.other_points_total}")
+            
+            # Then set the new player of the match (if there is one)
             if obj.player_of_match:
-                IPLPlayerEvent.objects.filter(
-                    match=obj,
-                    player=obj.player_of_match
-                ).update(player_of_match=True)
-
-                # Recalculate points for affected IPL events
-                affected_events = IPLPlayerEvent.objects.filter(
-                    Q(match=obj, player=obj.player_of_match) |
-                    (Q(match=obj, player=old_potm) if old_potm else Q())
+                for event in all_player_events.filter(player=obj.player_of_match):
+                    event.player_of_match = True
+                    
+                    # Debug current values
+                    old_total = event.total_points_all
+                    old_other = event.other_points_total
+                    
+                    # Save to trigger recalculation
+                    event.save()
+                    
+                    # Check if values changed
+                    event.refresh_from_db()
+                    print(f"New POM: Total points changed from {old_total} to {event.total_points_all}")
+                    print(f"New POM: Other points changed from {old_other} to {event.other_points_total}")
+            
+            # Get affected player IDs (old and new player of the match)
+            affected_player_ids = []
+            if old_player_of_match:
+                affected_player_ids.append(old_player_of_match.id)
+            if obj.player_of_match:
+                affected_player_ids.append(obj.player_of_match.id)
+            
+            # Get all fantasy player events that need to be updated
+            if affected_player_ids:
+                # Get all affected IPL player events (both old and new POM)
+                affected_ipl_events = all_player_events.filter(
+                    player_id__in=affected_player_ids
                 )
-                for event in affected_events:
-                    event.save()  # This recalculates the base points
+                
+                # Refresh our local copies from the database to ensure we have the updated values
+                refreshed_ipl_events = list(IPLPlayerEvent.objects.filter(id__in=[e.id for e in affected_ipl_events]))
+                
+                # Update all fantasy player events that use these IPL events
+                affected_fantasy_events = FantasyPlayerEvent.objects.filter(
+                    match_event__in=refreshed_ipl_events
+                ).select_related('match_event', 'fantasy_squad')
+                
+                # Update each fantasy player event
+                affected_squad_ids = set()
+                for fantasy_event in affected_fantasy_events:
+                    # Get the fresh event from our refreshed list
+                    ipl_event = next((e for e in refreshed_ipl_events if e.id == fantasy_event.match_event_id), None)
+                    
+                    old_boost = fantasy_event.boost_points
+                    
+                    # Recalculate boost points with the updated base points
+                    fantasy_event.boost_points = service._calculate_boost_points(ipl_event, fantasy_event.boost)
+                    fantasy_event.save()
+                    
+                    print(f"Fantasy Event: Boost points changed from {old_boost} to {fantasy_event.boost_points}")
+                    
+                    affected_squad_ids.add(fantasy_event.fantasy_squad_id)
+                
+                # Update all fantasy match events for affected squads
+                for squad_id in affected_squad_ids:
+                    # Get all fantasy player events for this squad and match (refresh from DB)
+                    squad_events = FantasyPlayerEvent.objects.filter(
+                        fantasy_squad_id=squad_id,
+                        match_event__match=obj
+                    ).select_related('match_event')
+                    
+                    # Calculate totals with Decimal precision
+                    base_decimal = sum(Decimal(str(e.match_event.total_points_all)) for e in squad_events)
+                    boost_decimal = sum(Decimal(str(e.boost_points)) for e in squad_events)
+                    total_decimal = base_decimal + boost_decimal
 
-                # Now also update the related FantasyPlayerEvents for POTM changes
-                # Get all fantasy events related to the affected IPL events
-                fantasy_events = FantasyPlayerEvent.objects.filter(
-                    match_event__in=affected_events
-                ).select_related('match_event', 'boost')
-
-                # Recalculate boost points for each fantasy event
-                for fantasy_event in fantasy_events:
-                    if fantasy_event.boost:
-                        # Recalculate boost points based on the updated IPL event
-                        ipl_event = fantasy_event.match_event
-                        boost = fantasy_event.boost
+                    # Round to 1 decimal place with consistent rounding
+                    base_points = float(base_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    boost_points = float(boost_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    total_points = float(total_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    
+                    # Get existing match event if any
+                    try:
+                        match_event = FantasyMatchEvent.objects.get(
+                            match=obj,
+                            fantasy_squad_id=squad_id
+                        )
                         
-                        # For Captain (2x) and Vice Captain (1.5x) roles that apply to all points
-                        if boost.label in ['Captain', 'Vice Captain']:
-                            # The boost is (multiplier - 1) * base_points
-                            multiplier = boost.multiplier_runs  # All multipliers are the same for these roles
-                            fantasy_event.boost_points = (multiplier - 1.0) * ipl_event.total_points_all
-                        # For POTM-specific boosts in other roles
-                        elif ipl_event.player_of_match:
-                            # Update POTM boost component
-                            potm_points = 50  # POTM gets 50 points
-                            potm_boost = potm_points * (boost.multiplier_potm - 1.0)
-                            # Add/Remove the POTM boost component
-                            current_boost = fantasy_event.boost_points
-                            if old_potm and ipl_event.player == obj.player_of_match:
-                                # Player just became POTM, add the boost
-                                fantasy_event.boost_points = current_boost + potm_boost
-                            elif not old_potm and ipl_event.player == old_potm:
-                                # Player just lost POTM, remove the boost
-                                fantasy_event.boost_points = current_boost - potm_boost
+                        old_base = match_event.total_base_points
+                        old_boost = match_event.total_boost_points
+                        old_total = match_event.total_points
                         
-                        fantasy_event.save()
-
-                # Update total points for affected fantasy squads
-                affected_squads = set(fantasy_events.values_list('fantasy_squad_id', flat=True))
-                for squad_id in affected_squads:
+                        # Update with new values
+                        match_event.total_base_points = base_points
+                        match_event.total_boost_points = boost_points
+                        match_event.total_points = total_points
+                        match_event.save()
+                        
+                        print(f"Squad {squad_id}: Base points changed from {old_base} to {base_points}")
+                        print(f"Squad {squad_id}: Boost points changed from {old_boost} to {boost_points}")
+                        print(f"Squad {squad_id}: Total points changed from {old_total} to {total_points}")
+                        
+                    except FantasyMatchEvent.DoesNotExist:
+                        # Create new match event
+                        match_event = FantasyMatchEvent.objects.create(
+                            match=obj,
+                            fantasy_squad_id=squad_id,
+                            total_base_points=base_points,
+                            total_boost_points=boost_points,
+                            total_points=total_points,
+                            players_count=squad_events.count()
+                        )
+                        print(f"Created new match event for squad {squad_id} with {total_points} points")
+                
+                # Update ranks for all fantasy match events
+                service._update_match_ranks(obj)
+                service._update_running_ranks(obj)
+                
+                # NEW CODE: Update total_points for all affected FantasySquads
+                for squad_id in affected_squad_ids:
                     squad = FantasySquad.objects.get(id=squad_id)
-                    # Calculate new total points
-                    total_points = sum(
-                        FantasyPlayerEvent.objects.filter(fantasy_squad=squad)
-                        .annotate(total=F('match_event__total_points_all') + F('boost_points'))
-                        .values_list('total', flat=True)
-                    )
+                    old_total = squad.total_points
+                    
+                    # Calculate new total from all fantasy player events
+                    total_points = FantasyPlayerEvent.objects.filter(
+                        fantasy_squad=squad
+                    ).annotate(
+                        event_total=F('match_event__total_points_all') + F('boost_points')
+                    ).aggregate(
+                        total=Sum('event_total')
+                    )['total'] or 0
+                    
+                    # Update the squad's total points
                     squad.total_points = total_points
-                    squad.save()
+                    squad.save(update_fields=['total_points'])
+                    
+                    print(f"Updated FantasySquad {squad.name} total points: {old_total} -> {total_points}")
 
-                messages.success(request, f"Updated Player of the Match from {old_potm} to {obj.player_of_match}. Recalculated fantasy points for {len(fantasy_events)} fantasy events.")
-
-# Add this to your admin.py file
-
-from django.contrib import admin
-from django.db import models
-from .models import IPLPlayerEvent, IPLPlayer, IPLMatch, IPLTeam  # Import your actual models
-
+@admin.register(IPLPlayerEvent)
 class IPLPlayerEventAdmin(admin.ModelAdmin):
-    # Efficient list display with limited columns
-    list_display = ['id', 'player_name', 'match_description', 'team_name', 'total_points_all']
-    list_display_links = ['id', 'player_name']
+    # Select only the fields you need to display in the list view
+    list_display = ('id', 'player_name', 'match_info', 'total_points_all')
     
-    # Optimize with limited search fields
-    search_fields = ['player__name', 'match__team_1__name', 'match__team_2__name']
+    # Add search capability
+    search_fields = ('player__name', 'match__match_number')
     
-    # Add filters to help narrow down records
-    list_filter = ['player_of_match', 'match__season__year', 'match__stage']
+    # Add list filtering
+    list_filter = ('player__role', 'match__status')
     
-    # Define what fields are readonly to prevent accidental changes
-    readonly_fields = [
-        'batting_points_total', 'bowling_points_total', 
-        'fielding_points_total', 'other_points_total', 
-        'total_points_all', 'bat_strike_rate', 'bowl_economy'
-    ]
-    
-    # Custom field sets to organize the edit form
-    fieldsets = [
-        ('Match Information', {
-            'fields': ['player', 'match', 'for_team', 'vs_team']
-        }),
-        ('Batting', {
-            'fields': ['bat_runs', 'bat_balls', 'bat_fours', 'bat_sixes', 'bat_not_out', 'bat_innings', 'bat_strike_rate']
-        }),
-        ('Bowling', {
-            'fields': ['bowl_balls', 'bowl_maidens', 'bowl_runs', 'bowl_wickets', 'bowl_innings', 'bowl_economy']
-        }),
-        ('Fielding', {
-            'fields': ['field_catch', 'wk_catch', 'wk_stumping', 'run_out_solo', 'run_out_collab']
-        }),
-        ('Other', {
-            'fields': ['player_of_match']
-        }),
-        ('Points (Calculated)', {
-            'fields': ['batting_points_total', 'bowling_points_total', 'fielding_points_total', 
-                      'other_points_total', 'total_points_all']
-        }),
-    ]
-    
-    # Override to efficiently load related objects
+    # Optimize the queryset with select_related
     def get_queryset(self, request):
-        try:
-            qs = super().get_queryset(request)
-            # Use select_related for ForeignKey relationships
-            return qs.select_related(
-                'player', 
-                'match', 
-                'match__team_1', 
-                'match__team_2', 
-                'match__season',
-                'for_team', 
-                'vs_team'
-            )
-        except Exception as e:
-            # Log error but return basic queryset to prevent admin crash
-            logger.error(f"Error in IPLPlayerEventAdmin.get_queryset: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            return super().get_queryset(request)
+        return super().get_queryset(request).select_related(
+            'player', 
+            'match',
+            'for_team', 
+            'vs_team'
+        )
     
-    # Custom methods to display related info without additional queries
+    # Custom display methods
     def player_name(self, obj):
         try:
-            return obj.player.name if obj.player else None
-        except Exception:
-            return "Error loading player"
+            return obj.player.name if obj.player else "N/A"
+        except:
+            return f"Player {obj.player_id}"
     player_name.short_description = 'Player'
-    player_name.admin_order_field = 'player__name'
     
-    def match_description(self, obj):
+    def match_info(self, obj):
         try:
             if obj.match:
-                team1 = obj.match.team_1.short_name if obj.match.team_1 else 'TBD'
-                team2 = obj.match.team_2.short_name if obj.match.team_2 else 'TBD'
-                return f"{team1} vs {team2} - Match {obj.match.match_number}"
-            return None
-        except Exception:
-            return "Error loading match"
-    match_description.short_description = 'Match'
-    match_description.admin_order_field = 'match__match_number'
+                return f"Match {obj.match.match_number} - {obj.for_team.short_name} vs {obj.vs_team.short_name}"
+            return "N/A"
+        except:
+            return f"Match {obj.match_id}"
+    match_info.short_description = 'Match'
+    
+    # Use raw_id_fields to prevent Django from loading full querysets
+    raw_id_fields = ('player', 'match', 'for_team', 'vs_team')
+    
+    # Limit fields shown in the admin form
+    fields = (
+        'player', 'match', 'for_team', 'vs_team',
+        'bat_runs', 'bat_balls', 'bat_fours', 'bat_sixes', 'bat_not_out',
+        'bowl_balls', 'bowl_maidens', 'bowl_runs', 'bowl_wickets',
+        'field_catch', 'wk_catch', 'wk_stumping', 'run_out_solo', 'run_out_collab',
+        'player_of_match',
+        'total_points_all'
+    )
+    
+    # Make some fields read-only
+    readonly_fields = ('total_points_all',)
+    
+    # Customize the way the change form loads data
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        # This is optional - disable some fields for better performance
+        if obj:  # Only on edit, not on create
+            form.base_fields['player'].queryset = form.base_fields['player'].queryset.select_related('playerteamhistory_set__team')
+            form.base_fields['match'].queryset = form.base_fields['match'].queryset.select_related('team_1', 'team_2')
+            
+        return form
     
     def team_name(self, obj):
         try:
@@ -435,10 +499,11 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             # Do not re-raise the exception to prevent the admin from crashing
     
     def _update_fantasy_events(self, ipl_event, request):
-        """Update related fantasy player events when an IPL event changes"""
+        """Update related fantasy events when an IPL event changes"""
         try:
-            from .models import FantasyPlayerEvent, FantasySquad
-            from django.db.models import F
+            from .models import FantasyPlayerEvent, FantasySquad, FantasyMatchEvent
+            from django.db.models import F, Sum
+            from .services.cricket_data_service import CricketDataService
             
             # Find all related fantasy events
             fantasy_events = FantasyPlayerEvent.objects.filter(match_event=ipl_event)
@@ -446,6 +511,9 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             
             # Keep track of affected fantasy squads
             affected_squads = set()
+            
+            # Create service instance for boost calculations
+            service = CricketDataService()
             
             # Update each fantasy event
             for fantasy_event in fantasy_events:
@@ -460,36 +528,98 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
                         fantasy_event.boost_points = (multiplier - 1.0) * ipl_event.total_points_all
                     else:
                         # For specialized roles, we need to do more detailed calculations
-                        # This should call the same method that's used during normal scoring
-                        from .services.cricket_data_service import CricketDataService
-                        service = CricketDataService()
                         fantasy_event.boost_points = service._calculate_boost_points(ipl_event, boost)
                     
-                    fantasy_event.save()
+                    fantasy_event.save(update_fields=['boost_points'])
                     affected_squads.add(fantasy_event.fantasy_squad_id)
                     updated_count += 1
             
-            # Update total points for affected squads
+            # Get the match
+            match = ipl_event.match
+            
+            # Update match events for affected squads
             for squad_id in affected_squads:
                 try:
                     squad = FantasySquad.objects.get(id=squad_id)
-                    # Calculate new total points
-                    total_points = sum(
-                        FantasyPlayerEvent.objects.filter(fantasy_squad=squad)
-                        .annotate(total=F('match_event__total_points_all') + F('boost_points'))
-                        .values_list('total', flat=True)
+                    
+                    # Get all fantasy player events for this squad and match
+                    squad_events = FantasyPlayerEvent.objects.filter(
+                        fantasy_squad=squad,
+                        match_event__match=match
+                    ).select_related('match_event')
+                    
+                    # Calculate totals with Decimal precision
+                    base_decimal = sum(Decimal(str(e.match_event.total_points_all)) for e in squad_events)
+                    boost_decimal = sum(Decimal(str(e.boost_points)) for e in squad_events)
+                    total_decimal = base_decimal + boost_decimal
+
+                    # Round to 1 decimal place with consistent rounding
+                    base_points = float(base_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    boost_points = float(boost_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    total_points = float(total_decimal.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+                    
+                    # Update or create match event
+                    match_event, created = FantasyMatchEvent.objects.get_or_create(
+                        match=match,
+                        fantasy_squad=squad,
+                        defaults={
+                            'total_base_points': base_points,
+                            'total_boost_points': boost_points,
+                            'total_points': total_points,
+                            'players_count': squad_events.count()
+                        }
                     )
-                    squad.total_points = total_points
-                    squad.save()
+                    
+                    if not created:
+                        match_event.total_base_points = base_points
+                        match_event.total_boost_points = boost_points
+                        match_event.total_points = total_points
+                        match_event.players_count = squad_events.count()
+                        match_event.save()
+                    
+                    # Update match ranks
+                    if service:
+                        service._update_match_ranks(match)
+                        service._update_running_ranks(match)
+                    
+                    # Calculate new total points for the squad
+                    new_total = FantasyPlayerEvent.objects.filter(
+                        fantasy_squad=squad
+                    ).annotate(
+                        event_total=F('match_event__total_points_all') + F('boost_points')
+                    ).aggregate(
+                        total=Sum('event_total')
+                    )['total'] or 0
+                    
+                    # Update the squad's total points
+                    squad.total_points = new_total
+                    squad.save(update_fields=['total_points'])
+                    
+                    if request:
+                        from django.contrib import messages
+                        messages.info(request, f"Updated squad {squad.name}: total points now {new_total}")
+                    
                 except Exception as squad_e:
+                    import logging
+                    logger = logging.getLogger(__name__)
                     logger.error(f"Error updating squad points: {str(squad_e)}")
+                    if request:
+                        from django.contrib import messages
+                        messages.warning(request, f"Error updating Squad {squad_id}: {str(squad_e)}")
             
-            if updated_count > 0:
+            if request and updated_count > 0:
+                from django.contrib import messages
                 messages.info(request, f"Updated {updated_count} fantasy events and {len(affected_squads)} fantasy squads")
-                
+                    
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
             logger.error(f"Error updating fantasy events: {str(e)}")
-            messages.warning(request, f"Player event was saved, but could not update fantasy events: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            if request:
+                from django.contrib import messages
+                messages.warning(request, f"Player event was saved, but could not update fantasy events: {str(e)}")
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Optimize foreign key fields while ensuring existing values remain valid"""
@@ -515,9 +645,6 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             logger.error(f"Error in formfield_for_foreignkey: {str(e)}")
             
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-# Register with the admin site
-admin.site.register(IPLPlayerEvent, IPLPlayerEventAdmin)
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
@@ -1034,3 +1161,37 @@ class FantasyTradeAdmin(admin.ModelAdmin):
         css = {
             'all': ('admin/css/vendor/buttons.css',)
         }
+
+@admin.register(FantasyMatchEvent)
+class FantasyMatchEventAdmin(admin.ModelAdmin):
+    list_display = ('match', 'fantasy_squad', 'total_points', 'match_rank', 'running_rank')
+    list_filter = ('match__season', 'fantasy_squad__league')
+    search_fields = ('fantasy_squad__name', 'match__match_number')
+    ordering = ('-match__date', 'match_rank')
+    
+    def get_queryset(self, request):
+        # Optimize queryset with select_related to avoid N+1 query issues
+        return super().get_queryset(request).select_related(
+            'match', 'fantasy_squad', 'fantasy_squad__league', 'match__season'
+        )
+    
+    fieldsets = (
+        ('Match Info', {
+            'fields': ('match', 'fantasy_squad')
+        }),
+        ('Points Breakdown', {
+            'fields': ('total_base_points', 'total_boost_points', 'total_points')
+        }),
+        ('Rankings', {
+            'fields': ('match_rank', 'running_rank', 'running_total_points')
+        }),
+        ('Other Stats', {
+            'fields': ('players_count',)
+        })
+    )
+    
+    # Don't use readonly_fields that might not exist
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # This is an edit
+            return ('match', 'fantasy_squad')
+        return ()

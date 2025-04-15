@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../utils/axios';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import MatchOverview from './cards/MatchOverview';
 import MatchPerformanceContainer from './cards/MatchPerformanceContainer';
 import SquadPerformance from './cards/SquadPerformance';
@@ -15,6 +16,26 @@ const MatchView = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'total_points_all', direction: 'desc' });
   const [activeSquadId, setActiveSquadId] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [leagueName, setLeagueName] = useState('');
+
+  // Dynamic document title
+  const getPageTitle = () => {
+    if (!matchOverview) return 'Match Details';
+    
+    const date = new Date(matchOverview.date);
+    const formattedDate = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+    const matchTitle = matchOverview.title ||
+              `${matchOverview.team_1?.short_name || 'Team 1'} vs ${matchOverview.team_2?.short_name || 'Team 2'}, ${formattedDate}`;
+    
+    if (leagueId && leagueName) {
+      return `${matchTitle} (${leagueName})`;
+    }
+    
+    return matchTitle;
+  };
+  
+  // Apply the document title
+  useDocumentTitle(getPageTitle());
 
   useEffect(() => {
     const checkMobile = () => {
@@ -34,8 +55,20 @@ const MatchView = () => {
     // If we're viewing in league context, get the active user's squad ID
     if (leagueId) {
       fetchActiveSquad();
+      fetchLeagueInfo();
     }
   }, [matchId, leagueId]);
+
+  const fetchLeagueInfo = async () => {
+    if (!leagueId) return;
+    
+    try {
+      const response = await api.get(`/leagues/${leagueId}/`);
+      setLeagueName(response.data.name);
+    } catch (err) {
+      console.error('Error fetching league info:', err);
+    }
+  };
 
   const fetchActiveSquad = async () => {
     try {
@@ -143,37 +176,51 @@ const MatchView = () => {
   };
 
   return (
-    <div className="space-y-1 px-2 py-2">
-      {/* Overview section with MatchOverview and SquadPerformance side by side */}
-      <div className="flex flex-col md:flex-row gap-2">
-        <div className="w-full md:w-1/2">
+    <div className="container mx-auto px-2 py-4 max-w-7xl">
+      {/* Match page header */}
+      {/* <div className="mb-4">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+          {matchOverview ? 
+            `${matchOverview.team_1?.name} vs ${matchOverview.team_2?.name}` : 
+            'Match Details'}
+        </h1>
+        {leagueName && (
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+            League: {leagueName}
+          </p>
+        )}
+      </div> */}
+
+      {/* Overview cards section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
           <MatchOverview matchData={matchOverview} />
         </div>
         
         {leagueId && (
-          <div className="w-full md:w-1/2">
+          <div>
             <SquadPerformance 
-              playerEvents={playerEvents}
-              loading={loading}
-              error={error}
+              matchId={matchId}
+              leagueId={leagueId}
               activeSquadId={activeSquadId}
-              // squad_names={matchOverview?.squad_names}
             />
           </div>
         )}
       </div>
       
       {/* Match Performance Container */}
-      <MatchPerformanceContainer 
-        playerEvents={playerEvents}
-        loading={loading}
-        error={error}
-        sortConfig={sortConfig}
-        handleSort={handleSort}
-        activeSquadId={activeSquadId}
-        leagueId={leagueId}
-        isMobile={isMobile}
-      />
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg">
+        <MatchPerformanceContainer 
+          playerEvents={playerEvents}
+          loading={loading}
+          error={error}
+          sortConfig={sortConfig}
+          handleSort={handleSort}
+          activeSquadId={activeSquadId}
+          leagueId={leagueId}
+          isMobile={isMobile}
+        />
+      </div>
     </div>
   );
 };
