@@ -261,7 +261,21 @@ const MatchCard = ({ match, leagueId }) => {
           <div className="flex items-center mb-3">
             <Trophy className="h-4 w-4 text-yellow-500 mr-1.5" />
             <span className="text-neutral-700 dark:text-neutral-300 text-sm">
-              {match.winner.name} won by {match.win_margin} {match.win_type === 'RUNS' ? 'runs' : 'wickets'}
+              {match.win_type === 'RUNS' && (
+                <>{match.winner.name} won by {match.win_margin} {match.win_margin === 1 ? 'run' : 'runs'}</>
+              )}
+              {match.win_type === 'WICKETS' && (
+                <>{match.winner.name} won by {match.win_margin} {match.win_margin === 1 ? 'wicket' : 'wickets'}</>
+              )}
+              {match.win_type === 'TIE' && (
+                <>Match tied</>
+              )}
+              {match.win_type === 'SUPER_OVER' && (
+                <>{match.winner.name} won via Super Over</>
+              )}
+              {match.win_type === 'NO_RESULT' && (
+                <>No Result</>
+              )}
             </span>
           </div>
         )}

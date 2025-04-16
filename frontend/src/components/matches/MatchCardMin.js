@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Clock, Calendar, Hourglass } from 'lucide-react';
+import { Trophy, Clock, Calendar, Hourglass, Info } from 'lucide-react';
 import api from '../../utils/axios';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import BoostInlineElement from '../elements/BoostInlineElement';
@@ -258,13 +258,27 @@ const MatchCardMin = ({ match, leagueId }) => {
             </div>
           </div>
           
-          {/* Match Result with subtle details link */}
+          {/* Match Result */}
           {match.status === 'COMPLETED' && match.winner && (
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Trophy className="h-4 w-4 text-yellow-500 mr-1.5" />
                 <span className="text-neutral-700 dark:text-neutral-300 text-sm">
-                    {match.winner.short_name} won by {match.win_margin} {match.win_margin === 1 ? (match.win_type === 'RUNS' ? 'run' : 'wicket') : (match.win_type === 'RUNS' ? 'runs' : 'wickets')}
+                  {match.win_type === 'RUNS' && (
+                    <>{match.winner.short_name} won by {match.win_margin} {match.win_margin === 1 ? 'run' : 'runs'}</>
+                  )}
+                  {match.win_type === 'WICKETS' && (
+                    <>{match.winner.short_name} won by {match.win_margin} {match.win_margin === 1 ? 'wicket' : 'wickets'}</>
+                  )}
+                  {match.win_type === 'TIE' && (
+                    <>Match tied</>
+                  )}
+                  {match.win_type === 'SUPER_OVER' && (
+                    <>{match.winner.short_name} won via Super Over</>
+                  )}
+                  {match.win_type === 'NO_RESULT' && (
+                    <>No Result</>
+                  )}
                 </span>
               </div>
               
@@ -282,6 +296,32 @@ const MatchCardMin = ({ match, leagueId }) => {
               )}
             </div>
           )}
+
+          {/* Also handle cases where there is a match status of NO_RESULT or ABANDONED but no winner */}
+          {(match.status === 'NO_RESULT' || match.status === 'ABANDONED') && !match.winner && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Info className="h-4 w-4 text-neutral-500 mr-1.5" />
+                <span className="text-neutral-700 dark:text-neutral-300 text-sm">
+                  {match.status === 'NO_RESULT' ? 'No Result' : 'Match Abandoned'}
+                </span>
+              </div>
+              
+              {isClickable && (
+                <button
+                  onClick={handleMatchClick}
+                  className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center"
+                  aria-label="View match details"
+                >
+                  Details
+                  <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
 
           {/* Horizontal line separating match details from fantasy stats */}
           <div className="border-t border-neutral-200 dark:border-neutral-800 my-2" />
