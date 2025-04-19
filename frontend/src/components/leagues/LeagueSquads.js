@@ -407,18 +407,20 @@ const LeagueSquads = ({ league }) => {
                 <tr>
                   {visibleSquads.map(squad => (
                     <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400 align-top border border-neutral-200 dark:border-neutral-600">
-                        {squadPlayers[squad.id]?.map(player => {
-                        const { demandClass, avgRank, isHotPick, playerRank } = getPlayerDemandInfo(player.id);
-                        return (
+                      {squadPlayers[squad.id]
+                        ?.filter(player => player.status === 'current') // Only show current players
+                        .map(player => {
+                          const { demandClass, avgRank, isHotPick, playerRank } = getPlayerDemandInfo(player.id);
+                          return (
                             <div 
-                            key={player.id} 
-                            className={`px-1 py-1 truncate ${demandClass} border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700`}
-                            title={isHotPick ? `Avg. Rank: ${avgRank}` : ""}
+                              key={player.id} 
+                              className={`px-1 py-1 truncate ${demandClass} border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700`}
+                              title={isHotPick ? `Avg. Rank: ${avgRank}` : ""}
                             >
-                            {playerRank <= 4 && <Flame className="h-2 w-2 inline-block mr-1 text-white" />}
-                            {player.name}
+                              {playerRank <= 4 && <Flame className="h-2 w-2 inline-block mr-1 text-white" />}
+                              {player.name}
                             </div>
-                        );
+                          );
                         })}
                     </td>
                   ))}
