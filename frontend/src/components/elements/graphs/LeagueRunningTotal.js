@@ -16,6 +16,7 @@ const LeagueRunningTotal = ({ league }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [visibleSquads, setVisibleSquads] = useState({});
+  const [viewMode, setViewMode] = useState('zoomed'); // 'zoomed' or 'all'
 
   useEffect(() => {
     if (league?.id && league?.season?.id) {
@@ -124,6 +125,16 @@ const LeagueRunningTotal = ({ league }) => {
     }
   };
 
+  // Get filtered data based on view mode
+  const getFilteredData = () => {
+    if (viewMode === 'all' || chartData.length <= 10) {
+      return chartData;
+    }
+    
+    // For zoomed view, show only the last 10 matches
+    return chartData.slice(-10);
+  };
+
   // Get squad color with fallback to predefined colors
   const getSquadColor = (squadId) => {
     const squad = league?.squads?.find(s => s.id === squadId);
@@ -157,6 +168,94 @@ const LeagueRunningTotal = ({ league }) => {
       newVisibility[squad.id] = visible;
     });
     setVisibleSquads(newVisibility);
+  };
+
+  // Get Y-axis tick values based on view mode
+  const getYAxisTicks = () => {
+    const dataToConsider = getFilteredData();
+    if (!dataToConsider || dataToConsider.length === 0) return [0];
+
+    let minValue = Infinity;
+    let maxValue = -Infinity;
+
+    dataToConsider.forEach(data => {
+      league?.squads?.forEach(squad => {
+        if (visibleSquads[squad.id]) { // Only consider visible squads
+          const value = data[`squad_${squad.id}`] || 0;
+          if (value < minValue) minValue = value;
+          if (value > maxValue) maxValue = value;
+        }
+      });
+    });
+    
+    // Handle case where no squads are visible or no data
+    if (minValue === Infinity) minValue = 0;
+    if (maxValue === -Infinity) maxValue = 0;
+
+    const ticks = [];
+    if (viewMode === 'all') {
+      // For all view, ticks at 1000 intervals, starting from 0
+      const roundedMax = Math.ceil(maxValue / 1000) * 1000;
+      const roundedMin = Math.min(0, Math.floor(minValue / 1000) * 1000); 
+      for (let i = roundedMin; i <= roundedMax; i += 1000) {
+        ticks.push(i);
+      }
+    } else {
+      // For zoomed view, ticks at 500 intervals
+      const roundedMin = Math.floor(minValue / 500) * 500;
+      const roundedMax = Math.ceil(maxValue / 500) * 500;
+      for (let i = roundedMin; i <= roundedMax; i += 500) {
+        ticks.push(i);
+      }
+    }
+    // Ensure at least one tick (0) if range is empty or only negative
+     if (ticks.length === 0 || (ticks.every(t => t < 0) && !ticks.includes(0))) {
+       ticks.push(0);
+       ticks.sort((a, b) => a - b); // Re-sort if 0 was added
+     }
+     // Remove duplicates and ensure sorted order
+     return [...new Set(ticks)].sort((a, b) => a - b);
+  };
+  
+  // Calculate minor gridlines for the y-axis
+  const getMinorYAxisTicks = () => {
+    const majorTicks = getYAxisTicks();
+    const minorTicks = [];
+    if (majorTicks.length < 2) return []; // Need at least two major ticks to draw minors between them
+
+    const interval = viewMode === 'all' ? 250 : 100;
+    const steps = viewMode === 'all' ? 3 : 4; // 3 minor lines for 1000 interval, 4 for 500 interval
+
+    for (let i = 0; i < majorTicks.length - 1; i++) {
+      const start = majorTicks[i];
+      const end = majorTicks[i+1]; // End of the current major interval
+      // Generate 'steps' minor ticks within this interval
+      for (let j = 1; j <= steps; j++) {
+        const tickValue = start + (j * interval);
+        if (tickValue < end) { 
+            minorTicks.push(tickValue);
+        }
+      }
+    }
+    const firstMajor = majorTicks[0];
+    if (firstMajor > 0 && firstMajor % (interval * (steps + 1)) === 0) { 
+        for (let j = 1; j <= steps; j++) {
+            const tickValue = firstMajor - (j * interval);
+            minorTicks.push(tickValue);
+        }
+    }
+
+    // Add console log for debugging
+    // console.log("Minor Ticks:", minorTicks); 
+
+    return [...new Set(minorTicks)].sort((a, b) => a - b); // Remove duplicates and sort
+  };
+
+  // Calculate domain based on ticks to avoid extra space
+  const yAxisDomain = () => {
+    const ticks = getYAxisTicks();
+    if (!ticks || ticks.length === 0) return [0, 1000]; // Default fallback
+    return [ticks[0], ticks[ticks.length - 1]];
   };
 
   if (loading) {
@@ -245,6 +344,10 @@ const LeagueRunningTotal = ({ league }) => {
     return null;
   };
 
+  // Get the calculated minor ticks once for rendering
+  const minorTickValues = getMinorYAxisTicks();
+  // console.log("Rendering Minor Ticks:", minorTickValues); // Optional: Log during render
+
   return (
     <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800">
       <div className="flex justify-between items-center mb-4">
@@ -253,16 +356,24 @@ const LeagueRunningTotal = ({ league }) => {
         </h3>
         <div className="flex space-x-2">
           <button 
-            onClick={() => toggleAllSquads(true)}
-            className="px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+            onClick={() => setViewMode('zoomed')}
+            className={`px-2 py-1 text-xs rounded ${
+              viewMode === 'zoomed' 
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+            }`}
           >
-            Show All
+            Last 10 Matches
           </button>
           <button 
-            onClick={() => toggleAllSquads(false)}
-            className="px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+            onClick={() => setViewMode('all')}
+            className={`px-2 py-1 text-xs rounded ${
+              viewMode === 'all' 
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+            }`}
           >
-            Hide All
+            All Matches
           </button>
         </div>
       </div>
@@ -270,10 +381,32 @@ const LeagueRunningTotal = ({ league }) => {
       <div className="h-64 md:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={chartData}
-            margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+            data={getFilteredData()}
+            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+            {/* Draw major gridlines */}
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="#374151" // Darker gray
+              opacity={0.3} // Slightly more visible major lines
+              horizontal={true}
+              vertical={false}
+              y={getYAxisTicks()} // Explicitly pass major ticks
+            />
+            
+            {/* Draw minor gridlines - Make them more visible for testing */}
+            {minorTickValues.length > 0 && ( // Only render if there are minor ticks
+              <CartesianGrid 
+                // strokeDasharray="1 5" 
+                strokeDasharray="2 2" // More visible dash pattern
+                stroke="#6b7280" // Lighter gray than major, but visible
+                opacity={0.4} // Increased opacity significantly for testing
+                horizontal={true}
+                vertical={false}
+                y={minorTickValues} // Explicitly pass minor ticks
+              />
+            )}
+            
             <XAxis 
               dataKey="name" 
               label={{ 
@@ -285,15 +418,15 @@ const LeagueRunningTotal = ({ league }) => {
               tick={{ fill: '#4B5563' }}
               tickLine={{ stroke: '#6B7280' }}
             />
+            
             <YAxis 
-              tick={{ fill: '#4B5563' }}
+              tick={{ fill: '#4B5563', fontSize: 10 }} // Smaller font size for ticks
               tickLine={{ stroke: '#6B7280' }}
-              label={{
-                value: 'Points',
-                angle: -90,
-                position: 'insideLeft',
-                style: { textAnchor: 'middle', fill: '#4B5563' }
-              }}
+              ticks={getYAxisTicks()} // Use only major ticks for labels
+              domain={yAxisDomain()} // Set domain based on calculated ticks
+              allowDataOverflow={false} // Clip lines outside the domain
+              allowDecimals={false} // Ensure integer labels
+              interval={0} // Ensure interval is 0 to prevent skipping
             />
             <Tooltip content={<CustomTooltip />} />
             {league?.squads?.map((squad) => (
@@ -339,6 +472,22 @@ const LeagueRunningTotal = ({ league }) => {
             </span>
           </div>
         ))}
+      </div>
+      
+      {/* Show/Hide All buttons moved to bottom */}
+      <div className="mt-4 flex justify-center space-x-4">
+        <button 
+          onClick={() => toggleAllSquads(true)}
+          className="px-3 py-1 text-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+        >
+          Show All
+        </button>
+        <button 
+          onClick={() => toggleAllSquads(false)}
+          className="px-3 py-1 text-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+        >
+          Hide All
+        </button>
       </div>
     </div>
   );
