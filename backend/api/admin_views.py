@@ -218,6 +218,46 @@ def save_draft_results(results):
         squad.current_squad = player_ids
         squad.save()
 
+from django.contrib import messages
+from .models import FantasyLeague
+
+@staff_member_required
+def compile_mid_season_draft_pools_view(request):
+    """Admin view to compile draft pools for mid-season draft"""
+    from . import views  # Import views module
+    
+    if request.method == 'POST':
+        try:
+            # Forward to the actual function in views.py
+            response = views.compile_mid_season_draft_pools(request)
+            
+            # Process response data for admin interface
+            if response.status_code == 200:
+                data = response.data
+                messages.success(request, f"Successfully compiled draft pools for {data.get('leagues_updated', 0)} leagues")
+                
+                # Add details for each league
+                for league_detail in data.get('details', []):
+                    messages.info(
+                        request, 
+                        f"League: {league_detail.get('league_name')} - Draft pool size: {league_detail.get('draft_pool_size')}"
+                    )
+            else:
+                messages.error(request, f"Error: {response.data.get('error', 'Unknown error')}")
+        except Exception as e:
+            messages.error(request, f"Error compiling draft pools: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+    
+    # Get all leagues for display
+    leagues = FantasyLeague.objects.filter(season__status='ONGOING')
+    
+    # Render the admin form
+    return render(request, 'admin/compile_mid_season_draft_pools.html', {
+        'leagues': leagues,
+        'title': 'Compile Mid-Season Draft Pools',
+    })
+
 @staff_member_required
 def run_mid_season_draft(request):
     """Admin view to run mid-season fantasy draft for a specific league"""

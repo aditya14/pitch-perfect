@@ -200,7 +200,7 @@ const BoostSelection = ({
       {/* Header */}
       <div className="p-4 md:p-6 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4">
-          Week 5 (Apr 19 - Apr 25)
+          Week 6 (Apr 26 - May 2)
         </h2>
         
         {/* Countdown and retention info */}
@@ -219,10 +219,10 @@ const BoostSelection = ({
               </div>
               <div>
                 <h3 className="font-medium text-blue-800 dark:text-blue-300 text-sm">
-                  Mid-Season Draft Retention
+                  Mid-Season Draft in Progress
                 </h3>
                 <p className="text-xs text-blue-700 dark:text-blue-200 mt-1">
-                  Your Week 5 boost selections will be automatically retained during the mid-season draft.
+                  You can assign them to Week 6 boost roles once the draft is complete.
                 </p>
               </div>
             </div>
