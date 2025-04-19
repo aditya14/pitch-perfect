@@ -146,11 +146,14 @@ const LeagueSquads = ({ league }) => {
     const result = {};
     
     Object.entries(squadPlayers).forEach(([squadId, players]) => {
+      // Filter only current players
+      const currentPlayers = players.filter(p => p.status === 'current');
+      
       result[squadId] = {
-        BAT: players.filter(p => p.role === 'BAT'),
-        BOWL: players.filter(p => p.role === 'BOWL'),
-        ALL: players.filter(p => p.role === 'ALL'),
-        WK: players.filter(p => p.role === 'WK')
+        BAT: currentPlayers.filter(p => p.role === 'BAT'),
+        BOWL: currentPlayers.filter(p => p.role === 'BOWL'),
+        ALL: currentPlayers.filter(p => p.role === 'ALL'),
+        WK: currentPlayers.filter(p => p.role === 'WK')
       };
     });
     
@@ -164,14 +167,16 @@ const LeagueSquads = ({ league }) => {
     Object.entries(squadPlayers).forEach(([squadId, players]) => {
       result[squadId] = {};
       
-      // Group players by their IPL team
-      players.forEach(player => {
-        const teamCode = player.team_code || 'Unknown';
-        if (!result[squadId][teamCode]) {
-          result[squadId][teamCode] = [];
-        }
-        result[squadId][teamCode].push(player);
-      });
+      // Group only current players by their IPL team
+      players
+        .filter(player => player.status === 'current') // Add this filter
+        .forEach(player => {
+          const teamCode = player.team_code || 'Unknown';
+          if (!result[squadId][teamCode]) {
+            result[squadId][teamCode] = [];
+          }
+          result[squadId][teamCode].push(player);
+        });
     });
     
     return result;
@@ -518,19 +523,21 @@ const LeagueSquads = ({ league }) => {
                   
                   {visibleSquads.map(squad => (
                     <td key={`${squad.id}-${role}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600">
-                      {playersByRole[squad.id]?.[role]?.map(player => {
-                        const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
-                        return (
-                          <div 
-                            key={player.id} 
-                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-neutral-50 dark:hover:bg-neutral-700 relative`}
-                            onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
-                            onMouseLeave={hideTooltip}
-                          >
-                            {player.name}
-                          </div>
-                        );
-                      })}
+                      {playersByRole[squad.id]?.[role]
+                        ?.filter(player => player.status === 'current') // Add this filter
+                        ?.map(player => {
+                          const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
+                          return (
+                            <div 
+                              key={player.id} 
+                              className={`px-1 py-0.5 truncate ${demandClass} hover:bg-neutral-50 dark:hover:bg-neutral-700 relative`}
+                              onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
+                              onMouseLeave={hideTooltip}
+                            >
+                              {player.name}
+                            </div>
+                          );
+                        })}
                     </td>
                   ))}
                 </tr>
@@ -551,19 +558,21 @@ const LeagueSquads = ({ league }) => {
                   
                   {visibleSquads.map(squad => (
                     <td key={`${squad.id}-${teamCode}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600">
-                      {playersByTeam[squad.id]?.[teamCode]?.map(player => {
-                        const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
-                        return (
-                          <div 
-                            key={player.id} 
-                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-neutral-50 dark:hover:bg-neutral-700 relative`}
-                            onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
-                            onMouseLeave={hideTooltip}
-                          >
-                            {player.name}
-                          </div>
-                        );
-                      })}
+                      {playersByTeam[squad.id]?.[teamCode]
+                        ?.filter(player => player.status === 'current') // Add this filter
+                        ?.map(player => {
+                          const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
+                          return (
+                            <div 
+                              key={player.id} 
+                              className={`px-1 py-0.5 truncate ${demandClass} hover:bg-neutral-50 dark:hover:bg-neutral-700 relative`}
+                              onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
+                              onMouseLeave={hideTooltip}
+                            >
+                              {player.name}
+                            </div>
+                          );
+                        })}
                     </td>
                   ))}
                 </tr>
