@@ -1073,7 +1073,7 @@ class LeagueViewSet(viewsets.ModelViewSet):
             
             # 9. Cache the result (15 minutes)
             if use_cache:
-                cache.set(cache_key, response_data, 1 * 10)
+                cache.set(cache_key, response_data, 15 * 60)
             
             total_time = time.time() - start_time
             print(f"Squads endpoint completed in {total_time:.2f} seconds")
