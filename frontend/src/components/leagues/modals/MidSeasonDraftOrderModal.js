@@ -695,7 +695,7 @@ const MidSeasonDraftOrderModal = ({
                 <div className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   Draft closes in:
                 </div>
-                <div className="flex items-center text-sm font-semibold">
+                <div className="flex items-center text-sm font-semibold text-neutral-900 dark:text-white">
                   <span className="font-mono">{formatNumber(timeLeft.days)}d {formatNumber(timeLeft.hours)}h {formatNumber(timeLeft.minutes)}m</span>
                 </div>
               </div>
