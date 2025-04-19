@@ -758,24 +758,10 @@ const MidSeasonDraftOrderModal = ({
                       How the Mid-Season Draft Works
                     </h3>
                     <p className="text-sm text-blue-700 dark:text-blue-200">
-                      Your Week 5 core squad players are automatically retained for the second half of the season. 
+                      Your Week 5 boost players are automatically retained for the second half of the season. 
                       Reorder the remaining available players according to your preference. 
                       When the draft executes, the system will select the highest-ranked available player from your list.
                     </p>
-                    {retainedPlayers.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                          Your retained players ({retainedPlayers.length}):
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {retainedPlayers.map(player => (
-                            <span key={player.id} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              {player.name}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
