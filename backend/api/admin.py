@@ -122,58 +122,33 @@ class TeamSeasonAdmin(admin.ModelAdmin):
     list_filter = ('season',)
     search_fields = ('team__name',)
 
-# START IPL PLayer Admin Definition
-from django.db.models import Count, Sum, F, ExpressionWrapper, IntegerField, Case, When, Value
+# START IPL Player Admin Definition
+from django.db.models import Count, Sum, F, ExpressionWrapper, IntegerField, Case, When, Value, FloatField, Prefetch
+from .models import Season, PlayerTeamHistory
+import logging
+_logger = logging.getLogger(__name__)
 
 @admin.register(IPLPlayer)
 class IPLPlayerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'role', 'get_current_team', 'get_match_count', 'get_total_points', 'get_average_points')
+    # Further simplify list_display
+    list_display = ('id', 'name', 'role', 'is_active')  # Removed get_current_team
     list_filter = (
-        'role', 
+        'role',
         'is_active',
-        ('playerteamhistory__team', admin.RelatedFieldListFilter),
     )
     search_fields = ('name',)
 
-    def get_current_team(self, obj):
-        current_team = obj.playerteamhistory_set.filter(
-            season_id=17  # IPL 2025
-        ).first()
-        return current_team.team.name if current_team else '-'
-    get_current_team.short_description = 'Current Team'
-
-    def get_match_count(self, obj):
-        return obj.match_count
-    get_match_count.short_description = 'Matches'
-    get_match_count.admin_order_field = 'match_count'
-
-    def get_total_points(self, obj):
-        return obj.total_points or 0
-    get_total_points.short_description = 'Total Points'
-    get_total_points.admin_order_field = 'total_points'
-
-    def get_average_points(self, obj):
-        return obj.avg_points
-    get_average_points.short_description = 'Average Points'
-    get_average_points.admin_order_field = 'avg_points'
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).annotate(
-            match_count=Count('iplplayerevent'),
-            total_points=Sum('iplplayerevent__total_points_all'),
-            avg_points=Case(
-                When(match_count__gt=0, 
-                     then=ExpressionWrapper(
-                         F('total_points') * 1.0 / F('match_count'),
-                         output_field=IntegerField()
-                     )),
-                default=Value(0),
-                output_field=IntegerField(),
-            )
-        ).prefetch_related('playerteamhistory_set__team')
+    # Add save_model override for debugging
+    def save_model(self, request, obj, form, change):
+        _logger.info(f"Attempting to save IPLPlayer: {obj.name}, change={change}")
+        try:
+            super().save_model(request, obj, form, change)
+            _logger.info(f"Successfully saved IPLPlayer: {obj.name}")
+        except Exception as e:
+            _logger.exception(f"Error saving IPLPlayer {obj.name}: {e}")
+            raise
 
 # END IPL Player Admin Definition
-
 
 @admin.register(PlayerTeamHistory)
 class PlayerTeamHistoryAdmin(admin.ModelAdmin):
