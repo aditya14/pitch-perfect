@@ -155,6 +155,24 @@ class PlayerTeamHistoryAdmin(admin.ModelAdmin):
     list_display = ('player', 'team', 'season', 'points')
     list_filter = ('team', 'season')
     search_fields = ('player__name', 'team__name')
+    # Use raw_id_fields for potentially large foreign keys
+    raw_id_fields = ('player', 'team', 'season')
+
+    # Add save_model override for debugging
+    def save_model(self, request, obj, form, change):
+        player_name = obj.player.name if obj.player else "Unknown Player"
+        team_name = obj.team.name if obj.team else "Unknown Team"
+        season_name = obj.season.name if obj.season else "Unknown Season"
+        _logger.info(f"Attempting to save PlayerTeamHistory: Player='{player_name}', Team='{team_name}', Season='{season_name}', change={change}")
+        try:
+            super().save_model(request, obj, form, change)
+            _logger.info(f"Successfully saved PlayerTeamHistory for Player='{player_name}', Season='{season_name}'")
+        except Exception as e:
+            _logger.exception(f"Error saving PlayerTeamHistory for Player='{player_name}', Season='{season_name}': {e}")
+            # Add a user-facing message as well
+            messages.error(request, f"Failed to save history record: {e}")
+            # Re-raise the exception for Django's default handling, but we've logged it.
+            raise
 
 @admin.register(IPLMatch)
 class IPLMatchAdmin(admin.ModelAdmin):
