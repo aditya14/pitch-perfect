@@ -194,15 +194,15 @@ const LeagueSquads = ({ league }) => {
     let demandClass = '';
     let isHotPick = false; // Flag for showing tooltip
     
-    if (playerRank >= 0 && playerRank < 5) {
-      // Top 5 most in demand - on fire!
-      demandClass = 'bg-gradient-to-r from-red-500 to-yellow-500 text-white font-bold';
-      isHotPick = true;
-    } else if (playerRank >= 5 && playerRank < 15) {
-      // Next 10 most in demand - subtle glow effect
-      demandClass = 'bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700';
-      isHotPick = true;
-    }
+    // if (playerRank >= 0 && playerRank < 5) {
+    //   // Top 5 most in demand - on fire!
+    //   demandClass = 'bg-gradient-to-r from-red-500 to-yellow-500 text-white font-bold';
+    //   isHotPick = true;
+    // } else if (playerRank >= 5 && playerRank < 15) {
+    //   // Next 10 most in demand - subtle glow effect
+    //   demandClass = 'bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700';
+    //   isHotPick = true;
+    // }
     
     return { 
       rank: playerRank + 1, 
@@ -306,7 +306,7 @@ const LeagueSquads = ({ league }) => {
           }`}
         >
           <ArrowUpDown className="h-3 w-3 mr-1" />
-          Draft Order
+          Pre-Season Draft Order
         </button>
         
         <button
@@ -422,7 +422,7 @@ const LeagueSquads = ({ league }) => {
                               className={`px-1 py-1 truncate ${demandClass} border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700`}
                               title={isHotPick ? `Avg. Rank: ${avgRank}` : ""}
                             >
-                              {playerRank <= 4 && <Flame className="h-2 w-2 inline-block mr-1 text-white" />}
+                              {/* {playerRank <= 4 && <Flame className="h-2 w-2 inline-block mr-1 text-white" />} */}
                               {player.name}
                             </div>
                           );
@@ -677,7 +677,7 @@ const LeagueSquads = ({ league }) => {
         )}
       
       {/* Legend for player demand */}
-      <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-xs mt-2">
+      {/* <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-xs mt-2">
         <div className="flex items-center">
           <div className="h-4 w-4 bg-gradient-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center mr-1">
             <Flame className="h-2 w-2 text-white" />
@@ -688,7 +688,7 @@ const LeagueSquads = ({ league }) => {
           <div className="h-4 w-4 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 rounded mr-1"></div>
           <span className="text-neutral-600 dark:text-neutral-300">Top 6-15 in demand</span>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
