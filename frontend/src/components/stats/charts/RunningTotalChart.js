@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import BaseLineChart from './BaseLineChart';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine
+} from 'recharts';
 import api from '../../../utils/axios';
 
-const RunningTotalChart = ({ 
-  league, 
-  selectedSquadIds, 
+const RunningTotalChart = ({
+  league,
+  selectedSquadIds,
   selectedTimeFrame,
   includeBoost = true
 }) => {
@@ -14,7 +23,7 @@ const RunningTotalChart = ({
   const [leadingSquad, setLeadingSquad] = useState(null);
   const [highestScore, setHighestScore] = useState({ value: 0, squad: null, match: null });
   const [showInsights, setShowInsights] = useState(false);
-  
+
   useEffect(() => {
     if (league?.id && league?.season?.id) {
       fetchRunningTotalData();
@@ -24,8 +33,7 @@ const RunningTotalChart = ({
   const fetchRunningTotalData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch running total data from the API
+
       const response = await api.get(`/leagues/${league.id}/stats/running-total`, {
         params: {
           squads: selectedSquadIds.join(','),
@@ -33,110 +41,47 @@ const RunningTotalChart = ({
           includeBoost: includeBoost
         }
       });
-      
+
       setChartData(response.data);
-      
-      // Extract insights from data
+
       if (response.data && response.data.length > 0) {
         calculateInsights(response.data);
       }
     } catch (err) {
       console.error('Failed to fetch running total data:', err);
       setError('Failed to load running total data');
-      
-      // Simulate data for development
-      const simulatedMatches = Array.from({ length: 14 }, (_, i) => {
-        return {
-          id: 100 + i,
-          number: i + 1,
-          name: `Match ${i + 1}`,
-          team_1: { short_name: 'MI' },
-          team_2: { short_name: 'CSK' },
-          date: new Date(2025, 2, i + 1).toISOString()
-        };
-      });
-      
-      // Initialize data structure for chart
-      const chartDataPoints = [];
-      
-      // Initialize running totals
-      const runningTotals = {};
-      selectedSquadIds.forEach(squadId => {
-        runningTotals[squadId] = 0;
-      });
-      
-      // Create data points for each match
-      simulatedMatches.forEach((match, index) => {
-        const dataPoint = {
-          name: match.number.toString(),
-          match_id: match.id,
-          date: new Date(match.date).toLocaleDateString(undefined, {
-            weekday: 'short', month: 'short', day: 'numeric'
-          }),
-          match_name: `${match.team_1.short_name} vs ${match.team_2.short_name}`,
-          matchData: {}
-        };
-        
-        // Add data for each squad
-        selectedSquadIds.forEach(squadId => {
-          // Generate random match points
-          const matchPoints = Math.floor(Math.random() * 100) + 50;
-          
-          // Update running total
-          runningTotals[squadId] += matchPoints;
-          
-          // Store data
-          dataPoint.matchData[squadId] = {
-            matchPoints: matchPoints,
-            runningTotal: runningTotals[squadId]
-          };
-          
-          // Add running total to data point
-          dataPoint[`squad_${squadId}`] = runningTotals[squadId];
-        });
-        
-        chartDataPoints.push(dataPoint);
-      });
-      
-      setChartData(chartDataPoints);
-      calculateInsights(chartDataPoints);
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate insights from chart data
   const calculateInsights = (data) => {
     if (!data || data.length === 0 || !league?.squads) return;
-    
-    // Find current leading squad
+
     const lastDataPoint = data[data.length - 1];
     let maxTotal = 0;
     let leaderId = null;
-    
-    // Find highest single match score
+
     let highestMatchScore = 0;
     let highestScoreSquadId = null;
     let highestScoreMatch = null;
-    
+
     selectedSquadIds.forEach(squadId => {
       const squadKey = `squad_${squadId}`;
-      
-      // Check for leading squad
+
       if (lastDataPoint[squadKey] > maxTotal) {
         maxTotal = lastDataPoint[squadKey];
         leaderId = squadId;
       }
-      
-      // Check each match for highest score
+
       data.forEach((matchData, index) => {
-        if (index === 0) return; // Skip first match as it doesn't have previous data to compare
-        
+        if (index === 0) return;
+
         const prevMatchData = data[index - 1];
         const currentPoints = matchData[squadKey];
         const prevPoints = prevMatchData[squadKey];
         const matchPoints = currentPoints - prevPoints;
-        
+
         if (matchPoints > highestMatchScore) {
           highestMatchScore = matchPoints;
           highestScoreSquadId = squadId;
@@ -144,14 +89,12 @@ const RunningTotalChart = ({
         }
       });
     });
-    
-    // Set leading squad
+
     if (leaderId) {
       const leaderSquad = league.squads.find(s => s.id === leaderId);
       setLeadingSquad(leaderSquad || { id: leaderId, name: 'Unknown Squad' });
     }
-    
-    // Set highest score
+
     if (highestScoreSquadId) {
       const highScoreSquad = league.squads.find(s => s.id === highestScoreSquadId);
       setHighestScore({
@@ -162,44 +105,125 @@ const RunningTotalChart = ({
     }
   };
 
-  // Get squad color with fallback to predefined colors
   const getSquadColor = (dataKey) => {
     const squadId = parseInt(dataKey.replace('squad_', ''));
     const squad = league?.squads?.find(s => s.id === squadId);
-    
+
     if (squad?.color) {
       return squad.color;
     }
-    
-    // Fallback colors
+
     const colors = [
       '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
       '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
     ];
-    
-    // Get index of squad in league.squads
+
     const squadIndex = league?.squads?.findIndex(s => s.id === squadId) || 0;
     return colors[squadIndex % colors.length];
   };
 
-  // Custom tooltip to show squad point details
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    checkDarkMode();
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  const visibleSquads = {};
+  league?.squads?.forEach(squad => {
+    if (selectedSquadIds.includes(squad.id)) visibleSquads[squad.id] = true;
+  });
+
+  const getFilteredData = () => chartData;
+
+  const getYAxisTicks = () => {
+    const dataToConsider = getFilteredData();
+    if (!dataToConsider || dataToConsider.length === 0) return [0];
+    let minValue = Infinity;
+    let maxValue = -Infinity;
+    dataToConsider.forEach(data => {
+      league?.squads?.forEach(squad => {
+        if (visibleSquads[squad.id]) {
+          const value = data[`squad_${squad.id}`] || 0;
+          if (value < minValue) minValue = value;
+          if (value > maxValue) maxValue = value;
+        }
+      });
+    });
+    if (minValue === Infinity) minValue = 0;
+    if (maxValue === -Infinity) maxValue = 0;
+    const ticks = [];
+    const roundedMax = Math.ceil(maxValue / 1000) * 1000;
+    const roundedMin = Math.min(0, Math.floor(minValue / 1000) * 1000);
+    for (let i = roundedMin; i <= roundedMax; i += 1000) {
+      ticks.push(i);
+    }
+    if (ticks.length === 0 || (ticks.every(t => t < 0) && !ticks.includes(0))) {
+      ticks.push(0);
+      ticks.sort((a, b) => a - b);
+    }
+    return [...new Set(ticks)].sort((a, b) => a - b);
+  };
+
+  const getMinorYAxisTicks = () => {
+    const majorTicks = getYAxisTicks();
+    const minorTicks = [];
+    if (majorTicks.length < 2) return [];
+    const interval = 250;
+    const steps = 3;
+    for (let i = 0; i < majorTicks.length - 1; i++) {
+      const start = majorTicks[i];
+      const end = majorTicks[i + 1];
+      for (let j = 1; j <= steps; j++) {
+        const tickValue = start + (j * interval);
+        if (tickValue < end) {
+          minorTicks.push(tickValue);
+        }
+      }
+    }
+    const firstMajor = majorTicks[0];
+    if (firstMajor > 0 && firstMajor % (interval * (steps + 1)) === 0) {
+      for (let j = 1; j <= steps; j++) {
+        const tickValue = firstMajor - (j * interval);
+        minorTicks.push(tickValue);
+      }
+    }
+    return [...new Set(minorTicks)].sort((a, b) => a - b);
+  };
+
+  const yAxisDomain = () => {
+    const ticks = getYAxisTicks();
+    if (!ticks || ticks.length === 0) return [0, 1000];
+    return [ticks[0], ticks[ticks.length - 1]];
+  };
+
+  const majorGridStyles = {
+    stroke: isDarkMode ? '#4b5563' : '#d1d5db',
+    opacity: isDarkMode ? 0.4 : 0.5,
+  };
+  const minorGridStyles = {
+    stroke: isDarkMode ? '#374151' : '#e5e7eb',
+    opacity: isDarkMode ? 0.3 : 0.5,
+    strokeDasharray: "2 6",
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Get match name and date for this data point
       const matchName = payload[0]?.payload?.match_name || `Match ${label}`;
       const matchDate = payload[0]?.payload?.date || '';
       const matchData = payload[0]?.payload?.matchData || {};
-      
-      // Filter for visible squads and sort by running total in descending order
       const visibleEntries = payload
         .filter(entry => {
           const squadId = parseInt(entry.dataKey.replace('squad_', ''));
           return selectedSquadIds.includes(squadId);
         })
         .sort((a, b) => b.value - a.value);
-      
       return (
-        <div className="bg-white dark:bg-black p-3 border border-neutral-200 dark:border-neutral-800 shadow-md rounded">
+        <div className="bg-white dark:bg-black p-3 border border-neutral-200 dark:border-neutral-700 shadow-lg rounded">
           <p className="font-medium text-neutral-900 dark:text-white">{matchName}</p>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
             {matchDate}
@@ -209,7 +233,6 @@ const RunningTotalChart = ({
               const squadId = parseInt(entry.dataKey.replace('squad_', ''));
               const squad = league.squads.find(s => s.id === squadId);
               const squadMatchData = matchData[squadId] || { matchPoints: 0 };
-              
               return (
                 <div key={index} className="flex items-center justify-between gap-2">
                   <div className="flex items-center">
@@ -239,33 +262,54 @@ const RunningTotalChart = ({
     return null;
   };
 
-  // Prepare data keys for BaseLineChart
-  const dataKeys = league?.squads
-    ?.filter(squad => selectedSquadIds.includes(squad.id))
-    .map(squad => ({
-      dataKey: `squad_${squad.id}`,
-      name: squad.name,
-    }));
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+        <div className="space-y-4">
+          <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/4"></div>
+          <div className="h-64 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+        <p className="text-red-500 dark:text-red-400">{error}</p>
+      </div>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+        <p className="text-neutral-500 dark:text-neutral-400 text-center">
+          No match data available to display running totals.
+        </p>
+      </div>
+    );
+  }
+
+  const minorTickValues = getMinorYAxisTicks();
 
   return (
-    <div className="space-y-4">
-      {/* Insights Row (optional toggle) */}
+    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800 space-y-4">
       {leadingSquad && (
         <div className="flex flex-wrap justify-between items-center mb-2">
           <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
             Points Progression
           </h3>
-          
-          <button 
+          <button
             onClick={() => setShowInsights(!showInsights)}
             className="text-sm text-neutral-600 dark:text-neutral-400 hover:underline flex items-center"
           >
             {showInsights ? 'Hide Insights' : 'Show Insights'}
-            <svg 
+            <svg
               className={`ml-1 w-4 h-4 transform transition-transform ${showInsights ? 'rotate-180' : ''}`}
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24" 
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
@@ -273,13 +317,12 @@ const RunningTotalChart = ({
           </button>
         </div>
       )}
-      
-      {/* Insights Cards */}
+
       {showInsights && leadingSquad && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="bg-white dark:bg-neutral-950 rounded-lg border border-neutral-200 dark:border-neutral-800 p-4">
             <div className="flex items-center">
-              <div 
+              <div
                 className="w-4 h-10 rounded-full mr-3"
                 style={{ backgroundColor: leadingSquad.color || '#808080' }}
               ></div>
@@ -293,10 +336,9 @@ const RunningTotalChart = ({
               </div>
             </div>
           </div>
-          
           <div className="bg-white dark:bg-neutral-950 rounded-lg border border-neutral-200 dark:border-neutral-800 p-4">
             <div className="flex items-center">
-              <div 
+              <div
                 className="w-4 h-10 rounded-full mr-3"
                 style={{ backgroundColor: highestScore.squad?.color || '#808080' }}
               ></div>
@@ -315,20 +357,67 @@ const RunningTotalChart = ({
           </div>
         </div>
       )}
-      
-      {/* Chart Component */}
-      <BaseLineChart
-        data={chartData}
-        dataKeys={dataKeys || []}
-        xAxisDataKey="name"
-        xAxisLabel="Match"
-        height={400}
-        getStrokeColor={getSquadColor}
-        customTooltip={<CustomTooltip />}
-        loading={loading}
-        error={error}
-        emptyMessage="No match data available to display running totals."
-      />
+
+      <div className="h-64 md:h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={getFilteredData()}
+            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={majorGridStyles.stroke}
+              opacity={majorGridStyles.opacity}
+              horizontal={true}
+              vertical={false}
+            />
+            {minorTickValues.map((tickValue) => (
+              <ReferenceLine
+                key={`minor-${tickValue}`}
+                y={tickValue}
+                stroke={minorGridStyles.stroke}
+                strokeDasharray={minorGridStyles.strokeDasharray}
+                strokeOpacity={minorGridStyles.opacity}
+              />
+            ))}
+            <XAxis
+              dataKey="name"
+              label={{
+                value: 'Match',
+                position: 'insideBottom',
+                offset: -5,
+                style: { textAnchor: 'middle', fill: isDarkMode ? '#9ca3af' : '#4B5563' }
+              }}
+              tick={{ fill: isDarkMode ? '#9ca3af' : '#4B5563' }}
+              tickLine={{ stroke: isDarkMode ? '#6B7280' : '#6B7280' }}
+            />
+            <YAxis
+              tick={{ fill: isDarkMode ? '#9ca3af' : '#4B5563', fontSize: 10 }}
+              tickLine={{ stroke: isDarkMode ? '#6B7280' : '#6B7280' }}
+              ticks={getYAxisTicks()}
+              domain={yAxisDomain()}
+              allowDataOverflow={false}
+              allowDecimals={false}
+              interval={0}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            {league?.squads?.map((squad) =>
+              selectedSquadIds.includes(squad.id) && (
+                <Line
+                  key={squad.id}
+                  type="monotone"
+                  dataKey={`squad_${squad.id}`}
+                  name={squad.name}
+                  stroke={getSquadColor(`squad_${squad.id}`)}
+                  activeDot={{ r: 6 }}
+                  strokeWidth={2}
+                  dot={true}
+                />
+              )
+            )}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };

@@ -53,79 +53,104 @@ const StatsContainer = ({ league }) => {
       <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-4">
         League Statistics
       </h2>
-      
-      {/* Filter controls in a single row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <TimeFrameFilter 
           selectedTimeFrame={selectedTimeFrame} 
           onChange={setSelectedTimeFrame} 
         />
-        
         <SquadFilter 
           squads={league.squads || []} 
           selectedSquadIds={selectedSquadIds} 
           onChange={setSelectedSquadIds} 
         />
-        
         <BoostFilter 
           includeBoost={includeBoost} 
           onChange={setIncludeBoost} 
         />
       </div>
-      
+
+      {/* 1. Running Total Graph */}
       <RunningTotalChart 
         league={league} 
         selectedSquadIds={selectedSquadIds} 
         selectedTimeFrame={selectedTimeFrame}
         includeBoost={includeBoost}
       />
-      <div className='mb-3'></div>
+      <div className='mb-6'></div>
+
+      {/* 2. Season MVP and Match MVP side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div>
+          <SeasonMVPTable 
+            league={league} 
+            selectedSquadIds={selectedSquadIds} 
+            selectedTimeFrame={selectedTimeFrame} 
+            includeBoost={includeBoost} 
+            limit={10}
+            hideTitle={true}
+          />
+        </div>
+        <div>
+          <MatchMVPTable 
+            league={league} 
+            selectedSquadIds={selectedSquadIds} 
+            selectedTimeFrame={selectedTimeFrame} 
+            includeBoost={includeBoost} 
+            limit={10}
+            hideTitle={true}
+          />
+        </div>
+      </div>
+
+      {/* 3. Most Points in Match and Domination */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div>
+          <MostPointsInMatchTable 
+            league={league} 
+            selectedSquadIds={selectedSquadIds} 
+            selectedTimeFrame={selectedTimeFrame} 
+            includeBoost={includeBoost} 
+            hideTitle={true}
+          />
+        </div>
+        <div>
+          <DominationTable 
+            league={league} 
+            selectedSquadIds={selectedSquadIds} 
+            selectedTimeFrame={selectedTimeFrame} 
+            hideTitle={true}
+          />
+        </div>
+      </div>
+
+      {/* 4. Season Total Actives and Most Players in Match */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div>
+          <SeasonTotalActivesTable 
+            league={league} 
+            selectedSquadIds={selectedSquadIds} 
+            selectedTimeFrame={selectedTimeFrame} 
+            hideTitle={true}
+          />
+        </div>
+        <div>
+          <MostPlayersInMatchTable 
+            league={league} 
+            selectedSquadIds={selectedSquadIds} 
+            selectedTimeFrame={selectedTimeFrame} 
+            hideTitle={true}
+          />
+        </div>
+      </div>
+
+      {/* 5. Rank Breakdown */}
+      <div className="mb-2"></div>
       <RankBreakdownTable 
         league={league} 
         selectedSquadIds={selectedSquadIds} 
         selectedTimeFrame={selectedTimeFrame} 
+        hideTitle={true}
       />
-      <div className='mb-3'></div>
-      <SeasonMVPTable 
-        league={league} 
-        selectedSquadIds={selectedSquadIds} 
-        selectedTimeFrame={selectedTimeFrame} 
-        includeBoost={includeBoost} 
-      />
-      <div className='mb-3'></div>
-      <MatchMVPTable 
-        league={league} 
-        selectedSquadIds={selectedSquadIds} 
-        selectedTimeFrame={selectedTimeFrame} 
-        includeBoost={includeBoost} 
-      />
-      <div className='mb-3'></div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-        <SeasonTotalActivesTable 
-          league={league} 
-          selectedSquadIds={selectedSquadIds} 
-          selectedTimeFrame={selectedTimeFrame} 
-        />
-        <MostPlayersInMatchTable 
-          league={league} 
-          selectedSquadIds={selectedSquadIds} 
-          selectedTimeFrame={selectedTimeFrame} 
-        />
-      </div>
-      <div className='mb-3'></div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">      
-        <MostPointsInMatchTable 
-          league={league} 
-          selectedSquadIds={selectedSquadIds} 
-          selectedTimeFrame={selectedTimeFrame} 
-          includeBoost={includeBoost} 
-        />
-        <DominationTable 
-          league={league} 
-          selectedSquadIds={selectedSquadIds} 
-          selectedTimeFrame={selectedTimeFrame} 
-        />
-      </div>
     </div>
   );
 };

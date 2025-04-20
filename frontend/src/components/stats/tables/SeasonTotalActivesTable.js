@@ -78,7 +78,7 @@ const SeasonTotalActivesTable = ({
     },
     {
       key: 'count',
-      header: 'Active Players',
+      header: 'Actives',
       type: 'number',
       sortable: false
     }

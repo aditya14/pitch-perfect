@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import BaseStatsTable from './BaseStatsTable';
 import api from '../../../utils/axios';
 
-const MostPlayersInMatchTable = ({ 
-  league, 
-  selectedSquadIds, 
-  selectedTimeFrame
+const MostPlayersInMatchTable = ({
+  league,
+  selectedSquadIds,
+  selectedTimeFrame,
+  hideTitle = false // default, but we'll show title below
 }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,36 +15,28 @@ const MostPlayersInMatchTable = ({
 
   useEffect(() => {
     if (league?.id) {
-      fetchMostPlayersInMatchData();
+      fetchData();
     }
   }, [league?.id, selectedSquadIds, selectedTimeFrame]);
 
-  const fetchMostPlayersInMatchData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch most players in match data
       const response = await api.get(`/leagues/${league.id}/stats/most-players-in-match`, {
         params: {
           squads: selectedSquadIds.join(','),
           timeFrame: selectedTimeFrame
         }
       });
-      
-      // Limit to top 10
-      setData(response.data.slice(0, 10));
+      // The backend returns 'count' for actives, not 'actives'
+      setData((response.data || []).slice(0, 8));
     } catch (err) {
-      console.error('Failed to fetch most players in match data:', err);
-      setError('Failed to load most players in match data');
-      
+      setError('Failed to load data');
       // Simulate data for development
       const simulatedData = [];
-      
-      // Create 10 entries
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 8; i++) {
         const randomSquadId = selectedSquadIds[Math.floor(Math.random() * selectedSquadIds.length)];
         const randomSquad = league.squads.find(s => s.id === randomSquadId);
-        
         simulatedData.push({
           id: i + 1,
           squad: {
@@ -51,53 +44,51 @@ const MostPlayersInMatchTable = ({
             name: randomSquad?.name || 'Unknown Squad',
             color: randomSquad?.color || '#808080'
           },
-          count: Math.floor(Math.random() * 8) + 4, // Random count between 4-11
           match: {
             id: 200 + i,
             number: i + 1,
             name: `MI vs CSK - Match ${i + 1}`
-          }
+          },
+          count: Math.floor(Math.random() * 11) + 1 // use 'count' to match backend
         });
       }
-      
-      // Sort by count descending
-      simulatedData.sort((a, b) => b.count - a.count);
-      
       setData(simulatedData);
     } finally {
       setLoading(false);
     }
   };
 
-  // Define columns for the table
   const columns = [
     {
-      key: 'squadMatch',
-      header: 'Squad/Match',
-      renderer: (_, row) => (
-        <div className="flex flex-col">
-          <div className="flex items-center">
-            <div 
-              className="w-1 h-4 rounded-full mr-1"
-              style={{ backgroundColor: row.squad.color || '#808080' }}
-            />
-            <span className="text-sm">{row.squad.name}</span>
-          </div>
-          <Link 
-            to={`/leagues/${league.id}/matches/${row.match.id}`} 
-            className="text-primary-600 hover:text-primary-700 text-xs mt-1"
-          >
-            {row.match.name}
-          </Link>
+      key: 'squad',
+      header: 'Squad',
+      renderer: (value, row) => (
+        <div className="flex items-center">
+          <div
+            className="w-1 h-4 rounded-full mr-1"
+            style={{ backgroundColor: row.squad.color || '#808080' }}
+          />
+          <span className="text-sm">{row.squad.name}</span>
         </div>
-      ),
-      sortable: false
+      )
+    },
+    {
+      key: 'match',
+      header: 'Match',
+      renderer: (value, row) => (
+        <Link
+          to={`/leagues/${league.id}/matches/${row.match.id}`}
+          className="text-primary-600 hover:text-primary-700 text-xs"
+        >
+          {row.match.name}
+        </Link>
+      )
     },
     {
       key: 'count',
-      header: 'Player Count',
+      header: 'Actives',
       type: 'number',
-      sortable: false
+      renderer: (value, row) => <span>{row.count}</span>
     }
   ];
 
@@ -120,21 +111,21 @@ const MostPlayersInMatchTable = ({
     );
   }
 
+  // Always show title now
   return (
     <div className="bg-white dark:bg-neutral-900 shadow rounded-lg">
       <div className="p-3 border-b border-neutral-200 dark:border-neutral-700">
         <h3 className="text-lg sm:text-xl font-semibold text-neutral-900 dark:text-white">
-          Match Total Actives
+          Most Actives in Match
         </h3>
         <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
-          Highest number of active players in a single match
+          Highest number of active players in a match by squad
         </p>
       </div>
-      
-      <BaseStatsTable 
-        data={data} 
-        columns={columns} 
-        emptyMessage="No player count data available for the selected filters." 
+      <BaseStatsTable
+        data={data}
+        columns={columns}
+        emptyMessage="No match actives data available for the selected filters."
       />
     </div>
   );

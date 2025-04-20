@@ -67,13 +67,6 @@ const MostPointsInMatchTable = ({
         });
       }
       
-      // Sort by total or base points depending on includeBoost setting
-      if (includeBoost) {
-        simulatedData.sort((a, b) => b.total - a.total);
-      } else {
-        simulatedData.sort((a, b) => b.base - a.base);
-      }
-      
       setData(simulatedData);
     } finally {
       setLoading(false);
@@ -104,24 +97,21 @@ const MostPointsInMatchTable = ({
       )
     },
     {
-      key: 'base',
-      header: 'Base',
-      type: 'number',
-      renderer: (value) => value.toFixed(1)
-    },
-    {
-      key: 'boost',
-      header: 'Boost',
-      type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
-    },
-    {
       key: 'total',
       header: 'Total',
       type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
+      renderer: (value, row) => (
+        includeBoost ? (
+          <div className="flex flex-col items-start">
+            <span className="font-bold text-neutral-900 dark:text-white text-base">{row.total.toFixed(1)}</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {row.base.toFixed(1)} <span className="font-bold">+</span> {row.boost.toFixed(1)}
+            </span>
+          </div>
+        ) : (
+          <span className="font-bold text-neutral-900 dark:text-white text-base">{row.base.toFixed(1)}</span>
+        )
+      )
     }
   ];
 
@@ -158,8 +148,6 @@ const MostPointsInMatchTable = ({
       <BaseStatsTable 
         data={data} 
         columns={columns} 
-        defaultSortColumn={includeBoost ? "total" : "base"} 
-        defaultSortDirection="desc" 
         emptyMessage="No match points data available for the selected filters." 
       />
     </div>

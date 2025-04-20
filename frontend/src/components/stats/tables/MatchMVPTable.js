@@ -70,9 +70,6 @@ const MatchMVPTable = ({
         player.total = player.base + player.boost;
       });
       
-      // Sort by total descending
-      simulatedData.sort((a, b) => b.total - a.total);
-      
       setData(simulatedData.slice(0, 10));
     } finally {
       setLoading(false);
@@ -113,21 +110,18 @@ const MatchMVPTable = ({
       key: 'total',
       header: 'Total',
       type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
-    },
-    {
-      key: 'base',
-      header: 'Base',
-      type: 'number',
-      renderer: (value) => value.toFixed(1)
-    },
-    {
-      key: 'boost',
-      header: 'Boost',
-      type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
+      renderer: (value, row) => (
+        includeBoost ? (
+          <div className="flex flex-col items-start">
+            <span className="font-bold text-neutral-900 dark:text-white text-base">{row.total.toFixed(1)}</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {row.base.toFixed(1)} <span className="font-bold">+</span> {row.boost.toFixed(1)}
+            </span>
+          </div>
+        ) : (
+          <span className="font-bold text-neutral-900 dark:text-white text-base">{row.base.toFixed(1)}</span>
+        )
+      )
     }
   ];
 
