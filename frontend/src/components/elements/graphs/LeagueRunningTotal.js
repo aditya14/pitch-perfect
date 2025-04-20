@@ -7,7 +7,7 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Legend
+  ReferenceLine // Import ReferenceLine
 } from 'recharts';
 import api from '../../../utils/axios';
 
@@ -17,6 +17,7 @@ const LeagueRunningTotal = ({ league }) => {
   const [error, setError] = useState(null);
   const [visibleSquads, setVisibleSquads] = useState({});
   const [viewMode, setViewMode] = useState('zoomed'); // 'zoomed' or 'all'
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     if (league?.id && league?.season?.id) {
@@ -29,6 +30,19 @@ const LeagueRunningTotal = ({ league }) => {
       
       fetchRunningTotalData();
     }
+
+    // Check for dark mode on mount and potentially on updates if theme can change dynamically
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    checkDarkMode();
+
+    // Optional: If theme can be toggled dynamically, observe class changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect(); // Cleanup observer
+
   }, [league?.id, league?.season?.id]);
 
   const fetchRunningTotalData = async () => {
@@ -245,9 +259,6 @@ const LeagueRunningTotal = ({ league }) => {
         }
     }
 
-    // Add console log for debugging
-    // console.log("Minor Ticks:", minorTicks); 
-
     return [...new Set(minorTicks)].sort((a, b) => a - b); // Remove duplicates and sort
   };
 
@@ -346,7 +357,17 @@ const LeagueRunningTotal = ({ league }) => {
 
   // Get the calculated minor ticks once for rendering
   const minorTickValues = getMinorYAxisTicks();
-  // console.log("Rendering Minor Ticks:", minorTickValues); // Optional: Log during render
+
+  // Define gridline styles based on theme
+  const majorGridStyles = {
+    stroke: isDarkMode ? '#4b5563' : '#d1d5db', // Dark: gray-600, Light: gray-300
+    opacity: isDarkMode ? 0.4 : 0.5,
+  };
+  const minorGridStyles = {
+    stroke: isDarkMode ? '#374151' : '#e5e7eb', // Dark: gray-700, Light: gray-200
+    opacity: isDarkMode ? 0.3 : 0.5,
+    strokeDasharray: "2 6", // Adjusted dash array for subtlety
+  };
 
   return (
     <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800">
@@ -387,25 +408,22 @@ const LeagueRunningTotal = ({ league }) => {
             {/* Draw major gridlines */}
             <CartesianGrid 
               strokeDasharray="3 3" 
-              stroke="#374151" // Darker gray
-              opacity={0.3} // Slightly more visible major lines
+              stroke={majorGridStyles.stroke}
+              opacity={majorGridStyles.opacity}
               horizontal={true}
               vertical={false}
-              y={getYAxisTicks()} // Explicitly pass major ticks
             />
             
-            {/* Draw minor gridlines - Make them more visible for testing */}
-            {minorTickValues.length > 0 && ( // Only render if there are minor ticks
-              <CartesianGrid 
-                // strokeDasharray="1 5" 
-                strokeDasharray="2 2" // More visible dash pattern
-                stroke="#6b7280" // Lighter gray than major, but visible
-                opacity={0.4} // Increased opacity significantly for testing
-                horizontal={true}
-                vertical={false}
-                y={minorTickValues} // Explicitly pass minor ticks
+            {/* Draw minor gridlines using ReferenceLine - Conditional Styling */}
+            {minorTickValues.map((tickValue) => (
+              <ReferenceLine 
+                key={`minor-${tickValue}`} 
+                y={tickValue} 
+                stroke={minorGridStyles.stroke}
+                strokeDasharray={minorGridStyles.strokeDasharray}
+                strokeOpacity={minorGridStyles.opacity}
               />
-            )}
+            ))}
             
             <XAxis 
               dataKey="name" 
@@ -413,15 +431,15 @@ const LeagueRunningTotal = ({ league }) => {
                 value: 'Match', 
                 position: 'insideBottom',
                 offset: -5,
-                style: { textAnchor: 'middle', fill: '#4B5563' }
+                style: { textAnchor: 'middle', fill: isDarkMode ? '#9ca3af' : '#4B5563' }
               }}
-              tick={{ fill: '#4B5563' }}
-              tickLine={{ stroke: '#6B7280' }}
+              tick={{ fill: isDarkMode ? '#9ca3af' : '#4B5563' }}
+              tickLine={{ stroke: isDarkMode ? '#6B7280' : '#6B7280' }}
             />
             
             <YAxis 
-              tick={{ fill: '#4B5563', fontSize: 10 }} // Smaller font size for ticks
-              tickLine={{ stroke: '#6B7280' }}
+              tick={{ fill: isDarkMode ? '#9ca3af' : '#4B5563', fontSize: 10 }} // Smaller font size for ticks
+              tickLine={{ stroke: isDarkMode ? '#6B7280' : '#6B7280' }}
               ticks={getYAxisTicks()} // Use only major ticks for labels
               domain={yAxisDomain()} // Set domain based on calculated ticks
               allowDataOverflow={false} // Clip lines outside the domain
