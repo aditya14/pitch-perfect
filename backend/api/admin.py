@@ -667,29 +667,48 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
     list_filter = ('season', 'draft_completed')
     search_fields = ('name', 'admin__username')
     raw_id_fields = ('admin',)
-    
+
     def draft_status(self, obj):
-        if obj.draft_completed:
-            return format_html('<span style="color: green;">Complete</span>')
-        else:
-            return format_html('<span style="color: blue;">Not Started</span>')
+        pre_season = "Completed" if obj.draft_completed else "Not Started"
+        mid_season = "Completed" if getattr(obj, 'mid_season_draft_completed', False) else "Not Started"
+        
+        return format_html(
+            'Pre-Season: <span style="color: {};">{}</span><br>'
+            'Mid-Season: <span style="color: {};">{}</span>',
+            'green' if obj.draft_completed else 'blue', pre_season,
+            'green' if getattr(obj, 'mid_season_draft_completed', False) else 'blue', mid_season
+        )
     draft_status.short_description = 'Draft Status'
     
     def draft_actions(self, obj):
         """Custom buttons for draft actions"""
-        if obj.draft_completed:
-            return format_html('<span style="color: gray;">Draft Completed</span>')
+        actions = []
         
-        run_url = reverse('admin:run_fantasy_draft', args=[obj.pk])
-        simulate_url = reverse('admin:simulate_fantasy_draft', args=[obj.pk])
-            
-        return format_html(
-            '<a class="button" href="{}">Run Draft</a>&nbsp;'
-            '<a class="button" href="{}?dry_run=1">Simulate</a>',
-            run_url, simulate_url
-        )
+        # Pre-season draft actions
+        if not obj.draft_completed:
+            run_url = reverse('admin:run_fantasy_draft', args=[obj.pk])
+            simulate_url = reverse('admin:simulate_fantasy_draft', args=[obj.pk])
+            actions.append(
+                f'<a class="button" href="{run_url}">Run Pre-Season Draft</a>&nbsp;'
+                f'<a class="button" href="{simulate_url}?dry_run=1">Simulate Pre-Season</a>'
+            )
+        
+        # Mid-season draft actions
+        mid_season_completed = getattr(obj, 'mid_season_draft_completed', False)
+        if not mid_season_completed:
+            mid_season_url = reverse('admin:run_mid_season_draft', args=[obj.pk])
+            mid_season_sim_url = reverse('admin:simulate_mid_season_draft', args=[obj.pk])
+            actions.append(
+                f'<a class="button" style="background-color: #4CAF50;" href="{mid_season_url}">Run Mid-Season Draft</a>&nbsp;'
+                f'<a class="button" style="background-color: #2196F3;" href="{mid_season_sim_url}?dry_run=1">Simulate Mid-Season</a>'
+            )
+        
+        if not actions:
+            return format_html('<span style="color: gray;">Drafts Completed</span>')
+        
+        return format_html('<br>'.join(actions))
     draft_actions.short_description = 'Draft Actions'
-    
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -702,6 +721,16 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
                 '<path:object_id>/simulate-draft/',
                 self.admin_site.admin_view(self.simulate_draft),
                 name='simulate_fantasy_draft',
+            ),
+            path(
+                '<path:object_id>/run-mid-season-draft/',
+                self.admin_site.admin_view(self.run_mid_season_draft),
+                name='run_mid_season_draft',
+            ),
+            path(
+                '<path:object_id>/simulate-mid-season-draft/',
+                self.admin_site.admin_view(self.simulate_mid_season_draft),
+                name='simulate_mid_season_draft',
             ),
         ]
         return custom_urls + urls
@@ -814,6 +843,61 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
             })
         
         return formatted_results
+    
+    def run_mid_season_draft(self, request, object_id):
+        """Run the mid-season fantasy draft for a league"""
+        try:
+            league = self.get_object(request, object_id)
+            dry_run = request.GET.get('dry_run', '0') == '1'
+            verbose = request.GET.get('verbose', '0') == '1'
+            
+            # Call the draft function from admin_views
+            from .admin_views import run_mid_season_draft_process
+            results = run_mid_season_draft_process(league.id, dry_run, verbose)
+            
+            if dry_run:
+                messages.info(request, f"Mid-season draft simulation completed for {league.name}. No changes saved.")
+            else:
+                messages.success(request, f"Mid-season draft completed successfully for {league.name}!")
+            
+            # Add detailed results to the message
+            messages.info(request, f"Results: {results['squads']} squads")
+            
+            for squad_id, details in results.get('squad_results', {}).items():
+                squad = FantasySquad.objects.get(id=squad_id)
+                messages.info(request, f"Squad '{squad.name}': {details['retained']} retained + {details['drafted']} drafted = {details['total']} total")
+            
+        except Exception as e:
+            messages.error(request, f"Error running mid-season draft: {str(e)}")
+            import traceback
+            print(traceback.format_exc())  # Print traceback for debugging
+            
+        return redirect('admin:api_fantasyleague_changelist')
+
+    def simulate_mid_season_draft(self, request, object_id):
+        """Simulate the mid-season fantasy draft without saving changes"""
+        try:
+            league = self.get_object(request, object_id)
+            
+            # Call the draft function with dry_run=True
+            from .admin_views import run_mid_season_draft_process
+            results = run_mid_season_draft_process(league.id, dry_run=True, verbose=True)
+            
+            # Render a detailed results page
+            context = {
+                'title': f'Mid-Season Draft Simulation for {league.name}',
+                'league': league,
+                'results': results,
+                'squad_results': results.get('squad_results', {}),
+                'opts': self.model._meta,
+                'is_mid_season': True
+            }
+            
+            return render(request, 'admin/fantasy_draft_simulation.html', context)
+            
+        except Exception as e:
+            messages.error(request, f"Error simulating mid-season draft: {str(e)}")
+            return redirect('admin:api_fantasyleague_changelist')
 
 @admin.register(FantasySquad)
 class FantasySquadAdmin(admin.ModelAdmin):

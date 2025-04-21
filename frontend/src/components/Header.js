@@ -9,7 +9,7 @@ import {
 import MidSeasonDraftModal from './leagues/modals/MidSeasonDraftModal'; // We'll create this
 
 // Flag to show/hide mid-season draft button
-const SHOW_MID_SEASON_DRAFT = true;
+const SHOW_MID_SEASON_DRAFT = new Date() <= new Date(Date.UTC(2025, 3, 22, 13, 0, 0));
 
 const Header = ({ theme, onThemeChange }) => {
   const { user, logout } = useAuth(); // Fixed the hook usage
@@ -282,7 +282,7 @@ const Header = ({ theme, onThemeChange }) => {
               >
                 <img src="/icon.png" alt="Logo" className="h-9 w-9" />
                 <div 
-                  className="ml-3 text-xl font-extrabold text-primary-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-300 hidden sm:block"
+                  className="ml-3 text-xl font-extrabold text-primary-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-300 hidden sm:block font-caption"
                 >
                   <span className="text-primary-500 dark:text-primary-500">Pitch</span>Perfect
                 </div>
@@ -291,7 +291,7 @@ const Header = ({ theme, onThemeChange }) => {
               {/* League or Squad info */}
               {isLeagueView && leagueInfo && (
                 <div className="ml-3 sm:ml-6 sm:pl-4 sm:border-l sm:border-primary-200 sm:dark:border-primary-700">
-                  <div className="text-primary-900 dark:text-white font-medium">
+                  <div className="text-primary-900 dark:text-white font-bold font-caption">
                     {leagueInfo.name}
                   </div>
                   {leagueInfo.season && (
@@ -322,7 +322,7 @@ const Header = ({ theme, onThemeChange }) => {
               {isLeagueView && leagueInfo && (
                 <Link 
                   to={leagueInfo.my_squad ? `/squads/${leagueInfo.my_squad.id}` : '#'}
-                  className={`mr-1 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md
+                  className={`mr-1 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium font-caption rounded-md
                     ${leagueInfo.my_squad 
                       ? 'bg-primary-600 text-white hover:bg-primary-700' 
                       : 'bg-gray-200 text-gray-500 cursor-not-allowed'
@@ -447,7 +447,7 @@ const Header = ({ theme, onThemeChange }) => {
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     className={`
-                      whitespace-nowrap py-3 px-2 sm:px-4 font-medium text-xs sm:text-sm
+                      whitespace-nowrap py-3 px-2 sm:px-4 font-medium text-xs font-caption sm:text-sm
                       ${activeTab === tab.id
                         ? 'text-primary-600 border-b-2 border-primary-500 dark:text-primary-400 dark:border-primary-400'
                         : 'text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-white border-b-2 border-transparent'

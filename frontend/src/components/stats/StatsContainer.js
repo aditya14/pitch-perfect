@@ -19,7 +19,7 @@ import DominationTable from './tables/DominationTable';
 
 // Simple section header component
 const SectionHeader = ({ title }) => (
-  <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4 mt-8">
+  <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4 mt-8 font-caption">
     {title}
   </h3>
 );
@@ -50,7 +50,7 @@ const StatsContainer = ({ league }) => {
   return (
     <div className="bg-white dark:bg-stone-900 shadow rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
       {/* Header and Filters */}
-      <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-4">
+      <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-4 font-caption">
         League Statistics
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">

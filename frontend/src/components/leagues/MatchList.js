@@ -69,7 +69,7 @@ const MatchList = ({ league }) => {
     return (
       <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
         <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+          <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
             Matches
           </h2>
           <div className="flex gap-2">
@@ -91,7 +91,7 @@ const MatchList = ({ league }) => {
     return (
       <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
         <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white font-caption">
             Matches
           </h2>
         </div>
@@ -109,7 +109,7 @@ const MatchList = ({ league }) => {
   return (
     <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
       <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 flex flex-wrap justify-between items-center">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+        <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
           Matches
         </h2>
         <div className="flex gap-2 mt-2 sm:mt-0">
@@ -151,7 +151,7 @@ const MatchList = ({ league }) => {
           <div className="space-y-6">
             {groupedMatches.map((group) => (
               <div key={`phase-${group.phase}`} className="space-y-2">
-                <div className="sticky top-0 z-10 bg-neutral-100 dark:bg-neutral-900 px-4 py-2 rounded-md font-medium text-neutral-800 dark:text-neutral-200 border-l-2 border-primary-500">
+                <div className="sticky top-0 z-10 bg-neutral-100 dark:bg-neutral-900 px-4 py-2 rounded-md font-medium font-caption text-neutral-800 dark:text-neutral-200 border-l-2 border-primary-500">
                   Week {group.phase}
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-2">

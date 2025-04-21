@@ -176,7 +176,7 @@ const LeagueCard = ({ league }) => {
     >
       <div className="p-5">
         {/* League Name */}
-        <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
+        <h3 className="text-xl font-caption font-bold text-neutral-900 dark:text-white mb-2">
           {league.name}
         </h3>
         
@@ -193,7 +193,7 @@ const LeagueCard = ({ league }) => {
                 className="h-5 w-1.5 rounded-md mr-2"
                 style={{ backgroundColor: league.my_squad.color }}
               />
-              <span className="font-medium text-neutral-800 dark:text-neutral-200">
+              <span className="font-medium font-caption text-neutral-800 dark:text-neutral-200">
                 {league.my_squad.name}
               </span>
             </div>
@@ -331,7 +331,7 @@ const UserDashboard = () => {
     <div className="container mx-auto px-4 py-8">
       
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-        <h1 className="text-2xl font-bold dark:text-white">My Leagues</h1>
+        <h1 className="text-2xl font-caption font-bold dark:text-white">My Leagues</h1>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">
           {/* Admin-only Update Points Button */}
           {isAdmin && (
@@ -341,7 +341,7 @@ const UserDashboard = () => {
           )}
           <Link
             to="/leagues/join"
-            className="bg-primary-600 text-white border-transparent hover:bg-primary-700 focus:ring-primary-500 inline-block py-2 px-4 rounded-md text-sm font-medium"
+            className="bg-primary-600 font-caption text-white border-transparent hover:bg-primary-700 focus:ring-primary-500 inline-block py-2 px-4 rounded-md text-sm font-medium"
           >
             Join League
           </Link>

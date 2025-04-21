@@ -50,6 +50,7 @@ body {
   padding: 0;
   /* Add smooth transition */
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  @apply font-sans; /* Apply the default sans font globally */
 }
 
 /* Dark mode body styling */

@@ -60,7 +60,7 @@ const LeagueDashboard = ({ league }) => {
         {/* League Table */}
         <div className="bg-white dark:bg-neutral-950 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
           <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
-            <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+            <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
               Table
             </h2>
           </div>
@@ -94,7 +94,7 @@ const LeagueDashboard = ({ league }) => {
                       <div className="flex items-center">
                         <span className="inline-block h-4 w-1 mr-1 rounded-sm" style={{backgroundColor: squad.color}}></span>
                         <span 
-                          className="text-sm font-medium text-neutral-800 dark:text-neutral-200"
+                          className="text-sm font-medium text-neutral-800 dark:text-neutral-200 font-caption"
                         >
                           {squad.name}
                         </span>
@@ -120,7 +120,7 @@ const LeagueDashboard = ({ league }) => {
         {/* Recent Matches Section */}
         <div className="space-y-4">
           <div className="pt-4">
-            <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+            <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
               Recent Matches
             </h2>
           </div>

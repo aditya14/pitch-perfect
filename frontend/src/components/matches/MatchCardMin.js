@@ -213,7 +213,7 @@ const MatchCardMin = ({ match, leagueId }) => {
                       : 'none'
                    }}
                 />
-                <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingFirstTeam?.short_name === match?.winner?.short_name ? 'font-bold' : ''}`}>
+                <span className={`text-sm font-caption text-center text-neutral-900 dark:text-white ${battingFirstTeam?.short_name === match?.winner?.short_name ? 'font-bold' : ''}`}>
                   {battingFirstTeam.short_name || battingFirstTeam.name}
                 </span>
               </div>
@@ -243,7 +243,7 @@ const MatchCardMin = ({ match, leagueId }) => {
                       : 'none'
                   }}
                 />
-                <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingSecondTeam?.short_name === match?.winner?.short_name ? 'font-bold' : ''}`}>
+                <span className={`text-sm font-caption text-center text-neutral-900 dark:text-white ${battingSecondTeam?.short_name === match?.winner?.short_name ? 'font-bold' : ''}`}>
                   {battingSecondTeam.short_name || battingSecondTeam.name}
                 </span>
               </div>
@@ -359,7 +359,7 @@ const MatchCardMin = ({ match, leagueId }) => {
                       color={topSquads[0]?.color || '#6B7280'} 
                       className="mr-1.5" 
                     />
-                    <span className="text-neutral-900 dark:text-white text-sm truncate max-w-[150px] font-bold">
+                    <span className="text-neutral-900 dark:text-white text-sm truncate max-w-[150px] font-bold font-caption">
                       {topSquads[0]?.name}
                     </span>
                   </div>

@@ -211,7 +211,7 @@ const MatchCard = ({ match, leagueId }) => {
                     : 'none'
                  }}
               />
-              <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingFirstTeam?.short_name === match?.winner?.short_name ? 'font-bold' : 'font-light'}`}>
+              <span className={`text-sm font-caption text-center text-neutral-900 dark:text-white ${battingFirstTeam?.short_name === match?.winner?.short_name ? 'font-bold' : 'font-light'}`}>
                 {battingFirstTeam.short_name || battingFirstTeam.name}
               </span>
             </div>
@@ -241,7 +241,7 @@ const MatchCard = ({ match, leagueId }) => {
                     : 'none'
                 }}
               />
-              <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingSecondTeam?.short_name === match?.winner?.short_name ? 'font-bold' : 'font-light'}`}>
+              <span className={`text-sm font-caption text-center text-neutral-900 dark:text-white ${battingSecondTeam?.short_name === match?.winner?.short_name ? 'font-bold' : 'font-light'}`}>
                 {battingSecondTeam.short_name || battingSecondTeam.name}
               </span>
             </div>
@@ -310,7 +310,7 @@ const MatchCard = ({ match, leagueId }) => {
                     color={topSquads[0]?.color || '#6B7280'} 
                     className="mr-1.5" 
                   />
-                  <span className="text-neutral-900 dark:text-white text-md font-bold truncate max-w-[150px]">
+                  <span className="text-neutral-900 dark:text-white text-md font-bold truncate max-w-[150px] font-caption">
                     {topSquads[0]?.name}
                   </span>
                 </div>
@@ -417,7 +417,7 @@ const MatchCard = ({ match, leagueId }) => {
             onClick={handleMatchClick}
             className="mt-4 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
           >
-            <span>{match.status === 'LIVE' ? 'View Match Details' : 'View Match Details'}</span>
+            <span className='font-caption font-bold'>{match.status === 'LIVE' ? 'View Match Details' : 'View Match Details'}</span>
             <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

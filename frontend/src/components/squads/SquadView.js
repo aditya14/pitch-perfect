@@ -141,7 +141,7 @@ const SquadView = () => {
           </button>
           <h1 className="flex items-center text-2xl font-bold mb-2">
             <span className="inline-block h-8 w-2 mr-2 rounded-md" style={{backgroundColor: squadData.color}}></span>
-            <span className="text-base">{squadData.name}</span>
+            <span className="text-base font-caption">{squadData.name}</span>
           </h1>
         </div>
         

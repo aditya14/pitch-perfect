@@ -71,7 +71,7 @@ const Login = () => {
         {/* App Logo - Always at the top on all screens with safe spacing */}
         <div className="flex items-center justify-center lg:justify-start mb-8 safe-top">
           <img src="/icon.png" alt="PitchPerfect Logo" className="h-12 w-12 sm:h-16 sm:w-16 mr-3" />
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white font-caption">
             <span className="text-primary-500 dark:text-primary-500">Pitch</span>Perfect
           </h1>
         </div>
@@ -201,7 +201,7 @@ const Login = () => {
                     <div className="w-full border-t border-neutral-300 dark:border-neutral-600"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
+                    <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 font-caption">
                       Fantasy Cricket at its finest
                     </span>
                   </div>

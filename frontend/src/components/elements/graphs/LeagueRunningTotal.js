@@ -372,7 +372,7 @@ const LeagueRunningTotal = ({ league }) => {
   return (
     <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
+        <h3 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
           Running Total
         </h3>
         <div className="flex space-x-2">

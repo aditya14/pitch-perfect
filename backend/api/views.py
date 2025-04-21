@@ -954,15 +954,23 @@ class LeagueViewSet(viewsets.ModelViewSet):
             )
             print(f"Found {squads.count()} squads")
             
-            # 2. Get draft data for all squads in a single query
-            draft_data = FantasyDraft.objects.filter(
+            # 2. Get draft data for all squads in a single query (both Pre-Season and Mid-Season)
+            pre_season_drafts = FantasyDraft.objects.filter(
                 league=league,
                 type='Pre-Season'
             ).select_related('squad').values('squad_id', 'order')
             
-            # Convert to a dict for faster lookups
-            user_rankings = {d['squad_id']: d['order'] for d in draft_data}
-            print(f"Found draft data for {len(user_rankings)} squads")
+            mid_season_drafts = FantasyDraft.objects.filter(
+                league=league,
+                type='Mid-Season'
+            ).select_related('squad').values('squad_id', 'order')
+            
+            # Convert to dicts for faster lookups
+            pre_season_rankings = {d['squad_id']: d['order'] for d in pre_season_drafts}
+            mid_season_rankings = {d['squad_id']: d['order'] for d in mid_season_drafts}
+            
+            print(f"Found pre-season draft data for {len(pre_season_rankings)} squads")
+            print(f"Found mid-season draft data for {len(mid_season_rankings)} squads")
             
             # 3. Get all player IDs that we need to process
             # This includes current squad members and historical players
@@ -979,7 +987,8 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     'user_name': squad.user.username,
                     'total_points': float(squad.total_points),
                     'current_core_squad': squad.current_core_squad or {},
-                    'draft_ranking': user_rankings.get(squad.id, []),
+                    'draft_ranking': pre_season_rankings.get(squad.id, []),
+                    'mid_season_draft_ranking': mid_season_rankings.get(squad.id, []),
                     'current_player_ids': set(squad.current_squad or []),
                     'all_player_ids': set(squad.current_squad or [])
                 }
@@ -1029,21 +1038,51 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     'team_color': current_team.team.primary_color if current_team else None
                 }
             
-            # 6. Calculate average draft ranks
-            player_draft_rankings = {}
-            for squad_id, rankings in user_rankings.items():
+            # 6. Calculate average draft ranks for both draft types
+            pre_season_player_rankings = {}
+            mid_season_player_rankings = {}
+            
+            # Pre-season
+            for squad_id, rankings in pre_season_rankings.items():
                 for rank, player_id in enumerate(rankings):
-                    if player_id not in player_draft_rankings:
-                        player_draft_rankings[player_id] = []
+                    if player_id not in pre_season_player_rankings:
+                        pre_season_player_rankings[player_id] = []
                     
                     # Add the 1-indexed rank to the player's rankings
-                    player_draft_rankings[player_id].append(rank + 1)
+                    pre_season_player_rankings[player_id].append(rank + 1)
             
-            # Calculate average rank for each player with rankings
-            avg_draft_ranks = {}
-            for player_id, ranks in player_draft_rankings.items():
+            # Mid-season
+            for squad_id, rankings in mid_season_rankings.items():
+                # Calculate retained players for each squad
+                retained_player_ids = []
+                if squad_id in squad_dict and squad_dict[squad_id]['current_core_squad']:
+                    retained_player_ids = [
+                        boost['player_id'] 
+                        for boost in squad_dict[squad_id]['current_core_squad'] 
+                        if 'player_id' in boost
+                    ]
+                
+                # Only include non-retained players in rank calculations
+                for rank, player_id in enumerate(rankings):
+                    if player_id in retained_player_ids:
+                        continue  # Skip retained players
+                        
+                    if player_id not in mid_season_player_rankings:
+                        mid_season_player_rankings[player_id] = []
+                    
+                    # Add the 1-indexed rank to the player's rankings
+                    mid_season_player_rankings[player_id].append(rank + 1)
+            
+            # Calculate average ranks
+            pre_season_avg_ranks = {}
+            for player_id, ranks in pre_season_player_rankings.items():
                 if ranks:
-                    avg_draft_ranks[player_id] = round(sum(ranks) / len(ranks), 2)
+                    pre_season_avg_ranks[player_id] = round(sum(ranks) / len(ranks), 2)
+            
+            mid_season_avg_ranks = {}
+            for player_id, ranks in mid_season_player_rankings.items():
+                if ranks:
+                    mid_season_avg_ranks[player_id] = round(sum(ranks) / len(ranks), 2)
             
             # 7. Build the final response data
             squad_data = []
@@ -1068,7 +1107,8 @@ class LeagueViewSet(viewsets.ModelViewSet):
             # 8. Prepare the final response
             response_data = {
                 'squads': squad_data,
-                'avg_draft_ranks': avg_draft_ranks
+                'avg_draft_ranks': pre_season_avg_ranks,
+                'avg_mid_season_draft_ranks': mid_season_avg_ranks
             }
             
             # 9. Cache the result (15 minutes)
