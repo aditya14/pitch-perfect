@@ -52,7 +52,7 @@ const MatchOverview = ({ matchData }) => {
       <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center bg-gradient-to-r from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800">
         <div className="flex items-center">
           <Info className="w-4 h-4 mr-2 text-neutral-500 dark:text-neutral-400" />
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+          <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
             Match Overview
           </h2>
         </div>

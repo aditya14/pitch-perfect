@@ -98,7 +98,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
     return (
       <div className="bg-white dark:bg-neutral-900 overflow-hidden h-full">
         <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-700">
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+          <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
             Squad Points
           </h2>
         </div>
@@ -115,7 +115,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   return (
     <div className="bg-white dark:bg-black overflow-hidden h-full shadow rounded-lg">
       <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700">
-        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+        <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
           Squad Points
         </h2>
       </div>
@@ -138,7 +138,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
                 />
                 <div className="flex flex-col">
                   <div className="flex items-center">
-                    <span className={`${squad.rank === 1 ? 'font-bold' : 'font-medium'} text-base text-sm truncate max-w-[140px] sm:max-w-[200px]`}>
+                    <span className={`${squad.rank === 1 ? 'font-bold font-caption' : 'font-medium'} text-base text-sm truncate max-w-[140px] sm:max-w-[200px]`}>
                       {squad.name}
                     </span>
                   </div>
