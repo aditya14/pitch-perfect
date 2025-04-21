@@ -46,6 +46,13 @@ const MatchCard = ({ match, leagueId }) => {
   }
 
   useEffect(() => {
+    // Reset state when match or leagueId changes before fetching
+    setLoading(true);
+    setTopPlayers([]);
+    setTopSquads([]);
+    setError(null);
+    setTimeRemaining(null); // Reset countdown too
+
     if (match && ['COMPLETED', 'LIVE'].includes(match.status)) {
       fetchFantasyStats();
     } else {
@@ -82,7 +89,7 @@ const MatchCard = ({ match, leagueId }) => {
       
       return () => clearInterval(timer);
     }
-  }, [match]);
+  }, [match?.id, leagueId, match?.status, match?.date]); // Use match.id and include status/date
 
   const fetchFantasyStats = async () => {
     try {

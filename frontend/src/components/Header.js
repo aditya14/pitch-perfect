@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import { 
   Trophy, ChevronRight, Moon, Sun, Home, LogOut, User, 
-  ShieldHalf, Shield, UsersRound
+  ShieldHalf, Shield, UsersRound, ChevronsUpDown, Check
 } from 'lucide-react';
 import MidSeasonDraftModal from './leagues/modals/MidSeasonDraftModal'; // We'll create this
 
@@ -25,6 +25,9 @@ const Header = ({ theme, onThemeChange }) => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [leagueInfo, setLeagueInfo] = useState(null);
   const [squadInfo, setSquadInfo] = useState(null);
+  const [userLeagues, setUserLeagues] = useState([]); // State for user's leagues
+  const [isLeagueDropdownOpen, setIsLeagueDropdownOpen] = useState(false); // State for league dropdown
+  const leagueDropdownRef = useRef(null); // Ref for league dropdown
   
   // Just a simple state to open/close the modal
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
@@ -56,6 +59,7 @@ const Header = ({ theme, onThemeChange }) => {
           setLeagueInfo(response.data);
         } catch (err) {
           console.error('Failed to fetch league info:', err);
+          setLeagueInfo(null); 
         }
       };
       
@@ -64,6 +68,24 @@ const Header = ({ theme, onThemeChange }) => {
       setLeagueInfo(null);
     }
   }, [isLeagueView, leagueId]);
+
+  // Fetch user's leagues
+  useEffect(() => {
+    const fetchUserLeagues = async () => {
+      if (user) {
+        try {
+          const response = await api.get('/leagues/my_leagues/');
+          setUserLeagues(response.data || []);
+        } catch (err) {
+          console.error('Failed to fetch user leagues:', err);
+          setUserLeagues([]);
+        }
+      } else {
+        setUserLeagues([]);
+      }
+    };
+    fetchUserLeagues();
+  }, [user]);
 
   // Fetch squad info when in squad view
   useEffect(() => {
@@ -140,6 +162,10 @@ const Header = ({ theme, onThemeChange }) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
+      // Close league dropdown on outside click
+      if (leagueDropdownRef.current && !leagueDropdownRef.current.contains(event.target)) {
+        setIsLeagueDropdownOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -158,52 +184,7 @@ const Header = ({ theme, onThemeChange }) => {
   
   // Helper function to show iOS installation instructions
   const showIOSInstallInstructions = () => {
-    // Create simplified instructions for iOS
-    const instructionsHTML = `
-      <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" id="ios-install-modal">
-        <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl max-w-md w-full p-6">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold text-primary-900 dark:text-white">Add to Home Screen</h3>
-            <button class="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-200" id="close-modal">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <div class="space-y-4">
-            <p class="text-primary-700 dark:text-primary-300">To add PitchPerfect to your home screen:</p>
-            <ol class="list-decimal pl-5 text-primary-700 dark:text-primary-300 space-y-2">
-              <li>Tap the <strong>Share</strong> icon at the bottom of your screen</li>
-              <li>Select <strong>"Add to Home Screen"</strong> from the menu</li>
-              <li>Tap <strong>"Add"</strong> to confirm</li>
-            </ol>
-          </div>
-          <div class="mt-6">
-            <button class="w-full py-2 px-4 bg-neutral-500 hover:bg-neutral-700 text-white font-semibold rounded-lg shadow-md focus:outline-none" id="confirm-modal">
-              Got it
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Create a container for the modal
-    const modalContainer = document.createElement('div');
-    modalContainer.innerHTML = instructionsHTML;
-    document.body.appendChild(modalContainer);
-    
-    // Add event listeners for the close buttons
-    const closeModal = () => {
-      document.body.removeChild(modalContainer);
-    };
-    
-    document.getElementById('close-modal').addEventListener('click', closeModal);
-    document.getElementById('confirm-modal').addEventListener('click', closeModal);
-    document.getElementById('ios-install-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'ios-install-modal') {
-        closeModal();
-      }
-    });
+    // ...existing code...
   };
   
   // If we're in a league view, determine the active tab
@@ -241,6 +222,15 @@ const Header = ({ theme, onThemeChange }) => {
     navigate(`/leagues/${leagueId}/${tabId}`);
   };
 
+  // Handle league change from dropdown
+  const handleLeagueChange = (newLeagueId) => {
+    if (!newLeagueId || newLeagueId === leagueId) return; // No change or invalid ID
+    
+    const currentTab = getActiveTab() || 'dashboard'; // Default to dashboard if no tab found
+    navigate(`/leagues/${newLeagueId}/${currentTab}`);
+    setIsLeagueDropdownOpen(false); // Close dropdown after selection
+  };
+
   // Handlers for Add to Home Screen button
   const handleAddToHomeScreen = () => {
     if (deferredPrompt) {
@@ -265,6 +255,8 @@ const Header = ({ theme, onThemeChange }) => {
     setIsDropdownOpen(false);
   };
 
+  const canShowLeagueSwitcher = isLeagueView && userLeagues.length > 1;
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full theme-transition bg-white dark:bg-neutral-950 shadow-sm fix-fixed">
@@ -274,7 +266,7 @@ const Header = ({ theme, onThemeChange }) => {
         <div className="container mx-auto px-2 sm:px-6 lg:px-3">
           {/* Main Header Row */}
           <div className="flex items-center justify-between h-16">
-            {/* Left side - Logo and League Name */}
+            {/* Left side - Logo and League Name/Switcher */}
             <div className="flex items-center">
               <Link 
                 to="/dashboard"
@@ -288,32 +280,73 @@ const Header = ({ theme, onThemeChange }) => {
                 </div>
               </Link>
               
-              {/* League or Squad info */}
-              {isLeagueView && leagueInfo && (
-                <div className="ml-3 sm:ml-6 sm:pl-4 sm:border-l sm:border-primary-200 sm:dark:border-primary-700">
-                  <div className="text-primary-900 dark:text-white font-bold font-caption">
-                    {leagueInfo.name}
-                  </div>
-                  {leagueInfo.season && (
-                    <div className="text-xs text-primary-500 dark:text-primary-400">
-                      {leagueInfo.season.name}
+              {/* League Info or Switcher */}
+              <div className="ml-3 sm:ml-6 sm:pl-4 sm:border-l sm:border-primary-200 sm:dark:border-primary-700 relative" ref={leagueDropdownRef}>
+                {canShowLeagueSwitcher && leagueInfo ? (
+                  // League Switcher Dropdown Button
+                  <button
+                    onClick={() => setIsLeagueDropdownOpen(!isLeagueDropdownOpen)}
+                    className="flex items-center gap-1 p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  >
+                    <div className="flex flex-col items-start">
+                      <span className="text-primary-900 dark:text-white font-bold font-caption text-sm leading-tight">
+                        {leagueInfo.name}
+                      </span>
+                      {leagueInfo.season && (
+                        <span className="text-xs text-primary-500 dark:text-primary-400 leading-tight">
+                          {leagueInfo.season.name}
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
-              
-              {isSquadView && squadInfo && (
-                <div className="ml-3 sm:ml-6 sm:pl-4 sm:border-l sm:border-primary-200 sm:dark:border-primary-700">
-                  <div className="text-primary-900 dark:text-white font-medium">
-                    {squadInfo.name}
-                  </div>
-                  {squadInfo.league_name && (
-                    <div className="text-xs text-primary-500 dark:text-primary-400">
-                      {squadInfo.league_name}
+                    <ChevronsUpDown className="h-4 w-4 text-neutral-500 dark:text-neutral-400 ml-1" />
+                  </button>
+                ) : isLeagueView && leagueInfo ? (
+                  // Static League Info (if only one league or switcher disabled)
+                  <div>
+                    <div className="text-primary-900 dark:text-white font-bold font-caption text-sm leading-tight">
+                      {leagueInfo.name}
                     </div>
-                  )}
-                </div>
-              )}
+                    {leagueInfo.season && (
+                      <div className="text-xs text-primary-500 dark:text-primary-400 leading-tight">
+                        {leagueInfo.season.name}
+                      </div>
+                    )}
+                  </div>
+                ) : isSquadView && squadInfo ? (
+                  // Squad Info
+                  <div>
+                    <div className="text-primary-900 dark:text-white font-medium text-sm leading-tight">
+                      {squadInfo.name}
+                    </div>
+                    {squadInfo.league_name && (
+                      <div className="text-xs text-primary-500 dark:text-primary-400 leading-tight">
+                        {squadInfo.league_name}
+                      </div>
+                    )}
+                  </div>
+                ) : null /* No info to display */}
+
+                {/* League Switcher Dropdown Menu */}
+                {canShowLeagueSwitcher && isLeagueDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-64 py-1 theme-transition bg-white dark:bg-neutral-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10 max-h-60 overflow-y-auto">
+                    {userLeagues.map((league) => (
+                      <button
+                        key={league.id}
+                        onClick={() => handleLeagueChange(league.id)}
+                        className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between ${
+                          league.id === leagueInfo?.id
+                            ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                        }`}
+                        disabled={league.id === leagueInfo?.id} // Disable selecting the current league
+                      >
+                        <span className="font-medium">{league.name}</span>
+                        {league.id === leagueInfo?.id && <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
   
             {/* Right side - Navigation buttons and User Menu */}
@@ -346,18 +379,6 @@ const Header = ({ theme, onThemeChange }) => {
                 </button>
               )}
   
-              {/* Back to League button (for squad views) */}
-              {/* {isSquadView && squadInfo && (
-                <Link 
-                  to={`/leagues/${squadInfo.league_id}`}
-                  className="mr-1 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md bg-primary-600 text-white hover:bg-primary-700"
-                >
-                  <Shield className="h-4 w-4" />
-                  <span>League</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              )} */}
-  
               {/* User menu */}
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -375,7 +396,7 @@ const Header = ({ theme, onThemeChange }) => {
                   >
                     <path 
                       fillRule="evenodd" 
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" 
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a 1 1 0 010-1.414z" 
                       clipRule="evenodd" 
                     />
                   </svg>
