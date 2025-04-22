@@ -203,17 +203,6 @@ const BoostSelection = ({
           <div className="lg:w-1/2">
             <CountdownTimer onExpire={() => {}} />
           </div>
-          <div className="lg:w-1/2 bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 border border-blue-100 dark:border-blue-800">
-            <div className="flex items-start gap-2">
-              <div className="mt-0.5 text-blue-600 dark:text-blue-400">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 16v-4"></path>
-                  <path d="M12 8h.01"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
         </div>
         
         {error && (
