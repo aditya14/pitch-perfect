@@ -229,7 +229,7 @@ const LeagueSquads = ({ league }) => {
           Pre-Season Draft
         </button> */}
 
-        {/* <button
+        <button
           onClick={() => setActiveView('mid_season_draft')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'mid_season_draft'
@@ -239,7 +239,7 @@ const LeagueSquads = ({ league }) => {
         >
           <BarChartHorizontal className="h-3 w-3 mr-1" />
           Mid-Season Draft
-        </button> */}
+        </button>
         
         <button
           onClick={() => setActiveView('roles')}
