@@ -28,7 +28,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
   // Countdown Timer Component
   const CountdownTimer = ({ onExpire }) => {
     const [timeLeft, setTimeLeft] = useState({});
-    const lockDate = new Date('2025-04-19T10:00:00Z'); // April 19, 2025, 10am UTC
+    const lockDate = new Date('2025-04-26T14:00:00Z'); // April 26, 2025, 2pm UTC
   
     useEffect(() => {
       const calculateTimeLeft = () => {
@@ -216,14 +216,6 @@ const BoostSelection = ({
                   <path d="M12 16v-4"></path>
                   <path d="M12 8h.01"></path>
                 </svg>
-              </div>
-              <div>
-                <h3 className="font-medium text-blue-800 dark:text-blue-300 text-sm">
-                  Mid-Season Draft in Progress
-                </h3>
-                <p className="text-xs text-blue-700 dark:text-blue-200 mt-1">
-                  You can assign them to Week 6 boost roles once the draft is complete.
-                </p>
               </div>
             </div>
           </div>
