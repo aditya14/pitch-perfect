@@ -139,36 +139,31 @@ const BoostSelection = ({
   // Filter and sort players
   // First show players with boosts, then sort alphabetically
   const filteredPlayers = players
-    .filter(player => {
-      // Search by name
-      const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      // Filter by role
-      const matchesRole = filterRole === 'all' || player.role === filterRole;
-      
-      // Filter by team
-      const matchesTeam = filterTeam === 'all' || player.current_team?.name === filterTeam;
-      
-      // Filter by assignment status
-      const isAssigned = isPlayerAssigned(player.id);
-      const matchesAssigned = 
-        filterAssigned === 'all' || 
-        (filterAssigned === 'assigned' && isAssigned) ||
-        (filterAssigned === 'unassigned' && !isAssigned);
-      
-      return matchesSearch && matchesRole && matchesTeam && matchesAssigned;
-    })
-    .sort((a, b) => {
-      // First prioritize players with boosts
-      const aHasBoost = isPlayerAssigned(a.id);
-      const bHasBoost = isPlayerAssigned(b.id);
-      
-      if (aHasBoost && !bHasBoost) return -1;
-      if (!aHasBoost && bHasBoost) return 1;
-      
-      // Then sort alphabetically
-      return a.name.localeCompare(b.name);
-    });
+  .filter(player => {
+    // Check if the player is in your squad (assuming `isInSquad` is a property)
+    const isInSquad = player.isInSquad; // Replace with the appropriate condition or data source.
+
+    // Ensure the player passes all the other filters
+    const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = filterRole === 'all' || player.role === filterRole;
+    const matchesTeam = filterTeam === 'all' || player.current_team?.name === filterTeam;
+    const isAssigned = isPlayerAssigned(player.id);
+    const matchesAssigned =
+      filterAssigned === 'all' ||
+      (filterAssigned === 'assigned' && isAssigned) ||
+      (filterAssigned === 'unassigned' && !isAssigned);
+
+    return isInSquad && matchesSearch && matchesRole && matchesTeam && matchesAssigned;
+  })
+  .sort((a, b) => {
+    const aHasBoost = isPlayerAssigned(a.id);
+    const bHasBoost = isPlayerAssigned(b.id);
+
+    if (aHasBoost && !bHasBoost) return -1;
+    if (!aHasBoost && bHasBoost) return 1;
+
+    return a.name.localeCompare(b.name);
+  });
 
   // Get eligible roles for a player
   const getEligibleRolesForPlayer = (player) => {
