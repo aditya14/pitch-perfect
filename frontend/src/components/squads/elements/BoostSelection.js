@@ -140,20 +140,20 @@ const BoostSelection = ({
   // First show players with boosts, then sort alphabetically
   const filteredPlayers = players
   .filter(player => {
-    // Check if the player is in your squad (assuming `isInSquad` is a property)
-    const isInSquad = player.isInSquad; // Replace with the appropriate condition or data source.
+    // Check if the player is in the current squad
+    const isCurrentPlayer = player.status === 'current'; // Assuming `status` indicates 'current' or 'traded'
 
-    // Ensure the player passes all the other filters
+    // Combine with existing filters
     const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = filterRole === 'all' || player.role === filterRole;
     const matchesTeam = filterTeam === 'all' || player.current_team?.name === filterTeam;
     const isAssigned = isPlayerAssigned(player.id);
-    const matchesAssigned =
-      filterAssigned === 'all' ||
+    const matchesAssigned = 
+      filterAssigned === 'all' || 
       (filterAssigned === 'assigned' && isAssigned) ||
       (filterAssigned === 'unassigned' && !isAssigned);
 
-    return isInSquad && matchesSearch && matchesRole && matchesTeam && matchesAssigned;
+    return isCurrentPlayer && matchesSearch && matchesRole && matchesTeam && matchesAssigned;
   })
   .sort((a, b) => {
     const aHasBoost = isPlayerAssigned(a.id);
