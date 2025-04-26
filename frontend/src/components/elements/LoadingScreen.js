@@ -1,15 +1,26 @@
 import React, { useEffect } from 'react';
 
 const LoadingScreen = ({ message = "Loading...", description = "Preparing your cricketing experience"}) => {
-  // Ensure dark mode is properly applied to the loading screen
   useEffect(() => {
-    // Check for dark mode preference in localStorage 
+    // Only apply theme if not already set
     const storedTheme = localStorage.getItem('theme');
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Ensure dark mode is applied if needed
-    if (storedTheme === 'dark' || (!storedTheme && prefersDarkMode)) {
-      document.documentElement.classList.add('dark');
+    const html = document.documentElement;
+    if (storedTheme === 'dark' && !html.classList.contains('dark')) {
+      html.classList.add('dark');
+      html.style.backgroundColor = '#0a0a0a';
+    } else if (storedTheme === 'light' && html.classList.contains('dark')) {
+      html.classList.remove('dark');
+      html.style.backgroundColor = '#ffffff';
+    } else if (!storedTheme) {
+      // Only apply system preference if no explicit theme
+      if (prefersDarkMode && !html.classList.contains('dark')) {
+        html.classList.add('dark');
+        html.style.backgroundColor = '#0a0a0a';
+      } else if (!prefersDarkMode && html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        html.style.backgroundColor = '#ffffff';
+      }
     }
   }, []);
 

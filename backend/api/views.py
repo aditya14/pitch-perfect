@@ -107,13 +107,6 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
         # For other actions, keep the is_active filter
         return IPLPlayer.objects.filter(is_active=True)
 
-    @action(detail=True)
-    # def history(self, request, pk=None):
-    #     player = self.get_object()
-    #     history = PlayerTeamHistory.objects.filter(player=player)
-    #     serializer = PlayerTeamHistorySerializer(history, many=True)
-    #     return Response(serializer.data)
-    
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         """Get historical IPL performance for a player with optimized queries"""
@@ -129,7 +122,7 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
             # Use efficient database-level aggregation for season stats
             season_stats = IPLPlayerEvent.objects.filter(
                 player=player,
-                match__status='COMPLETED'
+                match__status__in=['COMPLETED', 'NO_RESULT']
             ).values(
                 'match__season__year'
             ).annotate(
@@ -187,7 +180,7 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
             # Fetch match details with a single efficient query
             match_events = IPLPlayerEvent.objects.filter(
                 player=player,
-                match__status='COMPLETED'
+                match__status__in=['COMPLETED', 'NO_RESULT']
             ).select_related(
                 'match', 
                 'match__season', 

@@ -52,7 +52,7 @@ const LeagueRunningTotal = ({ league }) => {
       // Fetch all completed matches for the season
       const matchesResponse = await api.get(`/seasons/${league.season.id}/matches/`);
       const matches = matchesResponse.data
-        .filter(match => match.status === 'COMPLETED' || match.status === 'LIVE')
+        .filter(match => match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT')
         .sort((a, b) => new Date(a.date) - new Date(b.date));
       
       if (matches.length === 0) {

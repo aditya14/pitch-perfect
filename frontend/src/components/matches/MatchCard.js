@@ -53,7 +53,7 @@ const MatchCard = ({ match, leagueId }) => {
     setError(null);
     setTimeRemaining(null); // Reset countdown too
 
-    if (match && ['COMPLETED', 'LIVE'].includes(match.status)) {
+    if (match && ['COMPLETED', 'LIVE', 'NO_RESULT'].includes(match.status)) {
       fetchFantasyStats();
     } else {
       setLoading(false);
@@ -169,7 +169,7 @@ const MatchCard = ({ match, leagueId }) => {
 
   const formattedDateTime = formatMatchDateTime();
   const formattedCountdown = formatCountdown();
-  const isClickable = ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status);
+  const isClickable = ['COMPLETED', 'NO_RESULT', 'LIVE'].includes(match.status);
 
   return (
     <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800">
@@ -227,7 +227,7 @@ const MatchCard = ({ match, leagueId }) => {
           )}
           
           <div className="text-neutral-900 dark:text-white text-sm">
-            {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
+            {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
               <span>{formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}</span>
             )}
           </div>
@@ -257,14 +257,14 @@ const MatchCard = ({ match, leagueId }) => {
           )}
           
           <div className="text-neutral-900 dark:text-white text-sm">
-            {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
+            {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
               <span>{formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}</span>
             )}
           </div>
         </div>
         
         {/* Match Result */}
-        {match.status === 'COMPLETED' && match.winner && (
+        {((match.status === 'COMPLETED' && match.winner) || match.status === 'ABANDONED' || match.status === 'NO_RESULT') && (
           <div className="flex items-center mb-3">
             <Trophy className="h-4 w-4 text-yellow-500 mr-1.5" />
             <span className="text-neutral-700 dark:text-neutral-300 text-sm">

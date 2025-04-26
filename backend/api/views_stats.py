@@ -34,9 +34,9 @@ def cache_page_with_bypass(timeout):
 def filter_by_time_frame(queryset, time_frame, match_field='match'):
     """
     Filter queryset based on time frame parameter (phase as number string)
-    Only includes matches with status='COMPLETED'
+    Only includes matches with status='COMPLETED' or 'NO_RESULT'
     """
-    queryset = queryset.filter(**{f"{match_field}__status": 'COMPLETED'})
+    queryset = queryset.filter(Q(**{f"{match_field}__status": 'COMPLETED'}) | Q(**{f"{match_field}__status": 'NO_RESULT'}))
     if time_frame and time_frame.isdigit():
         return queryset.filter(**{f"{match_field}__phase": int(time_frame)})
     # Default: no filtering (all data)
@@ -642,7 +642,7 @@ def league_table_stats(request, league_id):
 
         match_ids = FantasyMatchEvent.objects.filter(
             fantasy_squad__league=league,
-            match__status='COMPLETED'
+            match__status__in=['COMPLETED', 'NO_RESULT']
         ).values_list('match_id', flat=True).distinct()
 
         caps_count = {}
@@ -660,7 +660,7 @@ def league_table_stats(request, league_id):
 
         recent_matches = IPLMatch.objects.filter(
             fantasymatchevent__fantasy_squad__league=league,
-            status='COMPLETED'
+            status__in=['COMPLETED', 'NO_RESULT']
         ).distinct().order_by('-date')[:2]
 
         if len(recent_matches) >= 2:
@@ -681,7 +681,7 @@ def league_table_stats(request, league_id):
 
         recent_matches = IPLMatch.objects.filter(
             fantasymatchevent__fantasy_squad__league=league,
-            status='COMPLETED'
+            status__in=['COMPLETED', 'NO_RESULT']
         ).distinct().order_by('-date')[:5]
 
         for match in recent_matches:

@@ -53,7 +53,8 @@ const MatchCardMin = ({ match, leagueId }) => {
     setError(null);
     setTimeRemaining(null); // Reset countdown too
 
-    if (match && ['COMPLETED', 'LIVE'].includes(match.status)) {
+    // Fetch stats for COMPLETED, LIVE, or NO_RESULT matches
+    if (match && ['COMPLETED', 'LIVE', 'NO_RESULT'].includes(match.status)) {
       fetchFantasyStats();
     } else {
       setLoading(false);
@@ -304,8 +305,8 @@ const MatchCardMin = ({ match, leagueId }) => {
             </div>
           )}
 
-          {/* Also handle cases where there is a match status of NO_RESULT or ABANDONED but no winner */}
-          {(match.status === 'NO_RESULT' || match.status === 'ABANDONED') && !match.winner && (
+          {/* NO_RESULT or ABANDONED (with or without winner) */}
+          {(match.status === 'NO_RESULT' || match.status === 'ABANDONED') && (
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Info className="h-4 w-4 text-neutral-500 mr-1.5" />
@@ -313,7 +314,6 @@ const MatchCardMin = ({ match, leagueId }) => {
                   {match.status === 'NO_RESULT' ? 'No Result' : 'Match Abandoned'}
                 </span>
               </div>
-              
               {isClickable && (
                 <button
                   onClick={handleMatchClick}
@@ -328,7 +328,6 @@ const MatchCardMin = ({ match, leagueId }) => {
               )}
             </div>
           )}
-
 
           {/* Horizontal line separating match details from fantasy stats */}
           <div className="border-t border-neutral-200 dark:border-neutral-800 my-2" />
@@ -464,22 +463,6 @@ const MatchCardMin = ({ match, leagueId }) => {
                   </span>
                 </div>
               )}
-            </div>
-          )}
-          
-          {/* Add details link for NO_RESULT and ABANDONED matches */}
-          {(match.status === 'NO_RESULT' || match.status === 'ABANDONED') && (
-            <div className="text-right mt-3">
-              <button
-                onClick={handleMatchClick}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center ml-auto"
-                aria-label="View match details"
-              >
-                Details
-                <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
             </div>
           )}
         </div>

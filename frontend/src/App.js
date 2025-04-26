@@ -25,45 +25,40 @@ import DraftModalContainer from './components/leagues/modals/DraftModalContainer
 
 const AppContent = () => {
   const { user, loading } = useAuth();
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [theme, setTheme] = useState(() => {
+    // Prefer user profile theme if available, else localStorage, else system
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) return storedTheme;
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDarkMode ? 'dark' : 'light';
+  });
 
   // Set default document title
   useDocumentTitle('Home');
 
-  // Apply theme immediately on component mount
+  // Always apply theme when theme state changes
   useEffect(() => {
-    // Apply theme from localStorage or system preference right away
-    const storedTheme = localStorage.getItem('theme');
-    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = storedTheme || (prefersDarkMode ? 'dark' : 'light');
-    
-    applyTheme(initialTheme);
-    
-    // Then update when user data is loaded
-    if (user) {
-      const userTheme = user.profile?.theme || theme;
-      setTheme(userTheme);
-      applyTheme(userTheme);
-    }
-  }, [user]);
-
-  const applyTheme = (currentTheme) => {
-    if (currentTheme === 'dark') {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.style.backgroundColor = '#0a0a0a';
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.style.backgroundColor = '#ffffff';
     }
-    // Use dataset to explicitly mark the theme
-    document.documentElement.dataset.theme = currentTheme;
-    // console.log('Theme applied:', currentTheme);
-  };
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  // Update theme from user profile if available
+  useEffect(() => {
+    if (user && user.profile?.theme && user.profile.theme !== theme) {
+      setTheme(user.profile.theme);
+      localStorage.setItem('theme', user.profile.theme);
+    }
+  }, [user]); // Only runs when user changes
 
   const handleThemeChange = async (newTheme) => {
-    console.log('Theme changing to:', newTheme);
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
-    
     if (user) {
       try {
         await api.post('/user/preferences/', { theme: newTheme });
