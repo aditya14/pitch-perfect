@@ -1932,7 +1932,7 @@ def season_recent_matches(request, season_id):
         # Get recent completed and live matches
         recent_matches = IPLMatch.objects.filter(
             season=season,
-            status__in=['COMPLETED', 'LIVE']
+            status__in=['COMPLETED', 'LIVE', 'ABANDONED', 'NO_RESULT']
         ).select_related(
             'team_1', 'team_2', 'winner', 'player_of_match'
         ).order_by('-date')[:2]  # Get 2 most recent matches
