@@ -235,7 +235,7 @@ const TradeList = ({ league }) => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {currentTrades.map((trade) => (
-                <div key={trade.id} className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm overflow-hidden">
+                <div key={trade.id} className="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-900 rounded-lg shadow-sm overflow-hidden">
                   {/* Trade Header */}
                   <div className="p-3 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
                     <div className="flex items-center">
@@ -291,7 +291,7 @@ const TradeList = ({ league }) => {
                           ></div>
                           <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
                             {trade.initiator_name}
-                            {isTradeInitiator(trade) && <span className="ml-1 text-xs">(You)</span>}
+                            {/* {isTradeInitiator(trade) && <span className="ml-1 text-xs">(You)</span>} */}
                           </span>
                         </div>
                       </div>
@@ -302,21 +302,35 @@ const TradeList = ({ league }) => {
                           <div className="flex items-center mb-1">
                             <div className="flex flex-col items-end mr-2">
                               {trade.players_given_details.map((p, idx) => (
-                                <span key={p.id} className="text-sm text-neutral-700 dark:text-neutral-200">
+                                <span
+                                  key={p.id}
+                                  className={`text-xs ${
+                                    trade.status === 'Rejected'
+                                      ? 'text-neutral-400 dark:text-neutral-600 line-through'
+                                      : 'text-neutral-700 dark:text-neutral-200'
+                                  }`}
+                                >
                                   {p.name}
                                 </span>
                               ))}
                             </div>
-                            <ArrowRight className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                            <ArrowRight className="h-3 w-3 text-blue-500 dark:text-blue-400 " style={{color: trade.receiver_color || '#3B82F6'}} />
                           </div>
                         )}
                         {/* Receiver -> Initiator */}
                         {trade.players_received_details?.length > 0 && (
                           <div className="flex items-center mt-1">
-                            <ArrowLeft className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <ArrowLeft className="h-3 w-3 text-green-600 dark:text-green-400" style={{color: trade.initiator_color || '#22C55E'}} />
                             <div className="flex flex-col items-start ml-2">
                               {trade.players_received_details.map((p, idx) => (
-                                <span key={p.id} className="text-sm text-neutral-700 dark:text-neutral-200">
+                                <span
+                                  key={p.id}
+                                  className={`text-xs ${
+                                    trade.status === 'Rejected'
+                                      ? 'text-neutral-400 dark:text-neutral-600 line-through'
+                                      : 'text-neutral-700 dark:text-neutral-200'
+                                  }`}
+                                >
                                   {p.name}
                                 </span>
                               ))}
@@ -335,7 +349,7 @@ const TradeList = ({ league }) => {
                         <div className="flex items-center mb-1">
                           <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
                             {trade.receiver_name}
-                            {isTradeReceiver(trade) && <span className="ml-1 text-xs">(You)</span>}
+                            {/* {isTradeReceiver(trade) && <span className="ml-1 text-xs">(You)</span>} */}
                           </span>
                           <div
                             className="w-1.5 h-4 rounded-md ml-2"
