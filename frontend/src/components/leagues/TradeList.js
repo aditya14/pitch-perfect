@@ -277,92 +277,74 @@ const TradeList = ({ league }) => {
                     )}
                   </div>
                   
-                  {/* Trade Body - with color-coded player movement */}
+                  {/* Trade Body - 3 columns, all vertically aligned */}
                   <div className="p-4">
-                    <div className="flex flex-col space-y-3">
-                      {/* Teams header */}
-                      <div className="grid grid-cols-2 gap-8">
-                        <div className="flex items-center">
-                          <div 
+                    <div className="flex flex-row items-center min-h-[56px]">
+                      {/* Initiator Squad (col 1) */}
+                      <div className="flex flex-col items-center flex-1 min-w-0">
+                        <div className="flex items-center mb-1">
+                          <div
                             className="w-1.5 h-4 rounded-md mr-2"
-                            style={{ 
-                              backgroundColor: trade.initiator_color || '#6366F1' 
+                            style={{
+                              backgroundColor: trade.initiator_color || '#6366F1'
                             }}
                           ></div>
-                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
                             {trade.initiator_name}
                             {isTradeInitiator(trade) && <span className="ml-1 text-xs">(You)</span>}
                           </span>
                         </div>
-                        
-                        <div className="flex items-center">
-                          <div 
-                            className="w-1.5 h-4 rounded-md mr-2"
-                            style={{ 
-                              backgroundColor: trade.receiver_color || '#8B5CF6' 
-                            }}
-                          ></div>
-                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                            {trade.receiver_name}
-                            {isTradeReceiver(trade) && <span className="ml-1 text-xs">(You)</span>}
-                          </span>
-                        </div>
                       </div>
-                      
-                      {/* Players moving RIGHT (from initiator to receiver) */}
-                      {trade.players_given_details?.length > 0 && (
-                        <div className="border-t border-neutral-100 dark:border-neutral-700">
-                          {trade.players_given_details.map(player => (
-                            <div key={player.id} className="grid grid-cols-9 items-center">
-                              <div className="col-span-4">
-                                <span className="text-sm text-neutral-300 dark:text-neutral-600">
-                                  {player.name}
+                      {/* Traded Players (col 2, vertical stack, arrows) */}
+                      <div className="flex flex-col items-center flex-[2] min-w-0">
+                        {/* Initiator -> Receiver */}
+                        {trade.players_given_details?.length > 0 && (
+                          <div className="flex items-center mb-1">
+                            <div className="flex flex-col items-end mr-2">
+                              {trade.players_given_details.map((p, idx) => (
+                                <span key={p.id} className="text-sm text-neutral-700 dark:text-neutral-200">
+                                  {p.name}
                                 </span>
-                              </div>
-                              <div className="col-span-1 flex justify-center">
-                                <ArrowRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
-                              </div>
-                              <div className="col-span-4">
-                                <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                                  {player.name}
-                                </span>
-                              </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* Players moving LEFT (from receiver to initiator) */}
-                      {trade.players_received_details?.length > 0 && (
-                        <div className={`${trade.players_given_details?.length > 0 ? '' : 'border-t border-neutral-100 dark:border-neutral-700'}`}>
-                          {trade.players_received_details.map(player => (
-                            <div key={player.id} className="grid grid-cols-9 items-center">
-                              <div className="col-span-4">
-                                <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                                  {player.name}
+                            <ArrowRight className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                          </div>
+                        )}
+                        {/* Receiver -> Initiator */}
+                        {trade.players_received_details?.length > 0 && (
+                          <div className="flex items-center mt-1">
+                            <ArrowLeft className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <div className="flex flex-col items-start ml-2">
+                              {trade.players_received_details.map((p, idx) => (
+                                <span key={p.id} className="text-sm text-neutral-700 dark:text-neutral-200">
+                                  {p.name}
                                 </span>
-                              </div>
-                              <div className="col-span-1 flex justify-center">
-                                <ArrowLeft className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
-                              </div>
-                              <div className="col-span-4">
-                                <span className="text-sm text-neutral-300 dark:text-neutral-600">
-                                  {player.name}
-                                </span>
-                              </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* No players message */}
-                      {trade.players_given_details?.length === 0 && trade.players_received_details?.length === 0 && (
-                        <div className="border-t border-neutral-100 dark:border-neutral-700 pt-3 text-center">
+                          </div>
+                        )}
+                        {/* No players */}
+                        {(!trade.players_given_details?.length && !trade.players_received_details?.length) && (
                           <span className="text-sm text-neutral-500 dark:text-neutral-400 italic">
                             No players in this trade
                           </span>
+                        )}
+                      </div>
+                      {/* Receiver Squad (col 3) */}
+                      <div className="flex flex-col items-center flex-1 min-w-0">
+                        <div className="flex items-center mb-1">
+                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
+                            {trade.receiver_name}
+                            {isTradeReceiver(trade) && <span className="ml-1 text-xs">(You)</span>}
+                          </span>
+                          <div
+                            className="w-1.5 h-4 rounded-md ml-2"
+                            style={{
+                              backgroundColor: trade.receiver_color || '#8B5CF6'
+                            }}
+                          ></div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
