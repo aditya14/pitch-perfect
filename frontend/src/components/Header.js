@@ -225,7 +225,7 @@ const Header = ({ theme, onThemeChange }) => {
     { id: 'squads', label: 'Squads' },
     { id: 'table', label: 'Standings' },
     { id: 'stats', label: 'Stats' },
-    // { id: 'trades', label: 'Trades' },
+    { id: 'trades', label: 'Trades' },
   ];
   
   // Handle tab change
