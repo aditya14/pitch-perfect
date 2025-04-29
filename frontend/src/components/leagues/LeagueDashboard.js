@@ -140,24 +140,24 @@ const LeagueDashboard = ({ league }) => {
         {/* Matches Section with pills */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex gap-2">
+            <div className="flex space-x-2">
               <button
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  matchTab === 'recent'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
-                }`}
                 onClick={() => setMatchTab('recent')}
+                className={`px-2 py-1 text-sm rounded ${
+                  matchTab === 'recent' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                }`}
               >
                 Live/Recent
               </button>
               <button
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  matchTab === 'upcoming'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
-                }`}
                 onClick={() => setMatchTab('upcoming')}
+                className={`px-2 py-1 text-sm rounded ${
+                  matchTab === 'upcoming' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                }`}
               >
                 Upcoming
               </button>
