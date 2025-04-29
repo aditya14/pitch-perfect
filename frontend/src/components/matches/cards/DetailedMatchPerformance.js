@@ -127,6 +127,46 @@ const DetailedMatchPerformance = ({
     return null;
   };
 
+  // Function to render chevrons for runs (batting)
+  const renderRunsChevrons = (runs) => {
+    if (!runs) return null;
+    if (runs >= 100) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (runs >= 50) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+        </span>
+      );
+    }
+    return null;
+  };
+
+  // Function to render chevrons for wickets (bowling)
+  const renderWicketsChevrons = (wickets) => {
+    if (!wickets) return null;
+    if (wickets >= 5) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+          <ChevronUp className="h-2 w-2 -mt-1" />
+        </span>
+      );
+    } else if (wickets >= 3) {
+      return (
+        <span className="inline-flex flex-col text-green-500 ml-1">
+          <ChevronUp className="h-2 w-2" />
+        </span>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="overflow-x-auto max-h-[calc(100vh-12rem)]">
       <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -338,7 +378,10 @@ const DetailedMatchPerformance = ({
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white border-l dark:border-neutral-600
                     ${data.bat_balls ? 'font-medium' : 'opacity-30'}
                   `}>
-                    {data.bat_balls ? `${data.bat_runs}${data.bat_not_out ? '*' : ''}` : '-'}
+                    <div className="flex items-center">
+                      {data.bat_balls ? `${data.bat_runs}${data.bat_not_out ? '*' : ''}` : '-'}
+                      {renderRunsChevrons(data.bat_runs)}
+                    </div>
                   </td>
                   <td className={`
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
@@ -397,7 +440,10 @@ const DetailedMatchPerformance = ({
                     px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white
                     ${data.bowl_wickets ? 'font-medium' : data.bowl_balls ? '' : 'opacity-30'}
                   `}>
-                    {data.bowl_wickets ? data.bowl_wickets : data.bowl_balls ? 0 : '-'}
+                    <div className="flex items-center">
+                      {data.bowl_wickets ? data.bowl_wickets : data.bowl_balls ? 0 : '-'}
+                      {renderWicketsChevrons(data.bowl_wickets)}
+                    </div>
                   </td>
                   <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${!data.bowl_balls && 'opacity-30'}`}>
                     <div className="flex items-center">
