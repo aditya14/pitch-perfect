@@ -3,47 +3,63 @@ import { useNavigate } from 'react-router-dom';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import api from '../../utils/axios';
 import MatchCard from '../matches/MatchCard';
+import MatchCardMin from '../matches/MatchCardMin';
 import LeagueRunningTotal from '../elements/graphs/LeagueRunningTotal';
 
 const LeagueDashboard = ({ league }) => {
   const navigate = useNavigate();
   const [recentMatches, setRecentMatches] = useState([]);
+  const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(true);
+  const [matchTab, setMatchTab] = useState('recent'); // 'recent' or 'upcoming'
 
   useEffect(() => {
     if (league?.season?.id) {
-      fetchRecentMatches();
+      fetchMatches();
     }
   }, [league?.season?.id]);
 
-  const fetchRecentMatches = async () => {
+  const fetchMatches = async () => {
+    setLoadingMatches(true);
+    // Fetch recent/live matches
+    let recent = [];
     try {
-      setLoadingMatches(true);
-      
-      // Attempt to use the recent matches endpoint
       let response;
       try {
         response = await api.get(`/seasons/${league.season.id}/matches/recent/`);
+        recent = response.data;
       } catch (err) {
-        // Fallback: If the recent endpoint fails, get all matches and filter
-        console.log('Recent matches endpoint failed, using fallback method');
+        // fallback: filter from all matches
         response = await api.get(`/seasons/${league.season.id}/matches/`);
         const allMatches = response.data;
-        
-        // Filter to get recent or upcoming matches
-        const recent = allMatches
+        recent = allMatches
           .filter(match => match.status === 'COMPLETED' || match.status === 'LIVE')
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 2);
-        
-        setRecentMatches(recent);
-        return;
       }
-      
-      setRecentMatches(response.data);
+      setRecentMatches(recent);
     } catch (err) {
-      console.error('Failed to fetch matches:', err);
       setRecentMatches([]);
+    }
+
+    // Fetch upcoming matches (needs backend endpoint, fallback to filter)
+    try {
+      let response;
+      try {
+        response = await api.get(`/seasons/${league.season.id}/matches/upcoming/`);
+        setUpcomingMatches(response.data.slice(0, 3));
+      } catch (err) {
+        // fallback: filter from all matches
+        response = await api.get(`/seasons/${league.season.id}/matches/`);
+        const allMatches = response.data;
+        const upcoming = allMatches
+          .filter(match => match.status === 'SCHEDULED')
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .slice(0, 3);
+        setUpcomingMatches(upcoming);
+      }
+    } catch (err) {
+      setUpcomingMatches([]);
     } finally {
       setLoadingMatches(false);
     }
@@ -53,9 +69,13 @@ const LeagueDashboard = ({ league }) => {
     navigate(`/squads/${squadId}`);
   };
 
+  // Helper for preview button logic
+  const canShowPreview = (match) =>
+    match.team_1 && match.team_2 && match.team_1.short_name !== 'TBD' && match.team_2.short_name !== 'TBD';
+
   return (
     <div className="space-y-8">
-      {/* League table and recent matches */}
+      {/* League table and recent/upcoming matches */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* League Table */}
         <div className="bg-white dark:bg-neutral-950 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
@@ -117,39 +137,75 @@ const LeagueDashboard = ({ league }) => {
           </div>
         </div>
 
-        {/* Recent Matches Section */}
+        {/* Matches Section with pills */}
         <div className="space-y-4">
-          <div className="pt-4">
-            <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
-              Recent Matches
-            </h2>
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  matchTab === 'recent'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
+                }`}
+                onClick={() => setMatchTab('recent')}
+              >
+                Live/Recent
+              </button>
+              <button
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  matchTab === 'upcoming'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
+                }`}
+                onClick={() => setMatchTab('upcoming')}
+              >
+                Upcoming
+              </button>
+            </div>
           </div>
-          
           {loadingMatches ? (
             <div className="space-y-4">
-              {[1, 2].map(i => (
+              {[1, 2, 3].map(i => (
                 <div key={i} className="h-40 bg-neutral-200 dark:bg-neutral-700 rounded-lg animate-pulse"></div>
               ))}
             </div>
-          ) : recentMatches.length > 0 ? (
-            <div className="space-y-4">
-              {recentMatches.map(match => (
-                <MatchCard 
-                  key={match.id} 
-                  match={match} 
-                  leagueId={league.id} 
-                  compact={true}
-                />
-              ))}
-            </div>
+          ) : matchTab === 'recent' ? (
+            recentMatches.length > 0 ? (
+              <div className="space-y-4">
+                {recentMatches.map(match => (
+                  <MatchCard 
+                    key={match.id} 
+                    match={match} 
+                    leagueId={league.id} 
+                    compact={true}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-neutral-800 shadow border border-neutral-200 dark:border-neutral-700 rounded-lg p-6 text-center">
+                <p className="text-neutral-500 dark:text-neutral-400">No recent matches available</p>
+              </div>
+            )
           ) : (
-            <div className="bg-white dark:bg-neutral-800 shadow border border-neutral-200 dark:border-neutral-700 rounded-lg p-6 text-center">
-              <p className="text-neutral-500 dark:text-neutral-400">No recent matches available</p>
-            </div>
+            upcomingMatches.length > 0 ? (
+              <div className="space-y-4">
+                {upcomingMatches.map(match => (
+                  <MatchCard 
+                    key={match.id}
+                    match={match}
+                    leagueId={league.id}
+                    compact={true}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-neutral-800 shadow border border-neutral-200 dark:border-neutral-700 rounded-lg p-6 text-center">
+                <p className="text-neutral-500 dark:text-neutral-400">No upcoming matches available</p>
+              </div>
+            )
           )}
         </div>
       </div>
-      
       {/* Running Total Graph */}
       <LeagueRunningTotal league={league} />
     </div>

@@ -122,6 +122,15 @@ const MatchCard = ({ match, leagueId }) => {
     }
   };
 
+  // Add preview navigation for SCHEDULED matches
+  const handlePreviewClick = () => {
+    if (leagueId) {
+      navigate(`/leagues/${leagueId}/matches/${match.id}/preview`);
+    } else {
+      navigate(`/matches/${match.id}/preview`);
+    }
+  };
+
   // Format match date and time
   const formatMatchDateTime = () => {
     if (!match.date) return '';
@@ -418,13 +427,23 @@ const MatchCard = ({ match, leagueId }) => {
           </div>
         )}
         
-        {/* View Match Details button */}
-        {isClickable && (
+        {/* View Match Details or Preview button */}
+        {isClickable ? (
           <button
             onClick={handleMatchClick}
             className="mt-4 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
           >
             <span className='font-caption font-bold'>{match.status === 'LIVE' ? 'View Match Details' : 'View Match Details'}</span>
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        ) : match.status === 'SCHEDULED' && battingFirstTeam && battingSecondTeam && (
+          <button
+            onClick={handlePreviewClick}
+            className="mt-3 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
+          >
+            <span className='font-caption font-bold'>Preview</span>
             <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

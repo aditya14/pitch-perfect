@@ -6,6 +6,7 @@ from . import views
 from . import admin_views
 from . import user_views
 from . import views_stats
+from .views import match_preview, league_match_preview
 
 router = DefaultRouter()
 router.register(r'seasons', views.SeasonViewSet)
@@ -41,7 +42,9 @@ urlpatterns = [
     path('matches/<int:match_id>/stats/', views.match_fantasy_stats),
     path('matches/<int:match_id>/standings/', views.match_standings, name='match-standings'),
     path('leagues/<int:league_id>/matches/<int:match_id>/stats/', views.match_fantasy_stats),
-    
+    path('matches/<int:match_id>/preview/', match_preview, name='match-preview'),
+    path('leagues/<int:league_id>/matches/<int:match_id>/preview/', league_match_preview, name='league-match-preview'),
+
     # Stats endpoints
     path('leagues/<int:league_id>/stats/season-mvp/', views_stats.league_stats_season_mvp, name='league-stats-season-mvp'),
     path('leagues/<int:league_id>/stats/match-mvp/', views_stats.league_stats_match_mvp, name='league-stats-match-mvp'),

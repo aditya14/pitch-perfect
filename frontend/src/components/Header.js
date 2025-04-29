@@ -203,20 +203,17 @@ const Header = ({ theme, onThemeChange }) => {
   // If we're in a league view, determine the active tab
   const getActiveTab = () => {
     if (!isLeagueView) return null;
-    
     const pathSegments = location.pathname.split('/');
     const lastSegment = pathSegments[pathSegments.length - 1];
-    
     // Check if the last segment is one of our tabs
     const tabIds = ['dashboard', 'matches', 'squads', 'table', 'stats', 'trades'];
     if (tabIds.includes(lastSegment)) {
       return lastSegment;
     }
-    
     // Default to dashboard if not found
     return 'dashboard';
   };
-  
+
   const activeTab = getActiveTab();
 
   // League navigation tabs

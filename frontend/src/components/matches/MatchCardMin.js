@@ -123,6 +123,15 @@ const MatchCardMin = ({ match, leagueId }) => {
     }
   };
 
+  const handlePreviewClick = (e) => {
+    e.stopPropagation();
+    if (leagueId) {
+      navigate(`/leagues/${leagueId}/matches/${match.id}/preview`);
+    } else {
+      navigate(`/matches/${match.id}/preview`);
+    }
+  };
+
   // Format match date and time
   const formatMatchDateTime = () => {
     if (!match.date) return '';
@@ -666,6 +675,21 @@ const MatchCardMin = ({ match, leagueId }) => {
               <Hourglass className="h-3 w-3 inline mr-1 text-neutral-400 dark:text-neutral-600" />
               {formattedCountdown}
             </span>
+          </div>
+        )}
+        {/* For SCHEDULED matches, show Preview button as a subtle link */}
+        {match.status === 'SCHEDULED' && battingFirstTeam && battingSecondTeam && (
+          <div className="text-right mt-2">
+            <button
+              onClick={handlePreviewClick}
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center ml-auto"
+              aria-label="Preview match"
+            >
+              <span className='font-caption font-bold'>Preview</span>
+              <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         )}
       </div>

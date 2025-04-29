@@ -22,6 +22,7 @@ import HowItWorksComponent from './components/HowItWorksComponent';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import { DraftModalProvider } from './context/DraftModalContext';
 import DraftModalContainer from './components/leagues/modals/DraftModalContainer';
+import MatchPreview from './components/matches/MatchPreview'; // Import MatchPreview
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -120,9 +121,10 @@ const AppContent = () => {
         <div className={`
           theme-transition 
           dark:bg-neutral-900
-          ${user ? '' : ''}
+          ${user ? 'pb-16' : ''} //
         `}>
           <Routes>
+            {/* Public Routes */}
             <Route 
               path="/login" 
               element={
@@ -139,6 +141,8 @@ const AppContent = () => {
                 <Navigate to="/dashboard" />
               }
             />
+            
+            {/* Authenticated Routes */}
             <Route 
               path="/dashboard" 
               element={
@@ -216,12 +220,19 @@ const AppContent = () => {
                 <Navigate to="/login" />
               }
             />
-
             <Route 
               path="/matches/:matchId" 
               element={
                 user ? 
                 <MatchView /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/matches/:matchId/preview" 
+              element={
+                user ? 
+                <MatchPreview /> : 
                 <Navigate to="/login" />
               }
             />
@@ -233,7 +244,16 @@ const AppContent = () => {
                 <Navigate to="/login" />
               }
             />
-            <Route path="*" element={<Navigate to="/login" />} />
+            {/* Add Route for MatchPreview within league context */}
+            <Route 
+              path="/leagues/:leagueId/matches/:matchId/preview" 
+              element={
+                user ? 
+                <MatchPreview leagueContext={true} /> : // Pass leagueContext prop
+                <Navigate to="/login" />
+              }
+            />
+            <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} /> {/* Adjusted fallback */}
           </Routes>
         </div>
       </div>

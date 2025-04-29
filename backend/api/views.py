@@ -4,6 +4,7 @@ from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -1229,7 +1230,7 @@ class DraftViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
-        serializer = self.get_serializer(draft)
+        serializer = FantasyDraftSerializer(draft)
         return Response(serializer.data)
 
     @action(detail=True, methods=['patch'])
@@ -1444,8 +1445,8 @@ def get_player_fantasy_stats(request, league_id, player_id):
             
             squad_stats[squad_id]['matches'] += 1
             base_points = event.match_event.total_points_all  # Use total_points_all from IPLPlayerEvent
-            squad_stats[squad_id]['basePoints'] += base_points
             boost_points = event.boost_points  # UPDATED: Changed from calculating to using boost_points directly
+            squad_stats[squad_id]['basePoints'] += base_points
             squad_stats[squad_id]['boostPoints'] += boost_points
             squad_stats[squad_id]['totalPoints'] += (base_points + boost_points)
 
@@ -1531,7 +1532,6 @@ def get_player_fantasy_stats(request, league_id, player_id):
         return Response(response_data)
 
     except Exception as e:
-        import traceback
         print(f"Error in get_player_fantasy_stats: {str(e)}")
         print(traceback.format_exc())
         return Response(
@@ -1905,7 +1905,6 @@ def match_fantasy_stats(request, match_id, league_id=None):
     
     except Exception as e:
         print(f"Error in match_fantasy_stats: {str(e)}")
-        import traceback
         print(traceback.format_exc())
         return Response(
             {'error': str(e)}, 
@@ -2024,7 +2023,7 @@ def mid_season_draft_pool(request, league_id):
         player_data = []
         for player in players:
             # Get current team
-            team = player.playerteamhistory_set.filter(
+            team =player.playerteamhistory_set.filter(
                 season=league.season
             ).select_related('team').first()
             
@@ -2088,7 +2087,7 @@ def mid_season_draft_order(request, league_id):
         # Check if mid-season draft has already been executed
         if getattr(league, 'mid_season_draft_completed', False):
             return Response(
-                {'error': 'Mid-season draft has already been completed'},
+                {'error': 'Mid-season draft has already been completed'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -2138,7 +2137,7 @@ def mid_season_draft_order(request, league_id):
                     league.save()
                 
                 # Create default order based on current season points (for players not retained)
-                from django.db.models import Avg, Count, Q
+                from django.db.models import Avg
                 
                 # First, get all players with current season match data
                 default_order = list(IPLPlayer.objects.filter(
@@ -2487,3 +2486,176 @@ def execute_mid_season_draft_api(request, league_id):
             {'error': str(e)}, 
             status=status.HTTP_400_BAD_REQUEST
         )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticatedOrReadOnly])
+def match_preview(request, match_id):
+    # Get the match and season
+    match = IPLMatch.objects.select_related('team_1', 'team_2', 'season').get(id=match_id)
+    season = match.season
+
+    # Get all IPL players in both teams for this season
+    team_ids = [match.team_1.id, match.team_2.id]
+    player_ids = PlayerTeamHistory.objects.filter(
+        team_id__in=team_ids, season=season
+    ).values_list('player_id', flat=True).distinct()
+    players = IPLPlayer.objects.filter(id__in=player_ids)
+
+    # For each player, get matches played and base points this season
+    player_stats = IPLPlayerEvent.objects.filter(
+        player_id__in=player_ids, match__season=season
+    ).values('player_id').annotate(
+        matches=Count('id'),
+        base_points=Sum('total_points_all')
+    )
+    stats_map = {s['player_id']: s for s in player_stats}
+
+    data = []
+    for player in players:
+        stat = stats_map.get(player.id, {})
+        data.append({
+            'id': player.id,
+            'name': player.name,
+            'role': player.role,
+            'ipl_team': player.playerteamhistory_set.filter(season=season).first().team.short_name if player.playerteamhistory_set.filter(season=season).exists() else None,
+            'matches': stat.get('matches', 0),
+            'base_points': stat.get('base_points', 0),
+        })
+    # Add match info for frontend overview
+    match_info = {
+        'id': match.id,
+        'team_1': {
+            'id': match.team_1.id,
+            'name': match.team_1.name,
+            'short_name': match.team_1.short_name,
+            'primary_color': getattr(match.team_1, 'primary_color', None),
+        },
+        'team_2': {
+            'id': match.team_2.id,
+            'name': match.team_2.name,
+            'short_name': match.team_2.short_name,
+            'primary_color': getattr(match.team_2, 'primary_color', None),
+        },
+        'date': match.date,
+        'stage': getattr(match, 'stage', None),
+        'venue': getattr(match, 'venue', None),
+        'match_number': getattr(match, 'match_number', None),
+        'status': getattr(match, 'status', None),
+        'toss_winner': {
+            'id': match.toss_winner.id,
+            'short_name': match.toss_winner.short_name,
+            'primary_color': getattr(match.toss_winner, 'primary_color', None),
+        } if getattr(match, 'toss_winner', None) else None,
+        'toss_decision': getattr(match, 'toss_decision', None),
+        'winner': {
+            'id': match.winner.id,
+            'short_name': match.winner.short_name,
+            'primary_color': getattr(match.winner, 'primary_color', None),
+        } if getattr(match, 'winner', None) else None,
+        'win_margin': getattr(match, 'win_margin', None),
+        'win_type': getattr(match, 'win_type', None),
+        'player_of_match': {
+            'id': match.player_of_match.id,
+            'name': match.player_of_match.name,
+        } if getattr(match, 'player_of_match', None) else None,
+        'inns_1_runs': getattr(match, 'inns_1_runs', None),
+        'inns_1_wickets': getattr(match, 'inns_1_wickets', None),
+        'inns_1_overs': getattr(match, 'inns_1_overs', None),
+        'inns_2_runs': getattr(match, 'inns_2_runs', None),
+        'inns_2_wickets': getattr(match, 'inns_2_wickets', None),
+        'inns_2_overs': getattr(match, 'inns_2_overs', None),
+    }
+    return Response({'players': data, 'match': match_info})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticatedOrReadOnly])
+def league_match_preview(request, league_id, match_id):
+    # Get the match, league, and season
+    match = IPLMatch.objects.select_related('team_1', 'team_2', 'season').get(id=match_id)
+    league = FantasyLeague.objects.get(id=league_id)
+    season = match.season
+
+    # Get all IPL players in both teams for this season
+    team_ids = [match.team_1.id, match.team_2.id]
+    player_ids = PlayerTeamHistory.objects.filter(
+        team_id__in=team_ids, season=season
+    ).values_list('player_id', flat=True).distinct()
+    players = IPLPlayer.objects.filter(id__in=player_ids)
+
+    # Map player_id to fantasy squad name and color (if assigned in this league)
+    squad_map = {}
+    squad_color_map = {}
+    for squad in FantasySquad.objects.filter(league=league):
+        for pid in squad.current_squad or []:
+            squad_map[pid] = squad.name
+            squad_color_map[pid] = squad.color
+
+    # For each player, get matches played and base points this season (in league context)
+    player_stats = FantasyPlayerEvent.objects.filter(
+        match_event__player_id__in=player_ids,
+        fantasy_squad__league=league,
+        match_event__match__season=season
+    ).values('match_event__player_id').annotate(
+        matches=Count('id'),
+        base_points=Sum('match_event__total_points_all')
+    )
+    stats_map = {s['match_event__player_id']: s for s in player_stats}
+
+    data = []
+    for player in players:
+        stat = stats_map.get(player.id, {})
+        data.append({
+            'id': player.id,
+            'name': player.name,
+            'role': player.role,
+            'ipl_team': player.playerteamhistory_set.filter(season=season).first().team.short_name if player.playerteamhistory_set.filter(season=season).exists() else None,
+            'fantasy_squad': squad_map.get(player.id),
+            'squad_color': squad_color_map.get(player.id),  # <-- Add squad color here
+            'matches': stat.get('matches', 0),
+            'base_points': stat.get('base_points', 0),
+        })
+    # Add match info for frontend overview (same as above)
+    match_info = {
+        'id': match.id,
+        'team_1': {
+            'id': match.team_1.id,
+            'name': match.team_1.name,
+            'short_name': match.team_1.short_name,
+            'primary_color': getattr(match.team_1, 'primary_color', None),
+        },
+        'team_2': {
+            'id': match.team_2.id,
+            'name': match.team_2.name,
+            'short_name': match.team_2.short_name,
+            'primary_color': getattr(match.team_2, 'primary_color', None),
+        },
+        'date': match.date,
+        'stage': getattr(match, 'stage', None),
+        'venue': getattr(match, 'venue', None),
+        'match_number': getattr(match, 'match_number', None),
+        'status': getattr(match, 'status', None),
+        'toss_winner': {
+            'id': match.toss_winner.id,
+            'short_name': match.toss_winner.short_name,
+            'primary_color': getattr(match.toss_winner, 'primary_color', None),
+        } if getattr(match, 'toss_winner', None) else None,
+        'toss_decision': getattr(match, 'toss_decision', None),
+        'winner': {
+            'id': match.winner.id,
+            'short_name': match.winner.short_name,
+            'primary_color': getattr(match.winner, 'primary_color', None),
+        } if getattr(match, 'winner', None) else None,
+        'win_margin': getattr(match, 'win_margin', None),
+        'win_type': getattr(match, 'win_type', None),
+        'player_of_match': {
+            'id': match.player_of_match.id,
+            'name': match.player_of_match.name,
+        } if getattr(match, 'player_of_match', None) else None,
+        'inns_1_runs': getattr(match, 'inns_1_runs', None),
+        'inns_1_wickets': getattr(match, 'inns_1_wickets', None),
+        'inns_1_overs': getattr(match, 'inns_1_overs', None),
+        'inns_2_runs': getattr(match, 'inns_2_runs', None),
+        'inns_2_wickets': getattr(match, 'inns_2_wickets', None),
+        'inns_2_overs': getattr(match, 'inns_2_overs', None),
+    }
+    return Response({'players': data, 'match': match_info})

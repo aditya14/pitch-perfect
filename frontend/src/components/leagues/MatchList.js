@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../utils/axios';
 import MatchCard from '../matches/MatchCard';
 import MatchCardMin from '../matches/MatchCardMin';
+import MatchPreview from '../matches/MatchPreview';
 
 const MatchList = ({ league }) => {
   const [matches, setMatches] = useState([]);

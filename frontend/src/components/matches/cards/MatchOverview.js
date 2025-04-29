@@ -150,6 +150,7 @@ const MatchOverview = ({ matchData }) => {
               </div>
             </div>
             
+            {matchData.inns_2_runs !== null && matchData.inns_2_wickets != null && matchData.inns_2_overs != null && (
             <div className="text-right">
               <div className="text-2xl font-bold text-neutral-900 dark:text-white">
                 {matchData.inns_2_runs}/{matchData.inns_2_wickets}
@@ -158,6 +159,7 @@ const MatchOverview = ({ matchData }) => {
                 ({matchData.inns_2_overs} overs)
               </div>
             </div>
+            )}
           </div>
         </div>
 
