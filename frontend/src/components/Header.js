@@ -7,6 +7,7 @@ import {
   ShieldHalf, Shield, UsersRound, ChevronsUpDown, Check
 } from 'lucide-react';
 import MidSeasonDraftModal from './leagues/modals/MidSeasonDraftModal'; // We'll create this
+import UpdatePointsButton from './UpdatePointsButton';
 
 // Flag to show/hide mid-season draft button
 const SHOW_MID_SEASON_DRAFT = new Date() <= new Date(Date.UTC(2025, 3, 22, 13, 0, 0));
@@ -269,6 +270,9 @@ const Header = ({ theme, onThemeChange }) => {
 
   const canShowLeagueSwitcher = isLeagueView && userLeagues.length > 1;
 
+  // Check if current user is the admin (user ID 1)
+  const isAdmin = user && user.id === 1;
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full theme-transition bg-white dark:bg-neutral-950 shadow-sm fix-fixed">
@@ -378,6 +382,13 @@ const Header = ({ theme, onThemeChange }) => {
                   <span>My Squad</span>
                   <ChevronRight className="h-4 w-4" />
                 </Link>
+              )}
+
+              {/* Admin-only Update Points Button */}
+              {isAdmin && (
+                <div className="mr-2 flex-shrink-0">
+                  <UpdatePointsButton />
+                </div>
               )}
   
               {/* Mid-Season Draft button (for squad views) */}

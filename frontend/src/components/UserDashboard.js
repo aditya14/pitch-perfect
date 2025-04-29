@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import useDocumentTitle from '../hooks/useDocumentTitle';
-import UpdatePointsButton from './UpdatePointsButton';
 import TimelineComponent from './TimelineComponent';
 import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle } from 'lucide-react';
 import LoadingScreen from './elements/LoadingScreen';
@@ -320,9 +319,6 @@ const UserDashboard = () => {
     }
   };
 
-  // Check if current user is the admin (user ID 1)
-  const isAdmin = user && user.id === 1;
-
   if (loading) {
     return <LoadingScreen message="Loading your leagues..." />;
   }
@@ -333,12 +329,7 @@ const UserDashboard = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <h1 className="text-2xl font-caption font-bold dark:text-white">My Leagues</h1>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">
-          {/* Admin-only Update Points Button */}
-          {isAdmin && (
-            <div className="mr-2">
-              <UpdatePointsButton />
-            </div>
-          )}
+          
           <Link
             to="/leagues/join"
             className="bg-primary-600 font-caption text-white border-transparent hover:bg-primary-700 focus:ring-primary-500 inline-block py-2 px-4 rounded-md text-sm font-medium"
