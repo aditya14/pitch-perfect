@@ -4,6 +4,20 @@ import BoostInlineElement from '../../elements/BoostInlineElement';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
 import { getPointsColorClass } from '../../../utils/matchUtils';
 
+// Tooltip component for header info
+const HeaderTooltip = ({ children, tooltip }) => (
+  <span className="relative inline-flex group">
+    {children}
+    {tooltip && (
+      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 mt-2 z-30 hidden group-hover:block px-2 py-1 rounded bg-neutral-900 text-white text-xs shadow-lg whitespace-nowrap min-w-max"
+        style={{ top: '100%' }}
+      >
+        {tooltip}
+      </span>
+    )}
+  </span>
+);
+
 const DetailedMatchPerformance = ({ 
   processedEvents, 
   handleSort, 
@@ -15,153 +29,187 @@ const DetailedMatchPerformance = ({
 }) => {
   const { openPlayerModal } = usePlayerModal();
 
-  const SortableHeader = ({ label, sortKey }) => (
-    <div
-      onClick={() => handleSort(sortKey)}
-      className="cursor-pointer group flex items-center text-left"
-    >
-      <span>{label}</span>
-      <ArrowUpDown className="h-4 w-4 ml-1 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-    </div>
+  const SortableHeader = ({ label, sortKey, tooltip }) => (
+    <HeaderTooltip tooltip={tooltip}>
+      <div
+        onClick={() => handleSort(sortKey)}
+        className="cursor-pointer group flex items-center text-left"
+      >
+        <span>{label}</span>
+        <ArrowUpDown className="h-4 w-4 ml-1 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    </HeaderTooltip>
   );
 
-  // Function to render strike rate chevrons
+  // Function to render strike rate chevrons with tooltip
   const renderSRChevrons = (sr, ballsFaced) => {
     if (!sr || ballsFaced < 10) return null;
-    
+
     if (sr >= 200) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-          <ChevronUp className="h-2 w-2 -mt-1" />
-          <ChevronUp className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="6 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+            <ChevronUp className="h-2 w-2 -mt-1" />
+            <ChevronUp className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (sr >= 175) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-          <ChevronUp className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="4 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+            <ChevronUp className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (sr >= 150) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-        </span>
+        <HeaderTooltip tooltip="2 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (sr < 50) {
       return (
-        <span className="inline-flex flex-col text-red-500 ml-1">
-          <ChevronDown className="h-2 w-2" />
-          <ChevronDown className="h-2 w-2 -mt-1" />
-          <ChevronDown className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="-6 pts">
+          <span className="inline-flex flex-col text-red-500 ml-1">
+            <ChevronDown className="h-2 w-2" />
+            <ChevronDown className="h-2 w-2 -mt-1" />
+            <ChevronDown className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (sr < 75) {
       return (
-        <span className="inline-flex flex-col text-red-500 ml-1">
-          <ChevronDown className="h-2 w-2" />
-          <ChevronDown className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="-4 pts">
+          <span className="inline-flex flex-col text-red-500 ml-1">
+            <ChevronDown className="h-2 w-2" />
+            <ChevronDown className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (sr < 100) {
       return (
-        <span className="inline-flex flex-col text-red-500 ml-1">
-          <ChevronDown className="h-2 w-2" />
-        </span>
+        <HeaderTooltip tooltip="-2 pts">
+          <span className="inline-flex flex-col text-red-500 ml-1">
+            <ChevronDown className="h-2 w-2" />
+          </span>
+        </HeaderTooltip>
       );
     }
-    
+
     return null;
   };
 
-  // Function to render economy chevrons
+  // Function to render economy chevrons with tooltip
   const renderEconomyChevrons = (economy, ballsBowled) => {
     if (!economy || ballsBowled < 10) return null;
-    
+
     if (economy < 5) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-          <ChevronUp className="h-2 w-2 -mt-1" />
-          <ChevronUp className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="6 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+            <ChevronUp className="h-2 w-2 -mt-1" />
+            <ChevronUp className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (economy < 6) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-          <ChevronUp className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="4 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+            <ChevronUp className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (economy < 7) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-        </span>
+        <HeaderTooltip tooltip="2 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (economy >= 12) {
       return (
-        <span className="inline-flex flex-col text-red-500 ml-1">
-          <ChevronDown className="h-2 w-2" />
-          <ChevronDown className="h-2 w-2 -mt-1" />
-          <ChevronDown className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="-6 pts">
+          <span className="inline-flex flex-col text-red-500 ml-1">
+            <ChevronDown className="h-2 w-2" />
+            <ChevronDown className="h-2 w-2 -mt-1" />
+            <ChevronDown className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (economy >= 11) {
       return (
-        <span className="inline-flex flex-col text-red-500 ml-1">
-          <ChevronDown className="h-2 w-2" />
-          <ChevronDown className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="-4 pts">
+          <span className="inline-flex flex-col text-red-500 ml-1">
+            <ChevronDown className="h-2 w-2" />
+            <ChevronDown className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (economy >= 10) {
       return (
-        <span className="inline-flex flex-col text-red-500 ml-1">
-          <ChevronDown className="h-2 w-2" />
-        </span>
+        <HeaderTooltip tooltip="-2 pts">
+          <span className="inline-flex flex-col text-red-500 ml-1">
+            <ChevronDown className="h-2 w-2" />
+          </span>
+        </HeaderTooltip>
       );
     }
-    
+
     return null;
   };
 
-  // Function to render chevrons for runs (batting)
+  // Function to render chevrons for runs (batting) with tooltip
   const renderRunsChevrons = (runs) => {
     if (!runs) return null;
     if (runs >= 100) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-          <ChevronUp className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="24 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+            <ChevronUp className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (runs >= 50) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-        </span>
+        <HeaderTooltip tooltip="8 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+          </span>
+        </HeaderTooltip>
       );
     }
     return null;
   };
 
-  // Function to render chevrons for wickets (bowling)
+  // Function to render chevrons for wickets (bowling) with tooltip
   const renderWicketsChevrons = (wickets) => {
     if (!wickets) return null;
     if (wickets >= 5) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-          <ChevronUp className="h-2 w-2 -mt-1" />
-        </span>
+        <HeaderTooltip tooltip="24 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+            <ChevronUp className="h-2 w-2 -mt-1" />
+          </span>
+        </HeaderTooltip>
       );
     } else if (wickets >= 3) {
       return (
-        <span className="inline-flex flex-col text-green-500 ml-1">
-          <ChevronUp className="h-2 w-2" />
-        </span>
+        <HeaderTooltip tooltip="8 pts">
+          <span className="inline-flex flex-col text-green-500 ml-1">
+            <ChevronUp className="h-2 w-2" />
+          </span>
+        </HeaderTooltip>
       );
     }
     return null;
@@ -237,16 +285,16 @@ const DetailedMatchPerformance = ({
             
             {/* Batting subheaders */}
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12 border-l dark:border-neutral-600">
-              <SortableHeader label="R" sortKey="bat_runs" />
+              <SortableHeader label="R" sortKey="bat_runs" tooltip="1 pt per run" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
               <SortableHeader label="B" sortKey="bat_balls" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-              <SortableHeader label="4s" sortKey="bat_fours" />
+              <SortableHeader label="4s" sortKey="bat_fours" tooltip="1 pt per four" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-              <SortableHeader label="6s" sortKey="bat_sixes" />
+              <SortableHeader label="6s" sortKey="bat_sixes" tooltip="2 pts per six" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
               <SortableHeader label="SR" sortKey="bat_strike_rate" />
@@ -260,13 +308,13 @@ const DetailedMatchPerformance = ({
               <SortableHeader label="O" sortKey="bowl_balls" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-              <SortableHeader label="M" sortKey="bowl_maidens" />
+              <SortableHeader label="M" sortKey="bowl_maidens" tooltip="8 pts per maiden" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
               <SortableHeader label="R" sortKey="bowl_runs" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-              <SortableHeader label="W" sortKey="bowl_wickets" />
+              <SortableHeader label="W" sortKey="bowl_wickets" tooltip="25 pts per wicket" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
               <SortableHeader label="Econ" sortKey="bowl_economy" />
@@ -277,13 +325,13 @@ const DetailedMatchPerformance = ({
             
             {/* Fielding subheaders */}
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12 border-l dark:border-neutral-600">
-              <SortableHeader label="Ct" sortKey="field_catch" />
+              <SortableHeader label="Ct" sortKey="field_catch" tooltip="8 pts per catch" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-              <SortableHeader label="RO" sortKey="run_out_solo" />
+              <SortableHeader label="RO" sortKey="run_out_solo" tooltip="8 pts per run out" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-              <SortableHeader label="St" sortKey="wk_stumping" />
+              <SortableHeader label="St" sortKey="wk_stumping" tooltip="12 pts per stumping" />
             </th>
             <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
               <SortableHeader label="Pts" sortKey="fielding_points_total" />
