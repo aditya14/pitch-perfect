@@ -62,22 +62,23 @@ const SimpleMatchPerformance = ({
   
   // Format performance data into a readable string
   const formatPerformance = (data) => {
-    let performance = [];
-    
+    let batting = null;
+    let bowling = null;
+    let fielding = [];
+
     // Add batting info if player batted
     if (data.bat_runs > 0) {
-      performance.push(`${data.bat_runs}${data.bat_not_out ? '*' : ''}(${data.bat_balls})`);
+      batting = `${data.bat_runs}${data.bat_not_out ? '*' : ''}(${data.bat_balls})`;
     }
-    
+
     // Add bowling info if player bowled
     if (data.bowl_balls > 0) {
       // const overs = `${Math.floor(data.bowl_balls / 6)}${data.bowl_balls % 6 ? '.' + (data.bowl_balls % 6) : ''}`;
-      // performance.push(`${data.bowl_wickets}/${data.bowl_runs} (${overs})`);
-      performance.push(`${data.bowl_wickets}/${data.bowl_runs}`);
+      // bowling = `${data.bowl_wickets}/${data.bowl_runs} (${overs})`;
+      bowling = `${data.bowl_wickets}/${data.bowl_runs}`;
     }
-    
+
     // Add fielding info if player was involved in fielding
-    const fielding = [];
     if (data.field_catch > 0 || data.wk_catch > 0) {
       fielding.push(`${(data.field_catch || 0) + (data.wk_catch || 0)}c`);
     }
@@ -87,13 +88,23 @@ const SimpleMatchPerformance = ({
     if (data.run_out_solo > 0 || data.run_out_collab > 0) {
       fielding.push(`${(data.run_out_solo || 0) + (data.run_out_collab || 0)}ro`);
     }
-    
-    if (fielding.length > 0) {
-      performance.push(fielding.join('+'));
-    }
-    
-    // Return a formatted string
-    return performance.length > 0 ? performance.join(', ') : '-';
+
+    // Compose second line if bowling or fielding present
+    const secondLine = [bowling, fielding.length > 0 ? fielding.join('+') : null].filter(Boolean).join(', ');
+
+    if (!batting && !secondLine) return '-';
+
+    return (
+      <>
+        {batting && <span>{batting}</span>}
+        {secondLine && (
+          <>
+            {batting && <br />}
+            <span>{secondLine}</span>
+          </>
+        )}
+      </>
+    );
   };
 
   return (
@@ -177,7 +188,7 @@ const SimpleMatchPerformance = ({
                   </td>
                   
                   {/* Performance column */}
-                  <td className="px-2 py-3 text-sm text-sm text-neutral-900 dark:text-white">
+                  <td className="px-2 py-3 text-sm text-neutral-900 dark:text-white">
                     {formatPerformance(data)}
                   </td>
                   
