@@ -28,7 +28,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
   // Countdown Timer Component
   const CountdownTimer = ({ onExpire }) => {
     const [timeLeft, setTimeLeft] = useState({});
-    const lockDate = new Date('2025-05-03T14:00:00Z'); // May 3, 2025, 2pm UTC
+    const lockDate = new Date('2025-05-10T14:00:00Z'); // May 3, 2025, 2pm UTC
   
     useEffect(() => {
       const calculateTimeLeft = () => {
