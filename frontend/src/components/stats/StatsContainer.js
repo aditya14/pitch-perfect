@@ -9,9 +9,9 @@ import BoostFilter from './filters/BoostFilter';
 import RunningTotalChart from './charts/RunningTotalChart';
 
 // Import Table Components
-import SeasonMVPTable from './tables/SeasonMVPTable';
+import RunningMVPTable from './tables/RunningMVPTable';
 import MatchMVPTable from './tables/MatchMVPTable';
-import SeasonTotalActivesTable from './tables/SeasonTotalActivesTable';
+import RunningTotalActivesTable from './tables/RunningTotalActivesTable';
 import MostPlayersInMatchTable from './tables/MostPlayersInMatchTable';
 import MostPointsInMatchTable from './tables/MostPointsInMatchTable';
 import RankBreakdownTable from './tables/RankBreakdownTable';
@@ -81,7 +81,7 @@ const StatsContainer = ({ league }) => {
       {/* 2. Season MVP and Match MVP side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div>
-          <SeasonMVPTable 
+          <RunningMVPTable 
             league={league} 
             selectedSquadIds={selectedSquadIds} 
             selectedTimeFrame={selectedTimeFrame} 
@@ -126,7 +126,7 @@ const StatsContainer = ({ league }) => {
       {/* 4. Season Total Actives and Most Players in Match */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div>
-          <SeasonTotalActivesTable 
+          <RunningTotalActivesTable 
             league={league} 
             selectedSquadIds={selectedSquadIds} 
             selectedTimeFrame={selectedTimeFrame} 

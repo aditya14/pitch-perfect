@@ -43,10 +43,23 @@ const BaseStatsTable = ({
           {data.map((row, rowIndex) => (
             <tr key={rowIndex} className="hover:bg-neutral-50 dark:hover:bg-black">
               {visibleColumns.map((column, colIndex) => {
-                const value = row[column.key];
-                const renderedValue = column.renderer 
-                  ? column.renderer(value, row) 
-                  : value;
+                // Safely get value or provide a default
+                const value = row ? row[column.key] : undefined;
+                
+                // Safely render value
+                let renderedValue;
+                try {
+                  if (column.renderer) {
+                    // Use try-catch around the renderer to catch any errors
+                    renderedValue = column.renderer(value, row || {});
+                  } else {
+                    renderedValue = value;
+                  }
+                } catch (err) {
+                  console.error(`Error rendering column ${column.key}:`, err);
+                  renderedValue = "Error";
+                }
+                
                 const isFirstColumn = colIndex === 0;
                 return (
                   <td 

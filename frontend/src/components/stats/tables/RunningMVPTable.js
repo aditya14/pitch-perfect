@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BaseStatsTable from './BaseStatsTable';
 import api from '../../../utils/axios';
 
-const SeasonMVPTable = ({ 
+const RunningMVPTable = ({ 
   league, 
   selectedSquadIds, 
   selectedTimeFrame,
@@ -151,4 +151,4 @@ const SeasonMVPTable = ({
   );
 };
 
-export default SeasonMVPTable;
+export default RunningMVPTable;

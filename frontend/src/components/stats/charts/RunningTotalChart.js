@@ -138,7 +138,26 @@ const RunningTotalChart = ({
     if (selectedSquadIds.includes(squad.id)) visibleSquads[squad.id] = true;
   });
 
-  const getFilteredData = () => chartData;
+  const prepareChartData = () => {
+    if (!chartData || chartData.length === 0) return [];
+    const processedData = JSON.parse(JSON.stringify(chartData));
+    processedData.forEach(dataPoint => {
+      league?.squads?.forEach(squad => {
+        if (selectedSquadIds.includes(squad.id)) {
+          // Use integer squadId for matchData access
+          const squadData = dataPoint.matchData?.[squad.id];
+          if (squadData) {
+            dataPoint[`squad_${squad.id}`] = squadData.runningTotal;
+          } else {
+            dataPoint[`squad_${squad.id}`] = 0;
+          }
+        }
+      });
+    });
+    return processedData;
+  };
+
+  const getFilteredData = () => prepareChartData();
 
   const getYAxisTicks = () => {
     const dataToConsider = getFilteredData();
@@ -231,14 +250,15 @@ const RunningTotalChart = ({
           <div className="space-y-1">
             {visibleEntries.map((entry, index) => {
               const squadId = parseInt(entry.dataKey.replace('squad_', ''));
-              const squad = league.squads.find(s => s.id === squadId);
-              const squadMatchData = matchData[squadId] || { matchPoints: 0 };
+              // Use squad info from matchData if available, else fallback to league.squads
+              const squadMatchData = matchData[squadId] || { matchPoints: 0, squad: null };
+              const squad = squadMatchData.squad || league.squads.find(s => s.id === squadId);
               return (
                 <div key={index} className="flex items-center justify-between gap-2">
                   <div className="flex items-center">
                     <div
                       className="h-3 w-3 rounded-full mr-1"
-                      style={{ backgroundColor: entry.stroke }}
+                      style={{ backgroundColor: squad?.color || entry.stroke }}
                     ></div>
                     <span className="text-neutral-800 dark:text-neutral-200 text-sm">
                       {squad?.name}
@@ -249,7 +269,7 @@ const RunningTotalChart = ({
                       {entry.value.toFixed(1)}
                     </span>
                     <span className="ml-1 text-xs text-neutral-500 dark:text-neutral-400">
-                      (+{squadMatchData.matchPoints.toFixed(1)})
+                      (+{squadMatchData.matchPoints?.toFixed(1) ?? '0.0'})
                     </span>
                   </div>
                 </div>

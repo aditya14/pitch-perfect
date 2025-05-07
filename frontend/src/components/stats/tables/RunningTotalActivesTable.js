@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BaseStatsTable from './BaseStatsTable';
 import api from '../../../utils/axios';
 
-const SeasonTotalActivesTable = ({ 
+const RunningTotalActivesTable = ({ 
   league, 
   selectedSquadIds, 
   selectedTimeFrame
@@ -107,7 +107,7 @@ const SeasonTotalActivesTable = ({
     <div className="bg-white dark:bg-neutral-900 shadow rounded-lg">
       <div className="p-3 border-b border-neutral-200 dark:border-neutral-700">
         <h3 className="text-lg sm:text-xl font-semibold text-neutral-900 dark:text-white">
-          Season Total Actives
+          Running Total Actives
         </h3>
         <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
           Total active players per squad across all matches
@@ -123,4 +123,4 @@ const SeasonTotalActivesTable = ({
   );
 };
 
-export default SeasonTotalActivesTable;
+export default RunningTotalActivesTable;

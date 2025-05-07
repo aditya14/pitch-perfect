@@ -66,5 +66,6 @@ urlpatterns = [
     path('admin/run-mid-season-draft/', admin_views.run_mid_season_draft, name='run-mid-season-draft'),
     path('admin/compile-mid-season-draft-pools/', views.compile_mid_season_draft_pools, name='compile_mid_season_draft_pools'),
     path('admin/execute-mid-season-draft/<int:league_id>/', views.execute_mid_season_draft_api, name='execute_mid_season_draft'),
-    path('admin/compile-mid-season-draft-pools-view/', admin_views.compile_mid_season_draft_pools_view, name='admin-compile-mid-season-draft-pools'),
+    path('admin/compile-mid-season-draft-pools-view/', admin_views.compile_mid_season_draft_pools_view, name='admin-compile-mid-season-draft-pools')
+
 ]

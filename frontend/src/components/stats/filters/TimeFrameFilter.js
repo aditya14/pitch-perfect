@@ -8,6 +8,9 @@ const TimeFrameFilter = ({ selectedTimeFrame, onChange }) => {
     { value: '3', label: 'Week 3' },
     { value: '4', label: 'Week 4' },
     { value: '5', label: 'Week 5' },
+    { value: '6', label: 'Week 6' },
+    { value: '7', label: 'Week 7' },
+    { value: '8', label: 'Week 8' },
   ];
 
   return (

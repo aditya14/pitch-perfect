@@ -8,13 +8,14 @@ from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, 
-                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade, FantasyMatchEvent)
+                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade, FantasyMatchEvent, FantasyStats)
 
 from .forms import CSVUploadForm
 import csv
 from io import TextIOWrapper
 from django.db.models import Q, Avg, F
 from decimal import Decimal, ROUND_HALF_UP
+from .services.stats_service import update_fantasy_stats
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -663,7 +664,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(FantasyLeague)
 class FantasyLeagueAdmin(admin.ModelAdmin):
-    list_display = ('name', 'admin', 'max_teams', 'season', 'draft_status', 'draft_actions')
+    list_display = ('name', 'season', 'admin', 'draft_completed', 'stats_last_updated')
     list_filter = ('season', 'draft_completed')
     search_fields = ('name', 'admin__username')
     raw_id_fields = ('admin',)
@@ -898,6 +899,39 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
         except Exception as e:
             messages.error(request, f"Error simulating mid-season draft: {str(e)}")
             return redirect('admin:api_fantasyleague_changelist')
+        
+    def update_stats(self, request, queryset):
+        from .services.stats_service import update_fantasy_stats
+        updated = 0
+        for league in queryset:
+            try:
+                stats, created = FantasyStats.objects.get_or_create(league=league)
+                update_fantasy_stats(league.id)
+                updated += 1
+            except Exception as e:
+                self.message_user(
+                    request, 
+                    f"Error updating stats for {league.name}: {str(e)}", 
+                    level=messages.ERROR
+                )
+        
+        self.message_user(
+            request, 
+            f"Successfully updated stats for {updated} leagues.",
+            level=messages.SUCCESS
+        )
+    update_stats.short_description = "Update fantasy stats"
+
+    # And add this to your list of actions
+    actions = ['update_stats']  # Add to your existing actions list
+
+    # Add this to display the last update time
+    def stats_last_updated(self, obj):
+        try:
+            return obj.stats.last_updated
+        except FantasyStats.DoesNotExist:
+            return "Not calculated"
+    stats_last_updated.short_description = "Stats Last Updated"
 
 @admin.register(FantasySquad)
 class FantasySquadAdmin(admin.ModelAdmin):
@@ -1272,3 +1306,18 @@ class FantasyMatchEventAdmin(admin.ModelAdmin):
         if obj:  # This is an edit
             return ('match', 'fantasy_squad')
         return ()
+
+@admin.register(FantasyStats)
+class FantasyStatsAdmin(admin.ModelAdmin):
+    list_display = ('league', 'last_updated')
+    search_fields = ('league__name',)
+    readonly_fields = ('last_updated', 'match_details', 'player_details')
+    fieldsets = (
+        (None, {
+            'fields': ('league', 'last_updated')
+        }),
+        ('Pre-calculated Data', {
+            'fields': ('match_details', 'player_details'),
+            'classes': ('collapse',)
+        }),
+    )
