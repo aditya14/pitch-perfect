@@ -15,15 +15,13 @@ const MostPointsInMatchTable = ({
 
   useEffect(() => {
     if (league?.id) {
-      fetchMostPointsInMatchData();
+      fetchMostPointsData();
     }
   }, [league?.id, selectedSquadIds, selectedTimeFrame, includeBoost]);
 
-  const fetchMostPointsInMatchData = async () => {
+  const fetchMostPointsData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch most points in match data
       const response = await api.get(`/leagues/${league.id}/stats/most-points-in-match`, {
         params: {
           squads: selectedSquadIds.join(','),
@@ -31,9 +29,16 @@ const MostPointsInMatchTable = ({
           includeBoost: includeBoost
         }
       });
-      
-      // Limit to top 10
-      setData(response.data.slice(0, 10));
+      // Map backend fields to expected frontend structure
+      setData(
+        (response.data || []).map(item => ({
+          squad: item.squad,
+          match: item.match,
+          base: item.base,
+          boost: item.boost,
+          total: item.total
+        }))
+      );
     } catch (err) {
       console.error('Failed to fetch most points in match data:', err);
       setError('Failed to load most points in match data');
@@ -83,15 +88,15 @@ const MostPointsInMatchTable = ({
           <div className="flex items-center">
             <div 
               className="w-1 h-4 rounded-full mr-1"
-              style={{ backgroundColor: row.squad.color || '#808080' }}
+              style={{ backgroundColor: row.squad?.color || '#808080' }}
             />
-            <span className="text-sm">{row.squad.name}</span>
+            <span className="text-sm">{row.squad?.name || '-'}</span>
           </div>
           <Link 
-            to={`/leagues/${league.id}/matches/${row.match.id}`} 
+            to={row.match ? `/leagues/${league.id}/matches/${row.match.id}` : '#'} 
             className="text-primary-600 hover:text-primary-700 text-xs mt-1"
           >
-            {row.match.name}
+            {row.match?.name || '-'}
           </Link>
         </div>
       )
@@ -103,13 +108,17 @@ const MostPointsInMatchTable = ({
       renderer: (value, row) => (
         includeBoost ? (
           <div className="flex flex-col items-start">
-            <span className="font-bold text-neutral-900 dark:text-white text-base">{row.total.toFixed(1)}</span>
+            <span className="font-bold text-neutral-900 dark:text-white text-base">
+              {typeof row.total === 'number' ? row.total.toFixed(1) : '-'}
+            </span>
             <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              {row.base.toFixed(1)} <span className="font-bold">+</span> {row.boost.toFixed(1)}
+              {typeof row.base === 'number' ? row.base.toFixed(1) : '-'} <span className="font-bold">+</span> {typeof row.boost === 'number' ? row.boost.toFixed(1) : '-'}
             </span>
           </div>
         ) : (
-          <span className="font-bold text-neutral-900 dark:text-white text-base">{row.base.toFixed(1)}</span>
+          <span className="font-bold text-neutral-900 dark:text-white text-base">
+            {typeof row.base === 'number' ? row.base.toFixed(1) : '-'}
+          </span>
         )
       )
     }

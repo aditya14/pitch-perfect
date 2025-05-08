@@ -20,17 +20,24 @@ const RankBreakdownTable = ({
   const fetchRankBreakdownData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch rank breakdown data
       const response = await api.get(`/leagues/${league.id}/stats/rank-breakdown`, {
         params: {
           squads: selectedSquadIds.join(','),
           timeFrame: selectedTimeFrame
         }
       });
-      
-      // Limit to top 10
-      setData(response.data.slice(0, 10));
+
+      // Defensive: ensure array and valid structure
+      let arr = Array.isArray(response.data) ? response.data : [];
+      arr = arr.filter(item => item && item.squad && typeof item.highestRank === 'number');
+      // Sort: primary by highestRank (asc), secondary by gamesAtHighestRank (desc)
+      arr.sort((a, b) => {
+        if (a.highestRank !== b.highestRank) {
+          return a.highestRank - b.highestRank;
+        }
+        return (b.gamesAtHighestRank || 0) - (a.gamesAtHighestRank || 0);
+      });
+      setData(arr);
     } catch (err) {
       console.error('Failed to fetch rank breakdown data:', err);
       setError('Failed to load rank breakdown data');
@@ -61,8 +68,13 @@ const RankBreakdownTable = ({
         };
       });
       
-      // Sort by highest rank ascending (best rank first)
-      simulatedData.sort((a, b) => a.highestRank - b.highestRank);
+      // Sort: primary by highestRank (asc), secondary by gamesAtHighestRank (desc)
+      simulatedData.sort((a, b) => {
+        if (a.highestRank !== b.highestRank) {
+          return a.highestRank - b.highestRank;
+        }
+        return (b.gamesAtHighestRank || 0) - (a.gamesAtHighestRank || 0);
+      });
       
       // Limit to top 10
       setData(simulatedData.slice(0, 10));
@@ -80,9 +92,9 @@ const RankBreakdownTable = ({
         <div className="flex items-center">
           <div 
             className="w-1 h-5 rounded-full mr-2"
-            style={{ backgroundColor: value.color || '#808080' }}
+            style={{ backgroundColor: value?.color || '#808080' }}
           />
-          <span>{value.name}</span>
+          <span>{value?.name || '-'}</span>
         </div>
       ),
       sortable: false

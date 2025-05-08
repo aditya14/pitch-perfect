@@ -22,7 +22,6 @@ const MatchMVPTable = ({
   const fetchMatchMVPData = async () => {
     try {
       setLoading(true);
-      
       // Fetch match MVP data
       const response = await api.get(`/leagues/${league.id}/stats/match-mvp`, {
         params: {
@@ -31,9 +30,17 @@ const MatchMVPTable = ({
           includeBoost: includeBoost
         }
       });
-      
-      // Limit to top 10
-      setData(response.data.slice(0, 10));
+      // Map backend fields to expected frontend structure
+      setData(
+        (response.data || []).map(item => ({
+          player: { id: item.player_id, name: item.player_name },
+          squad: item.squad,
+          match: item.match,
+          base: item.base,
+          boost: item.boost,
+          total: item.total
+        }))
+      );
     } catch (err) {
       console.error('Failed to fetch match MVP data:', err);
       setError('Failed to load match MVP data');

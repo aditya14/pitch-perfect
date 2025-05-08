@@ -15,11 +15,11 @@ const MostPlayersInMatchTable = ({
 
   useEffect(() => {
     if (league?.id) {
-      fetchData();
+      fetchMostPlayersData();
     }
   }, [league?.id, selectedSquadIds, selectedTimeFrame]);
 
-  const fetchData = async () => {
+  const fetchMostPlayersData = async () => {
     try {
       setLoading(true);
       const response = await api.get(`/leagues/${league.id}/stats/most-players-in-match`, {
@@ -28,8 +28,14 @@ const MostPlayersInMatchTable = ({
           timeFrame: selectedTimeFrame
         }
       });
-      // The backend returns 'count' for actives, not 'actives'
-      setData((response.data || []).slice(0, 8));
+      // Map backend fields to expected frontend structure
+      setData(
+        (response.data || []).map(item => ({
+          squad: item.squad,
+          match: item.match,
+          count: item.count
+        }))
+      );
     } catch (err) {
       setError('Failed to load data');
       // Simulate data for development
@@ -60,35 +66,32 @@ const MostPlayersInMatchTable = ({
 
   const columns = [
     {
-      key: 'squad',
-      header: 'Squad',
-      renderer: (value, row) => (
-        <div className="flex items-center">
-          <div
-            className="w-1 h-4 rounded-full mr-1"
-            style={{ backgroundColor: row.squad.color || '#808080' }}
-          />
-          <span className="text-sm">{row.squad.name}</span>
+      key: 'squadMatch',
+      header: 'Squad/Match',
+      renderer: (_, row) => (
+        <div className="flex flex-col">
+          <div className="flex items-center">
+            <div 
+              className="w-1 h-4 rounded-full mr-1"
+              style={{ backgroundColor: row.squad?.color || '#808080' }}
+            />
+            <span className="text-sm">{row.squad?.name || '-'}</span>
+          </div>
+          <Link 
+            to={row.match ? `/leagues/${league.id}/matches/${row.match.id}` : '#'} 
+            className="text-primary-600 hover:text-primary-700 text-xs mt-1"
+          >
+            {row.match?.name || '-'}
+          </Link>
         </div>
-      )
-    },
-    {
-      key: 'match',
-      header: 'Match',
-      renderer: (value, row) => (
-        <Link
-          to={`/leagues/${league.id}/matches/${row.match.id}`}
-          className="text-primary-600 hover:text-primary-700 text-xs"
-        >
-          {row.match.name}
-        </Link>
-      )
+      ),
+      sortable: false
     },
     {
       key: 'count',
-      header: 'Actives',
+      header: 'Player Count',
       type: 'number',
-      renderer: (value, row) => <span>{row.count}</span>
+      sortable: false
     }
   ];
 

@@ -29,8 +29,10 @@ const RunningTotalActivesTable = ({
         }
       });
       
-      // Limit to top 10
-      setData(response.data.slice(0, 10));
+      // Defensive: ensure array and valid structure
+      let arr = Array.isArray(response.data) ? response.data : [];
+      arr = arr.filter(item => item && item.squad && typeof item.count === 'number');
+      setData(arr);
     } catch (err) {
       console.error('Failed to fetch season total actives data:', err);
       setError('Failed to load season total actives data');

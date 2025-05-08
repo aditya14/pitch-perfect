@@ -33,7 +33,7 @@ const RunningTotalChart = ({
   const fetchRunningTotalData = async () => {
     try {
       setLoading(true);
-
+      // Fetch running total data from the API
       const response = await api.get(`/leagues/${league.id}/stats/running-total`, {
         params: {
           squads: selectedSquadIds.join(','),
@@ -42,10 +42,15 @@ const RunningTotalChart = ({
         }
       });
 
-      setChartData(response.data);
+      // Defensive: ensure array and structure
+      let data = Array.isArray(response.data) ? response.data : [];
+      data = data.filter(d => d && typeof d === 'object' && d.matchData);
 
-      if (response.data && response.data.length > 0) {
-        calculateInsights(response.data);
+      setChartData(data);
+
+      // Extract insights from data
+      if (data.length > 0) {
+        calculateInsights(data);
       }
     } catch (err) {
       console.error('Failed to fetch running total data:', err);
@@ -141,19 +146,25 @@ const RunningTotalChart = ({
   const prepareChartData = () => {
     if (!chartData || chartData.length === 0) return [];
     const processedData = JSON.parse(JSON.stringify(chartData));
+    
     processedData.forEach(dataPoint => {
       league?.squads?.forEach(squad => {
         if (selectedSquadIds.includes(squad.id)) {
-          // Use integer squadId for matchData access
-          const squadData = dataPoint.matchData?.[squad.id];
+          // Convert squad.id to string to match the keys in matchData
+          const squadIdStr = String(squad.id);
+          const squadData = dataPoint.matchData?.[squadIdStr];
+          
           if (squadData) {
+            // Use the running total from the nested matchData
             dataPoint[`squad_${squad.id}`] = squadData.runningTotal;
           } else {
-            dataPoint[`squad_${squad.id}`] = 0;
+            // Fallback to direct property or set to 0
+            dataPoint[`squad_${squad.id}`] = dataPoint[`squad_${squad.id}`] || 0;
           }
         }
       });
     });
+    
     return processedData;
   };
 

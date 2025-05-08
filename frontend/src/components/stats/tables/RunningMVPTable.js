@@ -30,8 +30,18 @@ const RunningMVPTable = ({
           includeBoost: includeBoost
         }
       });
-      
-      setData(response.data);
+
+      // Map backend fields to expected frontend structure
+      setData(
+        (response.data || []).map(item => ({
+          player: { id: item.player_id, name: item.player_name },
+          squad: item.squad,
+          base: item.base,
+          boost: item.boost,
+          total: item.total,
+          match_count: item.match_count || 0  // Add this line
+        }))
+      );
     } catch (err) {
       console.error('Failed to fetch season MVP data:', err);
       setError('Failed to load season MVP data');
@@ -89,9 +99,10 @@ const RunningMVPTable = ({
       )
     },
     {
-      key: 'matches',
+      key: 'match_count',
       header: 'Mts',
-      type: 'number'
+      type: 'number',
+      sortable: true
     },
     {
       key: 'total',

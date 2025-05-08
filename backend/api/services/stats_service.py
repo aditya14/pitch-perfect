@@ -1,185 +1,99 @@
 import statistics
+import logging
 from django.db.models import Sum, Count, Q, F
 from ..models import (
     FantasyLeague, FantasySquad, 
     FantasyMatchEvent, FantasyPlayerEvent, IPLMatch, FantasyStats
 )
 
-def update_fantasy_stats(league_id, match_id=None):
-    """
-    Update fantasy stats for a league.
-    If match_id is provided, only update stats for that match.
-    """
-    league = FantasyLeague.objects.get(id=league_id)
-    stats, created = FantasyStats.objects.get_or_create(league=league)
-    
-    # Initialize data structure if needed
-    if not stats.match_details:
-        stats.match_details = {
-            "running_total": [],
-            "squad_stats": {},
-            "domination": []
-        }
-    
-    if not stats.player_details:
-        stats.player_details = {
-            "season_mvp": [],
-            "match_mvp": [],
-            "squad_mvps": {}
-        }
-    
-    # If updating for a specific match
-    if match_id:
-        update_stats_for_match(stats, league_id, match_id)
-    else:
-        # Full recalculation
-        recalculate_all_stats(stats, league_id)
-    
-    stats.save()
-    return stats
+logger = logging.getLogger("api.stats_service")
 
-def update_stats_for_match(stats, league_id, match_id):
-    """Update stats for a specific match"""
-    match = IPLMatch.objects.get(id=match_id)
-    
-    # Update running totals
-    match_data = calculate_match_running_totals(league_id, match_id)
-    
-    # Check if match already exists in running_total
-    match_exists = False
-    for i, existing_match in enumerate(stats.match_details["running_total"]):
-        if existing_match.get("match_id") == match_id:
-            # Replace the existing match data
-            stats.match_details["running_total"][i] = match_data
-            match_exists = True
-            break
-    
-    if not match_exists:
-        # Match doesn't exist, append it
-        stats.match_details["running_total"].append(match_data)
-    
-    # Update squad stats
-    update_squad_stats(stats, league_id)
-    
-    # Update MVPs
-    update_mvp_stats(stats, league_id)
-    
-    # Update domination stats
-    update_domination_stats(stats, league_id)
-
-def recalculate_all_stats(stats, league_id):
-    """Complete recalculation of all stats"""
-    # Clear existing data
-    stats.match_details = {
-        "running_total": [],
-        "squad_stats": {},
-        "domination": []
-    }
-    
-    stats.player_details = {
-        "season_mvp": [],
-        "match_mvp": [],
-        "squad_mvps": {}
-    }
-    
-    # Get all completed matches for this league
-    matches = IPLMatch.objects.filter(
-        fantasymatchevent__fantasy_squad__league_id=league_id,
-        status__in=['COMPLETED', 'NO_RESULT']
-    ).distinct().order_by('date')
-    
-    # Calculate running totals for all matches
-    for match in matches:
-        match_data = calculate_match_running_totals(league_id, match.id)
-        stats.match_details["running_total"].append(match_data)
-    
-    # Calculate squad stats
-    update_squad_stats(stats, league_id)
-    
-    # Calculate MVP stats
-    update_mvp_stats(stats, league_id)
-    
-    # Calculate domination stats
-    update_domination_stats(stats, league_id)
-
-def calculate_match_running_totals(league_id, match_id):
-    """Calculate running totals for a specific match"""
-    match = IPLMatch.objects.get(id=match_id)
-    match_events = FantasyMatchEvent.objects.filter(
-        match_id=match_id,
-        fantasy_squad__league_id=league_id
-    ).select_related('fantasy_squad')
-    
-    match_data = {
-        "match_id": match.id,
-        "match_number": match.match_number,
-        "match_name": f"{match.team_1.short_name} vs {match.team_2.short_name}",
-        "date": match.date.strftime('%Y-%m-%d'),
-        "squads": {}
-    }
-    
-    for me in match_events:
-        match_data["squads"][str(me.fantasy_squad.id)] = {
-            "match_points": float(me.total_points),
-            "base_points": float(me.total_base_points),
-            "boost_points": float(me.total_boost_points),
-            "running_total": float(me.running_total_points),
-            "match_rank": me.match_rank,
-            "overall_rank": me.running_rank,
-            "players_count": me.players_count
-        }
-    
-    return match_data
-
-def update_squad_stats(stats, league_id):
-    """Update squad statistics"""
+def calculate_running_total_for_matches(league_id, matches):
     squads = FantasySquad.objects.filter(league_id=league_id)
-    
-    for squad in squads:
-        squad_id = str(squad.id)
-        
-        # Get all match events for this squad
+    squad_ids = list(squads.values_list('id', flat=True))
+    running_totals = {squad_id: 0.0 for squad_id in squad_ids}
+    chart_data = []
+
+    for match in matches.order_by('date', 'match_number', 'id'):
+        events = FantasyMatchEvent.objects.filter(
+            match=match,
+            fantasy_squad__league_id=league_id
+        )
+        matchData = {}
+        for squad_id in squad_ids:
+            event = next((e for e in events if e.fantasy_squad_id == squad_id), None)
+            current_match_points = float(event.total_points or 0) if event else 0.0
+            running_totals[squad_id] += current_match_points
+            matchData[squad_id] = {
+                "matchPoints": current_match_points,
+                "runningTotal": running_totals[squad_id],
+                "squad": {
+                    "id": squad_id,
+                    "name": str(squads.get(id=squad_id).name),
+                    "color": str(squads.get(id=squad_id).color)
+                }
+            }
+        data_point = {
+            "name": str(match.match_number),
+            "match_id": match.id,
+            "date": match.date.strftime('%a, %b %d') if match.date else "Unknown Date",
+            "match_name": f"{match.team_1.short_name if match.team_1 else 'T1'} vs {match.team_2.short_name if match.team_2 else 'T2'}",
+            "matchData": matchData
+        }
+        for squad_id in squad_ids:
+            data_point[f"squad_{squad_id}"] = matchData[squad_id]["runningTotal"]
+        chart_data.append(data_point)
+    return chart_data
+
+def calculate_domination_for_matches(league_id, matches):
+    domination_stats = []
+    for match in matches:
         match_events = FantasyMatchEvent.objects.filter(
-            fantasy_squad_id=squad.id
-        ).select_related('match')
-        
+            match=match,
+            fantasy_squad__league_id=league_id
+        )
+        total_match_points = sum(me.total_points for me in match_events)
+        if total_match_points == 0:
+            continue
+        for me in match_events:
+            domination_pct = (me.total_points / total_match_points) * 100
+            if domination_pct > 20:
+                domination_stats.append({
+                    "match_id": match.id,
+                    "squad_id": me.fantasy_squad_id,
+                    "percentage": float(domination_pct)
+                })
+    domination_stats.sort(key=lambda x: x["percentage"], reverse=True)
+    return domination_stats[:25]
+
+def calculate_squad_stats_for_matches(league_id, matches):
+    squads = FantasySquad.objects.filter(league_id=league_id)
+    squad_stats = []
+    for squad in squads:
+        match_events = FantasyMatchEvent.objects.filter(
+            fantasy_squad_id=squad.id,
+            match__in=matches
+        )
         if not match_events.exists():
             continue
-        
-        # Most points in a match
         most_points_match = match_events.order_by('-total_points').first()
-        
-        # Most actives in a match
         most_actives_match = match_events.order_by('-players_count').first()
-        
-        # Caps (times being #1)
         caps_count = match_events.filter(match_rank=1).count()
-        
-        # Rank statistics
         ranks = list(match_events.values_list('running_rank', flat=True))
-        
-        if ranks:
-            highest_rank = min(ranks)
-            lowest_rank = max(ranks)
-            games_at_highest = ranks.count(highest_rank)
-            median_rank = statistics.median(ranks)
-            try:
-                mode_rank = statistics.mode(ranks)
-            except:
-                mode_rank = None
-        else:
-            highest_rank = None
-            lowest_rank = None
-            games_at_highest = 0
-            median_rank = None
+        highest_rank = min(ranks) if ranks else None
+        lowest_rank = max(ranks) if ranks else None
+        games_at_highest = ranks.count(highest_rank) if ranks else 0
+        median_rank = statistics.median(ranks) if ranks else None
+        try:
+            mode_rank = statistics.mode(ranks) if ranks else None
+        except:
             mode_rank = None
-        
-        # Recent form (last 5 matches)
         recent_matches = match_events.order_by('-match__date')[:5]
         recent_form = [me.match_rank for me in recent_matches]
-        
-        # Update squad stats in the JSON
-        stats.match_details["squad_stats"][squad_id] = {
+        squad_stats.append({
+            "squad_id": squad.id,
+            "squad_name": squad.name,
+            "color": squad.color,
             "most_points_in_match": {
                 "value": float(most_points_match.total_points) if most_points_match else 0,
                 "match_id": most_points_match.match_id if most_points_match else None
@@ -198,25 +112,19 @@ def update_squad_stats(stats, league_id):
                 "games_at_highest": games_at_highest
             },
             "recent_form": recent_form
-        }
+        })
+    return squad_stats
 
-def update_mvp_stats(stats, league_id):
-    """Update MVP statistics"""
-    # Season MVPs
+def calculate_season_mvp_for_matches(league_id, matches):
     player_events = FantasyPlayerEvent.objects.filter(
-        fantasy_squad__league_id=league_id
-    ).select_related(
-        'match_event__player',
-        'fantasy_squad'
-    )
-    
-    # Process player events for MVP calculations
+        fantasy_squad__league_id=league_id,
+        match_event__match__in=matches
+    ).select_related('match_event__player', 'fantasy_squad')
     player_totals = {}
     for pe in player_events:
         player_id = pe.match_event.player_id
         squad_id = pe.fantasy_squad_id
         key = (squad_id, player_id)
-        
         if key not in player_totals:
             player_totals[key] = {
                 "squad_id": squad_id,
@@ -227,13 +135,10 @@ def update_mvp_stats(stats, league_id):
                 "boost": 0,
                 "total": 0
             }
-        
         player_totals[key]["matches"].add(pe.match_event.match_id)
         player_totals[key]["base"] += pe.match_event.total_points_all
         player_totals[key]["boost"] += pe.boost_points
         player_totals[key]["total"] += (pe.match_event.total_points_all + pe.boost_points)
-    
-    # Format season MVPs
     season_mvp = []
     for key, data in player_totals.items():
         season_mvp.append({
@@ -245,38 +150,20 @@ def update_mvp_stats(stats, league_id):
             "boost": float(data["boost"]),
             "total": float(data["total"])
         })
-    
-    # Sort by total points
     season_mvp.sort(key=lambda x: x["total"], reverse=True)
-    stats.player_details["season_mvp"] = season_mvp[:25]  # Top 25 players
-    
-    # Find squad MVPs
-    squad_mvps = {}
-    for key, data in player_totals.items():
-        squad_id = str(data["squad_id"])
-        if squad_id not in squad_mvps or data["total"] > squad_mvps[squad_id]["points"]:
-            squad_mvps[squad_id] = {
-                "player_id": data["player_id"],
-                "player_name": data["player_name"],
-                "points": float(data["total"])
-            }
-    
-    stats.player_details["squad_mvps"] = squad_mvps
-    
-    # Match MVPs
+    return season_mvp[:25]
+
+def calculate_match_mvp_for_matches(league_id, matches):
+    player_events = FantasyPlayerEvent.objects.filter(
+        fantasy_squad__league_id=league_id,
+        match_event__match__in=matches
+    ).select_related('match_event__player', 'fantasy_squad')
     match_mvps = []
-    matches = IPLMatch.objects.filter(
-        fantasymatchevent__fantasy_squad__league_id=league_id,
-        status__in=['COMPLETED', 'NO_RESULT']
-    ).distinct()
-    
     for match in matches:
         match_player_events = player_events.filter(match_event__match=match)
-        
         match_player_data = {}
         for pe in match_player_events:
             key = (pe.match_event.player_id, pe.fantasy_squad_id)
-            
             if key not in match_player_data:
                 match_player_data[key] = {
                     "player_id": pe.match_event.player_id,
@@ -287,54 +174,244 @@ def update_mvp_stats(stats, league_id):
                     "boost": 0,
                     "total": 0
                 }
-            
             match_player_data[key]["base"] += pe.match_event.total_points_all
             match_player_data[key]["boost"] += pe.boost_points
             match_player_data[key]["total"] += (pe.match_event.total_points_all + pe.boost_points)
-        
-        # Find top performers for this match
         top_performers = sorted(
             match_player_data.values(),
             key=lambda x: x["total"],
             reverse=True
-        )[:5]  # Top 5 per match
-        
+        )[:5]
         match_mvps.extend(top_performers)
-    
-    # Sort all match MVPs by total points
     match_mvps.sort(key=lambda x: x["total"], reverse=True)
-    stats.player_details["match_mvp"] = match_mvps[:25]  # Top 25 match performances
+    return match_mvps[:25]
 
-def update_domination_stats(stats, league_id):
-    """Update domination statistics"""
+def calculate_squad_mvps_for_matches(league_id, matches):
+    player_events = FantasyPlayerEvent.objects.filter(
+        fantasy_squad__league_id=league_id,
+        match_event__match__in=matches
+    ).select_related('match_event__player', 'fantasy_squad')
+    squad_mvps = {}
+    for pe in player_events:
+        squad_id = str(pe.fantasy_squad_id)
+        points = pe.match_event.total_points_all + pe.boost_points
+        if squad_id not in squad_mvps or points > squad_mvps[squad_id]["points"]:
+            squad_mvps[squad_id] = {
+                "player_id": pe.match_event.player_id,
+                "player_name": pe.match_event.player.name,
+                "points": float(points)
+            }
+    return squad_mvps
+
+def calculate_season_total_actives_for_matches(league_id, matches):
+    squads = FantasySquad.objects.filter(league_id=league_id)
+    squad_ids = list(squads.values_list('id', flat=True))
+    actives = []
+    for squad in squads:
+        match_events = FantasyMatchEvent.objects.filter(
+            fantasy_squad_id=squad.id,
+            match__in=matches
+        )
+        total_actives = sum(me.players_count for me in match_events)
+        actives.append({
+            "squad": {
+                "id": squad.id,
+                "name": squad.name,
+                "color": squad.color
+            },
+            "count": total_actives
+        })
+    actives.sort(key=lambda x: x["count"], reverse=True)
+    return actives
+
+def calculate_most_points_in_match_for_matches(league_id, matches):
+    squads = FantasySquad.objects.filter(league_id=league_id)
+    most_points = []
+    for squad in squads:
+        match_events = FantasyMatchEvent.objects.filter(
+            fantasy_squad_id=squad.id,
+            match__in=matches
+        ).order_by('-total_points')
+        if match_events.exists():
+            top_event = match_events.first()
+            # Defensive: ensure squad fields are always present and not None
+            most_points.append({
+                "squad_id": squad.id,
+                "squad_name": squad.name or "",
+                "color": squad.color or "#808080",
+                "match_id": top_event.match_id,
+                "match_number": getattr(top_event.match, "match_number", None),
+                "match_name": (
+                    f"{getattr(getattr(top_event.match, 'team_1', None), 'short_name', 'T1')} vs "
+                    f"{getattr(getattr(top_event.match, 'team_2', None), 'short_name', 'T2')}"
+                ),
+                "base": float(getattr(top_event, "total_base_points", 0) or 0),
+                "boost": float(getattr(top_event, "total_boost_points", 0) or 0),
+                "total": float(getattr(top_event, "total_points", 0) or 0)
+            })
+    most_points.sort(key=lambda x: x["total"], reverse=True)
+    return most_points[:25]
+
+def calculate_most_players_in_match_for_matches(league_id, matches):
+    squads = FantasySquad.objects.filter(league_id=league_id)
+    most_actives = []
+    for squad in squads:
+        match_events = FantasyMatchEvent.objects.filter(
+            fantasy_squad_id=squad.id,
+            match__in=matches
+        ).order_by('-players_count')
+        if match_events.exists():
+            top_event = match_events.first()
+            most_actives.append({
+                "squad_id": squad.id,
+                "squad_name": squad.name or "",
+                "color": squad.color or "#808080",
+                "match_id": top_event.match_id,
+                "match_number": getattr(top_event.match, "match_number", None),
+                "match_name": (
+                    f"{getattr(getattr(top_event.match, 'team_1', None), 'short_name', 'T1')} vs "
+                    f"{getattr(getattr(top_event.match, 'team_2', None), 'short_name', 'T2')}"
+                ),
+                "count": getattr(top_event, "players_count", 0) or 0
+            })
+    most_actives.sort(key=lambda x: x["count"], reverse=True)
+    return most_actives[:25]
+
+def calculate_rank_breakdown_for_matches(league_id, matches):
+    squads = FantasySquad.objects.filter(league_id=league_id)
+    breakdown = []
+    for squad in squads:
+        match_events = FantasyMatchEvent.objects.filter(
+            fantasy_squad_id=squad.id,
+            match__in=matches
+        )
+        ranks = list(match_events.values_list('running_rank', flat=True))
+        if not ranks:
+            continue
+        highest_rank = min(ranks)
+        lowest_rank = max(ranks)
+        median_rank = statistics.median(ranks)
+        try:
+            mode_rank = statistics.mode(ranks)
+        except:
+            mode_rank = None
+        breakdown.append({
+            "squad_id": squad.id,
+            "squad_name": squad.name,
+            "color": squad.color,
+            "highest": highest_rank,
+            "lowest": lowest_rank,
+            "median": median_rank,
+            "mode": mode_rank
+        })
+    return breakdown
+
+def calculate_league_table_for_matches(league_id, matches):
+    squads = FantasySquad.objects.filter(league_id=league_id)
+    table = []
+    for squad in squads:
+        match_events = FantasyMatchEvent.objects.filter(
+            fantasy_squad_id=squad.id,
+            match__in=matches
+        )
+        total_points = sum(me.total_points for me in match_events)
+        base_points = sum(me.total_base_points for me in match_events)
+        boost_points = sum(me.total_boost_points for me in match_events)
+        table.append({
+            "id": squad.id,
+            "name": squad.name,
+            "color": squad.color,
+            "total_points": total_points,
+            "base_points": base_points,
+            "boost_points": boost_points
+        })
+    table.sort(key=lambda x: x["total_points"], reverse=True)
+    return table
+
+def recalculate_all_stats(stats, league_id):
+    logger.info(f"Starting full recalculation of fantasy stats for league {league_id}")
+    stats.match_details = {
+        "running_total": {},
+        "domination": {},
+        "squad_stats": {},
+        "season_total_actives": {},
+        "most_points_in_match": {},
+        "most_players_in_match": {},
+        "rank_breakdown": {},
+        "league_table": {}
+    }
+    stats.player_details = {
+        "season_mvp": {},
+        "match_mvp": {},
+        "squad_mvps": {}
+    }
+
     matches = IPLMatch.objects.filter(
         fantasymatchevent__fantasy_squad__league_id=league_id,
         status__in=['COMPLETED', 'NO_RESULT']
-    ).distinct()
-    
-    domination_stats = []
-    
-    for match in matches:
-        match_events = FantasyMatchEvent.objects.filter(
-            match=match,
-            fantasy_squad__league_id=league_id
-        ).select_related('fantasy_squad')
-        
-        total_match_points = sum(me.total_points for me in match_events)
-        
-        if total_match_points == 0:
-            continue
-        
-        for me in match_events:
-            domination_pct = (me.total_points / total_match_points) * 100
-            
-            if domination_pct > 20:  # Only track significant domination
-                domination_stats.append({
-                    "match_id": match.id,
-                    "squad_id": me.fantasy_squad_id,
-                    "percentage": float(domination_pct)
-                })
-    
-    # Sort by percentage
-    domination_stats.sort(key=lambda x: x["percentage"], reverse=True)
-    stats.match_details["domination"] = domination_stats[:25]  # Top 25 domination performances
+    ).distinct().order_by('date')
+
+    all_phases = matches.values_list('phase', flat=True).distinct()
+    all_phases = [p for p in all_phases if p is not None]
+    all_phases = sorted(set(all_phases))
+
+    def get_matches_for_phase(phase=None):
+        if phase is None:
+            return matches
+        return matches.filter(phase=phase)
+
+    for phase in [None] + all_phases:
+        key = str(phase) if phase is not None else "overall"
+        phase_matches = get_matches_for_phase(phase)
+        logger.info(f"Calculating stats for phase '{key}' with {phase_matches.count()} matches")
+        stats.match_details["running_total"][key] = calculate_running_total_for_matches(league_id, phase_matches)
+        stats.match_details["domination"][key] = calculate_domination_for_matches(league_id, phase_matches)
+        stats.match_details["squad_stats"][key] = calculate_squad_stats_for_matches(league_id, phase_matches)
+        stats.match_details["season_total_actives"][key] = calculate_season_total_actives_for_matches(league_id, phase_matches)
+        stats.match_details["most_points_in_match"][key] = calculate_most_points_in_match_for_matches(league_id, phase_matches)
+        stats.match_details["most_players_in_match"][key] = calculate_most_players_in_match_for_matches(league_id, phase_matches)
+        stats.match_details["rank_breakdown"][key] = calculate_rank_breakdown_for_matches(league_id, phase_matches)
+        stats.match_details["league_table"][key] = calculate_league_table_for_matches(league_id, phase_matches)
+        stats.player_details["season_mvp"][key] = calculate_season_mvp_for_matches(league_id, phase_matches)
+        stats.player_details["match_mvp"][key] = calculate_match_mvp_for_matches(league_id, phase_matches)
+        stats.player_details["squad_mvps"][key] = calculate_squad_mvps_for_matches(league_id, phase_matches)
+
+    stats.save()
+    logger.info(f"Finished recalculation and saved stats for league {league_id}")
+
+def update_fantasy_stats(league_id, match_id=None):
+    """
+    Update fantasy stats for a league.
+    If match_id is provided, only update stats for that match.
+    """
+    logger.info(f"Updating fantasy stats for league {league_id} (match_id={match_id})")
+    league = FantasyLeague.objects.get(id=league_id)
+    stats, created = FantasyStats.objects.get_or_create(league=league)
+
+    # Initialize data structure if needed
+    if not stats.match_details:
+        logger.info("Initializing empty match_details")
+        stats.match_details = {
+            "running_total": {},
+            "domination": {},
+            "squad_stats": {},
+            "season_total_actives": {},
+            "most_points_in_match": {},
+            "most_players_in_match": {},
+            "rank_breakdown": {},
+            "league_table": {}
+        }
+
+    if not stats.player_details:
+        logger.info("Initializing empty player_details")
+        stats.player_details = {
+            "season_mvp": {},
+            "match_mvp": {},
+            "squad_mvps": {}
+        }
+
+    # Only full recalculation is supported here
+    recalculate_all_stats(stats, league_id)
+    stats.save()
+    logger.info(f"Stats updated for league {league_id}")
+    return stats
