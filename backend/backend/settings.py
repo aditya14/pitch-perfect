@@ -229,7 +229,7 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Cricket API Key
-CRICDATA_API_KEY = os.environ.get('CRICDATA_API_KEY', '347e27a7-5e40-428f-8afb-adfae1d5d3dd')
+CRICDATA_API_KEY = os.environ.get('CRICDATA_API_KEY', '3b70adad-ac33-4441-9c65-dc753ee58177')
 
 # Cache configuration
 CACHES = {
