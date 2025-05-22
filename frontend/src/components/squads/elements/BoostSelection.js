@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, User } from 'lucide-react';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
-import { Anchor, Bomb, Crown, EarthLock, Handshake, Sparkles, Swords, Zap, ArrowLeft } from 'lucide-react';
+import { Anchor, Bomb, Crown, EarthLock, Handshake, Sparkles, Swords, Zap, ArrowLeft, AlertTriangle } from 'lucide-react';
 
 // Helper function to get role icon
 const getRoleIcon = (roleName, size = 16, squadColor) => {
@@ -28,7 +28,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
   // Countdown Timer Component
   const CountdownTimer = ({ onExpire }) => {
     const [timeLeft, setTimeLeft] = useState({});
-    const lockDate = new Date('2025-05-19T14:00:00Z'); // May 19, 2025, 2pm UTC
+    const lockDate = new Date('2025-05-29T14:00:00Z'); // May 19, 2025, 2pm UTC
   
     useEffect(() => {
       const calculateTimeLeft = () => {
@@ -96,6 +96,33 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
       </div>
     );
   };
+
+// List of qualified teams for playoffs
+const QUALIFIED_TEAMS = [
+  'Royal Challengers Bengaluru',
+  'Punjab Kings',
+  'Gurajat Titans',
+  'Mumbai Indians'
+];
+
+// Helper to check if a player is from a qualified team
+const isQualifiedTeam = (player) => {
+  return QUALIFIED_TEAMS.includes(player.current_team?.name);
+};
+
+// Tooltip for player warning (styled like HeaderTooltip)
+const PlayerTooltip = ({ children, tooltip }) => (
+  <span className="relative inline-flex group">
+    {children}
+    {tooltip && (
+      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 mt-2 z-30 hidden group-hover:block px-2 py-1 rounded bg-neutral-900 text-white text-xs shadow-lg whitespace-nowrap min-w-max"
+        style={{ top: '100%' }}
+      >
+        {tooltip}
+      </span>
+    )}
+  </span>
+);
 
 const BoostSelection = ({
   players,
@@ -195,7 +222,7 @@ const BoostSelection = ({
       {/* Header */}
       <div className="p-4 md:p-6 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4">
-          Week 8 (May 19 - May 27)
+          Playoffs (May 29 - Jun 3)
         </h2>
         
         {/* Countdown and retention info */}
@@ -257,8 +284,17 @@ const BoostSelection = ({
 
           {/* Selected Player Header */}
           <div className="mb-5 pb-4 border-b border-neutral-200 dark:border-neutral-700">
-            <h3 className="text-lg font-medium text-neutral-900 dark:text-white">
+            <h3 className="text-lg font-medium text-neutral-900 dark:text-white flex items-center">
               {selectedPlayer.name}
+              {!isQualifiedTeam(selectedPlayer) && (
+                <PlayerTooltip tooltip="Not in Playoffs">
+                  <AlertTriangle
+                    className="ml-2 text-yellow-500"
+                    size={18}
+                    title="Not in Playoffs"
+                  />
+                </PlayerTooltip>
+              )}
             </h3>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {selectedPlayer.role} • {selectedPlayer.current_team?.name || 'No team'}
@@ -269,7 +305,6 @@ const BoostSelection = ({
           <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
             Eligible Boosts
           </h4>
-          
           <div className="space-y-3">
             {getEligibleRolesForPlayer(selectedPlayer).map(role => {
               const currentAssignment = futureCoreSquad?.find(a => a.boost_id === role.id);
@@ -390,7 +425,7 @@ const BoostSelection = ({
               {filteredPlayers.map(player => {
                 const isAssigned = isPlayerAssigned(player.id);
                 const assignedRole = isAssigned ? getRoleById(getPlayerRole(player.id)) : null;
-                
+                const notQualified = !isQualifiedTeam(player);
                 return (
                   <div 
                     key={player.id}
@@ -403,14 +438,22 @@ const BoostSelection = ({
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium text-neutral-900 dark:text-white">
+                        <div className="font-medium text-neutral-900 dark:text-white flex items-center">
                           {player.name}
+                          {notQualified && (
+                            <PlayerTooltip tooltip="Not in Playoffs">
+                              <AlertTriangle
+                                className="ml-2 text-yellow-500"
+                                size={16}
+                                title="Not in Playoffs"
+                              />
+                            </PlayerTooltip>
+                          )}
                         </div>
                         <div className="text-xs text-neutral-500 dark:text-neutral-400">
                           {player.role} • {player.current_team?.name || 'No team'}
                         </div>
                       </div>
-
                       {/* Current assignment indicator - just the icon */}
                       {isAssigned && assignedRole && (
                         <div className="h-6 w-6 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700">
@@ -510,7 +553,7 @@ const BoostSelection = ({
                 const isAssigned = isPlayerAssigned(player.id);
                 const isSelected = selectedPlayer?.id === player.id;
                 const assignedRole = isAssigned ? getRoleById(getPlayerRole(player.id)) : null;
-                
+                const notQualified = !isQualifiedTeam(player);
                 return (
                   <div 
                     key={player.id}
@@ -525,14 +568,22 @@ const BoostSelection = ({
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium text-neutral-900 dark:text-white">
+                        <div className="font-medium text-neutral-900 dark:text-white flex items-center">
                           {player.name}
+                          {notQualified && (
+                            <PlayerTooltip tooltip="Not in Playoffs">
+                              <AlertTriangle
+                                className="ml-2 text-yellow-500"
+                                size={16}
+                                title="Not in Playoffs"
+                              />
+                            </PlayerTooltip>
+                          )}
                         </div>
                         <div className="text-xs text-neutral-500 dark:text-neutral-400">
                           {player.role} • {player.current_team?.name || 'No team'}
                         </div>
                       </div>
-
                       {/* Current assignment indicator - just the icon */}
                       {isAssigned && assignedRole && (
                         <div className="h-6 w-6 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700">
@@ -572,8 +623,17 @@ const BoostSelection = ({
                 {/* Selected Player Header */}
                 <div className="mb-5 pb-4 border-b border-neutral-200 dark:border-neutral-700">
                   <div>
-                    <h3 className="text-lg font-medium text-neutral-900 dark:text-white">
+                    <h3 className="text-lg font-medium text-neutral-900 dark:text-white flex items-center">
                       {selectedPlayer.name}
+                      {!isQualifiedTeam(selectedPlayer) && (
+                        <PlayerTooltip tooltip="Not in Playoffs">
+                          <AlertTriangle
+                            className="ml-2 text-yellow-500"
+                            size={18}
+                            title="Not in Playoffs"
+                          />
+                        </PlayerTooltip>
+                      )}
                     </h3>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
                       {selectedPlayer.role} • {selectedPlayer.current_team?.name || 'No team'}
