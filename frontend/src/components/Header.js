@@ -482,16 +482,17 @@ const Header = ({ theme, onThemeChange }) => {
         {isLeagueView && (
           <div className="border-t border-primary-100 dark:border-primary-800 overflow-x-auto dark:bg-neutral-950">
             <div className="container mx-auto px-4">
-              <nav className="flex">
+              <nav className="flex space-x-1">
                 {leagueTabs.map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     className={`
-                      whitespace-nowrap py-3 px-2 sm:px-4 font-medium text-xs font-caption sm:text-sm
+                      whitespace-nowrap py-3 px-4 font-medium text-sm transition-all duration-200
+                      min-w-[80px] touch-manipulation
                       ${activeTab === tab.id
-                        ? 'text-primary-600 border-b-2 border-primary-500 dark:text-primary-400 dark:border-primary-400'
-                        : 'text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-white border-b-2 border-transparent'
+                        ? 'text-primary-600 border-b-3 border-primary-500 dark:text-primary-400 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                        : 'text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-white border-b-3 border-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10'
                       }
                     `}
                   >

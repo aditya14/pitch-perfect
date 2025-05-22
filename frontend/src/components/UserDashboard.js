@@ -169,20 +169,28 @@ const LeagueCard = ({ league }) => {
   // Regular season card (active season)
   return (
     <div 
-      className="bg-white dark:bg-neutral-950 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-neutral-200 dark:border-neutral-700 border-l-4 cursor-pointer"
+      className="bg-white dark:bg-neutral-950 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border border-neutral-200 dark:border-neutral-700 border-l-4 cursor-pointer group"
       style={{ borderLeftColor: league.color || '#6366F1' }}
       onClick={() => navigate(`/leagues/${league.id}`)}
     >
-      <div className="p-5">
-        {/* League Name */}
-        <h3 className="text-xl font-caption font-bold text-neutral-900 dark:text-white mb-2">
-          {league.name}
-        </h3>
+      <div className="p-6">
+        {/* League Name with better typography */}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xl font-bold text-neutral-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+            {league.name}
+          </h3>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <ChevronRight className="h-5 w-5 text-primary-500" />
+          </div>
+        </div>
         
-        {/* Season Name */}
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-          {league.season?.name || 'No season'}
-        </p>
+        {/* Season Name with better visual treatment */}
+        <div className="flex items-center mb-4">
+          <div className="w-2 h-2 bg-primary-500 rounded-full mr-2"></div>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">
+            {league.season?.name || 'No season'}
+          </p>
+        </div>
         
         {/* Squad Info */}
         {league.my_squad ? (

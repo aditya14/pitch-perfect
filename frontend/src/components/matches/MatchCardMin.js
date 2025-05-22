@@ -202,10 +202,14 @@ const MatchCardMin = ({ match, leagueId }) => {
                 <span>{formattedDateTime.time}</span>
               </>
             )}
+            {/* Live indicator with improved animation */}
             {match.status === 'LIVE' && (
-              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full animate-pulse">
-                LIVE
-              </span>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
+                <span className="px-3 py-1 text-xs font-semibold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-full border border-red-200 dark:border-red-800">
+                  LIVE
+                </span>
+              </div>
             )}
           </div>
         </div>
@@ -218,11 +222,14 @@ const MatchCardMin = ({ match, leagueId }) => {
               {match.stage || "LEAGUE"}
             </span>
             
-            {/* Live indicator */}
+            {/* Live indicator with improved animation */}
             {match.status === 'LIVE' && (
-              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full animate-pulse">
-                LIVE
-              </span>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
+                <span className="px-3 py-1 text-xs font-semibold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-full border border-red-200 dark:border-red-800">
+                  LIVE
+                </span>
+              </div>
             )}
           </div>
           {/* Date and time below the match number */}
