@@ -120,7 +120,7 @@ const LeagueDashboard = ({ league }) => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900 dark:text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900 dark:text-white font-number">
                       {squad.total_points}
                     </td>
                   </tr>

@@ -196,7 +196,7 @@ const SimpleMatchPerformance = ({
                   <td className="px-2 py-3 whitespace-nowrap text-sm font-medium">
                     {hasFantasyData && leagueId ? (
                       <div className="flex flex-col">
-                        <span className="font-bold text-neutral-900 dark:text-white text-base">
+                        <span className="font-bold text-neutral-900 dark:text-white text-base font-number">
                           {data.fantasy_points}
                         </span>
                         <div className='flex items-center gap-1'>

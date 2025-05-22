@@ -362,7 +362,7 @@ const LeagueTable = ({ league }) => {
                     
                     {/* Total Points - with subtle left border for grouping */}
                     <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap border-l border-l-neutral-300 dark:border-l-neutral-600">
-                      <span className="text-sm font-bold text-neutral-900 dark:text-white">
+                      <span className="text-sm font-bold text-neutral-900 dark:text-white font-number">
                         {squad.total_points}
                       </span>
                     </td>

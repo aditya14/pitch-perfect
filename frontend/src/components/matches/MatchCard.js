@@ -331,7 +331,7 @@ const MatchCard = ({ match, leagueId }) => {
                   </span>
                 </div>
                 <span className="text-green-600 dark:text-green-500 text-md font-bold whitespace-nowrap ml-2">
-                  {topSquads[0]?.match_points} pts
+                  <span class="font-number">{topSquads[0]?.match_points}</span> pts
                 </span>
               </div>
             )}
@@ -349,7 +349,7 @@ const MatchCard = ({ match, leagueId }) => {
                   </span>
                 </div>
                 <span className="text-neutral-900 dark:text-white text-sm whitespace-nowrap ml-2">
-                  {topSquads[1]?.match_points} pts
+                  <span class="font-number">{topSquads[1]?.match_points}</span> pts
                 </span>
               </div>
             )}
@@ -389,7 +389,7 @@ const MatchCard = ({ match, leagueId }) => {
                     )}
                 </div>
                 <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
-                  {topPlayers[0]?.fantasy_points} pts
+                  <span class="font-number">{topPlayers[0]?.fantasy_points}</span> pts
                 </span>
               </div>
             )}
@@ -420,7 +420,7 @@ const MatchCard = ({ match, leagueId }) => {
                     )}
                 </div>
                 <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
-                  {topPlayers[1]?.fantasy_points} pts
+                  <span class="font-number">{topPlayers[1]?.fantasy_points}</span> pts
                 </span>
               </div>
             )}

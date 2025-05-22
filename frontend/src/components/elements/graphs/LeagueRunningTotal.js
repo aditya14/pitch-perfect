@@ -18,6 +18,7 @@ const LeagueRunningTotal = ({ league }) => {
   const [visibleSquads, setVisibleSquads] = useState({});
   const [viewMode, setViewMode] = useState('zoomed'); // 'zoomed' or 'all'
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (league?.id && league?.season?.id) {
@@ -37,11 +38,21 @@ const LeagueRunningTotal = ({ league }) => {
     };
     checkDarkMode();
 
+    // Check for mobile on mount and on resize
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
     // Optional: If theme can be toggled dynamically, observe class changes
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-    return () => observer.disconnect(); // Cleanup observer
+    return () => {
+      observer.disconnect(); // Cleanup observer
+      window.removeEventListener('resize', checkMobile);
+    };
 
   }, [league?.id, league?.season?.id]);
 
@@ -369,6 +380,11 @@ const LeagueRunningTotal = ({ league }) => {
     strokeDasharray: "2 6", // Adjusted dash array for subtlety
   };
 
+  // Get dot size based on mobile status and view mode
+  const getDotSize = () => {
+    return (isMobile && viewMode === 'all') ? 0.5 : 2;
+  };
+
   return (
     <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800">
       <div className="flex justify-between items-center mb-4">
@@ -455,9 +471,9 @@ const LeagueRunningTotal = ({ league }) => {
                   dataKey={`squad_${squad.id}`}
                   name={squad.name}
                   stroke={getSquadColor(squad.id)}
-                  activeDot={{ r: 6 }}
+                  activeDot={{ r: 3 }}
                   strokeWidth={2}
-                  dot={true}
+                  dot={{ r: getDotSize() }}
                 />
               )
             ))}

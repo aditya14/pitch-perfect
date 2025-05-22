@@ -150,12 +150,12 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
               </div>
               
               <div className="flex flex-col items-end">
-                <span className="text-md font-bold text-neutral-900 dark:text-white">
+                <span className="text-md font-bold text-neutral-900 dark:text-white font-number">
                   {squad.points.toFixed(1)}
                 </span>
                 {squad.basePoints > 0 || squad.boostPoints > 0 ? (
                   <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                    {squad.basePoints.toFixed(1)} {squad.boostPoints >= 0 && '+'}{squad.boostPoints.toFixed(1)}
+                    {squad.basePoints.toFixed(1)} {squad.boostPoints >= 0 && '+ '}{squad.boostPoints.toFixed(1)}
                   </span>
                 ) : null}
               </div>

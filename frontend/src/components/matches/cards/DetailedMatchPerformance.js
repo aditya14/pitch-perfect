@@ -422,12 +422,12 @@ const DetailedMatchPerformance = ({
                         <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${data.boost_label ? 'font-medium' : 'opacity-30'}`}>
                           {data.boost_label ? data.boost_points : '-'}
                         </td>
-                        <td className="px-1 py-2 whitespace-nowrap text-xs text-left font-bold text-neutral-900 dark:text-white">
+                        <td className="px-1 py-2 whitespace-nowrap text-xs text-left font-bold text-neutral-900 dark:text-white font-number">
                           {data.fantasy_points}
                         </td>
                       </>
                     ) : (
-                      <td className="px-1 py-2 whitespace-nowrap text-xs text-left border-l dark:border-neutral-600">
+                      <td className="px-1 py-2 whitespace-nowrap text-xs text-left border-l dark:border-neutral-600 font-number">
                         <span className={`font-bold ${getPointsColorClass(data.total_points_all)}`}>
                           {data.total_points_all}
                         </span>
