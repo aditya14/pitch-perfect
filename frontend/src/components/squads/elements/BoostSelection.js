@@ -101,7 +101,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
 const QUALIFIED_TEAMS = [
   'Royal Challengers Bengaluru',
   'Punjab Kings',
-  'Gurajat Titans',
+  'Gujarat Titans',
   'Mumbai Indians'
 ];
 
