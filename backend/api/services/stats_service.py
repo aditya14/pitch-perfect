@@ -307,24 +307,74 @@ def calculate_rank_breakdown_for_matches(league_id, matches):
     return breakdown
 
 def calculate_league_table_for_matches(league_id, matches):
+    """
+    Calculate comprehensive league table data including all fields needed by the frontend
+    """
     squads = FantasySquad.objects.filter(league_id=league_id)
     table = []
+    
+    # Get MVP data for each squad (reusing existing logic)
+    squad_mvps = calculate_squad_mvps_for_matches(league_id, matches)
+    
     for squad in squads:
         match_events = FantasyMatchEvent.objects.filter(
             fantasy_squad_id=squad.id,
             match__in=matches
-        )
+        ).order_by('match__date')
+        
+        # Basic points calculation
         total_points = sum(me.total_points for me in match_events)
         base_points = sum(me.total_base_points for me in match_events)
         boost_points = sum(me.total_boost_points for me in match_events)
+        
+        # Calculate caps (number of times ranked #1 in a match)
+        caps = match_events.filter(match_rank=1).count()
+        
+        # Calculate total actives (sum of players_count across all matches)
+        total_actives = sum(me.players_count for me in match_events)
+        
+        # Calculate recent form (last 5 match ranks)
+        recent_matches = match_events.order_by('-match__date')[:5]
+        recent_form = []
+        for match_event in recent_matches:
+            recent_form.append({
+                "match_number": match_event.match.match_number,
+                "match_rank": match_event.match_rank,
+                "date": match_event.match.date.isoformat() if match_event.match.date else None
+            })
+        # Reverse to get chronological order (oldest to newest)
+        recent_form.reverse()
+        
+        # Get MVP for this squad
+        squad_id_str = str(squad.id)
+        mvp_data = squad_mvps.get(squad_id_str, {})
+        mvp = None
+        if mvp_data:
+            mvp = {
+                "player_id": mvp_data.get("player_id"),
+                "player_name": mvp_data.get("player_name"),
+                "points": mvp_data.get("points", 0)
+            }
+        
+        # Calculate rank change (this would need historical data or previous calculations)
+        # For now, setting to 0 as we'd need to compare with previous week's standings
+        rank_change = 0
+        
         table.append({
             "id": squad.id,
             "name": squad.name,
             "color": squad.color,
-            "total_points": total_points,
-            "base_points": base_points,
-            "boost_points": boost_points
+            "total_points": float(total_points),
+            "base_points": float(base_points),
+            "boost_points": float(boost_points),
+            "caps": caps,
+            "total_actives": total_actives,
+            "mvp": mvp,
+            "recent_form": recent_form,
+            "rank_change": rank_change
         })
+    
+    # Sort by total points (descending)
     table.sort(key=lambda x: x["total_points"], reverse=True)
     return table
 

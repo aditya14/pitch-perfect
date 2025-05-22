@@ -10,8 +10,6 @@ from api.models import (
     IPLMatch, IPLPlayer, IPLTeam, IPLPlayerEvent, FantasySquad, FantasyPlayerEvent, FantasyBoostRole, FantasyMatchEvent, FantasyLeague
 )
 
-from .stats_service import update_fantasy_stats
-
 logger = logging.getLogger(__name__)
 
 class CricketDataService:

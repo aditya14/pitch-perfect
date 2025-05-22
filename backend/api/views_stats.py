@@ -308,22 +308,108 @@ def league_stats_rank_breakdown(request, league_id):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-@cache_page_with_bypass(60 * 10)
+@cache_page_with_bypass(60 * 5)  # Cache for 5 minutes only
 def league_table_stats(request, league_id):
     """
-    Get consolidated stats for the league table from FantasyStats (by phase if requested)
+    Get live league table stats - calculates everything on-the-fly
+    No more dependency on cached FantasyStats!
     """
     try:
-        time_frame = request.query_params.get('timeFrame', 'overall')
-        phase_key = _get_phase_key(time_frame)
-
-        stats = FantasyStats.objects.get(league_id=league_id)
-        table_stats = stats.match_details.get("league_table", {}).get(phase_key, [])
-
-        return Response(table_stats)
+        from django.db.models import Sum, Count, Q, F, Prefetch
+        
+        # Get the league and verify it exists
+        league = FantasyLeague.objects.get(id=league_id)
+        
+        # Get all squads with aggregated match event data in a single query
+        squads = FantasySquad.objects.filter(league=league).annotate(
+            # Aggregate match event data
+            caps_count=Count('match_events', filter=Q(match_events__match_rank=1)),
+            total_actives_sum=Sum('match_events__players_count'),
+            total_base_points_sum=Sum('match_events__total_base_points'),
+            total_boost_points_sum=Sum('match_events__total_boost_points'),
+        ).prefetch_related(
+            # Prefetch recent match events for recent form calculation
+            Prefetch(
+                'match_events',
+                queryset=FantasyMatchEvent.objects.select_related('match').order_by('-match__date', '-match__match_number')[:5],
+                to_attr='recent_match_events'
+            )
+        )
+        
+        # Get MVP data for all squads in one optimized query
+        mvp_data = {}
+        player_totals = FantasyPlayerEvent.objects.filter(
+            fantasy_squad__league=league
+        ).values(
+            'fantasy_squad_id',
+            'match_event__player_id', 
+            'match_event__player__name'
+        ).annotate(
+            total_points=Sum(F('match_event__total_points_all') + F('boost_points'))
+        )
+        
+        # Group MVP data by squad and find the best player for each
+        squad_players = {}
+        for pt in player_totals:
+            squad_id = pt['fantasy_squad_id']
+            if squad_id not in squad_players:
+                squad_players[squad_id] = []
+            squad_players[squad_id].append({
+                'player_id': pt['match_event__player_id'],
+                'player_name': pt['match_event__player__name'],
+                'total_points': float(pt['total_points'] or 0)
+            })
+        
+        # Find MVP for each squad (player with highest total points)
+        for squad_id, players in squad_players.items():
+            mvp_data[squad_id] = max(players, key=lambda x: x['total_points'])
+        
+        table_data = []
+        
+        for squad in squads:
+            # Calculate recent form from prefetched data
+            recent_form = []
+            for match_event in reversed(squad.recent_match_events):  # Reverse for chronological order
+                recent_form.append({
+                    "match_number": match_event.match.match_number,
+                    "match_rank": match_event.match_rank,
+                    "date": match_event.match.date.isoformat() if match_event.match.date else None
+                })
+            
+            # Get MVP for this squad
+            mvp = None
+            if squad.id in mvp_data:
+                mvp_info = mvp_data[squad.id]
+                mvp = {
+                    "player_id": mvp_info['player_id'],
+                    "player_name": mvp_info['player_name'],
+                    "points": mvp_info['total_points']
+                }
+            
+            table_data.append({
+                "id": squad.id,
+                "name": squad.name,
+                "color": squad.color,
+                "total_points": float(squad.total_points or 0),
+                "base_points": float(squad.total_base_points_sum or 0),
+                "boost_points": float(squad.total_boost_points_sum or 0),
+                "caps": squad.caps_count or 0,
+                "total_actives": squad.total_actives_sum or 0,
+                "mvp": mvp,
+                "recent_form": recent_form,
+                "rank_change": 0  # Set to 0 for now - could be enhanced with historical comparison
+            })
+        
+        # Sort by total points (descending)
+        table_data.sort(key=lambda x: x["total_points"], reverse=True)
+        
+        return Response(table_data)
+        
+    except FantasyLeague.DoesNotExist:
+        return Response({'error': 'League not found'}, status=404)
     except Exception as e:
         import traceback
-        print(f"Error in league_table_stats: {str(e)}")
+        print(f"Error in live league_table_stats: {str(e)}")
         print(traceback.format_exc())
         return Response({'error': str(e)}, status=500)
 
