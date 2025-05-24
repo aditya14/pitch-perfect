@@ -480,8 +480,8 @@ const Header = ({ theme, onThemeChange }) => {
         
         {/* League Navigation Tabs (consistent across all devices) */}
         {isLeagueView && (
-          <div className="border-t border-primary-100 dark:border-primary-800 overflow-x-auto scrollbar-hide dark:bg-neutral-950" style={{WebkitOverflowScrolling: 'touch'}}>
-            <nav className="flex space-x-1 px-4 sm:px-6 lg:px-3 min-w-max">
+          <div className="container mx-auto border-t border-primary-100 dark:border-primary-800 overflow-x-auto scrollbar-hide dark:bg-neutral-950 px-2 sm:px-6 lg:px-3" style={{WebkitOverflowScrolling: 'touch'}}>
+            <nav className="flex space-x-1 min-w-max">
               {leagueTabs.map(tab => (
                 <button
                   key={tab.id}
