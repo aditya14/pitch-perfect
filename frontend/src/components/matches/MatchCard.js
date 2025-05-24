@@ -45,6 +45,9 @@ const MatchCard = ({ match, leagueId }) => {
     }
   }
 
+  const firstColorHex = battingFirstTeam.primary_color ? `#${battingFirstTeam.primary_color}` : '#6B7280';
+  const secondColorHex = battingSecondTeam.primary_color ? `#${battingSecondTeam.primary_color}` : '#6B7280';
+
   useEffect(() => {
     // Reset state when match or leagueId changes before fetching
     setLoading(true);
@@ -181,93 +184,71 @@ const MatchCard = ({ match, leagueId }) => {
   const isClickable = ['COMPLETED', 'NO_RESULT', 'LIVE'].includes(match.status);
 
   return (
-    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800">
-      {/* Header: Match number + date/time */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center mb-2 sm:mb-0">
+    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800 transition-transform hover:shadow-lg hover:-translate-y-0.5">
+
+      {/* Accent Line */}
+      <div 
+        className="h-1 w-full" 
+        style={{ background: `linear-gradient(to right, ${firstColorHex}, ${secondColorHex})` }} 
+      />
+
+      {/* Header: compact, single line, smaller */}
+      <div className="flex items-center justify-between p-2 border-b border-neutral-200 dark:border-neutral-800 text-xs">
+        <div className="flex items-center space-x-2">
           <span className="text-neutral-900 dark:text-white font-medium">Match {match.match_number}</span>
-          <span className="text-neutral-500 dark:text-neutral-400 mx-2">•</span>
-          <span className="text-neutral-500 dark:text-neutral-400 uppercase">
-            {match.stage || "LEAGUE"}
-          </span>
-          
-          {/* Live indicator */}
+          <span className="text-neutral-500 dark:text-neutral-400">•</span>
+          <span className="text-neutral-500 dark:text-neutral-400 uppercase">{match.stage || "LEAGUE"}</span>
           {match.status === 'LIVE' && (
-            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full animate-pulse">
-              LIVE
-            </span>
+            <span className="px-1 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full animate-pulse">LIVE</span>
           )}
         </div>
-        
         {match.date && (
-          <div className="flex items-center text-neutral-500 dark:text-neutral-400 text-sm">
-            <Calendar className="h-4 w-4 mr-1" />
+          <div className="flex items-center space-x-1 text-neutral-500 dark:text-neutral-400">
+            <Calendar className="h-4 w-4"/>
             <span>{formattedDateTime.date}</span>
-            <span className="mx-1">•</span>
-            <Clock className="h-4 w-4 mr-1" />
+            <span>•</span>
+            <Clock className="h-4 w-4"/>
             <span>{formattedDateTime.time}</span>
           </div>
         )}
       </div>
-      
+
       {/* Main content area */}
       <div className="p-3">
-        {/* Teams and scores - Batting First Team */}
+        {/* Teams and scores combined on one line */}
         <div className="flex items-center justify-between mb-3">
-          {battingFirstTeam ? (
-            <div className="flex items-center">
-              <div className='h-2.5 w-2.5 mr-1.5 rounded-sm'
-                style={{
-                  backgroundColor: battingFirstTeam.primary_color ? `${'#' + battingFirstTeam.primary_color}` : '#6B7280',
-                  opacity: match.winner 
-                    ? (battingFirstTeam?.short_name === match?.winner?.short_name ? 1 : 0.1) 
-                    : 1,
-                  boxShadow: match.winner && battingFirstTeam?.short_name === match?.winner?.short_name 
-                    ? `1px 1px 5px ${hexToRgba(battingFirstTeam.primary_color, 0.9)}` 
-                    : 'none'
-                 }}
-              />
-              <span className={`text-sm font-caption text-center text-neutral-900 dark:text-white ${battingFirstTeam?.short_name === match?.winner?.short_name ? 'font-bold' : 'font-light'}`}>
+          <div className="flex items-center space-x-2">
+            {battingFirstTeam ? (
+              <span
+                className="px-2 py-0.5 text-xs font-caption font-semibold rounded-md"
+                style={{ backgroundColor: firstColorHex, color: getTextColorForBackground(firstColorHex) }}
+              >
                 {battingFirstTeam.short_name || battingFirstTeam.name}
               </span>
-            </div>
-          ) : (
-            <span className="text-neutral-900 dark:text-white">TBD</span>
-          )}
-          
-          <div className="text-neutral-900 dark:text-white text-sm">
+            ) : (
+              <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
+            )}
             {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
-              <span>{formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}</span>
+              <span className="text-neutral-900 dark:text-white text-sm">
+                {formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}
+              </span>
             )}
           </div>
-        </div>
-        
-        {/* Teams and scores - Batting Second Team */}
-        <div className="flex items-center justify-between mb-3">
-          {battingSecondTeam ? (
-            <div className="flex items-center">
-              <div className='h-2.5 w-2.5 mr-1.5 rounded-sm'
-                style={{
-                  backgroundColor: battingSecondTeam.primary_color ? `${'#' + battingSecondTeam.primary_color}` : '#6B7280',
-                  opacity: match.winner 
-                    ? (battingSecondTeam?.short_name === match?.winner?.short_name ? 1 : 0.1) 
-                    : 1,
-                  boxShadow: match.winner && battingSecondTeam?.short_name === match?.winner?.short_name 
-                    ? `1px 1px 5px ${hexToRgba(battingSecondTeam.primary_color, 0.9)}` 
-                    : 'none'
-                }}
-              />
-              <span className={`text-sm font-caption text-center text-neutral-900 dark:text-white ${battingSecondTeam?.short_name === match?.winner?.short_name ? 'font-bold' : 'font-light'}`}>
+          <div className="flex items-center space-x-2">
+            {battingSecondTeam ? (
+              <span
+                className="px-2 py-0.5 text-xs font-caption font-semibold rounded-md"
+                style={{ backgroundColor: secondColorHex, color: getTextColorForBackground(secondColorHex) }}
+              >
                 {battingSecondTeam.short_name || battingSecondTeam.name}
               </span>
-            </div>
-          ) : (
-            <span className="text-neutral-900 dark:text-white">TBD</span>
-          )}
-          
-          <div className="text-neutral-900 dark:text-white text-sm">
+            ) : (
+              <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
+            )}
             {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
-              <span>{formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}</span>
+              <span className="text-neutral-900 dark:text-white text-sm">
+                {formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}
+              </span>
             )}
           </div>
         </div>
