@@ -257,7 +257,7 @@ const MatchCard = ({ match, leagueId }) => {
             {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
               <span className={`text-sm ${
                 winnerId === battingSecondTeam?.id
-                  ? 'text-green-600 dark:text-green-500'
+                  ? 'text-green-600 dark:text-green-500 font-semibold'
                   : 'text-neutral-900 dark:text-white'
               }`}>
                 {formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}
