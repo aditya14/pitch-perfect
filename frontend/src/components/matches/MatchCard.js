@@ -183,8 +183,13 @@ const MatchCard = ({ match, leagueId }) => {
   const formattedCountdown = formatCountdown();
   const isClickable = ['COMPLETED', 'NO_RESULT', 'LIVE'].includes(match.status);
 
+  // Determine winner ID for conditional styling
+  const winnerId = (match.status === 'COMPLETED' && match.winner) 
+    ? match.winner.id 
+    : null;
+
   return (
-    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800 transition-transform hover:shadow-lg hover:-translate-y-0.5">
+    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800 transition-transform hover:shadow-md">
 
       {/* Accent Line */}
       <div 
@@ -229,7 +234,11 @@ const MatchCard = ({ match, leagueId }) => {
               <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
             )}
             {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
-              <span className="text-neutral-900 dark:text-white text-sm">
+              <span className={`text-sm ${
+                winnerId === battingFirstTeam?.id
+                  ? 'text-green-600 dark:text-green-500 font-semibold'
+                  : 'text-neutral-900 dark:text-white'
+              }`}>
                 {formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}
               </span>
             )}
@@ -246,7 +255,11 @@ const MatchCard = ({ match, leagueId }) => {
               <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
             )}
             {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
-              <span className="text-neutral-900 dark:text-white text-sm">
+              <span className={`text-sm ${
+                winnerId === battingSecondTeam?.id
+                  ? 'text-green-600 dark:text-green-500'
+                  : 'text-neutral-900 dark:text-white'
+              }`}>
                 {formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}
               </span>
             )}
