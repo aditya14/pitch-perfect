@@ -341,7 +341,7 @@ const Header = ({ theme, onThemeChange }) => {
 
                 {/* League Switcher Dropdown Menu */}
                 {canShowLeagueSwitcher && isLeagueDropdownOpen && (
-                  <div className="absolute left-0 mt-2 w-64 py-1 theme-transition bg-white dark:bg-neutral-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10 max-h-60 overflow-y-auto">
+                  <div className="absolute left-0 mt-2 w-64 py-1 theme-transition bg-white dark:bg-neutral-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50 max-h-60 overflow-y-auto">
                     {userLeagues.map((league) => (
                       <button
                         key={league.id}
@@ -424,7 +424,7 @@ const Header = ({ theme, onThemeChange }) => {
   
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 py-1 theme-transition bg-white dark:bg-neutral-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
+                  <div className="absolute right-0 mt-2 w-48 py-1 theme-transition bg-white dark:bg-neutral-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
                     <Link
                       to="/profile"
                       className="px-4 py-2 text-sm text-primary-700 dark:text-primary-300 flex items-center w-full hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -480,27 +480,25 @@ const Header = ({ theme, onThemeChange }) => {
         
         {/* League Navigation Tabs (consistent across all devices) */}
         {isLeagueView && (
-          <div className="border-t border-primary-100 dark:border-primary-800 overflow-x-auto dark:bg-neutral-950">
-            <div className="container mx-auto px-4">
-              <nav className="flex space-x-1">
-                {leagueTabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`
-                      whitespace-nowrap py-3 px-4 font-medium text-sm transition-all duration-200
-                      min-w-[80px] touch-manipulation
-                      ${activeTab === tab.id
-                        ? 'text-primary-600 border-b-3 border-primary-500 dark:text-primary-400 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                        : 'text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-white border-b-3 border-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10'
-                      }
-                    `}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
+          <div className="border-t border-primary-100 dark:border-primary-800 overflow-x-auto scrollbar-hide dark:bg-neutral-950" style={{WebkitOverflowScrolling: 'touch'}}>
+            <nav className="flex space-x-1 px-4 sm:px-6 lg:px-3 min-w-max">
+              {leagueTabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`
+                    whitespace-nowrap py-3 px-4 font-medium text-sm transition-all duration-200
+                    touch-manipulation flex-shrink-0
+                    ${activeTab === tab.id
+                      ? 'text-primary-600 border-b-3 border-primary-500 dark:text-primary-400 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                      : 'text-primary-700 dark:text-primary-300 border-b-3 border-transparent md:hover:text-primary-900 md:dark:hover:text-white md:hover:bg-primary-50 md:dark:hover:bg-primary-900/10'
+                    }
+                  `}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
           </div>
         )}
       </header>
