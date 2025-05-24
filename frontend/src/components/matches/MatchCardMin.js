@@ -164,14 +164,14 @@ const MatchCardMin = ({ match, leagueId }) => {
     // Return empty string if runs is undefined, null, or not a valid number
     if (runs === undefined || runs === null || isNaN(runs)) return '';
     
-    // Format wickets (only if it's a valid number)
-    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets)) 
-      ? `/${wickets}` 
+    // Format wickets (skip display if team is all out, i.e. 10 wickets)
+    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets) && wickets < 10)
+      ? `/${wickets}`
       : '';
     
-    // Format overs (only if it's a valid string or number)
-    const oversDisplay = (overs !== undefined && overs !== null && overs !== '') 
-      ? ` (${overs} ov)` 
+    // Format overs
+    const oversDisplay = (overs !== undefined && overs !== null && overs !== '')
+      ? ` (${overs} ov)`
       : '';
     
     return `${runs}${wicketsDisplay}${oversDisplay}`;

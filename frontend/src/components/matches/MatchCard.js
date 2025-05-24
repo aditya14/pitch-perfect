@@ -166,14 +166,14 @@ const MatchCard = ({ match, leagueId }) => {
     // Return empty string if runs is undefined, null, or not a valid number
     if (runs === undefined || runs === null || isNaN(runs)) return '';
     
-    // Format wickets (only if it's a valid number)
-    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets)) 
-      ? `/${wickets}` 
+    // Format wickets (skip display if team is all out, i.e. 10 wickets)
+    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets) && wickets < 10)
+      ? `/${wickets}`
       : '';
     
-    // Format overs (only if it's a valid string or number)
-    const oversDisplay = (overs !== undefined && overs !== null && overs !== '') 
-      ? ` (${overs} ov)` 
+    // Format overs
+    const oversDisplay = (overs !== undefined && overs !== null && overs !== '')
+      ? ` (${overs} ov)`
       : '';
     
     return `${runs}${wicketsDisplay}${oversDisplay}`;
@@ -198,7 +198,7 @@ const MatchCard = ({ match, leagueId }) => {
       />
 
       {/* Header: compact, single line, smaller */}
-      <div className="flex items-center justify-between p-2 border-b border-neutral-200 dark:border-neutral-800 text-xs">
+      <div className="flex items-center justify-between p-2 px-4 border-b border-neutral-200 dark:border-neutral-800 text-xs">
         <div className="flex items-center space-x-2">
           <span className="text-neutral-900 dark:text-white font-medium">Match {match.match_number}</span>
           <span className="text-neutral-500 dark:text-neutral-400">•</span>
@@ -219,7 +219,7 @@ const MatchCard = ({ match, leagueId }) => {
       </div>
 
       {/* Main content area */}
-      <div className="p-3">
+      <div className="p-3 px-4">
         {/* Teams and scores combined on one line */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
@@ -234,7 +234,7 @@ const MatchCard = ({ match, leagueId }) => {
               <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
             )}
             {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
-              <span className={`text-sm ${
+              <span className={`text-md ${
                 winnerId === battingFirstTeam?.id
                   ? 'text-green-600 dark:text-green-500 font-semibold'
                   : 'text-neutral-900 dark:text-white'
@@ -255,7 +255,7 @@ const MatchCard = ({ match, leagueId }) => {
               <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
             )}
             {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
-              <span className={`text-sm ${
+              <span className={`text-md ${
                 winnerId === battingSecondTeam?.id
                   ? 'text-green-600 dark:text-green-500 font-semibold'
                   : 'text-neutral-900 dark:text-white'
@@ -303,6 +303,29 @@ const MatchCard = ({ match, leagueId }) => {
         {/* Horizontal line separating match details from fantasy stats */}
         <div className="border-t border-neutral-200 dark:border-neutral-800 my-2" />
 
+        {/* View Match Details or Preview button */}
+        {isClickable ? (
+          <button
+            onClick={handleMatchClick}
+            className="my-2 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
+          >
+            <span className='font-caption font-bold'>{match.status === 'LIVE' ? 'Match Details' : 'Match Details'}</span>
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        ) : match.status === 'SCHEDULED' && battingFirstTeam && battingSecondTeam && (
+          <button
+            onClick={handlePreviewClick}
+            className="mt-3 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
+          >
+            <span className='font-caption font-bold'>Match Preview</span>
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
+
         {/* Fantasy Stats Section - Top Squads */}
         {!loading && topSquads.length > 0 && (
           <div className="mb-3">
@@ -312,7 +335,13 @@ const MatchCard = ({ match, leagueId }) => {
             
             {/* Squad 1 */}
             {topSquads.length > 0 && (
-              <div className="flex items-center justify-between mb-2">
+              <div
+                className="flex items-center justify-between mb-2 p-2 py-1 rounded-md"
+                style={{
+                  backgroundColor: hexToRgba(topSquads[0]?.color || '#6B7280', 0.1),
+                  border: `1px solid ${topSquads[0]?.color || '#6B7280'}`
+                }}
+              >
                 <div className="flex items-center">
                   <CapIcon
                     size={24}
@@ -325,7 +354,7 @@ const MatchCard = ({ match, leagueId }) => {
                   </span>
                 </div>
                 <span className="text-green-600 dark:text-green-500 text-md font-bold whitespace-nowrap ml-2">
-                  <span class="font-number">{topSquads[0]?.match_points}</span> pts
+                  <span className="font-number">{topSquads[0]?.match_points}</span> pts
                 </span>
               </div>
             )}
@@ -343,7 +372,7 @@ const MatchCard = ({ match, leagueId }) => {
                   </span>
                 </div>
                 <span className="text-neutral-900 dark:text-white text-sm whitespace-nowrap ml-2">
-                  <span class="font-number">{topSquads[1]?.match_points}</span> pts
+                  <span className="font-number">{topSquads[1]?.match_points}</span> pts
                 </span>
               </div>
             )}
@@ -419,29 +448,6 @@ const MatchCard = ({ match, leagueId }) => {
               </div>
             )}
           </div>
-        )}
-        
-        {/* View Match Details or Preview button */}
-        {isClickable ? (
-          <button
-            onClick={handleMatchClick}
-            className="mt-4 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
-          >
-            <span className='font-caption font-bold'>{match.status === 'LIVE' ? 'View Match Details' : 'View Match Details'}</span>
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        ) : match.status === 'SCHEDULED' && battingFirstTeam && battingSecondTeam && (
-          <button
-            onClick={handlePreviewClick}
-            className="mt-3 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
-          >
-            <span className='font-caption font-bold'>Preview</span>
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
         )}
       </div>
     </div>

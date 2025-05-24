@@ -145,7 +145,7 @@ const LeagueDashboard = ({ league }) => {
                 </div>
 
                 {/* Matches Section with pills */}
-                  <div className="space-y-4 max-w-[440px]">
+                  <div className="space-y-4 max-w-[560px]">
                     <div className="flex items-center justify-between">
                       <div className="flex space-x-2">
                         <button
