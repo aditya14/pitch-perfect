@@ -196,14 +196,22 @@ const LeagueDashboard = ({ league }) => {
                     ) : (
                       upcomingMatches.length > 0 ? (
                         <div className="space-y-4">
-                    {upcomingMatches.map(match => (
-                      <MatchCard 
-                        key={match.id}
-                        match={match}
-                        leagueId={league.id}
-                        compact={true}
-                      />
-                    ))}
+      {upcomingMatches.map(match => (
+        <MatchCard 
+          key={match.id}
+          match={{
+            ...match,
+            team_1: match.team_1
+              ? { ...match.team_1, name: match.team_1.name || 'TBD', short_name: match.team_1.short_name || 'TBD' }
+              : { name: 'TBD', short_name: 'TBD' },
+            team_2: match.team_2
+              ? { ...match.team_2, name: match.team_2.name || 'TBD', short_name: match.team_2.short_name || 'TBD' }
+              : { name: 'TBD', short_name: 'TBD' }
+          }}
+          leagueId={league.id}
+          compact={true}
+        />
+      ))}
                         </div>
                       ) : (
                         <div className="bg-white dark:bg-neutral-800 shadow border border-neutral-200 dark:border-neutral-700 rounded-lg p-6 text-center">
