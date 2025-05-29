@@ -111,7 +111,10 @@ const MatchOverview = ({ matchData }) => {
             
             <div className="text-right">
               <div className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {matchData.inns_1_runs}/{matchData.inns_1_wickets}
+                {matchData.inns_1_runs}
+                {matchData.inns_1_wickets !== 10 && (
+                  <>/{matchData.inns_1_wickets}</>
+                )}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
                 ({matchData.inns_1_overs} overs)
@@ -153,7 +156,10 @@ const MatchOverview = ({ matchData }) => {
             {matchData.inns_2_runs !== null && matchData.inns_2_wickets != null && matchData.inns_2_overs != null && (
             <div className="text-right">
               <div className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {matchData.inns_2_runs}/{matchData.inns_2_wickets}
+                {matchData.inns_2_runs}
+                {matchData.inns_2_wickets !== 10 && (
+                  <>/{matchData.inns_2_wickets}</>
+                )}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
                 ({matchData.inns_2_overs} overs)
