@@ -265,7 +265,7 @@ const LeagueCard = ({ league }) => {
                   <>
                     <Trophy className="h-4 w-4 text-yellow-500 mr-2" />
                     <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                      Leader:
+                      Winner:
                     </span>
                   </>
                 )}
