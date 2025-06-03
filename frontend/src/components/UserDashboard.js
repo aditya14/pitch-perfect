@@ -211,7 +211,7 @@ const LeagueCard = ({ league }) => {
                 <div className="flex flex-col">
                   {isUserLeading ? (
                     <>
-                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">LEADING</span>
+                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">WINNER</span>
                       <div className="flex items-center">
                         <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
                         <span className="font-bold text-yellow-600 dark:text-yellow-400">
