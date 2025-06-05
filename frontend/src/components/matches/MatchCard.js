@@ -45,8 +45,18 @@ const MatchCard = ({ match, leagueId }) => {
     }
   }
 
+  const firstColorHex = battingFirstTeam.primary_color ? `#${battingFirstTeam.primary_color}` : '#6B7280';
+  const secondColorHex = battingSecondTeam.primary_color ? `#${battingSecondTeam.primary_color}` : '#6B7280';
+
   useEffect(() => {
-    if (match && ['COMPLETED', 'LIVE'].includes(match.status)) {
+    // Reset state when match or leagueId changes before fetching
+    setLoading(true);
+    setTopPlayers([]);
+    setTopSquads([]);
+    setError(null);
+    setTimeRemaining(null); // Reset countdown too
+
+    if (match && ['COMPLETED', 'LIVE', 'NO_RESULT'].includes(match.status)) {
       fetchFantasyStats();
     } else {
       setLoading(false);
@@ -82,7 +92,7 @@ const MatchCard = ({ match, leagueId }) => {
       
       return () => clearInterval(timer);
     }
-  }, [match]);
+  }, [match?.id, leagueId, match?.status, match?.date]); // Use match.id and include status/date
 
   const fetchFantasyStats = async () => {
     try {
@@ -112,6 +122,15 @@ const MatchCard = ({ match, leagueId }) => {
       navigate(`/leagues/${leagueId}/matches/${match.id}`);
     } else {
       navigate(`/matches/${match.id}`);
+    }
+  };
+
+  // Add preview navigation for SCHEDULED matches
+  const handlePreviewClick = () => {
+    if (leagueId) {
+      navigate(`/leagues/${leagueId}/matches/${match.id}/preview`);
+    } else {
+      navigate(`/matches/${match.id}/preview`);
     }
   };
 
@@ -147,14 +166,14 @@ const MatchCard = ({ match, leagueId }) => {
     // Return empty string if runs is undefined, null, or not a valid number
     if (runs === undefined || runs === null || isNaN(runs)) return '';
     
-    // Format wickets (only if it's a valid number)
-    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets)) 
-      ? `/${wickets}` 
+    // Format wickets (skip display if team is all out, i.e. 10 wickets)
+    const wicketsDisplay = (wickets !== undefined && wickets !== null && !isNaN(wickets) && wickets < 10)
+      ? `/${wickets}`
       : '';
     
-    // Format overs (only if it's a valid string or number)
-    const oversDisplay = (overs !== undefined && overs !== null && overs !== '') 
-      ? ` (${overs} ov)` 
+    // Format overs
+    const oversDisplay = (overs !== undefined && overs !== null && overs !== '')
+      ? ` (${overs} ov)`
       : '';
     
     return `${runs}${wicketsDisplay}${oversDisplay}`;
@@ -162,106 +181,111 @@ const MatchCard = ({ match, leagueId }) => {
 
   const formattedDateTime = formatMatchDateTime();
   const formattedCountdown = formatCountdown();
-  const isClickable = ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status);
+  const isClickable = ['COMPLETED', 'NO_RESULT', 'LIVE'].includes(match.status);
+
+  // Determine winner ID for conditional styling
+  const winnerId = (match.status === 'COMPLETED' && match.winner) 
+    ? match.winner.id 
+    : null;
 
   return (
-    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800">
-      {/* Header: Match number + date/time */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center mb-2 sm:mb-0">
+    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800 transition-transform hover:shadow-md">
+
+      {/* Accent Line */}
+      <div 
+        className="h-1 w-full" 
+        style={{ background: `linear-gradient(to right, ${firstColorHex}, ${secondColorHex})` }} 
+      />
+
+      {/* Header: compact, single line, smaller */}
+      <div className="flex items-center justify-between p-2 px-4 border-b border-neutral-200 dark:border-neutral-800 text-xs">
+        <div className="flex items-center space-x-2">
           <span className="text-neutral-900 dark:text-white font-medium">Match {match.match_number}</span>
-          <span className="text-neutral-500 dark:text-neutral-400 mx-2">•</span>
-          <span className="text-neutral-500 dark:text-neutral-400 uppercase">
-            {match.stage || "LEAGUE"}
-          </span>
-          
-          {/* Live indicator */}
+          <span className="text-neutral-500 dark:text-neutral-400">•</span>
+          <span className="text-neutral-500 dark:text-neutral-400 uppercase">{match.stage || "LEAGUE"}</span>
           {match.status === 'LIVE' && (
-            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full animate-pulse">
-              LIVE
-            </span>
+            <span className="px-1 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full animate-pulse">LIVE</span>
           )}
         </div>
-        
         {match.date && (
-          <div className="flex items-center text-neutral-500 dark:text-neutral-400 text-sm">
-            <Calendar className="h-4 w-4 mr-1" />
+          <div className="flex items-center space-x-1 text-neutral-500 dark:text-neutral-400">
+            <Calendar className="h-4 w-4"/>
             <span>{formattedDateTime.date}</span>
-            <span className="mx-1">•</span>
-            <Clock className="h-4 w-4 mr-1" />
+            <span>•</span>
+            <Clock className="h-4 w-4"/>
             <span>{formattedDateTime.time}</span>
           </div>
         )}
       </div>
-      
+
       {/* Main content area */}
-      <div className="p-3">
-        {/* Teams and scores - Batting First Team */}
+      <div className="p-3 px-4">
+        {/* Teams and scores combined on one line */}
         <div className="flex items-center justify-between mb-3">
-          {battingFirstTeam ? (
-            <div className="flex items-center">
-              <div className='h-2.5 w-2.5 mr-1.5 rounded-sm'
-                style={{
-                  backgroundColor: battingFirstTeam.primary_color ? `${'#' + battingFirstTeam.primary_color}` : '#6B7280',
-                  opacity: match.winner 
-                    ? (battingFirstTeam?.short_name === match?.winner?.short_name ? 1 : 0.1) 
-                    : 1,
-                  boxShadow: match.winner && battingFirstTeam?.short_name === match?.winner?.short_name 
-                    ? `1px 1px 5px ${hexToRgba(battingFirstTeam.primary_color, 0.9)}` 
-                    : 'none'
-                 }}
-              />
-              <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingFirstTeam?.short_name === match?.winner?.short_name ? 'font-bold' : 'font-light'}`}>
+          <div className="flex items-center space-x-2">
+            {battingFirstTeam ? (
+              <span
+                className="px-2 py-0.5 text-xs font-caption font-semibold rounded-md"
+                style={{ backgroundColor: firstColorHex, color: getTextColorForBackground(firstColorHex) }}
+              >
                 {battingFirstTeam.short_name || battingFirstTeam.name}
               </span>
-            </div>
-          ) : (
-            <span className="text-neutral-900 dark:text-white">TBD</span>
-          )}
-          
-          <div className="text-neutral-900 dark:text-white text-sm">
-            {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
-              <span>{formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}</span>
+            ) : (
+              <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
+            )}
+            {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
+              <span className={`text-md ${
+                winnerId === battingFirstTeam?.id
+                  ? 'text-green-600 dark:text-green-500 font-semibold'
+                  : 'text-neutral-900 dark:text-white'
+              }`}>
+                {formatScore(match.inns_1_runs, match.inns_1_wickets, match.inns_1_overs)}
+              </span>
             )}
           </div>
-        </div>
-        
-        {/* Teams and scores - Batting Second Team */}
-        <div className="flex items-center justify-between mb-3">
-          {battingSecondTeam ? (
-            <div className="flex items-center">
-              <div className='h-2.5 w-2.5 mr-1.5 rounded-sm'
-                style={{
-                  backgroundColor: battingSecondTeam.primary_color ? `${'#' + battingSecondTeam.primary_color}` : '#6B7280',
-                  opacity: match.winner 
-                    ? (battingSecondTeam?.short_name === match?.winner?.short_name ? 1 : 0.1) 
-                    : 1,
-                  boxShadow: match.winner && battingSecondTeam?.short_name === match?.winner?.short_name 
-                    ? `1px 1px 5px ${hexToRgba(battingSecondTeam.primary_color, 0.9)}` 
-                    : 'none'
-                }}
-              />
-              <span className={`text-sm text-center text-neutral-900 dark:text-white ${battingSecondTeam?.short_name === match?.winner?.short_name ? 'font-bold' : 'font-light'}`}>
+          <div className="flex items-center space-x-2">
+            {battingSecondTeam ? (
+              <span
+                className="px-2 py-0.5 text-xs font-caption font-semibold rounded-md"
+                style={{ backgroundColor: secondColorHex, color: getTextColorForBackground(secondColorHex) }}
+              >
                 {battingSecondTeam.short_name || battingSecondTeam.name}
               </span>
-            </div>
-          ) : (
-            <span className="text-neutral-900 dark:text-white">TBD</span>
-          )}
-          
-          <div className="text-neutral-900 dark:text-white text-sm">
-            {(match.status === 'COMPLETED' || match.status === 'LIVE') && (
-              <span>{formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}</span>
+            ) : (
+              <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
+            )}
+            {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
+              <span className={`text-md ${
+                winnerId === battingSecondTeam?.id
+                  ? 'text-green-600 dark:text-green-500 font-semibold'
+                  : 'text-neutral-900 dark:text-white'
+              }`}>
+                {formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}
+              </span>
             )}
           </div>
         </div>
         
         {/* Match Result */}
-        {match.status === 'COMPLETED' && match.winner && (
+        {((match.status === 'COMPLETED' && match.winner) || match.status === 'ABANDONED' || match.status === 'NO_RESULT') && (
           <div className="flex items-center mb-3">
             <Trophy className="h-4 w-4 text-yellow-500 mr-1.5" />
             <span className="text-neutral-700 dark:text-neutral-300 text-sm">
-              {match.winner.name} won by {match.win_margin} {match.win_type === 'RUNS' ? 'runs' : 'wickets'}
+              {match.win_type === 'RUNS' && (
+                <>{match.winner.name} won by {match.win_margin} {match.win_margin === 1 ? 'run' : 'runs'}</>
+              )}
+              {match.win_type === 'WICKETS' && (
+                <>{match.winner.name} won by {match.win_margin} {match.win_margin === 1 ? 'wicket' : 'wickets'}</>
+              )}
+              {match.win_type === 'TIE' && (
+                <>Match tied</>
+              )}
+              {match.win_type === 'SUPER_OVER' && (
+                <>{match.winner.name} won via Super Over</>
+              )}
+              {match.win_type === 'NO_RESULT' && (
+                <>No Result</>
+              )}
             </span>
           </div>
         )}
@@ -279,6 +303,29 @@ const MatchCard = ({ match, leagueId }) => {
         {/* Horizontal line separating match details from fantasy stats */}
         <div className="border-t border-neutral-200 dark:border-neutral-800 my-2" />
 
+        {/* View Match Details or Preview button */}
+        {isClickable ? (
+          <button
+            onClick={handleMatchClick}
+            className="my-2 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
+          >
+            <span className='font-caption font-bold'>{match.status === 'LIVE' ? 'Match Details' : 'Match Details'}</span>
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        ) : match.status === 'SCHEDULED' && battingFirstTeam && battingSecondTeam && (
+          <button
+            onClick={handlePreviewClick}
+            className="mt-3 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
+          >
+            <span className='font-caption font-bold'>Match Preview</span>
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
+
         {/* Fantasy Stats Section - Top Squads */}
         {!loading && topSquads.length > 0 && (
           <div className="mb-3">
@@ -288,7 +335,13 @@ const MatchCard = ({ match, leagueId }) => {
             
             {/* Squad 1 */}
             {topSquads.length > 0 && (
-              <div className="flex items-center justify-between mb-2">
+              <div
+                className="flex items-center justify-between mb-2 p-2 py-1 rounded-md"
+                style={{
+                  backgroundColor: hexToRgba(topSquads[0]?.color || '#6B7280', 0.1),
+                  border: `1px solid ${topSquads[0]?.color || '#6B7280'}`
+                }}
+              >
                 <div className="flex items-center">
                   <CapIcon
                     size={24}
@@ -296,12 +349,12 @@ const MatchCard = ({ match, leagueId }) => {
                     color={topSquads[0]?.color || '#6B7280'} 
                     className="mr-1.5" 
                   />
-                  <span className="text-neutral-900 dark:text-white text-md font-bold truncate max-w-[150px]">
+                  <span className="text-neutral-900 dark:text-white text-md font-bold truncate max-w-[150px] font-caption">
                     {topSquads[0]?.name}
                   </span>
                 </div>
                 <span className="text-green-600 dark:text-green-500 text-md font-bold whitespace-nowrap ml-2">
-                  {topSquads[0]?.match_points} pts
+                  <span className="font-number">{topSquads[0]?.match_points}</span> pts
                 </span>
               </div>
             )}
@@ -319,7 +372,7 @@ const MatchCard = ({ match, leagueId }) => {
                   </span>
                 </div>
                 <span className="text-neutral-900 dark:text-white text-sm whitespace-nowrap ml-2">
-                  {topSquads[1]?.match_points} pts
+                  <span className="font-number">{topSquads[1]?.match_points}</span> pts
                 </span>
               </div>
             )}
@@ -359,7 +412,7 @@ const MatchCard = ({ match, leagueId }) => {
                     )}
                 </div>
                 <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
-                  {topPlayers[0]?.fantasy_points} pts
+                  <span class="font-number">{topPlayers[0]?.fantasy_points}</span> pts
                 </span>
               </div>
             )}
@@ -390,24 +443,11 @@ const MatchCard = ({ match, leagueId }) => {
                     )}
                 </div>
                 <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
-                  {topPlayers[1]?.fantasy_points} pts
+                  <span class="font-number">{topPlayers[1]?.fantasy_points}</span> pts
                 </span>
               </div>
             )}
           </div>
-        )}
-        
-        {/* View Match Details button */}
-        {isClickable && (
-          <button
-            onClick={handleMatchClick}
-            className="mt-4 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
-          >
-            <span>{match.status === 'LIVE' ? 'View Match Details' : 'View Match Details'}</span>
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
         )}
       </div>
     </div>

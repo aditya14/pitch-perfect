@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/axios';
-import { Users, Shield, Zap, Trophy, Globe, Flame, Crown, Swords, Anchor, Handshake, Bomb, EarthLock, Sparkles, ChevronLeft, ChevronRight, ArrowUpDown, ShieldHalf, Volleyball } from 'lucide-react';
+import { Users, Shield, Zap, Trophy, Globe, Crown, Swords, Anchor, Handshake, Bomb, EarthLock, Sparkles, BarChartHorizontal, ShieldHalf, Volleyball } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
 
 // Helper function to get role icon
@@ -33,31 +33,8 @@ const LeagueSquads = ({ league }) => {
   const [draftData, setDraftData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeView, setActiveView] = useState('names'); // 'names', 'draft', 'roles', 'teams', 'boosts'
-  const [playerDemandRanking, setPlayerDemandRanking] = useState([]);
-  const [tooltip, setTooltip] = useState({ 
-    visible: false, 
-    playerId: null, 
-    playerName: null, 
-    avgRank: null,
-    position: { x: 0, y: 0 } 
-  });
-  const [visibleColumns, setVisibleColumns] = useState({ start: 0, count: 3 }); // For mobile scrolling
-
-  // Determine visible column count based on screen size
-  useEffect(() => {
-    const handleResize = () => {
-      let count = 3; // Default for mobile
-      if (window.innerWidth >= 1280) count = 10; // xl screens
-      else if (window.innerWidth >= 1024) count = 5; // lg screens
-      else if (window.innerWidth >= 768) count = 4; // md screens
-      setVisibleColumns({ start: 0, count });
-    };
-
-    handleResize(); // Set initial value
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [activeView, setActiveView] = useState('names'); // 'names', 'draft', 'mid_season_draft', 'roles', 'teams', 'boosts'
+  const [avgMidSeasonDraftRanks, setAvgMidSeasonDraftRanks] = useState({});
 
   useEffect(() => {
     const fetchSquadsData = async () => {
@@ -68,27 +45,22 @@ const LeagueSquads = ({ league }) => {
         
         // Fetch all league squads data using the new endpoint
         const squadsResponse = await api.get(`/leagues/${league.id}/squads/`);
-        const { squads: squadsData, avg_draft_ranks } = squadsResponse.data;
+        const { squads: squadsData, avg_draft_ranks, avg_mid_season_draft_ranks } = squadsResponse.data;
         
         // Sort squads by snake_draft_order if available
         let sortedSquads = [...squadsData];
         if (league.snake_draft_order && league.snake_draft_order.length > 0) {
-          // Create a map for faster lookups
           const squadsMap = {};
           squadsData.forEach(squad => {
             squadsMap[squad.id] = squad;
           });
-          
-          // Order squads based on snake_draft_order
           sortedSquads = [];
           league.snake_draft_order.forEach(squadId => {
             if (squadsMap[squadId]) {
               sortedSquads.push(squadsMap[squadId]);
-              delete squadsMap[squadId]; // Remove to avoid duplicates
+              delete squadsMap[squadId];
             }
           });
-          
-          // Add any remaining squads not in snake_draft_order
           Object.values(squadsMap).forEach(squad => {
             sortedSquads.push(squad);
           });
@@ -119,16 +91,8 @@ const LeagueSquads = ({ league }) => {
         };
         setDraftData(draftInfo);
         
-        // Convert average draft ranks to our sorted array format
-        const avgRankings = Object.entries(avg_draft_ranks).map(([playerId, avgRank]) => ({
-          playerId: parseInt(playerId),
-          avgRank: avgRank,
-          totalRankings: sortedSquads.length
-        }));
-        
-        // Sort by ascending average rank (lower is better/more in demand)
-        avgRankings.sort((a, b) => a.avgRank - b.avgRank);
-        setPlayerDemandRanking(avgRankings);
+        // Store mid-season average ranks
+        setAvgMidSeasonDraftRanks(avg_mid_season_draft_ranks || {});
         
         setLoading(false);
       } catch (err) {
@@ -144,120 +108,79 @@ const LeagueSquads = ({ league }) => {
   // Group players by role
   const playersByRole = useMemo(() => {
     const result = {};
-    
     Object.entries(squadPlayers).forEach(([squadId, players]) => {
+      const currentPlayers = players.filter(p => p.status === 'current');
       result[squadId] = {
-        BAT: players.filter(p => p.role === 'BAT'),
-        BOWL: players.filter(p => p.role === 'BOWL'),
-        ALL: players.filter(p => p.role === 'ALL'),
-        WK: players.filter(p => p.role === 'WK')
+        BAT: currentPlayers.filter(p => p.role === 'BAT'),
+        BOWL: currentPlayers.filter(p => p.role === 'BOWL'),
+        ALL: currentPlayers.filter(p => p.role === 'ALL'),
+        WK: currentPlayers.filter(p => p.role === 'WK')
       };
     });
-    
     return result;
   }, [squadPlayers]);
   
   // Group players by IPL team
   const playersByTeam = useMemo(() => {
     const result = {};
-    
     Object.entries(squadPlayers).forEach(([squadId, players]) => {
       result[squadId] = {};
-      
-      // Group players by their IPL team
-      players.forEach(player => {
-        const teamCode = player.team_code || 'Unknown';
-        if (!result[squadId][teamCode]) {
-          result[squadId][teamCode] = [];
-        }
-        result[squadId][teamCode].push(player);
-      });
+      players
+        .filter(player => player.status === 'current')
+        .forEach(player => {
+          const teamCode = player.team_code || 'Unknown';
+          if (!result[squadId][teamCode]) {
+            result[squadId][teamCode] = [];
+          }
+          result[squadId][teamCode].push(player);
+        });
     });
-    
     return result;
   }, [squadPlayers]);
-  
-  // Helper function to get player average rank
-  const getPlayerAvgRank = (playerId) => {
-    const playerRanking = playerDemandRanking.find(item => item.playerId === parseInt(playerId));
-    return playerRanking ? playerRanking.avgRank.toFixed(2) : 'N/A';
-  };
-  
-  // Find player in demand rankings with improved styling
-  const getPlayerDemandInfo = (playerId) => {
-    const playerRank = playerDemandRanking.findIndex(item => item.playerId === parseInt(playerId));
-    let demandClass = '';
-    let isHotPick = false; // Flag for showing tooltip
-    
-    if (playerRank >= 0 && playerRank < 5) {
-      // Top 5 most in demand - on fire!
-      demandClass = 'bg-gradient-to-r from-red-500 to-yellow-500 text-white font-bold';
-      isHotPick = true;
-    } else if (playerRank >= 5 && playerRank < 15) {
-      // Next 10 most in demand - subtle glow effect
-      demandClass = 'bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700';
-      isHotPick = true;
-    }
-    
-    return { 
-      rank: playerRank + 1, 
-      demandClass, 
-      avgRank: getPlayerAvgRank(playerId),
-      isHotPick,
-      playerRank // Include the actual rank value
-    };
-  };
-  
-  // Helper function to show tooltip
-  const showTooltip = (playerId, playerName, avgRank, isHotPick, event) => {
-    if (!isHotPick || !event) return;
-    
-    const tableContainer = event.currentTarget.closest('.overflow-x-auto');
-    const rect = tableContainer.getBoundingClientRect();
-    
-    setTooltip({
-      visible: true,
-      playerId: parseInt(playerId),
-      playerName,
-      avgRank,
-      position: {
-        x: event.clientX,
-        y: event.clientY - rect.top + tableContainer.scrollTop
-      }
-    });
-  };
-  
-  // Helper function to hide tooltip
-  const hideTooltip = () => {
-    setTooltip({ visible: false, playerId: null, playerName: null, avgRank: null });
-  };
 
-  // Pagination controls for mobile view
-  const nextPage = () => {
-    if (visibleColumns.start + visibleColumns.count < squads.length) {
-      setVisibleColumns(prev => ({
-        ...prev,
-        start: prev.start + 1
-      }));
+  // Calculate ordered squads for draft views outside the return statement
+  const orderedPreSeasonSquads = useMemo(() => {
+    let ordered = [...squads];
+    if (league?.snake_draft_order?.length > 0) {
+      const squadsMap = squads.reduce((acc, squad) => {
+        acc[squad.id] = squad;
+        return acc;
+      }, {});
+      ordered = league.snake_draft_order
+        .map(squadId => squadsMap[squadId])
+        .filter(Boolean);
+      // Add any squads not in the draft order
+      squads.forEach(squad => {
+        if (!league.snake_draft_order.includes(squad.id)) {
+          ordered.push(squad);
+        }
+      });
     }
-  };
+    return ordered;
+  }, [squads, league?.snake_draft_order]);
 
-  const prevPage = () => {
-    if (visibleColumns.start > 0) {
-      setVisibleColumns(prev => ({
-        ...prev,
-        start: prev.start - 1
-      }));
+  const orderedMidSeasonSquads = useMemo(() => {
+    let ordered = [...squads];
+    if (league?.mid_season_draft_order?.length > 0) {
+      const squadsMap = squads.reduce((acc, squad) => {
+        acc[squad.id] = squad;
+        return acc;
+      }, {});
+      ordered = league.mid_season_draft_order
+        .map(squadId => squadsMap[squadId])
+        .filter(Boolean);
+      // Add any remaining squads not in the order
+      squads.forEach(squad => {
+        if (!league.mid_season_draft_order.includes(squad.id)) {
+          ordered.push(squad);
+        }
+      });
+    } else {
+      // Fallback sort if no mid-season order (e.g., by points or name)
+      ordered.sort((a, b) => (a.total_points || 0) - (b.total_points || 0)); // Example: sort by lowest points first
     }
-  };
-
-  // Get visible squads for current view
-  const visibleSquads = useMemo(() => {
-    return squads.slice(
-      visibleColumns.start,
-      visibleColumns.start + visibleColumns.count
-    );
-  }, [squads, visibleColumns]);
+    return ordered;
+  }, [squads, league?.mid_season_draft_order]);
 
   if (loading) {
     return <LoadingScreen message="Loading Squads" description="Getting all squad information" />;
@@ -271,10 +194,12 @@ const LeagueSquads = ({ league }) => {
     );
   }
 
-  // Calculate progress indicators for pagination
-  const showPagination = squads.length > visibleColumns.count;
-  const canGoNext = visibleColumns.start + visibleColumns.count < squads.length;
-  const canGoPrev = visibleColumns.start > 0;
+  // Determine which squad list to use based on activeView
+  const squadsToDisplay = 
+    activeView === 'draft' ? orderedPreSeasonSquads :
+    // Reverse the order for mid-season draft view
+    activeView === 'mid_season_draft' ? [...orderedMidSeasonSquads].reverse() : 
+    squads; // Default to original order for other views
 
   return (
     <div className="space-y-4">
@@ -292,7 +217,7 @@ const LeagueSquads = ({ league }) => {
           All Players
         </button>
         
-        <button
+        {/* <button
           onClick={() => setActiveView('draft')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             activeView === 'draft'
@@ -300,8 +225,20 @@ const LeagueSquads = ({ league }) => {
               : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
         >
-          <ArrowUpDown className="h-3 w-3 mr-1" />
-          Draft Order
+          <BarChartHorizontal className="h-3 w-3 mr-1" /> 
+          Pre-Season Draft
+        </button> */}
+
+        <button
+          onClick={() => setActiveView('mid_season_draft')}
+          className={`flex items-center px-3 py-2 text-xs rounded-md ${
+            activeView === 'mid_season_draft'
+              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
+              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+          }`}
+        >
+          <BarChartHorizontal className="h-3 w-3 mr-1" />
+          Mid-Season Draft
         </button>
         
         <button
@@ -340,45 +277,18 @@ const LeagueSquads = ({ league }) => {
           Boosts
         </button>
       </div>
-
-      {/* Mobile Pagination Controls */}
-      {showPagination && (
-        <div className="flex items-center justify-between mb-2">
-          <button 
-            onClick={prevPage} 
-            disabled={!canGoPrev}
-            className={`p-1 rounded-md ${!canGoPrev ? 'text-neutral-400 cursor-not-allowed' : 'text-neutral-700 dark:text-neutral-300'}`}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          
-          <div className="text-xs text-neutral-600 dark:text-neutral-400">
-            {visibleColumns.start + 1}-{Math.min(visibleColumns.start + visibleColumns.count, squads.length)} of {squads.length} squads
-          </div>
-          
-          <button 
-            onClick={nextPage} 
-            disabled={!canGoNext}
-            className={`p-1 rounded-md ${!canGoNext ? 'text-neutral-400 cursor-not-allowed' : 'text-neutral-700 dark:text-neutral-300'}`}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      )}
       
-      {/* Squad Table - More compact and spreadsheet-like */}
       <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-x-auto">
         <table className="w-full border-collapse text-xs">
-          <thead>
+          <thead className="sticky top-0 z-20"> 
             <tr className="bg-neutral-50 dark:bg-neutral-700">
-              {/* Squad columns - No first column in 'names' view */}
               {activeView !== 'names' && (
-                <th className="sticky left-0 bg-neutral-50 dark:bg-neutral-700 z-10 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600">
-                  {activeView === 'teams' ? 'IPL Team' : (activeView === 'draft' ? 'Rank' : activeView === 'roles' ? 'Role' : 'Boost')}
+                <th className="sticky left-0 bg-neutral-50 dark:bg-neutral-700 z-30 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600">
+                  {activeView === 'teams' ? 'IPL Team' : (activeView === 'draft' || activeView === 'mid_season_draft' ? 'Rank' : activeView === 'roles' ? 'Role' : 'Boost')}
                 </th>
               )}
               
-              {visibleSquads.map(squad => (
+              {squadsToDisplay.map(squad => (
                 <th 
                   key={squad.id}
                   className="px-2 py-2 text-center text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600"
@@ -400,91 +310,45 @@ const LeagueSquads = ({ league }) => {
           </thead>
           
           <tbody>
-            {/* NAMES VIEW */}
             {activeView === 'names' && (
-              <>
-                {/* Create a single row with multiple cells, one per squad */}
-                <tr>
-                  {visibleSquads.map(squad => (
-                    <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400 align-top border border-neutral-200 dark:border-neutral-600">
-                        {squadPlayers[squad.id]?.map(player => {
-                        const { demandClass, avgRank, isHotPick, playerRank } = getPlayerDemandInfo(player.id);
-                        return (
-                            <div 
-                            key={player.id} 
-                            className={`px-1 py-1 truncate ${demandClass} border-b border-neutral-100 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700`}
-                            title={isHotPick ? `Avg. Rank: ${avgRank}` : ""}
-                            >
-                            {playerRank <= 4 && <Flame className="h-2 w-2 inline-block mr-1 text-white" />}
-                            {player.name}
-                            </div>
-                        );
-                        })}
-                    </td>
-                  ))}
-                </tr>
-              </>
+              <tr>
+                {squadsToDisplay.map(squad => (
+                  <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400 align-top border border-neutral-200 dark:border-neutral-600">
+                    {squadPlayers[squad.id]
+                      ?.filter(player => player.status === 'current')
+                      .map(player => (
+                        <div 
+                          key={player.id} 
+                          className={`px-1 py-1 truncate border-b border-neutral-100 dark:border-neutral-700`}
+                        >
+                          {player.name}
+                        </div>
+                      ))}
+                  </td>
+                ))}
+              </tr>
             )}
             
-            {/* DRAFT ORDER VIEW */}
             {activeView === 'draft' && (
               (() => {
-                // Get ordered squads based on snake_draft_order
-                let orderedSquads = [...visibleSquads];
-                
-                if (league && league.snake_draft_order && league.snake_draft_order.length > 0) {
-                  // Create a map for faster lookups
-                  const squadsMap = {};
-                  visibleSquads.forEach(squad => {
-                    squadsMap[squad.id] = squad;
-                  });
-                  
-                  // Order squads according to snake_draft_order
-                  orderedSquads = [];
-                  league.snake_draft_order.forEach(squadId => {
-                    const squad = squadsMap[squadId];
-                    if (squad) {
-                      orderedSquads.push(squad);
-                    }
-                  });
-                  
-                  // Add any squads not in the draft order
-                  visibleSquads.forEach(squad => {
-                    if (!league.snake_draft_order.includes(squad.id)) {
-                      orderedSquads.push(squad);
-                    }
-                  });
-                }
-                
-                // Get max length of draft rankings
-                const maxRankings = Math.max(...orderedSquads.map(s => (s.draft_ranking || []).length), 0);
-                
-                const displayRankings = maxRankings
-                
-                return Array.from({ length: displayRankings }).map((_, rankIndex) => (
-                  <tr key={`rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : ''}>
-                    {/* Player rank as the first cell in each row */}
-                    <td className="sticky left-0 bg-white dark:bg-neutral-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600">
+                const maxRankings = Math.max(...orderedPreSeasonSquads.map(s => (s.draft_ranking || []).length), 0);
+                return Array.from({ length: maxRankings }).map((_, rankIndex) => (
+                  <tr key={`rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
+                    <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
+                        style={{ backgroundColor: rankIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                    >
                       {rankIndex + 1}
                     </td>
-                    
-                    {/* For each squad in draft order, show the player at this rank */}
-                    {orderedSquads.map(squad => {
-                      // Get the player ID at this rank
+                    {orderedPreSeasonSquads.map(squad => {
                       const playerId = squad.draft_ranking?.[rankIndex];
                       if (!playerId) return (
                         <td key={`${squad.id}-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-neutral-400 dark:text-neutral-500 border border-neutral-200 dark:border-neutral-600">
                           -
                         </td>
                       );
-                      
-                      // Find player in playersData
                       const playerIdInt = typeof playerId === 'string' ? parseInt(playerId) : playerId;
                       const player = playersData.find(p => p.id === playerIdInt);
-                      
-                      // Check if player is in this squad
                       const isInSquad = squad.players?.some(p => p.id === playerIdInt && p.status === 'current');
-                      
                       return (
                         <td 
                           key={`${squad.id}-rank-${rankIndex}`} 
@@ -500,8 +364,51 @@ const LeagueSquads = ({ league }) => {
                 ));
               })()
             )}
+
+            {activeView === 'mid_season_draft' && (
+              (() => {
+                const maxRankings = Math.max(...orderedMidSeasonSquads.map(s => (s.mid_season_draft_ranking || []).length), 0);
+                // Use the same reversed array as the header
+                const reversedOrderedSquads = [...orderedMidSeasonSquads].reverse(); 
+                return Array.from({ length: maxRankings }).map((_, rankIndex) => (
+                  <tr key={`mid-rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
+                    <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
+                        style={{ backgroundColor: rankIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                    >
+                      {rankIndex + 1}
+                    </td>
+                    {/* Map over the reversed array */}
+                    {reversedOrderedSquads.map(squad => { 
+                      const playerId = squad.mid_season_draft_ranking?.[rankIndex];
+                      if (!playerId) return (
+                        <td key={`${squad.id}-mid-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-neutral-400 dark:text-neutral-500 border border-neutral-200 dark:border-neutral-600">
+                          -
+                        </td>
+                      );
+                      const playerIdInt = typeof playerId === 'string' ? parseInt(playerId) : playerId;
+                      const player = playersData.find(p => p.id === playerIdInt);
+                      const isRetained = squad.current_core_squad?.some(core => core.player_id === playerIdInt);
+                      const isInSquad = squad.players?.some(p => p.id === playerIdInt && p.status === 'current');
+                      let cellClass = `px-2 py-1 whitespace-nowrap text-xs truncate border border-neutral-200 dark:border-neutral-600`;
+                      if (isRetained) {
+                        cellClass += ' text-neutral-400 dark:text-neutral-500 italic';
+                      } else if (isInSquad) {
+                        cellClass += ' bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300';
+                      } else {
+                        cellClass += ' text-neutral-500 dark:text-neutral-400';
+                      }
+                      return (
+                        <td key={`${squad.id}-mid-rank-${rankIndex}`} className={cellClass}>
+                          {player ? player.name : `ID: ${playerId}`}
+                          {isRetained && ' (R)'}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ));
+              })()
+            )}
             
-            {/* ROLES VIEW */}
             {activeView === 'roles' && (
               Object.entries({
                 BAT: 'BAT',
@@ -509,66 +416,59 @@ const LeagueSquads = ({ league }) => {
                 ALL: 'ALL',
                 WK: 'WK'
               }).map(([role, label], roleIndex) => (
-                <tr key={role} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : ''}>
-                  <td className="sticky left-0 bg-white dark:bg-neutral-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600">
+                <tr key={role} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
+                  <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
+                      style={{ backgroundColor: roleIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                  >
                     {label}
                   </td>
-                  
-                  {visibleSquads.map(squad => (
+                  {squadsToDisplay.map(squad => (
                     <td key={`${squad.id}-${role}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600">
-                      {playersByRole[squad.id]?.[role]?.map(player => {
-                        const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
-                        return (
+                      {playersByRole[squad.id]?.[role]
+                        ?.filter(player => player.status === 'current')
+                        ?.map(player => (
                           <div 
                             key={player.id} 
-                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-neutral-50 dark:hover:bg-neutral-700 relative`}
-                            onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
-                            onMouseLeave={hideTooltip}
+                            className={`px-1 py-0.5 truncate`}
                           >
                             {player.name}
                           </div>
-                        );
-                      })}
+                        ))}
                     </td>
                   ))}
                 </tr>
               ))
             )}
             
-            {/* TEAMS VIEW */}
             {activeView === 'teams' && (
-              // Get unique list of all IPL teams represented
               [...new Set(
                 Object.values(playersByTeam)
                   .flatMap(teamMap => Object.keys(teamMap))
               )].sort().map((teamCode, teamIndex) => (
-                <tr key={teamCode} className={teamIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : ''}>
-                  <td className="sticky left-0 bg-white dark:bg-neutral-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600">
+                <tr key={teamCode} className={teamIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
+                  <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
+                      style={{ backgroundColor: teamIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                  >
                     {teamCode}
                   </td>
-                  
-                  {visibleSquads.map(squad => (
+                  {squadsToDisplay.map(squad => (
                     <td key={`${squad.id}-${teamCode}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600">
-                      {playersByTeam[squad.id]?.[teamCode]?.map(player => {
-                        const { demandClass, avgRank, isHotPick } = getPlayerDemandInfo(player.id);
-                        return (
+                      {playersByTeam[squad.id]?.[teamCode]
+                        ?.filter(player => player.status === 'current')
+                        ?.map(player => (
                           <div 
                             key={player.id} 
-                            className={`px-1 py-0.5 truncate ${demandClass} hover:bg-neutral-50 dark:hover:bg-neutral-700 relative`}
-                            onMouseEnter={() => showTooltip(player.id, player.name, avgRank, isHotPick)}
-                            onMouseLeave={hideTooltip}
+                            className={`px-1 py-0.5 truncate`}
                           >
                             {player.name}
                           </div>
-                        );
-                      })}
+                        ))}
                     </td>
                   ))}
                 </tr>
               ))
             )}
             
-            {/* BOOSTS VIEW */}
             {activeView === 'boosts' && (
               squads.length > 0 && (
                 Object.entries({
@@ -581,24 +481,19 @@ const LeagueSquads = ({ league }) => {
                   rattler: 'Rattler',
                   constrictor: 'Constrictor',
                 }).map(([roleKey, roleLabel], roleIndex) => (
-                  <tr key={roleKey} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : ''}>
-                    <td className="sticky left-0 bg-white dark:bg-neutral-800 z-10 px-2 py-1 whitespace-nowrap font-medium text-xs text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600">
+                  <tr key={roleKey} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
+                    <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-xs text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
+                        style={{ backgroundColor: roleIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                    >
                       <div className="flex items-center gap-1">
                         {getRoleIcon(roleLabel, 14)}
                         <span className="truncate">{roleLabel}</span>
                       </div>
                     </td>
-                    
-                    {visibleSquads.map(squad => {
-                      // Find the player ID from the core squad
+                    {squadsToDisplay.map(squad => {
                       const coreSquad = squad.current_core_squad || {};
-                      
-                      // Support both object format with boost IDs and legacy format with role keys
                       let boostPlayerId = null;
-                      
-                      // Check if the core squad is an array of {boost_id, player_id} objects
                       if (Array.isArray(coreSquad)) {
-                        // Find the boost object that matches the role (need to map role key to boost ID)
                         const roleKeyToId = {
                           'captain': 1,
                           'vice_captain': 2,
@@ -609,31 +504,19 @@ const LeagueSquads = ({ league }) => {
                           'constrictor': 7,
                           'virtuoso': 8
                         };
-                        
                         const boostObj = coreSquad.find(b => b.boost_id === roleKeyToId[roleKey]);
                         boostPlayerId = boostObj ? boostObj.player_id : null;
                       } else {
-                        // Legacy format - direct mapping from role key to player ID
                         boostPlayerId = coreSquad[roleKey];
                       }
-                      
-                      // Find the player in the squad's player list
                       const boostPlayer = boostPlayerId && squadPlayers[squad.id] 
                         ? squadPlayers[squad.id].find(p => p.id === boostPlayerId)
                         : null;
-                      
-                      // Get demand info if player exists
-                      const { demandClass, avgRank, isHotPick } = boostPlayerId && boostPlayer
-                        ? getPlayerDemandInfo(boostPlayerId) 
-                        : { demandClass: '', avgRank: 'N/A', isHotPick: false };
-                      
                       return (
                         <td key={`${squad.id}-${roleKey}`} className="p-0 whitespace-nowrap text-xs border border-neutral-200 dark:border-neutral-600">
                           {boostPlayer ? (
                             <div 
-                              className={`w-full h-full px-2 py-1 truncate ${demandClass} relative`} 
-                              onMouseEnter={() => showTooltip(boostPlayerId, boostPlayer.name, avgRank, isHotPick)}
-                              onMouseLeave={hideTooltip}
+                              className={`w-full h-full px-2 py-1 truncate`} 
                             >
                               {boostPlayer.name}
                             </div>
@@ -649,34 +532,6 @@ const LeagueSquads = ({ league }) => {
             )}
           </tbody>
         </table>
-      </div>
-      
-      {/* Fixed Tooltip that shows when hovering over top-ranked players */}
-      {tooltip.visible && (
-        <div 
-            className="absolute z-50 px-3 py-2 bg-neutral-800 text-white text-xs rounded-md shadow-lg"
-            style={{ 
-            left: tooltip.position.x + 15,
-            top: tooltip.position.y - 30,
-            pointerEvents: 'none'
-            }}
-        >
-            Avg. Rank: {tooltip.avgRank}
-        </div>
-        )}
-      
-      {/* Legend for player demand */}
-      <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-xs mt-2">
-        <div className="flex items-center">
-          <div className="h-4 w-4 bg-gradient-to-r from-red-500 to-yellow-500 rounded flex items-center justify-center mr-1">
-            <Flame className="h-2 w-2 text-white" />
-          </div>
-          <span className="text-neutral-600 dark:text-neutral-300">Top 5 in demand</span>
-        </div>
-        <div className="flex items-center">
-          <div className="h-4 w-4 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-800 dark:to-yellow-900 border border-amber-300 dark:border-amber-700 rounded mr-1"></div>
-          <span className="text-neutral-600 dark:text-neutral-300">Top 6-15 in demand</span>
-        </div>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ from . import views
 from . import admin_views
 from . import user_views
 from . import views_stats
+from .views import match_preview, league_match_preview
 
 router = DefaultRouter()
 router.register(r'seasons', views.SeasonViewSet)
@@ -41,7 +42,9 @@ urlpatterns = [
     path('matches/<int:match_id>/stats/', views.match_fantasy_stats),
     path('matches/<int:match_id>/standings/', views.match_standings, name='match-standings'),
     path('leagues/<int:league_id>/matches/<int:match_id>/stats/', views.match_fantasy_stats),
-    
+    path('matches/<int:match_id>/preview/', match_preview, name='match-preview'),
+    path('leagues/<int:league_id>/matches/<int:match_id>/preview/', league_match_preview, name='league-match-preview'),
+
     # Stats endpoints
     path('leagues/<int:league_id>/stats/season-mvp/', views_stats.league_stats_season_mvp, name='league-stats-season-mvp'),
     path('leagues/<int:league_id>/stats/match-mvp/', views_stats.league_stats_match_mvp, name='league-stats-match-mvp'),
@@ -54,10 +57,15 @@ urlpatterns = [
     path('leagues/<int:league_id>/stats/table', views_stats.league_table_stats, name='league_table_stats'),
 
     # Mid-season draft endpoints
-    path('leagues/<int:league_id>/mid-season-draft/pool/', views.mid_season_draft_pool, name='mid_season_draft_pool'),
     path('leagues/<int:league_id>/mid-season-draft/order/', views.mid_season_draft_order, name='mid_season_draft_order'),
+    path('leagues/<int:league_id>/mid-season-draft/pool/', views.mid_season_draft_pool, name='mid_season_draft_pool'),
+    path('leagues/<int:league_id>/mid-season-draft/retained-players/', views.get_retained_players, name='get_retained_players'),
     
     # Admin endpoints
     path('admin/run-fantasy-draft/', admin_views.run_fantasy_draft, name='run-fantasy-draft'),
     path('admin/run-mid-season-draft/', admin_views.run_mid_season_draft, name='run-mid-season-draft'),
+    path('admin/compile-mid-season-draft-pools/', views.compile_mid_season_draft_pools, name='compile_mid_season_draft_pools'),
+    path('admin/execute-mid-season-draft/<int:league_id>/', views.execute_mid_season_draft_api, name='execute_mid_season_draft'),
+    path('admin/compile-mid-season-draft-pools-view/', admin_views.compile_mid_season_draft_pools_view, name='admin-compile-mid-season-draft-pools')
+
 ]

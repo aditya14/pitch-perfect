@@ -6,6 +6,11 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"PT Sans"', 'sans-serif'], // Add PT Sans as the default sans-serif font
+        caption: ['"PT Sans Caption"', 'sans-serif'], // New caption font
+        number: ['"PT Mono"', 'monospace'], // New number font
+      },
       colors: {
         primary: {
           50: '#e6fafd',

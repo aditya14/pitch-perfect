@@ -22,7 +22,6 @@ const MatchMVPTable = ({
   const fetchMatchMVPData = async () => {
     try {
       setLoading(true);
-      
       // Fetch match MVP data
       const response = await api.get(`/leagues/${league.id}/stats/match-mvp`, {
         params: {
@@ -31,9 +30,17 @@ const MatchMVPTable = ({
           includeBoost: includeBoost
         }
       });
-      
-      // Limit to top 10
-      setData(response.data.slice(0, 10));
+      // Map backend fields to expected frontend structure
+      setData(
+        (response.data || []).map(item => ({
+          player: { id: item.player_id, name: item.player_name },
+          squad: item.squad,
+          match: item.match,
+          base: item.base,
+          boost: item.boost,
+          total: item.total
+        }))
+      );
     } catch (err) {
       console.error('Failed to fetch match MVP data:', err);
       setError('Failed to load match MVP data');
@@ -69,9 +76,6 @@ const MatchMVPTable = ({
       simulatedData.forEach(player => {
         player.total = player.base + player.boost;
       });
-      
-      // Sort by total descending
-      simulatedData.sort((a, b) => b.total - a.total);
       
       setData(simulatedData.slice(0, 10));
     } finally {
@@ -113,21 +117,18 @@ const MatchMVPTable = ({
       key: 'total',
       header: 'Total',
       type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
-    },
-    {
-      key: 'base',
-      header: 'Base',
-      type: 'number',
-      renderer: (value) => value.toFixed(1)
-    },
-    {
-      key: 'boost',
-      header: 'Boost',
-      type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
+      renderer: (value, row) => (
+        includeBoost ? (
+          <div className="flex flex-col items-start">
+            <span className="font-bold text-neutral-900 dark:text-white text-base">{row.total.toFixed(1)}</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {row.base.toFixed(1)} <span className="font-bold">+</span> {row.boost.toFixed(1)}
+            </span>
+          </div>
+        ) : (
+          <span className="font-bold text-neutral-900 dark:text-white text-base">{row.base.toFixed(1)}</span>
+        )
+      )
     }
   ];
 

@@ -22,18 +22,20 @@ const DominationTable = ({
   const fetchDominationData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch domination data
       const response = await api.get(`/leagues/${league.id}/stats/domination`, {
         params: {
           squads: selectedSquadIds.join(','),
-          timeFrame: selectedTimeFrame,
-          includeBoost: includeBoost
+          timeFrame: selectedTimeFrame
         }
       });
-      
-      // Limit to top 10
-      setData(response.data.slice(0, 10));
+      // Map backend fields to expected frontend structure
+      setData(
+        (response.data || []).map(item => ({
+          squad: item.squad,
+          match: item.match,
+          percentage: item.percentage
+        }))
+      );
     } catch (err) {
       console.error('Failed to fetch domination data:', err);
       setError('Failed to load domination data');
@@ -81,15 +83,15 @@ const DominationTable = ({
           <div className="flex items-center">
             <div 
               className="w-1 h-4 rounded-full mr-1"
-              style={{ backgroundColor: row.squad.color || '#808080' }}
+              style={{ backgroundColor: row.squad?.color || '#808080' }}
             />
-            <span className="text-sm">{row.squad.name}</span>
+            <span className="text-sm">{row.squad?.name || '-'}</span>
           </div>
           <Link 
-            to={`/leagues/${league.id}/matches/${row.match.id}`} 
+            to={row.match?.id ? `/leagues/${league.id}/matches/${row.match.id}` : '#'} 
             className="text-primary-600 hover:text-primary-700 text-xs mt-1"
           >
-            {row.match.name}
+            {row.match?.name || '-'}
           </Link>
         </div>
       ),
@@ -99,7 +101,7 @@ const DominationTable = ({
       key: 'percentage',
       header: 'Domination %',
       type: 'number',
-      renderer: (value) => `${value.toFixed(1)}%`,
+      renderer: (value) => value != null ? value.toFixed(1) + '%' : '-',
       sortable: false
     }
   ];

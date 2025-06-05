@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Check } from 'lucide-react';
 import api from '../utils/axios';
 
 const UpdatePointsButton = ({ matchId = null }) => {
@@ -21,11 +21,12 @@ const UpdatePointsButton = ({ matchId = null }) => {
       const response = await api.post('/update-match-points/', payload);
       setResult(response.data);
       setShowDetails(true);
-      
-      // Auto-hide success message after 5 seconds
+
+      // Auto-refresh after 1 second if successful
       setTimeout(() => {
         setShowDetails(false);
-      }, 5000);
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       setError(err.response?.data?.error || 'An error occurred while updating points');
       console.error('Error updating points:', err);
@@ -36,16 +37,26 @@ const UpdatePointsButton = ({ matchId = null }) => {
 
   return (
     <div className="relative">
-      <button 
-        className="inline-flex items-center gap-2 px-4 py-2 border border-orange-300 dark:border-orange-600 rounded-md 
-                  text-sm font-medium text-orange-700 dark:text-orange-200 bg-white dark:bg-neutral-800 
-                  hover:bg-orange-50 dark:hover:bg-neutral-700 
-                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 dark:focus:ring-offset-neutral-900"
+      <button
+        className={`
+          flex items-center justify-center h-8 w-8 rounded-full
+          bg-orange-600 hover:bg-orange-700 text-white
+          disabled:opacity-60 disabled:cursor-not-allowed
+          transition-colors
+        `}
         onClick={updatePoints}
         disabled={loading}
+        title="Update Points"
+        aria-label="Update Points"
+        style={{ minWidth: 0, minHeight: 0, padding: 0 }}
       >
-        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        {loading ? 'Updating...' : 'Update Points'}
+        {loading ? (
+          <RefreshCw className="h-5 w-5 animate-spin" />
+        ) : result && showDetails ? (
+          <Check className="h-5 w-5 text-white" />
+        ) : (
+          <RefreshCw className="h-5 w-5" />
+        )}
       </button>
       
       {showDetails && result && (

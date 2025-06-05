@@ -1,3 +1,5 @@
+from django.utils.deprecation import MiddlewareMixin
+
 class CSRFFixMiddleware:
     """
     Middleware to fix CSRF issues with Django Admin when using custom domains.
@@ -16,3 +18,7 @@ class CSRFFixMiddleware:
             response['Access-Control-Allow-Credentials'] = 'true'
         
         return response
+
+class PrintRequestPathMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        print(f"DEBUG: Incoming request to {request.path}")

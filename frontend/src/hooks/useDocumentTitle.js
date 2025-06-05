@@ -3,25 +3,25 @@ import { useEffect } from 'react';
 /**
  * A custom hook to update the document title dynamically
  * 
- * @param {string} title - The title to set (without the app name prefix)
- * @param {boolean} withPrefix - Whether to add the app name prefix (defaults to true)
+ * @param {string} title - The title to set (without the app name suffix)
+ * @param {boolean} withSuffix - Whether to add the app name suffix (defaults to true)
  * @returns {void}
  * 
  * Usage examples:
- * useDocumentTitle('Dashboard'); // Sets "Pitch Perfect | Dashboard"
- * useDocumentTitle('My Cool League - Dashboard'); // Sets "Pitch Perfect | My Cool League - Dashboard"
- * useDocumentTitle('Full Title', false); // Sets just "Full Title" without the prefix
+ * useDocumentTitle('Dashboard'); // Sets "Dashboard | Pitch Perfect"
+ * useDocumentTitle('My Cool League - Dashboard'); // Sets "My Cool League - Dashboard | Pitch Perfect"
+ * useDocumentTitle('Full Title', false); // Sets just "Full Title" without the suffix
  */
-const useDocumentTitle = (title, withPrefix = true) => {
+const useDocumentTitle = (title, withSuffix = true) => {
   useEffect(() => {
     const appName = 'Pitch Perfect';
-    document.title = withPrefix ? `${appName} | ${title}` : title;
+    document.title = withSuffix ? `${title} | ${appName}` : title;
     
     // Cleanup function to reset the title when component unmounts
     return () => {
       document.title = appName;
     };
-  }, [title, withPrefix]);
+  }, [title, withSuffix]);
 };
 
 export default useDocumentTitle;

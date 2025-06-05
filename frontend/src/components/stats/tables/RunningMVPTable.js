@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BaseStatsTable from './BaseStatsTable';
 import api from '../../../utils/axios';
 
-const SeasonMVPTable = ({ 
+const RunningMVPTable = ({ 
   league, 
   selectedSquadIds, 
   selectedTimeFrame,
@@ -30,8 +30,18 @@ const SeasonMVPTable = ({
           includeBoost: includeBoost
         }
       });
-      
-      setData(response.data);
+
+      // Map backend fields to expected frontend structure
+      setData(
+        (response.data || []).map(item => ({
+          player: { id: item.player_id, name: item.player_name },
+          squad: item.squad,
+          base: item.base,
+          boost: item.boost,
+          total: item.total,
+          match_count: item.match_count || 0  // Add this line
+        }))
+      );
     } catch (err) {
       console.error('Failed to fetch season MVP data:', err);
       setError('Failed to load season MVP data');
@@ -64,9 +74,6 @@ const SeasonMVPTable = ({
         player.total = player.base + player.boost;
       });
       
-      // Sort by total descending
-      simulatedData.sort((a, b) => b.total - a.total);
-      
       setData(simulatedData);
     } finally {
       setLoading(false);
@@ -92,30 +99,27 @@ const SeasonMVPTable = ({
       )
     },
     {
-      key: 'matches',
+      key: 'match_count',
       header: 'Mts',
-      type: 'number'
+      type: 'number',
+      sortable: true
     },
-    
     {
       key: 'total',
       header: 'Total',
       type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
-    },
-    {
-      key: 'base',
-      header: 'Base',
-      type: 'number',
-      renderer: (value) => value.toFixed(1)
-    },
-    {
-      key: 'boost',
-      header: 'Boost',
-      type: 'number',
-      renderer: (value) => value.toFixed(1),
-      hidden: !includeBoost
+      renderer: (value, row) => (
+        includeBoost ? (
+          <div className="flex flex-col items-start">
+            <span className="font-bold text-neutral-900 dark:text-white text-base">{row.total.toFixed(1)}</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {row.base.toFixed(1)} <span className="font-bold">+</span> {row.boost.toFixed(1)}
+            </span>
+          </div>
+        ) : (
+          <span className="font-bold text-neutral-900 dark:text-white text-base">{row.base.toFixed(1)}</span>
+        )
+      )
     }
   ];
 
@@ -158,4 +162,4 @@ const SeasonMVPTable = ({
   );
 };
 
-export default SeasonMVPTable;
+export default RunningMVPTable;

@@ -177,20 +177,6 @@ const MatchView = () => {
 
   return (
     <div className="container mx-auto px-2 py-4 max-w-7xl">
-      {/* Match page header */}
-      {/* <div className="mb-4">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-          {matchOverview ? 
-            `${matchOverview.team_1?.name} vs ${matchOverview.team_2?.name}` : 
-            'Match Details'}
-        </h1>
-        {leagueName && (
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm">
-            League: {leagueName}
-          </p>
-        )}
-      </div> */}
-
       {/* Overview cards section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>

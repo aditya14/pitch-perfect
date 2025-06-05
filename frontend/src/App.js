@@ -22,48 +22,44 @@ import HowItWorksComponent from './components/HowItWorksComponent';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import { DraftModalProvider } from './context/DraftModalContext';
 import DraftModalContainer from './components/leagues/modals/DraftModalContainer';
+import MatchPreview from './components/matches/MatchPreview'; // Import MatchPreview
 
 const AppContent = () => {
   const { user, loading } = useAuth();
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [theme, setTheme] = useState(() => {
+    // Prefer user profile theme if available, else localStorage, else system
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) return storedTheme;
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDarkMode ? 'dark' : 'light';
+  });
 
   // Set default document title
   useDocumentTitle('Home');
 
-  // Apply theme immediately on component mount
+  // Always apply theme when theme state changes
   useEffect(() => {
-    // Apply theme from localStorage or system preference right away
-    const storedTheme = localStorage.getItem('theme');
-    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = storedTheme || (prefersDarkMode ? 'dark' : 'light');
-    
-    applyTheme(initialTheme);
-    
-    // Then update when user data is loaded
-    if (user) {
-      const userTheme = user.profile?.theme || theme;
-      setTheme(userTheme);
-      applyTheme(userTheme);
-    }
-  }, [user]);
-
-  const applyTheme = (currentTheme) => {
-    if (currentTheme === 'dark') {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.style.backgroundColor = '#0a0a0a';
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.style.backgroundColor = '#ffffff';
     }
-    // Use dataset to explicitly mark the theme
-    document.documentElement.dataset.theme = currentTheme;
-    // console.log('Theme applied:', currentTheme);
-  };
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  // Update theme from user profile if available
+  useEffect(() => {
+    if (user && user.profile?.theme && user.profile.theme !== theme) {
+      setTheme(user.profile.theme);
+      localStorage.setItem('theme', user.profile.theme);
+    }
+  }, [user]); // Only runs when user changes
 
   const handleThemeChange = async (newTheme) => {
-    console.log('Theme changing to:', newTheme);
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
-    
     if (user) {
       try {
         await api.post('/user/preferences/', { theme: newTheme });
@@ -125,9 +121,10 @@ const AppContent = () => {
         <div className={`
           theme-transition 
           dark:bg-neutral-900
-          ${user ? '' : ''}
+          ${user ? 'pb-16' : ''} //
         `}>
           <Routes>
+            {/* Public Routes */}
             <Route 
               path="/login" 
               element={
@@ -144,6 +141,8 @@ const AppContent = () => {
                 <Navigate to="/dashboard" />
               }
             />
+            
+            {/* Authenticated Routes */}
             <Route 
               path="/dashboard" 
               element={
@@ -221,12 +220,19 @@ const AppContent = () => {
                 <Navigate to="/login" />
               }
             />
-
             <Route 
               path="/matches/:matchId" 
               element={
                 user ? 
                 <MatchView /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/matches/:matchId/preview" 
+              element={
+                user ? 
+                <MatchPreview /> : 
                 <Navigate to="/login" />
               }
             />
@@ -238,7 +244,16 @@ const AppContent = () => {
                 <Navigate to="/login" />
               }
             />
-            <Route path="*" element={<Navigate to="/login" />} />
+            {/* Add Route for MatchPreview within league context */}
+            <Route 
+              path="/leagues/:leagueId/matches/:matchId/preview" 
+              element={
+                user ? 
+                <MatchPreview leagueContext={true} /> : // Pass leagueContext prop
+                <Navigate to="/login" />
+              }
+            />
+            <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} /> {/* Adjusted fallback */}
           </Routes>
         </div>
       </div>

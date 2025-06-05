@@ -7,7 +7,7 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Legend
+  ReferenceLine // Import ReferenceLine
 } from 'recharts';
 import api from '../../../utils/axios';
 
@@ -16,6 +16,9 @@ const LeagueRunningTotal = ({ league }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [visibleSquads, setVisibleSquads] = useState({});
+  const [viewMode, setViewMode] = useState('zoomed'); // 'zoomed' or 'all'
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (league?.id && league?.season?.id) {
@@ -28,6 +31,29 @@ const LeagueRunningTotal = ({ league }) => {
       
       fetchRunningTotalData();
     }
+
+    // Check for dark mode on mount and potentially on updates if theme can change dynamically
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    checkDarkMode();
+
+    // Check for mobile on mount and on resize
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    // Optional: If theme can be toggled dynamically, observe class changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+      observer.disconnect(); // Cleanup observer
+      window.removeEventListener('resize', checkMobile);
+    };
+
   }, [league?.id, league?.season?.id]);
 
   const fetchRunningTotalData = async () => {
@@ -37,7 +63,7 @@ const LeagueRunningTotal = ({ league }) => {
       // Fetch all completed matches for the season
       const matchesResponse = await api.get(`/seasons/${league.season.id}/matches/`);
       const matches = matchesResponse.data
-        .filter(match => match.status === 'COMPLETED' || match.status === 'LIVE')
+        .filter(match => match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT')
         .sort((a, b) => new Date(a.date) - new Date(b.date));
       
       if (matches.length === 0) {
@@ -124,6 +150,16 @@ const LeagueRunningTotal = ({ league }) => {
     }
   };
 
+  // Get filtered data based on view mode
+  const getFilteredData = () => {
+    if (viewMode === 'all' || chartData.length <= 10) {
+      return chartData;
+    }
+    
+    // For zoomed view, show only the last 10 matches
+    return chartData.slice(-10);
+  };
+
   // Get squad color with fallback to predefined colors
   const getSquadColor = (squadId) => {
     const squad = league?.squads?.find(s => s.id === squadId);
@@ -157,6 +193,91 @@ const LeagueRunningTotal = ({ league }) => {
       newVisibility[squad.id] = visible;
     });
     setVisibleSquads(newVisibility);
+  };
+
+  // Get Y-axis tick values based on view mode
+  const getYAxisTicks = () => {
+    const dataToConsider = getFilteredData();
+    if (!dataToConsider || dataToConsider.length === 0) return [0];
+
+    let minValue = Infinity;
+    let maxValue = -Infinity;
+
+    dataToConsider.forEach(data => {
+      league?.squads?.forEach(squad => {
+        if (visibleSquads[squad.id]) { // Only consider visible squads
+          const value = data[`squad_${squad.id}`] || 0;
+          if (value < minValue) minValue = value;
+          if (value > maxValue) maxValue = value;
+        }
+      });
+    });
+    
+    // Handle case where no squads are visible or no data
+    if (minValue === Infinity) minValue = 0;
+    if (maxValue === -Infinity) maxValue = 0;
+
+    const ticks = [];
+    if (viewMode === 'all') {
+      // For all view, ticks at 1000 intervals, starting from 0
+      const roundedMax = Math.ceil(maxValue / 1000) * 1000;
+      const roundedMin = Math.min(0, Math.floor(minValue / 1000) * 1000); 
+      for (let i = roundedMin; i <= roundedMax; i += 1000) {
+        ticks.push(i);
+      }
+    } else {
+      // For zoomed view, ticks at 500 intervals
+      const roundedMin = Math.floor(minValue / 500) * 500;
+      const roundedMax = Math.ceil(maxValue / 500) * 500;
+      for (let i = roundedMin; i <= roundedMax; i += 500) {
+        ticks.push(i);
+      }
+    }
+    // Ensure at least one tick (0) if range is empty or only negative
+     if (ticks.length === 0 || (ticks.every(t => t < 0) && !ticks.includes(0))) {
+       ticks.push(0);
+       ticks.sort((a, b) => a - b); // Re-sort if 0 was added
+     }
+     // Remove duplicates and ensure sorted order
+     return [...new Set(ticks)].sort((a, b) => a - b);
+  };
+  
+  // Calculate minor gridlines for the y-axis
+  const getMinorYAxisTicks = () => {
+    const majorTicks = getYAxisTicks();
+    const minorTicks = [];
+    if (majorTicks.length < 2) return []; // Need at least two major ticks to draw minors between them
+
+    const interval = viewMode === 'all' ? 250 : 100;
+    const steps = viewMode === 'all' ? 3 : 4; // 3 minor lines for 1000 interval, 4 for 500 interval
+
+    for (let i = 0; i < majorTicks.length - 1; i++) {
+      const start = majorTicks[i];
+      const end = majorTicks[i+1]; // End of the current major interval
+      // Generate 'steps' minor ticks within this interval
+      for (let j = 1; j <= steps; j++) {
+        const tickValue = start + (j * interval);
+        if (tickValue < end) { 
+            minorTicks.push(tickValue);
+        }
+      }
+    }
+    const firstMajor = majorTicks[0];
+    if (firstMajor > 0 && firstMajor % (interval * (steps + 1)) === 0) { 
+        for (let j = 1; j <= steps; j++) {
+            const tickValue = firstMajor - (j * interval);
+            minorTicks.push(tickValue);
+        }
+    }
+
+    return [...new Set(minorTicks)].sort((a, b) => a - b); // Remove duplicates and sort
+  };
+
+  // Calculate domain based on ticks to avoid extra space
+  const yAxisDomain = () => {
+    const ticks = getYAxisTicks();
+    if (!ticks || ticks.length === 0) return [0, 1000]; // Default fallback
+    return [ticks[0], ticks[ticks.length - 1]];
   };
 
   if (loading) {
@@ -245,24 +366,51 @@ const LeagueRunningTotal = ({ league }) => {
     return null;
   };
 
+  // Get the calculated minor ticks once for rendering
+  const minorTickValues = getMinorYAxisTicks();
+
+  // Define gridline styles based on theme
+  const majorGridStyles = {
+    stroke: isDarkMode ? '#4b5563' : '#d1d5db', // Dark: gray-600, Light: gray-300
+    opacity: isDarkMode ? 0.4 : 0.5,
+  };
+  const minorGridStyles = {
+    stroke: isDarkMode ? '#374151' : '#e5e7eb', // Dark: gray-700, Light: gray-200
+    opacity: isDarkMode ? 0.3 : 0.5,
+    strokeDasharray: "2 6", // Adjusted dash array for subtlety
+  };
+
+  // Get dot size based on mobile status and view mode
+  const getDotSize = () => {
+    return (isMobile && viewMode === 'all') ? 0.5 : 2;
+  };
+
   return (
     <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
+        <h3 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
           Running Total
         </h3>
         <div className="flex space-x-2">
           <button 
-            onClick={() => toggleAllSquads(true)}
-            className="px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+            onClick={() => setViewMode('zoomed')}
+            className={`px-2 py-1 text-xs rounded ${
+              viewMode === 'zoomed' 
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+            }`}
           >
-            Show All
+            Last 10 Matches
           </button>
           <button 
-            onClick={() => toggleAllSquads(false)}
-            className="px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+            onClick={() => setViewMode('all')}
+            className={`px-2 py-1 text-xs rounded ${
+              viewMode === 'all' 
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+            }`}
           >
-            Hide All
+            All Matches
           </button>
         </div>
       </div>
@@ -270,30 +418,49 @@ const LeagueRunningTotal = ({ league }) => {
       <div className="h-64 md:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={chartData}
-            margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+            data={getFilteredData()}
+            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+            {/* Draw major gridlines */}
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke={majorGridStyles.stroke}
+              opacity={majorGridStyles.opacity}
+              horizontal={true}
+              vertical={false}
+            />
+            
+            {/* Draw minor gridlines using ReferenceLine - Conditional Styling */}
+            {minorTickValues.map((tickValue) => (
+              <ReferenceLine 
+                key={`minor-${tickValue}`} 
+                y={tickValue} 
+                stroke={minorGridStyles.stroke}
+                strokeDasharray={minorGridStyles.strokeDasharray}
+                strokeOpacity={minorGridStyles.opacity}
+              />
+            ))}
+            
             <XAxis 
               dataKey="name" 
               label={{ 
                 value: 'Match', 
                 position: 'insideBottom',
                 offset: -5,
-                style: { textAnchor: 'middle', fill: '#4B5563' }
+                style: { textAnchor: 'middle', fill: isDarkMode ? '#9ca3af' : '#4B5563' }
               }}
-              tick={{ fill: '#4B5563' }}
-              tickLine={{ stroke: '#6B7280' }}
+              tick={{ fill: isDarkMode ? '#9ca3af' : '#4B5563' }}
+              tickLine={{ stroke: isDarkMode ? '#6B7280' : '#6B7280' }}
             />
+            
             <YAxis 
-              tick={{ fill: '#4B5563' }}
-              tickLine={{ stroke: '#6B7280' }}
-              label={{
-                value: 'Points',
-                angle: -90,
-                position: 'insideLeft',
-                style: { textAnchor: 'middle', fill: '#4B5563' }
-              }}
+              tick={{ fill: isDarkMode ? '#9ca3af' : '#4B5563', fontSize: 10 }} // Smaller font size for ticks
+              tickLine={{ stroke: isDarkMode ? '#6B7280' : '#6B7280' }}
+              ticks={getYAxisTicks()} // Use only major ticks for labels
+              domain={yAxisDomain()} // Set domain based on calculated ticks
+              allowDataOverflow={false} // Clip lines outside the domain
+              allowDecimals={false} // Ensure integer labels
+              interval={0} // Ensure interval is 0 to prevent skipping
             />
             <Tooltip content={<CustomTooltip />} />
             {league?.squads?.map((squad) => (
@@ -304,9 +471,9 @@ const LeagueRunningTotal = ({ league }) => {
                   dataKey={`squad_${squad.id}`}
                   name={squad.name}
                   stroke={getSquadColor(squad.id)}
-                  activeDot={{ r: 6 }}
+                  activeDot={{ r: 3 }}
                   strokeWidth={2}
-                  dot={true}
+                  dot={{ r: getDotSize() }}
                 />
               )
             ))}
@@ -339,6 +506,22 @@ const LeagueRunningTotal = ({ league }) => {
             </span>
           </div>
         ))}
+      </div>
+      
+      {/* Show/Hide All buttons moved to bottom */}
+      <div className="mt-4 flex justify-center space-x-4">
+        <button 
+          onClick={() => toggleAllSquads(true)}
+          className="px-3 py-1 text-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+        >
+          Show All
+        </button>
+        <button 
+          onClick={() => toggleAllSquads(false)}
+          className="px-3 py-1 text-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+        >
+          Hide All
+        </button>
       </div>
     </div>
   );

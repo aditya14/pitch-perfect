@@ -46,16 +46,16 @@ const TradeBanner = ({ trades, onAccept, onReject }) => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => onAccept(trade.id)}
-                      className="inline-flex items-center px-3 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transform hover:scale-105 transition-all duration-200 active:scale-95"
                     >
-                      <Check className="h-4 w-4 mr-1" aria-hidden="true" />
+                      <Check className="h-4 w-4 mr-2" aria-hidden="true" />
                       Accept
                     </button>
                     <button
                       onClick={() => onReject(trade.id)}
-                      className="inline-flex items-center px-3 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transform hover:scale-105 transition-all duration-200 active:scale-95"
                     >
-                      <X className="h-4 w-4 mr-1" aria-hidden="true" />
+                      <X className="h-4 w-4 mr-2" aria-hidden="true" />
                       Reject
                     </button>
                   </div>

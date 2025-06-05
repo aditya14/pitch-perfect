@@ -52,7 +52,7 @@ const MatchOverview = ({ matchData }) => {
       <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center bg-gradient-to-r from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800">
         <div className="flex items-center">
           <Info className="w-4 h-4 mr-2 text-neutral-500 dark:text-neutral-400" />
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+          <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
             Match Overview
           </h2>
         </div>
@@ -111,7 +111,10 @@ const MatchOverview = ({ matchData }) => {
             
             <div className="text-right">
               <div className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {matchData.inns_1_runs}/{matchData.inns_1_wickets}
+                {matchData.inns_1_runs}
+                {matchData.inns_1_wickets !== 10 && (
+                  <>/{matchData.inns_1_wickets}</>
+                )}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
                 ({matchData.inns_1_overs} overs)
@@ -150,14 +153,19 @@ const MatchOverview = ({ matchData }) => {
               </div>
             </div>
             
+            {matchData.inns_2_runs !== null && matchData.inns_2_wickets != null && matchData.inns_2_overs != null && (
             <div className="text-right">
               <div className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {matchData.inns_2_runs}/{matchData.inns_2_wickets}
+                {matchData.inns_2_runs}
+                {matchData.inns_2_wickets !== 10 && (
+                  <>/{matchData.inns_2_wickets}</>
+                )}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
                 ({matchData.inns_2_overs} overs)
               </div>
             </div>
+            )}
           </div>
         </div>
 
@@ -191,16 +199,56 @@ const MatchOverview = ({ matchData }) => {
                     Result
                   </td>
                   <td className="py-1.5 text-neutral-900 dark:text-white">
-                    <div className="flex items-center">
+                    {matchData.winner ? (
                       <div className="flex items-center">
-                        <div 
-                          className="h-2 w-2 mr-1.5 rounded-sm"
-                          style={{ backgroundColor: `#${matchData.winner.primary_color}` }}
-                        />
-                        <span className="font-bold">{matchData.winner.short_name}</span>
+                        <div className="flex items-center">
+                          <div 
+                            className="h-2 w-2 mr-1.5 rounded-sm"
+                            style={{ backgroundColor: `#${matchData.winner.primary_color}` }}
+                          />
+                          <span className="font-bold">{matchData.winner.short_name}</span>
+                        </div>
+                        
+                        {matchData.win_type === 'RUNS' && (
+                          <span className="ml-1">won by {matchData.win_margin} {matchData.win_margin === 1 ? 'run' : 'runs'}</span>
+                        )}
+                        {matchData.win_type === 'WICKETS' && (
+                          <span className="ml-1">won by {matchData.win_margin} {matchData.win_margin === 1 ? 'wicket' : 'wickets'}</span>
+                        )}
+                        {matchData.win_type === 'TIE' && (
+                          <span className="ml-1">match tied</span>
+                        )}
+                        {matchData.win_type === 'SUPER_OVER' && (
+                          <span className="ml-1">won via Super Over</span>
+                        )}
+                        {matchData.win_type === 'NO_RESULT' && (
+                          <span className="ml-1">no result</span>
+                        )}
+                        
+                        <Trophy className="h-4 w-4 text-yellow-500 ml-2" />
                       </div>
-                      <span className="ml-1">won by {matchData.win_margin} {safeToLowerCase(matchData.win_type)}</span>
-                      <Trophy className="h-4 w-4 text-yellow-500 ml-2" />
+                    ) : (
+                      <div className="flex items-center">
+                        <span className="text-neutral-700 dark:text-neutral-300">
+                          {matchData.status === 'NO_RESULT' ? 'No Result' : matchData.status === 'ABANDONED' ? 'Match Abandoned' : 'Result Pending'}
+                        </span>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              )}
+
+              {/* Also, to handle match statuses other than COMPLETED: */}
+              {(matchData.status === 'NO_RESULT' || matchData.status === 'ABANDONED') && (
+                <tr>
+                  <td className="py-1.5 w-28 font-medium text-neutral-500 dark:text-neutral-400 align-top">
+                    Status
+                  </td>
+                  <td className="py-1.5 text-neutral-900 dark:text-white">
+                    <div className="flex items-center">
+                      <span className="text-neutral-700 dark:text-neutral-300">
+                        {matchData.status === 'NO_RESULT' ? 'No Result' : 'Match Abandoned'}
+                      </span>
                     </div>
                   </td>
                 </tr>

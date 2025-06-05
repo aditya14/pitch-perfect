@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import useDocumentTitle from '../hooks/useDocumentTitle';
-import UpdatePointsButton from './UpdatePointsButton';
 import TimelineComponent from './TimelineComponent';
 import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle } from 'lucide-react';
 import LoadingScreen from './elements/LoadingScreen';
@@ -170,20 +169,28 @@ const LeagueCard = ({ league }) => {
   // Regular season card (active season)
   return (
     <div 
-      className="bg-white dark:bg-neutral-950 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-neutral-200 dark:border-neutral-700 border-l-4 cursor-pointer"
+      className="bg-white dark:bg-neutral-950 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border border-neutral-200 dark:border-neutral-700 border-l-4 cursor-pointer group"
       style={{ borderLeftColor: league.color || '#6366F1' }}
       onClick={() => navigate(`/leagues/${league.id}`)}
     >
-      <div className="p-5">
-        {/* League Name */}
-        <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
-          {league.name}
-        </h3>
+      <div className="p-6">
+        {/* League Name with better typography */}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xl font-bold text-neutral-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+            {league.name}
+          </h3>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <ChevronRight className="h-5 w-5 text-primary-500" />
+          </div>
+        </div>
         
-        {/* Season Name */}
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-          {league.season?.name || 'No season'}
-        </p>
+        {/* Season Name with better visual treatment */}
+        <div className="flex items-center mb-4">
+          <div className="w-2 h-2 bg-primary-500 rounded-full mr-2"></div>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">
+            {league.season?.name || 'No season'}
+          </p>
+        </div>
         
         {/* Squad Info */}
         {league.my_squad ? (
@@ -193,7 +200,7 @@ const LeagueCard = ({ league }) => {
                 className="h-5 w-1.5 rounded-md mr-2"
                 style={{ backgroundColor: league.my_squad.color }}
               />
-              <span className="font-medium text-neutral-800 dark:text-neutral-200">
+              <span className="font-medium font-caption text-neutral-800 dark:text-neutral-200">
                 {league.my_squad.name}
               </span>
             </div>
@@ -204,7 +211,7 @@ const LeagueCard = ({ league }) => {
                 <div className="flex flex-col">
                   {isUserLeading ? (
                     <>
-                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">LEADING</span>
+                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">WINNER</span>
                       <div className="flex items-center">
                         <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
                         <span className="font-bold text-yellow-600 dark:text-yellow-400">
@@ -258,7 +265,7 @@ const LeagueCard = ({ league }) => {
                   <>
                     <Trophy className="h-4 w-4 text-yellow-500 mr-2" />
                     <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                      Leader:
+                      Winner:
                     </span>
                   </>
                 )}
@@ -320,9 +327,6 @@ const UserDashboard = () => {
     }
   };
 
-  // Check if current user is the admin (user ID 1)
-  const isAdmin = user && user.id === 1;
-
   if (loading) {
     return <LoadingScreen message="Loading your leagues..." />;
   }
@@ -331,17 +335,12 @@ const UserDashboard = () => {
     <div className="container mx-auto px-4 py-8">
       
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-        <h1 className="text-2xl font-bold dark:text-white">My Leagues</h1>
+        <h1 className="text-2xl font-caption font-bold dark:text-white">My Leagues</h1>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">
-          {/* Admin-only Update Points Button */}
-          {isAdmin && (
-            <div className="mr-2">
-              <UpdatePointsButton />
-            </div>
-          )}
+          
           <Link
             to="/leagues/join"
-            className="bg-primary-600 text-white border-transparent hover:bg-primary-700 focus:ring-primary-500 inline-block py-2 px-4 rounded-md text-sm font-medium"
+            className="bg-primary-600 font-caption text-white border-transparent hover:bg-primary-700 focus:ring-primary-500 inline-block py-2 px-4 rounded-md text-sm font-medium"
           >
             Join League
           </Link>

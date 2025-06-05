@@ -8,13 +8,14 @@ from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, 
-                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade, FantasyMatchEvent)
+                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade, FantasyMatchEvent, FantasyStats)
 
 from .forms import CSVUploadForm
 import csv
 from io import TextIOWrapper
 from django.db.models import Q, Avg, F
 from decimal import Decimal, ROUND_HALF_UP
+from .services.stats_service import update_fantasy_stats
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -122,64 +123,57 @@ class TeamSeasonAdmin(admin.ModelAdmin):
     list_filter = ('season',)
     search_fields = ('team__name',)
 
-# START IPL PLayer Admin Definition
-from django.db.models import Count, Sum, F, ExpressionWrapper, IntegerField, Case, When, Value
+# START IPL Player Admin Definition
+from django.db.models import Count, Sum, F, ExpressionWrapper, IntegerField, Case, When, Value, FloatField, Prefetch
+from .models import Season, PlayerTeamHistory
+import logging
+_logger = logging.getLogger(__name__)
 
 @admin.register(IPLPlayer)
 class IPLPlayerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'role', 'get_current_team', 'get_match_count', 'get_total_points', 'get_average_points')
+    # Further simplify list_display
+    list_display = ('id', 'name', 'role', 'is_active')  # Removed get_current_team
     list_filter = (
-        'role', 
+        'role',
         'is_active',
-        ('playerteamhistory__team', admin.RelatedFieldListFilter),
     )
     search_fields = ('name',)
 
-    def get_current_team(self, obj):
-        current_team = obj.playerteamhistory_set.filter(
-            season_id=17  # IPL 2025
-        ).first()
-        return current_team.team.name if current_team else '-'
-    get_current_team.short_description = 'Current Team'
-
-    def get_match_count(self, obj):
-        return obj.match_count
-    get_match_count.short_description = 'Matches'
-    get_match_count.admin_order_field = 'match_count'
-
-    def get_total_points(self, obj):
-        return obj.total_points or 0
-    get_total_points.short_description = 'Total Points'
-    get_total_points.admin_order_field = 'total_points'
-
-    def get_average_points(self, obj):
-        return obj.avg_points
-    get_average_points.short_description = 'Average Points'
-    get_average_points.admin_order_field = 'avg_points'
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).annotate(
-            match_count=Count('iplplayerevent'),
-            total_points=Sum('iplplayerevent__total_points_all'),
-            avg_points=Case(
-                When(match_count__gt=0, 
-                     then=ExpressionWrapper(
-                         F('total_points') * 1.0 / F('match_count'),
-                         output_field=IntegerField()
-                     )),
-                default=Value(0),
-                output_field=IntegerField(),
-            )
-        ).prefetch_related('playerteamhistory_set__team')
+    # Add save_model override for debugging
+    def save_model(self, request, obj, form, change):
+        _logger.info(f"Attempting to save IPLPlayer: {obj.name}, change={change}")
+        try:
+            super().save_model(request, obj, form, change)
+            _logger.info(f"Successfully saved IPLPlayer: {obj.name}")
+        except Exception as e:
+            _logger.exception(f"Error saving IPLPlayer {obj.name}: {e}")
+            raise
 
 # END IPL Player Admin Definition
-
 
 @admin.register(PlayerTeamHistory)
 class PlayerTeamHistoryAdmin(admin.ModelAdmin):
     list_display = ('player', 'team', 'season', 'points')
     list_filter = ('team', 'season')
     search_fields = ('player__name', 'team__name')
+    # Use raw_id_fields for potentially large foreign keys
+    raw_id_fields = ('player', 'team', 'season')
+
+    # Add save_model override for debugging
+    def save_model(self, request, obj, form, change):
+        player_name = obj.player.name if obj.player else "Unknown Player"
+        team_name = obj.team.name if obj.team else "Unknown Team"
+        season_name = obj.season.name if obj.season else "Unknown Season"
+        _logger.info(f"Attempting to save PlayerTeamHistory: Player='{player_name}', Team='{team_name}', Season='{season_name}', change={change}")
+        try:
+            super().save_model(request, obj, form, change)
+            _logger.info(f"Successfully saved PlayerTeamHistory for Player='{player_name}', Season='{season_name}'")
+        except Exception as e:
+            _logger.exception(f"Error saving PlayerTeamHistory for Player='{player_name}', Season='{season_name}': {e}")
+            # Add a user-facing message as well
+            messages.error(request, f"Failed to save history record: {e}")
+            # Re-raise the exception for Django's default handling, but we've logged it.
+            raise
 
 @admin.register(IPLMatch)
 class IPLMatchAdmin(admin.ModelAdmin):
@@ -670,33 +664,52 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(FantasyLeague)
 class FantasyLeagueAdmin(admin.ModelAdmin):
-    list_display = ('name', 'admin', 'max_teams', 'season', 'draft_status', 'draft_actions')
+    list_display = ('name', 'season', 'admin', 'draft_completed', 'stats_last_updated')
     list_filter = ('season', 'draft_completed')
     search_fields = ('name', 'admin__username')
     raw_id_fields = ('admin',)
-    
+
     def draft_status(self, obj):
-        if obj.draft_completed:
-            return format_html('<span style="color: green;">Complete</span>')
-        else:
-            return format_html('<span style="color: blue;">Not Started</span>')
+        pre_season = "Completed" if obj.draft_completed else "Not Started"
+        mid_season = "Completed" if getattr(obj, 'mid_season_draft_completed', False) else "Not Started"
+        
+        return format_html(
+            'Pre-Season: <span style="color: {};">{}</span><br>'
+            'Mid-Season: <span style="color: {};">{}</span>',
+            'green' if obj.draft_completed else 'blue', pre_season,
+            'green' if getattr(obj, 'mid_season_draft_completed', False) else 'blue', mid_season
+        )
     draft_status.short_description = 'Draft Status'
     
     def draft_actions(self, obj):
         """Custom buttons for draft actions"""
-        if obj.draft_completed:
-            return format_html('<span style="color: gray;">Draft Completed</span>')
+        actions = []
         
-        run_url = reverse('admin:run_fantasy_draft', args=[obj.pk])
-        simulate_url = reverse('admin:simulate_fantasy_draft', args=[obj.pk])
-            
-        return format_html(
-            '<a class="button" href="{}">Run Draft</a>&nbsp;'
-            '<a class="button" href="{}?dry_run=1">Simulate</a>',
-            run_url, simulate_url
-        )
+        # Pre-season draft actions
+        if not obj.draft_completed:
+            run_url = reverse('admin:run_fantasy_draft', args=[obj.pk])
+            simulate_url = reverse('admin:simulate_fantasy_draft', args=[obj.pk])
+            actions.append(
+                f'<a class="button" href="{run_url}">Run Pre-Season Draft</a>&nbsp;'
+                f'<a class="button" href="{simulate_url}?dry_run=1">Simulate Pre-Season</a>'
+            )
+        
+        # Mid-season draft actions
+        mid_season_completed = getattr(obj, 'mid_season_draft_completed', False)
+        if not mid_season_completed:
+            mid_season_url = reverse('admin:run_mid_season_draft', args=[obj.pk])
+            mid_season_sim_url = reverse('admin:simulate_mid_season_draft', args=[obj.pk])
+            actions.append(
+                f'<a class="button" style="background-color: #4CAF50;" href="{mid_season_url}">Run Mid-Season Draft</a>&nbsp;'
+                f'<a class="button" style="background-color: #2196F3;" href="{mid_season_sim_url}?dry_run=1">Simulate Mid-Season</a>'
+            )
+        
+        if not actions:
+            return format_html('<span style="color: gray;">Drafts Completed</span>')
+        
+        return format_html('<br>'.join(actions))
     draft_actions.short_description = 'Draft Actions'
-    
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -709,6 +722,16 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
                 '<path:object_id>/simulate-draft/',
                 self.admin_site.admin_view(self.simulate_draft),
                 name='simulate_fantasy_draft',
+            ),
+            path(
+                '<path:object_id>/run-mid-season-draft/',
+                self.admin_site.admin_view(self.run_mid_season_draft),
+                name='run_mid_season_draft',
+            ),
+            path(
+                '<path:object_id>/simulate-mid-season-draft/',
+                self.admin_site.admin_view(self.simulate_mid_season_draft),
+                name='simulate_mid_season_draft',
             ),
         ]
         return custom_urls + urls
@@ -821,6 +844,94 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
             })
         
         return formatted_results
+    
+    def run_mid_season_draft(self, request, object_id):
+        """Run the mid-season fantasy draft for a league"""
+        try:
+            league = self.get_object(request, object_id)
+            dry_run = request.GET.get('dry_run', '0') == '1'
+            verbose = request.GET.get('verbose', '0') == '1'
+            
+            # Call the draft function from admin_views
+            from .admin_views import run_mid_season_draft_process
+            results = run_mid_season_draft_process(league.id, dry_run, verbose)
+            
+            if dry_run:
+                messages.info(request, f"Mid-season draft simulation completed for {league.name}. No changes saved.")
+            else:
+                messages.success(request, f"Mid-season draft completed successfully for {league.name}!")
+            
+            # Add detailed results to the message
+            messages.info(request, f"Results: {results['squads']} squads")
+            
+            for squad_id, details in results.get('squad_results', {}).items():
+                squad = FantasySquad.objects.get(id=squad_id)
+                messages.info(request, f"Squad '{squad.name}': {details['retained']} retained + {details['drafted']} drafted = {details['total']} total")
+            
+        except Exception as e:
+            messages.error(request, f"Error running mid-season draft: {str(e)}")
+            import traceback
+            print(traceback.format_exc())  # Print traceback for debugging
+            
+        return redirect('admin:api_fantasyleague_changelist')
+
+    def simulate_mid_season_draft(self, request, object_id):
+        """Simulate the mid-season fantasy draft without saving changes"""
+        try:
+            league = self.get_object(request, object_id)
+            
+            # Call the draft function with dry_run=True
+            from .admin_views import run_mid_season_draft_process
+            results = run_mid_season_draft_process(league.id, dry_run=True, verbose=True)
+            
+            # Render a detailed results page
+            context = {
+                'title': f'Mid-Season Draft Simulation for {league.name}',
+                'league': league,
+                'results': results,
+                'squad_results': results.get('squad_results', {}),
+                'opts': self.model._meta,
+                'is_mid_season': True
+            }
+            
+            return render(request, 'admin/fantasy_draft_simulation.html', context)
+            
+        except Exception as e:
+            messages.error(request, f"Error simulating mid-season draft: {str(e)}")
+            return redirect('admin:api_fantasyleague_changelist')
+        
+    def update_stats(self, request, queryset):
+        from .services.stats_service import update_fantasy_stats
+        updated = 0
+        for league in queryset:
+            try:
+                stats, created = FantasyStats.objects.get_or_create(league=league)
+                update_fantasy_stats(league.id)
+                updated += 1
+            except Exception as e:
+                self.message_user(
+                    request, 
+                    f"Error updating stats for {league.name}: {str(e)}", 
+                    level=messages.ERROR
+                )
+        
+        self.message_user(
+            request, 
+            f"Successfully updated stats for {updated} leagues.",
+            level=messages.SUCCESS
+        )
+    update_stats.short_description = "Update fantasy stats"
+
+    # And add this to your list of actions
+    actions = ['update_stats']  # Add to your existing actions list
+
+    # Add this to display the last update time
+    def stats_last_updated(self, obj):
+        try:
+            return obj.stats.last_updated
+        except FantasyStats.DoesNotExist:
+            return "Not calculated"
+    stats_last_updated.short_description = "Stats Last Updated"
 
 @admin.register(FantasySquad)
 class FantasySquadAdmin(admin.ModelAdmin):
@@ -1195,3 +1306,18 @@ class FantasyMatchEventAdmin(admin.ModelAdmin):
         if obj:  # This is an edit
             return ('match', 'fantasy_squad')
         return ()
+
+@admin.register(FantasyStats)
+class FantasyStatsAdmin(admin.ModelAdmin):
+    list_display = ('league', 'last_updated')
+    search_fields = ('league__name',)
+    readonly_fields = ('last_updated', 'match_details', 'player_details')
+    fieldsets = (
+        (None, {
+            'fields': ('league', 'last_updated')
+        }),
+        ('Pre-calculated Data', {
+            'fields': ('match_details', 'player_details'),
+            'classes': ('collapse',)
+        }),
+    )

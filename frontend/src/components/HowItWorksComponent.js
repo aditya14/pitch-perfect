@@ -156,7 +156,7 @@ const HowItWorksComponent = () => {
         >
         {/* Batting Points - Full width */}
         <div className="p-5 bg-white dark:bg-neutral-800 border-l-4 border-blue-500 dark:border-blue-400 mb-6">
-            <h3 className="text-xl font-semibold mb-4 text-blue-700 dark:text-blue-300">Batting</h3>
+            <h3 className="text-xl font-semibold mb-4 text-blue-700 dark:text-blue-300 font-caption">Batting</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Batting Points */}
@@ -285,7 +285,7 @@ const HowItWorksComponent = () => {
         
         {/* Bowling Points - Full width */}
         <div className="p-5 bg-white dark:bg-neutral-800 border-l-4 border-green-500 dark:border-green-400 mb-6">
-            <h3 className="text-xl font-semibold mb-4 text-green-700 dark:text-green-300">Bowling</h3>
+            <h3 className="text-xl font-semibold mb-4 text-green-700 dark:text-green-300 font-caption">Bowling</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Bowling Points */}
@@ -406,7 +406,7 @@ const HowItWorksComponent = () => {
         
         {/* Fielding & Other Points - Full width */}
         <div className="p-4 bg-white dark:bg-neutral-800 border-l-4 border-yellow-500 dark:border-yellow-400">
-            <h3 className="text-xl font-semibold mb-4 text-yellow-700 dark:text-yellow-300">Fielding & Other</h3>
+            <h3 className="text-xl font-semibold mb-4 text-yellow-700 dark:text-yellow-300 font-caption">Fielding & Other</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Fielding Points */}
@@ -557,11 +557,11 @@ const HowItWorksComponent = () => {
           </div>
           
           <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-6 mt-6">
-            <h3 className="text-xl font-semibold mb-4">Weekly Selection Rules</h3>
+            <h3 className="text-xl font-semibold mb-4 font-caption">Weekly Selection Rules</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium mb-2 flex items-center">
+                <h4 className="font-medium mb-2 flex items-center font-caption">
                   <Clock size={18} className="text-blue-500 dark:text-blue-400 mr-2" />
                   Weekly Selection & Lock Times
                 </h4>

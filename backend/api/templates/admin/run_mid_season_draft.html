@@ -8,10 +8,17 @@
         <p>
             This will execute the mid-season draft for the selected league. The draft will assign players based on:
             <ul>
-                <li>Team standings (worst to best for snake order)</li>
+                <li>Team standings (best to worst for first round, then snake order)</li>
                 <li>User draft preferences</li>
-                <li>Current core squad players will be retained</li>
+                <li>Core squad players will be automatically retained</li>
             </ul>
+            <p>The draft process will:</p>
+            <ol>
+                <li>Identify players in each squad's core squad as retained players</li>
+                <li>Create a snake draft order starting with best performers first</li>
+                <li>Skip the first 8 players from each squad's preferences (as these are the retained players)</li>
+                <li>Update each squad's roster with their retained + drafted players</li>
+            </ol>
             <strong>Warning: This action cannot be undone!</strong>
         </p>
     </div>
@@ -27,6 +34,18 @@
                     <option value="{{ league.id }}">{{ league.name }} ({{ league.season }})</option>
                     {% endfor %}
                 </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="dry_run">Dry Run:</label>
+                <input type="checkbox" name="dry_run" id="dry_run" value="1">
+                <span class="help">Run the draft without saving changes</span>
+            </div>
+            
+            <div class="form-row">
+                <label for="verbose">Verbose Mode:</label>
+                <input type="checkbox" name="verbose" id="verbose" value="1">
+                <span class="help">Show detailed draft picks in the console</span>
             </div>
         </fieldset>
         

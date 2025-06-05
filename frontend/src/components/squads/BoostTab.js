@@ -22,7 +22,7 @@ const BoostTab = ({
 
   // Check if current time is past deadline
   useEffect(() => {
-    const lockDate = new Date('2025-9T10:00:00Z'); // April 19, 2025, 10am UTC
+    const lockDate = new Date('2025-05-29T14:00:00Z'); // May 29, 2025, 2pm UTC
     const currentTime = new Date();
     setIsDeadlinePassed(currentTime >= lockDate);
   }, []);

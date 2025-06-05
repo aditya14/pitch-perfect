@@ -675,3 +675,14 @@ class FantasyMatchEvent(models.Model):
             models.Index(fields=['fantasy_squad', 'running_rank']),
             models.Index(fields=['match', 'match_rank']),
         ]
+
+class FantasyStats(models.Model):
+    league = models.OneToOneField('FantasyLeague', on_delete=models.CASCADE, related_name='stats')
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    # Pre-calculated JSON fields
+    match_details = models.JSONField(default=dict)
+    player_details = models.JSONField(default=dict)
+    
+    def __str__(self):
+        return f"Stats for {self.league.name}"

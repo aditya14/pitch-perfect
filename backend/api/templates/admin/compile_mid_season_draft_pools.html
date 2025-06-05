@@ -1,0 +1,32 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div class="module">
+    <h2>Compile Mid-Season Draft Pools</h2>
+    <div class="description">
+        <p>
+            This will compile the mid-season draft pools for all active leagues. The process will:
+            <ul>
+                <li>Identify retained players (Week 5 core squad players)</li>
+                <li>Create a draft pool of all non-retained players</li>
+                <li>Update each league with its draft pool</li>
+            </ul>
+            <strong>Note:</strong> This should be run after Week 5 core squad assignments are finalized.
+        </p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            <div class="form-row">
+                <label>Number of active leagues: {{ leagues.count }}</label>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" class="default" value="Compile Draft Pools">
+        </div>
+    </form>
+</div>
+{% endblock %}

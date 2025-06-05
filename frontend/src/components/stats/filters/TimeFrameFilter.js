@@ -3,11 +3,14 @@ import React from 'react';
 const TimeFrameFilter = ({ selectedTimeFrame, onChange }) => {
   const timeFrameOptions = [
     { value: 'overall', label: 'All Matches' },
-    { value: 'last5', label: 'Last 5 Matches' },
-    { value: 'last10', label: 'Last 10 Matches' },
-    { value: 'phase1', label: 'Week 1' },
-    { value: 'phase2', label: 'Week 2' },
-    // { value: 'phase3', label: 'Phase 3' }
+    { value: '1', label: 'Week 1' },
+    { value: '2', label: 'Week 2' },
+    { value: '3', label: 'Week 3' },
+    { value: '4', label: 'Week 4' },
+    { value: '5', label: 'Week 5' },
+    { value: '6', label: 'Week 6' },
+    { value: '7', label: 'Week 7' },
+    { value: '8', label: 'Week 8' },
   ];
 
   return (

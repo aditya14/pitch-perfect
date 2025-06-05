@@ -4,6 +4,7 @@ from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -107,13 +108,6 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
         # For other actions, keep the is_active filter
         return IPLPlayer.objects.filter(is_active=True)
 
-    @action(detail=True)
-    # def history(self, request, pk=None):
-    #     player = self.get_object()
-    #     history = PlayerTeamHistory.objects.filter(player=player)
-    #     serializer = PlayerTeamHistorySerializer(history, many=True)
-    #     return Response(serializer.data)
-    
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         """Get historical IPL performance for a player with optimized queries"""
@@ -129,7 +123,7 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
             # Use efficient database-level aggregation for season stats
             season_stats = IPLPlayerEvent.objects.filter(
                 player=player,
-                match__status='COMPLETED'
+                match__status__in=['COMPLETED', 'NO_RESULT']
             ).values(
                 'match__season__year'
             ).annotate(
@@ -187,7 +181,7 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
             # Fetch match details with a single efficient query
             match_events = IPLPlayerEvent.objects.filter(
                 player=player,
-                match__status='COMPLETED'
+                match__status__in=['COMPLETED', 'NO_RESULT']
             ).select_related(
                 'match', 
                 'match__season', 
@@ -954,15 +948,23 @@ class LeagueViewSet(viewsets.ModelViewSet):
             )
             print(f"Found {squads.count()} squads")
             
-            # 2. Get draft data for all squads in a single query
-            draft_data = FantasyDraft.objects.filter(
+            # 2. Get draft data for all squads in a single query (both Pre-Season and Mid-Season)
+            pre_season_drafts = FantasyDraft.objects.filter(
                 league=league,
                 type='Pre-Season'
             ).select_related('squad').values('squad_id', 'order')
             
-            # Convert to a dict for faster lookups
-            user_rankings = {d['squad_id']: d['order'] for d in draft_data}
-            print(f"Found draft data for {len(user_rankings)} squads")
+            mid_season_drafts = FantasyDraft.objects.filter(
+                league=league,
+                type='Mid-Season'
+            ).select_related('squad').values('squad_id', 'order')
+            
+            # Convert to dicts for faster lookups
+            pre_season_rankings = {d['squad_id']: d['order'] for d in pre_season_drafts}
+            mid_season_rankings = {d['squad_id']: d['order'] for d in mid_season_drafts}
+            
+            print(f"Found pre-season draft data for {len(pre_season_rankings)} squads")
+            print(f"Found mid-season draft data for {len(mid_season_rankings)} squads")
             
             # 3. Get all player IDs that we need to process
             # This includes current squad members and historical players
@@ -979,7 +981,8 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     'user_name': squad.user.username,
                     'total_points': float(squad.total_points),
                     'current_core_squad': squad.current_core_squad or {},
-                    'draft_ranking': user_rankings.get(squad.id, []),
+                    'draft_ranking': pre_season_rankings.get(squad.id, []),
+                    'mid_season_draft_ranking': mid_season_rankings.get(squad.id, []),
                     'current_player_ids': set(squad.current_squad or []),
                     'all_player_ids': set(squad.current_squad or [])
                 }
@@ -1029,21 +1032,51 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     'team_color': current_team.team.primary_color if current_team else None
                 }
             
-            # 6. Calculate average draft ranks
-            player_draft_rankings = {}
-            for squad_id, rankings in user_rankings.items():
+            # 6. Calculate average draft ranks for both draft types
+            pre_season_player_rankings = {}
+            mid_season_player_rankings = {}
+            
+            # Pre-season
+            for squad_id, rankings in pre_season_rankings.items():
                 for rank, player_id in enumerate(rankings):
-                    if player_id not in player_draft_rankings:
-                        player_draft_rankings[player_id] = []
+                    if player_id not in pre_season_player_rankings:
+                        pre_season_player_rankings[player_id] = []
                     
                     # Add the 1-indexed rank to the player's rankings
-                    player_draft_rankings[player_id].append(rank + 1)
+                    pre_season_player_rankings[player_id].append(rank + 1)
             
-            # Calculate average rank for each player with rankings
-            avg_draft_ranks = {}
-            for player_id, ranks in player_draft_rankings.items():
+            # Mid-season
+            for squad_id, rankings in mid_season_rankings.items():
+                # Calculate retained players for each squad
+                retained_player_ids = []
+                if squad_id in squad_dict and squad_dict[squad_id]['current_core_squad']:
+                    retained_player_ids = [
+                        boost['player_id'] 
+                        for boost in squad_dict[squad_id]['current_core_squad'] 
+                        if 'player_id' in boost
+                    ]
+                
+                # Only include non-retained players in rank calculations
+                for rank, player_id in enumerate(rankings):
+                    if player_id in retained_player_ids:
+                        continue  # Skip retained players
+                        
+                    if player_id not in mid_season_player_rankings:
+                        mid_season_player_rankings[player_id] = []
+                    
+                    # Add the 1-indexed rank to the player's rankings
+                    mid_season_player_rankings[player_id].append(rank + 1)
+            
+            # Calculate average ranks
+            pre_season_avg_ranks = {}
+            for player_id, ranks in pre_season_player_rankings.items():
                 if ranks:
-                    avg_draft_ranks[player_id] = round(sum(ranks) / len(ranks), 2)
+                    pre_season_avg_ranks[player_id] = round(sum(ranks) / len(ranks), 2)
+            
+            mid_season_avg_ranks = {}
+            for player_id, ranks in mid_season_player_rankings.items():
+                if ranks:
+                    mid_season_avg_ranks[player_id] = round(sum(ranks) / len(ranks), 2)
             
             # 7. Build the final response data
             squad_data = []
@@ -1068,7 +1101,8 @@ class LeagueViewSet(viewsets.ModelViewSet):
             # 8. Prepare the final response
             response_data = {
                 'squads': squad_data,
-                'avg_draft_ranks': avg_draft_ranks
+                'avg_draft_ranks': pre_season_avg_ranks,
+                'avg_mid_season_draft_ranks': mid_season_avg_ranks
             }
             
             # 9. Cache the result (15 minutes)
@@ -1196,7 +1230,7 @@ class DraftViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
-        serializer = self.get_serializer(draft)
+        serializer = FantasyDraftSerializer(draft)
         return Response(serializer.data)
 
     @action(detail=True, methods=['patch'])
@@ -1411,8 +1445,8 @@ def get_player_fantasy_stats(request, league_id, player_id):
             
             squad_stats[squad_id]['matches'] += 1
             base_points = event.match_event.total_points_all  # Use total_points_all from IPLPlayerEvent
-            squad_stats[squad_id]['basePoints'] += base_points
             boost_points = event.boost_points  # UPDATED: Changed from calculating to using boost_points directly
+            squad_stats[squad_id]['basePoints'] += base_points
             squad_stats[squad_id]['boostPoints'] += boost_points
             squad_stats[squad_id]['totalPoints'] += (base_points + boost_points)
 
@@ -1498,7 +1532,6 @@ def get_player_fantasy_stats(request, league_id, player_id):
         return Response(response_data)
 
     except Exception as e:
-        import traceback
         print(f"Error in get_player_fantasy_stats: {str(e)}")
         print(traceback.format_exc())
         return Response(
@@ -1872,7 +1905,6 @@ def match_fantasy_stats(request, match_id, league_id=None):
     
     except Exception as e:
         print(f"Error in match_fantasy_stats: {str(e)}")
-        import traceback
         print(traceback.format_exc())
         return Response(
             {'error': str(e)}, 
@@ -1892,7 +1924,7 @@ def season_recent_matches(request, season_id):
         # Get recent completed and live matches
         recent_matches = IPLMatch.objects.filter(
             season=season,
-            status__in=['COMPLETED', 'LIVE']
+            status__in=['COMPLETED', 'LIVE', 'ABANDONED', 'NO_RESULT']
         ).select_related(
             'team_1', 'team_2', 'winner', 'player_of_match'
         ).order_by('-date')[:2]  # Get 2 most recent matches
@@ -1978,11 +2010,20 @@ def mid_season_draft_pool(request, league_id):
             type='Mid-Season'
         ).first()
         
+        # Get player retention status
+        retained_player_ids = []
+        if squad.current_core_squad:
+            retained_player_ids = [
+                boost['player_id'] 
+                for boost in squad.current_core_squad 
+                if 'player_id' in boost
+            ]
+        
         # Prepare response with player details
         player_data = []
         for player in players:
             # Get current team
-            team = player.playerteamhistory_set.filter(
+            team =player.playerteamhistory_set.filter(
                 season=league.season
             ).select_related('team').first()
             
@@ -2013,7 +2054,8 @@ def mid_season_draft_pool(request, league_id):
                 'team': team.team.short_name if team else None,
                 'matches': player.matches or 0,
                 'avg_points': player.avg_points or historical_avg or 0,
-                'draft_position': draft_position
+                'draft_position': draft_position,
+                'is_retained': player.id in retained_player_ids
             })
         
         # Sort by average points
@@ -2042,6 +2084,22 @@ def mid_season_draft_order(request, league_id):
         league = get_object_or_404(FantasyLeague, id=league_id)
         squad = get_object_or_404(FantasySquad, league=league, user=request.user)
         
+        # Check if mid-season draft has already been executed
+        if getattr(league, 'mid_season_draft_completed', False):
+            return Response(
+                {'error': 'Mid-season draft has already been completed'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get retained players (core squad)
+        retained_player_ids = []
+        if squad.current_core_squad:
+            retained_player_ids = [
+                boost['player_id'] 
+                for boost in squad.current_core_squad 
+                if 'player_id' in boost
+            ]
+        
         # Get or create draft order
         draft, created = FantasyDraft.objects.get_or_create(
             league=league,
@@ -2053,34 +2111,81 @@ def mid_season_draft_order(request, league_id):
         if request.method == 'GET':
             # If empty order and we need to create a default
             if not draft.order:
-                # Create default order based on current season points
-                from django.db.models import Avg, Count, Q
+                # First, compile the mid-season draft pool if it doesn't exist
+                if not league.draft_pool:
+                    # Get all player IDs from all squads, except retained players
+                    draft_pool = []
+                    for league_squad in FantasySquad.objects.filter(league=league):
+                        squad_core_ids = []
+                        if league_squad.current_core_squad:
+                            squad_core_ids = [
+                                boost['player_id'] 
+                                for boost in league_squad.current_core_squad 
+                                if 'player_id' in boost
+                            ]
+                        
+                        # Add players that are in the current squad but not in core squad
+                        if league_squad.current_squad:
+                            draft_pool.extend([
+                                player_id 
+                                for player_id in league_squad.current_squad 
+                                if player_id not in squad_core_ids
+                            ])
+                    
+                    # Update league draft pool
+                    league.draft_pool = list(set(draft_pool))  # Remove duplicates
+                    league.save()
                 
+                # Create default order based on current season points (for players not retained)
+                from django.db.models import Avg
+                
+                # First, get all players with current season match data
                 default_order = list(IPLPlayer.objects.filter(
                     id__in=league.draft_pool
+                ).exclude(
+                    id__in=retained_player_ids
                 ).annotate(
                     matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season=league.season)),
                     avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season=league.season))
+                ).filter(
+                    matches__gt=0
                 ).order_by('-avg_points').values_list('id', flat=True))
                 
                 # For players with no matches this season, append sorted by historical data
-                no_matches_players = IPLPlayer.objects.filter(
+                no_matches_players = list(IPLPlayer.objects.filter(
                     id__in=league.draft_pool
                 ).exclude(
-                    id__in=default_order
+                    id__in=retained_player_ids + default_order
                 ).annotate(
                     hist_matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season__year__in=range(2021, 2025))),
                     hist_avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season__year__in=range(2021, 2025)))
-                ).order_by('-hist_avg_points').values_list('id', flat=True)
+                ).order_by('-hist_avg_points').values_list('id', flat=True))
                 
-                default_order.extend(list(no_matches_players))
+                # Finally add any remaining players alphabetically
+                remaining_players = list(IPLPlayer.objects.filter(
+                    id__in=league.draft_pool
+                ).exclude(
+                    id__in=retained_player_ids + default_order + no_matches_players
+                ).order_by('name').values_list('id', flat=True))
+                
+                # Combine the lists
+                draft_order = retained_player_ids + default_order + no_matches_players + remaining_players
                 
                 # Save the default order
-                draft.order = default_order
+                draft.order = draft_order
                 draft.save()
             
+            # Get retained players for the response
+            retained_players = []
+            if retained_player_ids:
+                retained_players = IPLPlayer.objects.filter(
+                    id__in=retained_player_ids
+                ).values('id', 'name', 'role')
+            
             serializer = FantasyDraftSerializer(draft)
-            return Response(serializer.data)
+            response_data = serializer.data
+            response_data['retained_players'] = retained_players
+            return Response(response_data)
             
         elif request.method == 'POST':
             # Update draft order
@@ -2092,16 +2197,17 @@ def mid_season_draft_order(request, league_id):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Validate all IDs are in the draft pool
-            invalid_ids = [pid for pid in order if pid not in league.draft_pool]
-            if invalid_ids:
-                return Response(
-                    {'error': f'Invalid player IDs in order: {invalid_ids}'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
             # Validate all draft pool players are included
-            missing_ids = [pid for pid in league.draft_pool if pid not in order]
+            all_player_ids = retained_player_ids + [
+                player_id for player_id in order 
+                if player_id not in retained_player_ids
+            ]
+            
+            missing_ids = [
+                pid for pid in league.draft_pool 
+                if pid not in all_player_ids
+            ]
+            
             if missing_ids:
                 return Response(
                     {'error': f'Missing player IDs in order: {missing_ids}'}, 
@@ -2109,7 +2215,7 @@ def mid_season_draft_order(request, league_id):
                 )
             
             # Update the order
-            draft.order = order
+            draft.order = all_player_ids
             draft.save()
             
             serializer = FantasyDraftSerializer(draft)
@@ -2123,3 +2229,433 @@ def mid_season_draft_order(request, league_id):
             {'error': str(e)}, 
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_retained_players(request, league_id):
+    """Get the list of retained players for the mid-season draft"""
+    try:
+        league = get_object_or_404(FantasyLeague, id=league_id)
+        squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+        
+        # Get retained player IDs from current_core_squad
+        retained_player_ids = []
+        if squad.current_core_squad:
+            retained_player_ids = [
+                boost['player_id'] 
+                for boost in squad.current_core_squad 
+                if 'player_id' in boost
+            ]
+        
+        # Get player details
+        retained_players = []
+        if retained_player_ids:
+            retained_players = IPLPlayer.objects.filter(
+                id__in=retained_player_ids
+            ).annotate(
+                team_name=F('playerteamhistory__team__short_name'),
+            ).values('id', 'name', 'role', 'team_name')
+        
+        return Response({
+            'retained_players': retained_players,
+            'count': len(retained_players)
+        })
+        
+    except Exception as e:
+        print(f"Error in get_retained_players: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+# This function compiles the draft pool for all leagues (admin use)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def compile_mid_season_draft_pools(request):
+    """Admin endpoint to compile the mid-season draft pools for all leagues"""
+    try:
+        leagues = FantasyLeague.objects.filter(
+            season__status='ONGOING'
+        )
+        
+        results = []
+        for league in leagues:
+            draft_pool = []
+            retained_players = {}
+            
+            # Get all squads in the league
+            for squad in FantasySquad.objects.filter(league=league):
+                # Get retained player IDs from core squad
+                squad_core_ids = []
+                if squad.current_core_squad:
+                    squad_core_ids = [
+                        boost['player_id'] 
+                        for boost in squad.current_core_squad 
+                        if 'player_id' in boost
+                    ]
+                    retained_players[squad.id] = squad_core_ids
+                
+                # Add players that are in the current squad but not in core squad
+                if squad.current_squad:
+                    draft_pool.extend([
+                        player_id 
+                        for player_id in squad.current_squad 
+                        if player_id not in squad_core_ids
+                    ])
+            
+            # Remove duplicates and update league
+            league.draft_pool = list(set(draft_pool))
+            league.save()
+            
+            results.append({
+                'league_id': league.id,
+                'league_name': league.name,
+                'draft_pool_size': len(league.draft_pool),
+                'retained_players': retained_players
+            })
+        
+        return Response({
+            'success': True,
+            'leagues_updated': len(results),
+            'details': results
+        })
+        
+    except Exception as e:
+        print(f"Error in compile_mid_season_draft_pools: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+# This function executes the mid-season draft for a specific league (admin use)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def execute_mid_season_draft_api(request, league_id):
+    """Execute the mid-season draft for a league"""
+    try:
+        league = get_object_or_404(FantasyLeague, id=league_id)
+        
+        # Check if draft has already been completed
+        if getattr(league, 'mid_season_draft_completed', False):
+            return Response(
+                {'error': 'Mid-season draft has already been completed for this league'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get squads in order of their standings (lowest to highest for snake draft)
+        squads = FantasySquad.objects.filter(league=league).order_by('total_points')
+        
+        # Create snake draft order
+        draft_rounds = []
+        squad_ids = [squad.id for squad in squads]
+        
+        # Calculate how many rounds we need
+        avg_players_needed = len(league.draft_pool) // squads.count() if league.draft_pool else 0
+        num_rounds = max(1, avg_players_needed)
+        
+        # Create snake draft rounds
+        for round_num in range(num_rounds):
+            if round_num % 2 == 0:
+                # Even rounds: worst to best
+                draft_rounds.append(squad_ids.copy())
+            else:
+                # Odd rounds: best to worst
+                draft_rounds.append(list(reversed(squad_ids.copy())))
+        
+        # Flatten the draft order
+        flat_draft_order = []
+        for round_list in draft_rounds:
+            flat_draft_order.extend(round_list)
+        
+        # Get draft preferences for all users
+        squad_preferences = {}
+        for squad in squads:
+            draft = FantasyDraft.objects.filter(
+                league=league,
+                squad=squad,
+                type='Mid-Season'
+            ).first()
+            
+            if draft and draft.order:
+                # Get only non-retained players from draft preferences
+                retained_ids = []
+                if squad.current_core_squad:
+                    retained_ids = [
+                        boost['player_id'] 
+                        for boost in squad.current_core_squad 
+                        if 'player_id' in boost
+                    ]
+                
+                # Filter out retained players from draft preferences
+                squad_preferences[squad.id] = [
+                    pid for pid in draft.order 
+                    if pid not in retained_ids
+                ]
+            else:
+                # Create a default order based on points
+                from django.db.models import Avg
+                
+                default_order = list(IPLPlayer.objects.filter(
+                    id__in=league.draft_pool
+                ).annotate(
+                    avg_points=Avg('iplplayerevent__total_points_all')
+                ).order_by('-avg_points').values_list('id', flat=True))
+                
+                squad_preferences[squad.id] = default_order
+        
+        # Track available players and assignments
+        available_players = set(league.draft_pool)
+        squad_assignments = {squad.id: [] for squad in squads}
+        
+        # Execute the draft
+        pick_results = []
+        
+        for pick_num, squad_id in enumerate(flat_draft_order):
+            if not available_players:
+                break
+                
+            # Get the squad's preferences
+            preferences = squad_preferences[squad_id]
+            
+            # Find the highest preferred available player
+            selected_player = None
+            for player_id in preferences:
+                if player_id in available_players:
+                    selected_player = player_id
+                    break
+            
+            if selected_player:
+                # Add to squad's assignments
+                squad_assignments[squad_id].append(selected_player)
+                # Remove from available pool
+                available_players.remove(selected_player)
+                
+                # Get player name for log
+                player = IPLPlayer.objects.get(id=selected_player)
+                squad = FantasySquad.objects.get(id=squad_id)
+                
+                pick_results.append({
+                    'pick': pick_num + 1,
+                    'squad_id': squad_id,
+                    'squad_name': squad.name,
+                    'player_id': selected_player,
+                    'player_name': player.name
+                })
+        
+        # Update squad rosters
+        for squad in squads:
+            # Get core squad players (retained)
+            retained_players = []
+            if squad.current_core_squad:
+                retained_players = [
+                    boost['player_id'] 
+                    for boost in squad.current_core_squad 
+                    if 'player_id' in boost
+                ]
+            
+            # Add drafted players
+            drafted_players = squad_assignments.get(squad.id, [])
+            
+            # Update squad roster
+            new_squad = retained_players + drafted_players
+            squad.current_squad = new_squad
+            squad.save()
+        
+        # Mark draft as completed
+        league.mid_season_draft_completed = True
+        league.save()
+        
+        return Response({
+            'success': True,
+            'league_id': league.id,
+            'league_name': league.name,
+            'picks': pick_results
+        })
+        
+    except Exception as e:
+        print(f"Error executing mid-season draft: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticatedOrReadOnly])
+def match_preview(request, match_id):
+    # Get the match and season
+    match = IPLMatch.objects.select_related('team_1', 'team_2', 'season').get(id=match_id)
+    season = match.season
+
+    # Get all IPL players in both teams for this season
+    team_ids = [match.team_1.id, match.team_2.id]
+    player_ids = PlayerTeamHistory.objects.filter(
+        team_id__in=team_ids, season=season
+    ).values_list('player_id', flat=True).distinct()
+    players = IPLPlayer.objects.filter(id__in=player_ids)
+
+    # For each player, get matches played and base points this season
+    player_stats = IPLPlayerEvent.objects.filter(
+        player_id__in=player_ids, match__season=season
+    ).values('player_id').annotate(
+        matches=Count('id'),
+        base_points=Sum('total_points_all')
+    )
+    stats_map = {s['player_id']: s for s in player_stats}
+
+    data = []
+    for player in players:
+        stat = stats_map.get(player.id, {})
+        data.append({
+            'id': player.id,
+            'name': player.name,
+            'role': player.role,
+            'ipl_team': player.playerteamhistory_set.filter(season=season).first().team.short_name if player.playerteamhistory_set.filter(season=season).exists() else None,
+            'matches': stat.get('matches', 0),
+            'base_points': stat.get('base_points', 0),
+        })
+    # Add match info for frontend overview
+    match_info = {
+        'id': match.id,
+        'team_1': {
+            'id': match.team_1.id,
+            'name': match.team_1.name,
+            'short_name': match.team_1.short_name,
+            'primary_color': getattr(match.team_1, 'primary_color', None),
+        },
+        'team_2': {
+            'id': match.team_2.id,
+            'name': match.team_2.name,
+            'short_name': match.team_2.short_name,
+            'primary_color': getattr(match.team_2, 'primary_color', None),
+        },
+        'date': match.date,
+        'stage': getattr(match, 'stage', None),
+        'venue': getattr(match, 'venue', None),
+        'match_number': getattr(match, 'match_number', None),
+        'status': getattr(match, 'status', None),
+        'toss_winner': {
+            'id': match.toss_winner.id,
+            'short_name': match.toss_winner.short_name,
+            'primary_color': getattr(match.toss_winner, 'primary_color', None),
+        } if getattr(match, 'toss_winner', None) else None,
+        'toss_decision': getattr(match, 'toss_decision', None),
+        'winner': {
+            'id': match.winner.id,
+            'short_name': match.winner.short_name,
+            'primary_color': getattr(match.winner, 'primary_color', None),
+        } if getattr(match, 'winner', None) else None,
+        'win_margin': getattr(match, 'win_margin', None),
+        'win_type': getattr(match, 'win_type', None),
+        'player_of_match': {
+            'id': match.player_of_match.id,
+            'name': match.player_of_match.name,
+        } if getattr(match, 'player_of_match', None) else None,
+        'inns_1_runs': getattr(match, 'inns_1_runs', None),
+        'inns_1_wickets': getattr(match, 'inns_1_wickets', None),
+        'inns_1_overs': getattr(match, 'inns_1_overs', None),
+        'inns_2_runs': getattr(match, 'inns_2_runs', None),
+        'inns_2_wickets': getattr(match, 'inns_2_wickets', None),
+        'inns_2_overs': getattr(match, 'inns_2_overs', None),
+    }
+    return Response({'players': data, 'match': match_info})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticatedOrReadOnly])
+def league_match_preview(request, league_id, match_id):
+    # Get the match, league, and season
+    match = IPLMatch.objects.select_related('team_1', 'team_2', 'season').get(id=match_id)
+    league = FantasyLeague.objects.get(id=league_id)
+    season = match.season
+
+    # Get all IPL players in both teams for this season
+    team_ids = [match.team_1.id, match.team_2.id]
+    player_ids = PlayerTeamHistory.objects.filter(
+        team_id__in=team_ids, season=season
+    ).values_list('player_id', flat=True).distinct()
+    players = IPLPlayer.objects.filter(id__in=player_ids)
+
+    # Map player_id to fantasy squad name and color (if assigned in this league)
+    squad_map = {}
+    squad_color_map = {}
+    for squad in FantasySquad.objects.filter(league=league):
+        for pid in squad.current_squad or []:
+            squad_map[pid] = squad.name
+            squad_color_map[pid] = squad.color
+
+    # For each player, get matches played and base points this season (in league context)
+    player_stats = FantasyPlayerEvent.objects.filter(
+        match_event__player_id__in=player_ids,
+        fantasy_squad__league=league,
+        match_event__match__season=season
+    ).values('match_event__player_id').annotate(
+        matches=Count('id'),
+        base_points=Sum('match_event__total_points_all')
+    )
+    stats_map = {s['match_event__player_id']: s for s in player_stats}
+
+    data = []
+    for player in players:
+        stat = stats_map.get(player.id, {})
+        data.append({
+            'id': player.id,
+            'name': player.name,
+            'role': player.role,
+            'ipl_team': player.playerteamhistory_set.filter(season=season).first().team.short_name if player.playerteamhistory_set.filter(season=season).exists() else None,
+            'fantasy_squad': squad_map.get(player.id),
+            'squad_color': squad_color_map.get(player.id),  # <-- Add squad color here
+            'matches': stat.get('matches', 0),
+            'base_points': stat.get('base_points', 0),
+        })
+    # Add match info for frontend overview (same as above)
+    match_info = {
+        'id': match.id,
+        'team_1': {
+            'id': match.team_1.id,
+            'name': match.team_1.name,
+            'short_name': match.team_1.short_name,
+            'primary_color': getattr(match.team_1, 'primary_color', None),
+        },
+        'team_2': {
+            'id': match.team_2.id,
+            'name': match.team_2.name,
+            'short_name': match.team_2.short_name,
+            'primary_color': getattr(match.team_2, 'primary_color', None),
+        },
+        'date': match.date,
+        'stage': getattr(match, 'stage', None),
+        'venue': getattr(match, 'venue', None),
+        'match_number': getattr(match, 'match_number', None),
+        'status': getattr(match, 'status', None),
+        'toss_winner': {
+            'id': match.toss_winner.id,
+            'short_name': match.toss_winner.short_name,
+            'primary_color': getattr(match.toss_winner, 'primary_color', None),
+        } if getattr(match, 'toss_winner', None) else None,
+        'toss_decision': getattr(match, 'toss_decision', None),
+        'winner': {
+            'id': match.winner.id,
+            'short_name': match.winner.short_name,
+            'primary_color': getattr(match.winner, 'primary_color', None),
+        } if getattr(match, 'winner', None) else None,
+        'win_margin': getattr(match, 'win_margin', None),
+        'win_type': getattr(match, 'win_type', None),
+        'player_of_match': {
+            'id': match.player_of_match.id,
+            'name': match.player_of_match.name,
+        } if getattr(match, 'player_of_match', None) else None,
+        'inns_1_runs': getattr(match, 'inns_1_runs', None),
+        'inns_1_wickets': getattr(match, 'inns_1_wickets', None),
+        'inns_1_overs': getattr(match, 'inns_1_overs', None),
+        'inns_2_runs': getattr(match, 'inns_2_runs', None),
+        'inns_2_wickets': getattr(match, 'inns_2_wickets', None),
+        'inns_2_overs': getattr(match, 'inns_2_overs', None),
+    }
+    return Response({'players': data, 'match': match_info})
