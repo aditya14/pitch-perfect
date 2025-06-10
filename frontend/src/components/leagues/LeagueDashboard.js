@@ -281,7 +281,7 @@ const LeagueDashboard = ({ league }) => {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => setMatchTab('recent')}
-                          className={`px-3 py-1.5 text-sm rounded-md transition-all duration-200 ${
+                          className={`px-3 py-1.5 text-sm lg-rounded-md transition-all duration-200 ${
                             matchTab === 'recent' 
                               ? 'lg-glass-primary text-primary-700 dark:text-primary-300 font-medium' 
                               : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
@@ -291,7 +291,7 @@ const LeagueDashboard = ({ league }) => {
                         </button>
                         <button
                           onClick={() => setMatchTab('upcoming')}
-                          className={`px-3 py-1.5 text-sm rounded-md transition-all duration-200 ${
+                          className={`px-3 py-1.5 text-sm lg-rounded-md transition-all duration-200 ${
                             matchTab === 'upcoming' 
                               ? 'lg-glass-primary text-primary-700 dark:text-primary-300 font-medium' 
                               : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'

@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import { 
   Trophy, ChevronRight, Moon, Sun, Home, LogOut, User, 
-  ShieldHalf, Shield, UsersRound, ChevronsUpDown, Check
+  ShieldHalf, Shield, UsersRound, ChevronsUpDown, Check,
+  Menu
 } from 'lucide-react';
 import MidSeasonDraftModal from './leagues/modals/MidSeasonDraftModal';
 import UpdatePointsButton from './UpdatePointsButton';
@@ -206,7 +207,7 @@ const Header = ({ theme, onThemeChange }) => {
     { id: 'squads', label: 'Squads' },
     { id: 'table', label: 'Standings' },
     { id: 'stats', label: 'Stats' },
-    { id: 'trades', label: 'Trades' },
+    // { id: 'trades', label: 'Trades' },
   ];
   
   // Handle tab change
@@ -268,8 +269,8 @@ const Header = ({ theme, onThemeChange }) => {
                     <img src="/icon.png" alt="Logo" className="h-8 w-8" />
                   </div>
                   <div className="text-xl font-extrabold dark:text-white hover:text-primary-300 transition-colors duration-300 hidden sm:block font-caption">
-                    {/* <span className="text-primary-400">Pitch</span>Perfect */}
-                    <span className="text-primary-400">Squad</span>ly
+                    <span className="text-primary-400">Pitch</span>Perfect
+                    {/* <span className="text-primary-400">Squad</span>ly */}
                   </div>
                 </Link>
                 
@@ -279,19 +280,19 @@ const Header = ({ theme, onThemeChange }) => {
                     // League Switcher Dropdown Button
                     <button
                       onClick={() => setIsLeagueDropdownOpen(!isLeagueDropdownOpen)}
-                      className="lg-glass-tertiary lg-rounded-md flex items-center gap-2 p-3 hover:bg-white/10 transition-colors group"
+                      className="lg-glass-tertiary lg-rounded-md flex items-center gap-2 py-1 px-2 pl-3 transition-colors group hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)]"
                     >
                       <div className="flex flex-col items-start">
-                        <span className="dark:text-white font-bold font-caption text-sm leading-tight">
+                        <span className="dark:text-white font-bold font-caption text-sm leading-tight group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors">
                           {leagueInfo.name}
                         </span>
                         {leagueInfo.season && (
-                          <span className="text-xs text-primary-300 leading-tight">
+                          <span className="text-xs text-primary-300 leading-tight group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors">
                             {leagueInfo.season.name}
                           </span>
                         )}
                       </div>
-                      <ChevronsUpDown className="h-4 w-4 text-slate-400 group-hover:text-white transition-colors" />
+                      <ChevronsUpDown className="h-4 w-4 text-slate-400 group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors" />
                     </button>
                   ) : isLeagueView && leagueInfo ? (
                     // Static League Info
@@ -367,11 +368,11 @@ const Header = ({ theme, onThemeChange }) => {
                 )}
 
                 {/* Admin-only Update Points Button */}
-                {isAdmin && (
+                {/* {isAdmin && (
                   <div className="flex-shrink-0">
                     <UpdatePointsButton />
                   </div>
-                )}
+                )} */}
     
                 {/* Mid-Season Draft button (for squad views) */}
                 {SHOW_MID_SEASON_DRAFT && isSquadView && squadInfo && squadInfo.user_id === user?.id && (
@@ -388,15 +389,15 @@ const Header = ({ theme, onThemeChange }) => {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="lg-glass-tertiary lg-rounded-md p-2 hover:bg-white/10 transition-all duration-200 group"
+                    className="lg-glass-tertiary lg-rounded-md p-2 transition-all duration-200 group hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)]"
                   >
                     <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-primary-500/20 flex items-center justify-center">
-                        <User className="h-5 w-5 text-primary-400" />
+                      <div className="h-6 w-6 rounded-full bg-primary-500/20 flex items-center justify-center">
+                        <Menu className="h-4 w-4 text-primary-400" />
                       </div>
                       <svg 
                         xmlns="http://www.w3.org/2000/svg" 
-                        className="ml-2 h-4 w-4 text-slate-400 group-hover:text-white transition-colors" 
+                        className="ml-2 h-4 w-4 text-slate-400 group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors" 
                         viewBox="0 0 20 20" 
                         fill="currentColor"
                       >
