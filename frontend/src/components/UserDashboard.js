@@ -40,12 +40,9 @@ const LeagueCard = ({ league }) => {
   if (isUpcomingSeason) {
     return (
       <div 
-        className="liquid-glass-card glass-rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer group"
+        className="lg-glass-secondary lg-rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer group lg-shine"
         onClick={() => navigate(`/leagues/${league.id}`)}
       >
-        {/* Liquid Glass Shine Effect */}
-        <div className="glass-shine absolute inset-0 glass-rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        
         <div className="relative z-10 p-6">
           {/* League Header */}
           <div className="flex items-start justify-between mb-4">
@@ -59,9 +56,9 @@ const LeagueCard = ({ league }) => {
                 <span className="text-sm text-slate-600 dark:text-slate-300 mr-3">
                   {league.season?.name || 'No season'}
                 </span>
-                <div className="liquid-glass-badge glass-rounded-sm px-3 py-1 flex items-center">
-                  <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mr-2 animate-pulse"></div>
-                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Upcoming</span>
+                <div className="lg-badge lg-badge-primary lg-pulse">
+                  <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mr-2"></div>
+                  <span className="text-xs font-medium">Upcoming</span>
                 </div>
               </div>
             </div>
@@ -85,7 +82,7 @@ const LeagueCard = ({ league }) => {
               </div>
               
               {/* Season Status */}
-              <div className="liquid-glass-input glass-rounded-md p-4">
+              <div className="lg-glass-tertiary lg-rounded-md p-4">
                 <div className="flex items-start">
                   <Calendar className="h-5 w-5 text-primary-600 dark:text-primary-400 mr-3 mt-0.5 flex-shrink-0" />
                   <div>
@@ -102,7 +99,7 @@ const LeagueCard = ({ league }) => {
               </div>
               
               {/* Draft Status */}
-              <div className={`liquid-glass-input glass-rounded-md p-4 ${
+              <div className={`lg-glass-tertiary lg-rounded-md p-4 ${
                 league.draft_completed ? 'border-green-400/20' : 'border-amber-400/20'
               }`}>
                 <div className="flex items-start">
@@ -127,7 +124,7 @@ const LeagueCard = ({ league }) => {
               </div>
             </div>
           ) : (
-            <div className="liquid-glass-input glass-rounded-md p-4">
+            <div className="lg-glass-tertiary lg-rounded-md p-4">
               <p className="text-slate-600 dark:text-slate-400 italic text-sm">
                 You haven't joined this league yet
               </p>
@@ -136,7 +133,7 @@ const LeagueCard = ({ league }) => {
         </div>
         
         {/* Footer */}
-        <div className="liquid-glass-input glass-rounded-t-none px-6 py-4 flex justify-between items-center">
+        <div className="lg-glass-tertiary rounded-t-none px-6 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <Users className="h-4 w-4 text-slate-600 dark:text-slate-400 mr-2" />
             <span className="text-xs text-slate-600 dark:text-slate-400">
@@ -176,12 +173,9 @@ const LeagueCard = ({ league }) => {
   // Regular season card (active season)
   return (
     <div 
-      className="liquid-glass-card glass-rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer group"
+      className="lg-glass-secondary lg-rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer group lg-shine"
       onClick={() => navigate(`/leagues/${league.id}`)}
     >
-      {/* Liquid Glass Shine Effect */}
-      <div className="glass-shine absolute inset-0 glass-rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      
       <div className="relative z-10 p-6">
         {/* League Header */}
         <div className="flex items-start justify-between mb-4">
@@ -257,7 +251,7 @@ const LeagueCard = ({ league }) => {
             </div>
           </div>
         ) : (
-          <div className="liquid-glass-input glass-rounded-md p-4">
+          <div className="lg-glass-tertiary lg-rounded-md p-4">
             <p className="text-slate-600 dark:text-slate-400 italic text-sm">
               You haven't joined this league yet
             </p>
@@ -300,7 +294,7 @@ const LeagueCard = ({ league }) => {
       </div>
       
       {/* Footer */}
-      <div className="liquid-glass-input glass-rounded-t-none px-6 py-4 flex justify-between items-center">
+      <div className="lg-glass-tertiary rounded-t-none px-6 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <Users className="h-4 w-4 text-slate-600 dark:text-slate-400 mr-2" />
           <span className="text-xs text-slate-600 dark:text-slate-400">
@@ -348,13 +342,13 @@ const UserDashboard = () => {
       {/* Dynamic Background */}
       <div className="absolute inset-0">
         {/* Floating Glass Orbs */}
-        <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-gradient-to-br from-primary-400/8 to-primary-600/8 dark:from-primary-400/15 dark:to-primary-600/15 floating-orb"></div>
-        <div className="absolute bottom-1/3 right-1/5 w-48 h-48 rounded-full bg-gradient-to-tr from-blue-400/5 to-primary-500/5 dark:from-blue-400/10 dark:to-primary-500/10 floating-orb" style={{animationDelay: '8s'}}></div>
-        <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-gradient-to-bl from-primary-300/4 to-primary-700/4 dark:from-primary-300/8 dark:to-primary-700/8 floating-orb" style={{animationDelay: '15s'}}></div>
+        <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-gradient-to-br from-primary-400/8 to-primary-600/8 dark:from-primary-400/15 dark:to-primary-600/15 lg-float"></div>
+        <div className="absolute bottom-1/3 right-1/5 w-48 h-48 rounded-full bg-gradient-to-tr from-blue-400/5 to-primary-500/5 dark:from-blue-400/10 dark:to-primary-500/10 lg-float" style={{animationDelay: '3s'}}></div>
+        <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-gradient-to-bl from-primary-300/4 to-primary-700/4 dark:from-primary-300/8 dark:to-primary-700/8 lg-float" style={{animationDelay: '6s'}}></div>
         
         {/* Subtle grid pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.02] dark:opacity-3" 
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]" 
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, rgba(31,190,221,0.2) 1px, transparent 0)`,
             backgroundSize: '60px 60px'
@@ -367,40 +361,33 @@ const UserDashboard = () => {
         
         {/* Header Section */}
         <div className="mb-12">
-          <div className="liquid-glass-main glass-rounded-lg relative overflow-hidden">
-            <div className="glass-shine absolute inset-0 glass-rounded-lg"></div>
+          <div className="lg-glass lg-rounded-lg relative overflow-hidden lg-glow">
+            <div className="lg-shine absolute inset-0 lg-rounded-lg"></div>
             
             <div className="relative z-10 p-8">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
                 <div className="flex-1">
-                  <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 font-caption">
+                  <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-caption">
                     Welcome back! <span className="text-primary-600 dark:text-primary-400">{user?.first_name}</span>
                   </h1>
-                  {/* <p className="text-slate-700 dark:text-slate-200 text-lg mb-6">
-                    Ready to dominate the fantasy cricket world? Manage your squads, check standings, and make those game-changing trades.
-                  </p> */}
                   
                   {/* Quick Stats */}
-                  <div className="flex flex-wrap gap-4">
-                    <div className="liquid-glass-badge glass-rounded-sm px-4 py-2 flex items-center">
+                  {/* <div className="flex flex-wrap gap-4">
+                    <div className="lg-badge lg-rounded-sm px-4 py-2 flex items-center">
                       <Users className="w-4 h-4 text-primary-600 dark:text-primary-400 mr-2" />
                       <span className="text-sm font-medium text-slate-900 dark:text-white">{leagues.length} Active League{leagues.length !== 1 ? 's' : ''}</span>
                     </div>
-                    {/* <div className="liquid-glass-badge glass-rounded-sm px-4 py-2 flex items-center">
-                      <Zap className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mr-2" />
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">IPL 2025 Season</span>
-                    </div> */}
-                  </div>
+                  </div> */}
                 </div>
                 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Link
                     to="/leagues/join"
-                    className="liquid-glass-button glass-rounded-md px-6 py-3 font-semibold text-white group transition-all duration-300"
+                    className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white group transition-all duration-300"
                   >
                     <div className="flex items-center justify-center">
-                      <Plus className="w-5 h-5 mr-2" />
+                      {/* <Plus className="w-5 h-5 mr-2" /> */}
                       Join League
                       <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -413,21 +400,19 @@ const UserDashboard = () => {
 
         {/* Error Display */}
         {error && (
-          <div className="liquid-glass-card glass-rounded-md p-6 mb-8 border border-red-400/20">
-            <div className="flex items-start text-red-600 dark:text-red-300">
-              <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
-              <span className="text-sm font-medium">{error}</span>
-            </div>
+          <div className="lg-alert lg-glass-danger mb-8">
+            <AlertCircle className="lg-alert-icon" />
+            <span className="text-sm font-medium">{error}</span>
           </div>
         )}
 
         {/* Leagues Section */}
         {leagues.length === 0 ? (
-          <div className="liquid-glass-main glass-rounded-lg text-center py-16">
-            <div className="glass-shine absolute inset-0 glass-rounded-lg"></div>
+          <div className="lg-glass lg-rounded-lg text-center py-16 lg-glow">
+            <div className="lg-shine absolute inset-0 lg-rounded-lg"></div>
             
             <div className="relative z-10">
-              <div className="liquid-glass-card glass-rounded-lg w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <div className="lg-glass-secondary lg-rounded-lg w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <Trophy className="w-10 h-10 text-primary-600 dark:text-primary-400" />
               </div>
               
@@ -445,7 +430,7 @@ const UserDashboard = () => {
                   { icon: BarChart3, title: "Core Squad Roles", desc: "Boost player performance" },
                   { icon: Star, title: "Season-Long", desc: "Compete all season long" }
                 ].map((feature, index) => (
-                  <div key={index} className="liquid-glass-input glass-rounded-md p-4 text-center">
+                  <div key={index} className="lg-glass-tertiary lg-rounded-md p-4 text-center">
                     <feature.icon className="w-6 h-6 text-primary-600 dark:text-primary-400 mx-auto mb-2" />
                     <h3 className="font-semibold text-slate-900 dark:text-white text-sm mb-1">{feature.title}</h3>
                     <p className="text-xs text-slate-600 dark:text-slate-400">{feature.desc}</p>
@@ -455,7 +440,7 @@ const UserDashboard = () => {
               
               <Link
                 to="/leagues/join"
-                className="liquid-glass-button glass-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center group"
+                className="lg-button lg-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center group"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Join Your First League
