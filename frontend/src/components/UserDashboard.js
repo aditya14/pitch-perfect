@@ -4,7 +4,7 @@ import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import TimelineComponent from './TimelineComponent';
-import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle } from 'lucide-react';
+import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle, Plus, Zap, BarChart3, Star } from 'lucide-react';
 import LoadingScreen from './elements/LoadingScreen';
 
 const LeagueCard = ({ league }) => {
@@ -40,49 +40,60 @@ const LeagueCard = ({ league }) => {
   if (isUpcomingSeason) {
     return (
       <div 
-        className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg border border-neutral-200 dark:border-neutral-700 border-l-4 cursor-pointer"
-        style={{ borderLeftColor: league.color || '#6366F1' }}
+        className="liquid-glass-card glass-rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer group"
         onClick={() => navigate(`/leagues/${league.id}`)}
       >
-        <div className="p-5">
-          {/* League Name */}
-          <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
-            {league.name}
-          </h3>
-          
-          {/* Season Name with Upcoming Badge */}
-          <div className="flex items-center mb-4">
-            <span className="text-sm text-neutral-500 dark:text-neutral-400 mr-2">
-              {league.season?.name || 'No season'}
-            </span>
-            <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs px-2 py-0.5 rounded">
-              Upcoming
-            </span>
+        {/* Liquid Glass Shine Effect */}
+        <div className="glass-shine absolute inset-0 glass-rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        
+        <div className="relative z-10 p-6">
+          {/* League Header */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-300 transition-colors font-caption">
+                {league.name}
+              </h3>
+              
+              {/* Season Badge */}
+              <div className="flex items-center mb-3">
+                <span className="text-sm text-slate-600 dark:text-slate-300 mr-3">
+                  {league.season?.name || 'No season'}
+                </span>
+                <div className="liquid-glass-badge glass-rounded-sm px-3 py-1 flex items-center">
+                  <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mr-2 animate-pulse"></div>
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Upcoming</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <ChevronRight className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+            </div>
           </div>
           
           {/* Squad Info */}
           {league.my_squad ? (
-            <div className="mb-5">
-              <div className="flex items-center mb-3">
+            <div className="space-y-4">
+              <div className="flex items-center">
                 <div 
-                  className="h-5 w-1.5 rounded-md mr-2"
+                  className="h-1 w-8 rounded-md mr-3"
                   style={{ backgroundColor: league.my_squad.color }}
                 />
-                <span className="font-medium text-neutral-800 dark:text-neutral-200">
+                <span className="font-medium text-slate-900 dark:text-white font-caption">
                   {league.my_squad.name}
                 </span>
               </div>
               
-              {/* Season status info */}
-              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 mb-2">
+              {/* Season Status */}
+              <div className="liquid-glass-input glass-rounded-md p-4">
                 <div className="flex items-start">
-                  <Calendar className="h-5 w-5 text-blue-500 dark:text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
+                  <Calendar className="h-5 w-5 text-primary-600 dark:text-primary-400 mr-3 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
                       Season starts Mar 22, 2025
                     </p>
                     {daysUntilStart !== null && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                         Less than a day to go!
                       </p>
                     )}
@@ -91,26 +102,22 @@ const LeagueCard = ({ league }) => {
               </div>
               
               {/* Draft Status */}
-              <div className={`rounded-lg p-3 ${league.draft_completed ? 
-                'bg-green-50 dark:bg-green-900/30' : 
-                'bg-amber-50 dark:bg-amber-900/30'}`}>
+              <div className={`liquid-glass-input glass-rounded-md p-4 ${
+                league.draft_completed ? 'border-green-400/20' : 'border-amber-400/20'
+              }`}>
                 <div className="flex items-start">
                   {league.draft_completed ? (
-                    <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                   ) : (
-                    <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-400 mr-2 mt-0.5 flex-shrink-0" />
+                    <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-400 mr-3 mt-0.5 flex-shrink-0" />
                   )}
                   <div>
-                    <p className={`text-sm font-medium ${league.draft_completed ? 
-                      'text-green-700 dark:text-green-300' : 
-                      'text-amber-700 dark:text-amber-300'}`}>
-                      {league.draft_completed ? 
-                        "Draft completed" : 
-                        "Draft pending"}
+                    <p className={`text-sm font-medium ${
+                      league.draft_completed ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'
+                    }`}>
+                      {league.draft_completed ? "Draft completed" : "Draft pending"}
                     </p>
-                    <p className={`text-xs mt-1 ${league.draft_completed ? 
-                      'text-green-600 dark:text-green-400' : 
-                      'text-amber-600 dark:text-amber-400'}`}>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                       {league.draft_completed ? 
                         "Finalize your team before the season starts" : 
                         "Make sure to rank your players before the draft closes"}
@@ -120,21 +127,23 @@ const LeagueCard = ({ league }) => {
               </div>
             </div>
           ) : (
-            <div className="mb-5 text-neutral-500 dark:text-neutral-400 italic text-sm">
-              You haven't joined this league yet
+            <div className="liquid-glass-input glass-rounded-md p-4">
+              <p className="text-slate-600 dark:text-slate-400 italic text-sm">
+                You haven't joined this league yet
+              </p>
             </div>
           )}
         </div>
         
-        {/* Footer with League Info */}
-        <div className="bg-neutral-50 dark:bg-neutral-700 px-5 py-3 flex justify-between items-center">
+        {/* Footer */}
+        <div className="liquid-glass-input glass-rounded-t-none px-6 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <Users className="h-4 w-4 text-neutral-500 dark:text-neutral-400 mr-1" />
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            <Users className="h-4 w-4 text-slate-600 dark:text-slate-400 mr-2" />
+            <span className="text-xs text-slate-600 dark:text-slate-400">
               {league.squads_count}/{league.max_teams} Squads
             </span>
           </div>
-          <ChevronRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+          <ChevronRight className="h-4 w-4 text-slate-500 dark:text-slate-500" />
         </div>
       </div>
     );
@@ -158,10 +167,8 @@ const LeagueCard = ({ league }) => {
   
   if (sortedSquads.length > 0) {
     if (isUserLeading && sortedSquads.length > 1) {
-      // If user is leading, get the second place
       secondPlaceOrLeaderInfo = sortedSquads[1];
     } else if (sortedSquads.length > 0) {
-      // Otherwise get the leader
       secondPlaceOrLeaderInfo = sortedSquads[0];
     }
   }
@@ -169,54 +176,59 @@ const LeagueCard = ({ league }) => {
   // Regular season card (active season)
   return (
     <div 
-      className="bg-white dark:bg-neutral-950 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border border-neutral-200 dark:border-neutral-700 border-l-4 cursor-pointer group"
-      style={{ borderLeftColor: league.color || '#6366F1' }}
+      className="liquid-glass-card glass-rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer group"
       onClick={() => navigate(`/leagues/${league.id}`)}
     >
-      <div className="p-6">
-        {/* League Name with better typography */}
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xl font-bold text-neutral-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-            {league.name}
-          </h3>
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <ChevronRight className="h-5 w-5 text-primary-500" />
+      {/* Liquid Glass Shine Effect */}
+      <div className="glass-shine absolute inset-0 glass-rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      <div className="relative z-10 p-6">
+        {/* League Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-300 transition-colors font-caption">
+              {league.name}
+            </h3>
+            
+            {/* Season Info */}
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-primary-500 dark:bg-primary-400 rounded-full mr-2"></div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
+                {league.season?.name || 'No season'}
+              </p>
+            </div>
           </div>
-        </div>
-        
-        {/* Season Name with better visual treatment */}
-        <div className="flex items-center mb-4">
-          <div className="w-2 h-2 bg-primary-500 rounded-full mr-2"></div>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">
-            {league.season?.name || 'No season'}
-          </p>
+          
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <ChevronRight className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+          </div>
         </div>
         
         {/* Squad Info */}
         {league.my_squad ? (
-          <div className="mb-5">
-            <div className="flex items-center mb-2">
+          <div className="space-y-4">
+            <div className="flex items-center">
               <div 
-                className="h-5 w-1.5 rounded-md mr-2"
+                className="h-1 w-8 rounded-md mr-3"
                 style={{ backgroundColor: league.my_squad.color }}
               />
-              <span className="font-medium font-caption text-neutral-800 dark:text-neutral-200">
+              <span className="font-medium text-slate-900 dark:text-white font-caption">
                 {league.my_squad.name}
               </span>
             </div>
             
             {/* Position and Points */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-6">
                 <div className="flex flex-col">
                   {isUserLeading ? (
                     <>
-                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">LEADING</span>
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">WINNER</span>
                       <div className="flex items-center">
-                        <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                        <span className="font-bold text-yellow-600 dark:text-yellow-400">
+                        <Trophy className="h-4 w-4 text-amber-500 dark:text-amber-400 mr-2" />
+                        <span className="font-bold text-amber-600 dark:text-amber-400 font-caption">
                           1
-                          <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400 ml-1">
+                          <span className="text-xs font-normal text-slate-600 dark:text-slate-400 ml-1">
                             of {league.squads_count}
                           </span>
                         </span>
@@ -224,10 +236,10 @@ const LeagueCard = ({ league }) => {
                     </>
                   ) : (
                     <>
-                      <span className="text-xs text-neutral-500 dark:text-neutral-400">Position</span>
-                      <span className="font-bold text-neutral-900 dark:text-white">
+                      <span className="text-xs text-slate-600 dark:text-slate-400">Position</span>
+                      <span className="font-bold text-slate-900 dark:text-white font-caption">
                         {userPosition}
-                        <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400 ml-1">
+                        <span className="text-xs font-normal text-slate-600 dark:text-slate-400 ml-1">
                           of {league.squads_count}
                         </span>
                       </span>
@@ -236,8 +248,8 @@ const LeagueCard = ({ league }) => {
                 </div>
                 
                 <div className="flex flex-col">
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">Points</span>
-                  <span className="font-bold text-neutral-900 dark:text-white">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Points</span>
+                  <span className="font-bold text-slate-900 dark:text-white font-caption">
                     {league.my_squad.total_points || 0}
                   </span>
                 </div>
@@ -245,40 +257,40 @@ const LeagueCard = ({ league }) => {
             </div>
           </div>
         ) : (
-          <div className="mb-5 text-neutral-500 dark:text-neutral-400 italic text-sm">
-            You haven't joined this league yet
+          <div className="liquid-glass-input glass-rounded-md p-4">
+            <p className="text-slate-600 dark:text-slate-400 italic text-sm">
+              You haven't joined this league yet
+            </p>
           </div>
         )}
         
         {/* Leader or Runner-up Info */}
         {secondPlaceOrLeaderInfo && (
-          <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700">
+          <div className="pt-4 mt-4 border-t border-slate-300/30 dark:border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 {isUserLeading ? (
-                  <>
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                      2nd Place:
-                    </span>
-                  </>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    2nd Place:
+                  </span>
                 ) : (
                   <>
-                    <Trophy className="h-4 w-4 text-yellow-500 mr-2" />
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                      Leader:
+                    <Trophy className="h-4 w-4 text-amber-500 dark:text-amber-400 mr-2" />
+                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                      Winner:
                     </span>
                   </>
                 )}
               </div>
               <div className="flex items-center">
                 <div 
-                  className="h-4 w-1 rounded-md mr-1"
+                  className="h-3 w-1 rounded-md mr-2"
                   style={{ backgroundColor: secondPlaceOrLeaderInfo.color }}
                 />
-                <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 mr-2">
+                <span className="text-sm font-medium text-slate-900 dark:text-white mr-3 font-caption">
                   {secondPlaceOrLeaderInfo.name}
                 </span>
-                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                <span className="text-xs text-slate-600 dark:text-slate-400">
                   {secondPlaceOrLeaderInfo.total_points || 0} pts
                 </span>
               </div>
@@ -287,15 +299,15 @@ const LeagueCard = ({ league }) => {
         )}
       </div>
       
-      {/* Footer with League Info */}
-      <div className="bg-neutral-50 dark:bg-neutral-800 px-5 py-3 flex justify-between items-center">
+      {/* Footer */}
+      <div className="liquid-glass-input glass-rounded-t-none px-6 py-4 flex justify-between items-center">
         <div className="flex items-center">
-          <Users className="h-4 w-4 text-neutral-500 dark:text-neutral-400 mr-1" />
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+          <Users className="h-4 w-4 text-slate-600 dark:text-slate-400 mr-2" />
+          <span className="text-xs text-slate-600 dark:text-slate-400">
             {league.squads_count}/{league.max_teams} Squads
           </span>
         </div>
-        <ChevronRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+        <ChevronRight className="h-4 w-4 text-slate-500 dark:text-slate-500" />
       </div>
     </div>
   );
@@ -332,39 +344,142 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-        <h1 className="text-2xl font-caption font-bold dark:text-white">My Leagues</h1>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">
-          
-          <Link
-            to="/leagues/join"
-            className="bg-primary-600 font-caption text-white border-transparent hover:bg-primary-700 focus:ring-primary-500 inline-block py-2 px-4 rounded-md text-sm font-medium"
-          >
-            Join League
-          </Link>
-        </div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0">
+        {/* Floating Glass Orbs */}
+        <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-gradient-to-br from-primary-400/8 to-primary-600/8 dark:from-primary-400/15 dark:to-primary-600/15 floating-orb"></div>
+        <div className="absolute bottom-1/3 right-1/5 w-48 h-48 rounded-full bg-gradient-to-tr from-blue-400/5 to-primary-500/5 dark:from-blue-400/10 dark:to-primary-500/10 floating-orb" style={{animationDelay: '8s'}}></div>
+        <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-gradient-to-bl from-primary-300/4 to-primary-700/4 dark:from-primary-300/8 dark:to-primary-700/8 floating-orb" style={{animationDelay: '15s'}}></div>
+        
+        {/* Subtle grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.02] dark:opacity-3" 
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(31,190,221,0.2) 1px, transparent 0)`,
+            backgroundSize: '60px 60px'
+          }}
+        ></div>
       </div>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded mb-4">
-          {error}
+      {/* Main Content */}
+      <div className="relative z-10 container mx-auto px-6 py-8">
+        
+        {/* Header Section */}
+        <div className="mb-12">
+          <div className="liquid-glass-main glass-rounded-lg relative overflow-hidden">
+            <div className="glass-shine absolute inset-0 glass-rounded-lg"></div>
+            
+            <div className="relative z-10 p-8">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
+                <div className="flex-1">
+                  <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 font-caption">
+                    Welcome back! <span className="text-primary-600 dark:text-primary-400">{user?.first_name}</span>
+                  </h1>
+                  {/* <p className="text-slate-700 dark:text-slate-200 text-lg mb-6">
+                    Ready to dominate the fantasy cricket world? Manage your squads, check standings, and make those game-changing trades.
+                  </p> */}
+                  
+                  {/* Quick Stats */}
+                  <div className="flex flex-wrap gap-4">
+                    <div className="liquid-glass-badge glass-rounded-sm px-4 py-2 flex items-center">
+                      <Users className="w-4 h-4 text-primary-600 dark:text-primary-400 mr-2" />
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">{leagues.length} Active League{leagues.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    {/* <div className="liquid-glass-badge glass-rounded-sm px-4 py-2 flex items-center">
+                      <Zap className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mr-2" />
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">IPL 2025 Season</span>
+                    </div> */}
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link
+                    to="/leagues/join"
+                    className="liquid-glass-button glass-rounded-md px-6 py-3 font-semibold text-white group transition-all duration-300"
+                  >
+                    <div className="flex items-center justify-center">
+                      <Plus className="w-5 h-5 mr-2" />
+                      Join League
+                      <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
 
-      {leagues.length === 0 ? (
-        <div className="text-center py-8 bg-neutral-50 dark:bg-neutral-800 rounded">
-          <p className="text-neutral-600 dark:text-neutral-300">You haven't joined any leagues yet.</p>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-2">Join a league to get started!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {leagues.map(league => (
-            <LeagueCard key={league.id} league={league} />
-          ))}
-        </div>
-      )}
+        {/* Error Display */}
+        {error && (
+          <div className="liquid-glass-card glass-rounded-md p-6 mb-8 border border-red-400/20">
+            <div className="flex items-start text-red-600 dark:text-red-300">
+              <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+              <span className="text-sm font-medium">{error}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Leagues Section */}
+        {leagues.length === 0 ? (
+          <div className="liquid-glass-main glass-rounded-lg text-center py-16">
+            <div className="glass-shine absolute inset-0 glass-rounded-lg"></div>
+            
+            <div className="relative z-10">
+              <div className="liquid-glass-card glass-rounded-lg w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Trophy className="w-10 h-10 text-primary-600 dark:text-primary-400" />
+              </div>
+              
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 font-caption">
+                Your Fantasy Journey Awaits
+              </h2>
+              <p className="text-slate-600 dark:text-slate-300 text-lg mb-8 max-w-md mx-auto">
+                Join your first league to experience draft-based fantasy cricket like never before.
+              </p>
+              
+              {/* Feature highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto mb-8">
+                {[
+                  { icon: Users, title: "Draft & Trade", desc: "Build your squad strategically" },
+                  { icon: BarChart3, title: "Core Squad Roles", desc: "Boost player performance" },
+                  { icon: Star, title: "Season-Long", desc: "Compete all season long" }
+                ].map((feature, index) => (
+                  <div key={index} className="liquid-glass-input glass-rounded-md p-4 text-center">
+                    <feature.icon className="w-6 h-6 text-primary-600 dark:text-primary-400 mx-auto mb-2" />
+                    <h3 className="font-semibold text-slate-900 dark:text-white text-sm mb-1">{feature.title}</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{feature.desc}</p>
+                  </div>
+                ))}
+              </div>
+              
+              <Link
+                to="/leagues/join"
+                className="liquid-glass-button glass-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center group"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Join Your First League
+                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white font-caption">My Leagues</h2>
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                {leagues.length} league{leagues.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {leagues.map(league => (
+                <LeagueCard key={league.id} league={league} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

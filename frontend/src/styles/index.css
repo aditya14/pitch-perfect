@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Liquid Glass Design System */
+@import './liquid-glass.css';
+
 /* Combined iOS and Android Safe Area Utilities */
 :root {
   /* iOS safe area insets */

@@ -1,14 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { AlertCircle, Eye, EyeOff, Users, ArrowRightLeft, TrendingUp, Zap, Activity } from 'lucide-react';
-
-// Add this style to ensure safe top spacing on mobile browsers
-const safeTopStyle = `
-  .safe-top {
-    padding-top: env(safe-area-inset-top, 1rem);
-  }
-`;
+import { AlertCircle, Eye, EyeOff, Users, BarChart3, Zap, ChevronRight, Star, Globe, ChevronDown } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -17,6 +10,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
+  const loginRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,194 +27,227 @@ const Login = () => {
     }
   };
 
-  const features = [
-    {
-      icon: <Users className="h-6 w-6" />,
-      title: "Draft Players",
-      description: "Rank, draft, and build your dream squad from the official IPL player pool"
-    },
-    {
-      icon: <TrendingUp className="h-6 w-6" />,
-      title: "Boost Strategy",
-      description: "Assign specialized roles with unique point multipliers to maximize scoring"
-    },
-    {
-      icon: <ArrowRightLeft className="h-6 w-6" />,
-      title: "In-Season Trading",
-      description: "Trade players with other managers to optimize your lineup strategy"
-    },
-    {
-      icon: <Activity className="h-6 w-6" />,
-      title: "Dynamic Scoring",
-      description: "Comprehensive scoring system for batting, bowling, fielding, and achievements"
-    }
-  ];
+  const scrollToLogin = () => {
+    loginRef.current?.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'center'
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-primary-950 pt-10 pb-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Inject safe-area CSS */}
-      <style dangerouslySetInnerHTML={{ __html: safeTopStyle }} />
-      {/* Background decoration */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-neutral-100 dark:bg-neutral-900/20 blur-3xl opacity-50"></div>
-        <div className="absolute top-1/2 -left-24 w-80 h-80 rounded-full bg-blue-100 dark:bg-blue-900/20 blur-3xl opacity-40"></div>
-        <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 w-screen h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-30"></div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0">
+        {/* Floating Glass Orbs */}
+        <div className="absolute top-1/4 left-1/5 w-72 h-72 rounded-full bg-gradient-to-br from-primary-400/20 to-primary-600/20 floating-orb"></div>
+        <div className="absolute bottom-1/4 right-1/5 w-56 h-56 rounded-full bg-gradient-to-tr from-blue-400/15 to-primary-500/15 floating-orb" style={{animationDelay: '5s'}}></div>
+        <div className="absolute top-1/2 right-1/4 w-40 h-40 rounded-full bg-gradient-to-bl from-primary-300/10 to-primary-700/10 floating-orb" style={{animationDelay: '10s'}}></div>
+        
+        {/* Subtle grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-5" 
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(31,190,221,0.3) 1px, transparent 0)`,
+            backgroundSize: '50px 50px'
+          }}
+        ></div>
       </div>
 
-      <div className="container mx-auto max-w-7xl z-10 relative">
-        {/* App Logo - Always at the top on all screens with safe spacing */}
-        <div className="flex items-center justify-center lg:justify-start mb-8 safe-top">
-          <img src="/icon.png" alt="PitchPerfect Logo" className="h-12 w-12 sm:h-16 sm:w-16 mr-3" />
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white font-caption">
-            <span className="text-primary-500 dark:text-primary-500">Pitch</span>Perfect
-          </h1>
-        </div>
-        
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-12">
-          {/* App Info Section - After login on mobile, side-by-side on desktop */}
-          <div className="w-full lg:w-1/2 space-y-6 lg:space-y-8 text-center lg:text-left order-last lg:order-first">
-            <div>
-              <h2 className="text-xl sm:text-3xl font-bold text-neutral-800 dark:text-neutral-100 mb-3">
-                Fantasy Cricket Reimagined
-              </h2>
-              <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-300 mb-6 max-w-xl mx-auto lg:mx-0">
-                The premier draft-based fantasy cricket platform for IPL enthusiasts. Build your squad, deploy strategic roles, and compete throughout the season.
-              </p>
+      {/* Main Content */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-7xl">
+          
+          {/* Header Section */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center mb-8">
+              <div className="liquid-glass-card glass-rounded-lg p-4 mr-6 brand-glow">
+                <img src="/icon.png" alt="PitchPerfect Logo" className="w-14 h-14" />
+              </div>
+              <div>
+                <h1 className="text-5xl md:text-7xl font-bold font-caption">
+                  <span className="text-primary-400">Pitch</span>
+                  <span className="text-white">Perfect</span>
+                </h1>
+                <p className="text-slate-300 text-xl mt-3">Fantasy Cricket Evolved</p>
+              </div>
+            </div>
+            
+            {/* Mobile CTA Button */}
+            <div className="lg:hidden mt-12">
+              <button
+                onClick={scrollToLogin}
+                className="liquid-glass-cta glass-rounded-lg px-8 py-4"
+              >
+                <div className="flex items-center justify-center">
+                  <span className="text-lg font-semibold text-white mr-3">Ready to step out into the field?</span>
+                  <ChevronDown className="w-6 h-6 text-primary-400 bounce-arrow" />
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Main Layout - Side by Side */}
+          <div className="grid lg:grid-cols-5 gap-12 items-start">
+            
+            {/* Left Side - Feature Showcase (3 columns) */}
+            <div className="lg:col-span-3 space-y-8">
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
-                {features.map((feature, index) => (
-                  <div key={index} className="flex items-start p-3 sm:p-4 bg-white dark:bg-neutral-800/50 rounded-lg shadow-sm border border-neutral-100 dark:border-neutral-700 hover:shadow-md transition-all">
-                    <div className="flex-shrink-0 p-2 bg-neutral-100 dark:bg-neutral-900/50 rounded-lg text-primary-600 dark:text-primary-400 mr-3">
-                      {feature.icon}
+              {/* Hero Message */}
+              <div className="liquid-glass-main glass-rounded relative overflow-hidden">
+                <div className="glass-shine absolute inset-0 glass-rounded"></div>
+                <div className="relative z-10 p-8">
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                    The Future of Fantasy Cricket
+                  </h2>
+                  <p className="text-slate-200 text-lg leading-relaxed mb-8">
+                    Experience cricket fantasy like never before with our innovative draft-based platform. 
+                    Build your squad, deploy strategic roles, and compete throughout entire seasons.
+                  </p>
+                  
+                  {/* Status Badges */}
+                  <div className="flex flex-wrap gap-4 mb-6">
+                    <div className="liquid-glass-badge rounded-full px-5 py-3 flex items-center">
+                      <div className="w-2.5 h-2.5 bg-green-400 rounded-full mr-3 animate-pulse"></div>
+                      <span className="text-sm font-medium text-white">IPL Available Now</span>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-neutral-900 dark:text-white text-sm sm:text-md mb-1">{feature.title}</h3>
-                      <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">{feature.description}</p>
+                    <div className="liquid-glass-badge rounded-full px-5 py-3 flex items-center">
+                      <Globe className="w-4 h-4 text-primary-400 mr-3" />
+                      <span className="text-sm font-medium text-white">International Cricket Coming Soon</span>
+                    </div>
+                  </div>
+                  
+                  {/* International Formats - clearly associated with coming soon */}
+                  <div className="pl-4 border-l-2 border-primary-400/30">
+                    <p className="text-slate-300 text-sm mb-3">Upcoming formats:</p>
+                    <div className="flex flex-wrap gap-3">
+                      {['Tests', 'ODIs', 'T20Is'].map((format) => (
+                        <div key={format} className="liquid-glass-input glass-rounded-sm px-4 py-2">
+                          <span className="text-sm text-primary-300 font-medium">{format}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {[
+                  { icon: Users, title: "Draft & Trade", desc: "Build your squad through strategic drafts and active trading throughout the season" },
+                  { icon: BarChart3, title: "Core Squad Roles", desc: "Boost player performance with specialized role multipliers and strategic assignments" },
+                  { icon: Star, title: "Season-Long Play", desc: "Compete throughout entire cricket seasons, not just individual matches" },
+                  { icon: Zap, title: "Live Scoring", desc: "Real-time fantasy points during every ball of every match" }
+                ].map((feature, index) => (
+                  <div key={index} className="liquid-glass-card glass-rounded-lg p-6 group hover:scale-105 transition-all duration-300 cursor-pointer">
+                    <div className="flex items-start space-x-4">
+                      <div className="liquid-glass-input glass-rounded-md p-3 group-hover:bg-primary-500/20 transition-colors">
+                        <feature.icon className="w-6 h-6 text-primary-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white mb-2 text-lg">{feature.title}</h3>
+                        <p className="text-sm text-slate-300 leading-relaxed">{feature.desc}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="hidden lg:block">
-              <div className="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400">
-                <Zap className="h-4 w-4 mr-2 text-yellow-500" />
-                <span>Ready for the 2025 IPL season</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Onboarding - Login First Approach */}
-          <div className="w-full sm:max-w-md mx-auto order-first mb-8 lg:mb-0 lg:order-last lg:w-5/12">
-            <div className="bg-white dark:bg-neutral-800 shadow-xl rounded-xl p-6 sm:p-8 border border-neutral-200 dark:border-neutral-700">
-              <div className="mb-4 sm:mb-6 text-center">
-                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-white">
-                  Sign in to your account
-                </h2>
-                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                  Or{' '}
-                  <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
-                    create a new account
-                  </Link>
-                </p>
-              </div>
-              
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                {error && (
-                  <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-md flex items-start">
-                    <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                    <span>{error}</span>
-                  </div>
-                )}
-                
-                <div className="space-y-4">
-                  {/* Username/Email */}
-                  <div>
-                    <label htmlFor="username" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      id="username"
-                      type="text"
-                      required
-                      className="appearance-none block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm placeholder-neutral-400 
-                        focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                        dark:bg-neutral-700 dark:text-white sm:text-sm bg-neutral-100 text-black"
-                      placeholder="you@example.com"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                    />
-                  </div>
+            {/* Right Side - Login Form (2 columns) */}
+            <div className="lg:col-span-2 flex justify-center lg:justify-end" ref={loginRef}>
+              <div className="w-full max-w-md">
+                <div className="liquid-glass-main glass-rounded relative overflow-hidden">
+                  <div className="glass-shine absolute inset-0 glass-rounded"></div>
                   
-                  {/* Password */}
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        required
-                        className="appearance-none block w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm placeholder-neutral-400 
-                          focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                          dark:bg-neutral-700 dark:text-white sm:text-sm bg-neutral-100 text-black"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
+                  <div className="relative z-10 p-8">
+                    {/* Form Header */}
+                    <div className="text-center mb-8">
+                      <h3 className="text-2xl font-bold text-white mb-3">Welcome Back</h3>
+                      <p className="text-slate-300">
+                        New to PitchPerfect?{' '}
+                        <Link to="/register" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
+                          Create account
+                        </Link>
+                      </p>
+                    </div>
+
+                    {/* Error Display */}
+                    {error && (
+                      <div className="liquid-glass-card glass-rounded-md p-4 mb-6 border border-red-400/20">
+                        <div className="flex items-start text-red-300">
+                          <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm font-medium">{error}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      {/* Email Input */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-200 mb-3">
+                          Email Address
+                        </label>
+                        <div className="liquid-glass-input glass-rounded-md">
+                          <input
+                            type="email"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="w-full px-4 py-4 bg-transparent border-0 text-white placeholder-slate-400 focus:outline-none rounded-lg"
+                            placeholder="you@example.com"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Password Input */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-200 mb-3">
+                          Password
+                        </label>
+                        <div className="liquid-glass-input glass-rounded-md relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-4 pr-12 bg-transparent border-0 text-white placeholder-slate-400 focus:outline-none rounded-lg"
+                            placeholder="••••••••"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                          >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Sign In Button */}
                       <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="liquid-glass-button glass-rounded-md w-full py-4 px-6 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed group"
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        <div className="flex items-center justify-center">
+                          {isSubmitting ? 'Signing in...' : 'Sign In'}
+                          {!isSubmitting && <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />}
+                        </div>
                       </button>
+                    </form>
+
+                    {/* Bottom Text */}
+                    <div className="mt-8 text-center">
+                      <p className="text-sm text-slate-400">
+                        Join thousands of cricket fans worldwide
+                      </p>
                     </div>
                   </div>
                 </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                      bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 
-                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 
-                      disabled:bg-neutral-400 disabled:cursor-not-allowed transition-colors duration-200"
-                  >
-                    {isSubmitting ? 'Signing in...' : 'Sign in'}
-                  </button>
-                </div>
-              </form>
-
-              <div className="mt-6">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-neutral-300 dark:border-neutral-600"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 font-caption">
-                      Fantasy Cricket at its finest
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 text-center lg:hidden">
-              <div className="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400">
-                <Zap className="h-4 w-4 mr-2 text-yellow-500" />
-                <span>Ready for the 2025 IPL season</span>
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Footer */}
-        <div className="mt-8 lg:mt-12 text-center text-xs text-neutral-500 dark:text-neutral-400">
-          <p>© 2025 PitchPerfect. All rights reserved.</p>
         </div>
       </div>
     </div>
