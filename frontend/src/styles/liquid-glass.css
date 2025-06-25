@@ -1347,3 +1347,44 @@ html.dark .liquid-glass-frosted {
   --lg-text-light: 248, 250, 252;
   --lg-border-light: 51, 65, 85;
 }
+
+/* ============================================
+   13. Bottom Navigation Specific Styles
+   ============================================ */
+
+/* Ensure bottom navigation is always fixed to viewport */
+.bottom-nav-fixed {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+}
+
+.bottom-nav-fixed > * {
+  pointer-events: auto !important;
+}
+
+/* Ensure no parent container affects the positioning */
+html, body {
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Handle safe areas for iOS devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .bottom-nav-fixed {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+}
+
+/* ============================================
+   14. App Layout Helpers
+   ============================================ */
+
+/* Main content should account for bottom navigation */
+.main-content-with-bottom-nav {
+  padding-bottom: 120px !important;
+  min-height: calc(100vh - 120px) !important;
+}

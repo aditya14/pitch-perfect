@@ -39,7 +39,7 @@ const MatchPerformanceContainer = ({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-4">
+      <div className="lg-card p-4">
         <div className="animate-pulse flex space-x-4">
           <div className="flex-1 space-y-4 py-1">
             <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4"></div>
@@ -55,7 +55,7 @@ const MatchPerformanceContainer = ({
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-4">
+      <div className="lg-card p-4">
         <div className="text-red-500 dark:text-red-400">
           {error}
         </div>
@@ -64,7 +64,7 @@ const MatchPerformanceContainer = ({
   }
 
   return (
-    <div className="bg-white dark:bg-neutral-900 shadow rounded-lg overflow-hidden">
+    <div className="lg-glass lg-card overflow-hidden">
       <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
         <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
           Player Points

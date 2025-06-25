@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { PlayerModalProvider } from './context/PlayerModalContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/auth/Login';
@@ -13,6 +13,7 @@ import RosterView from './components/leagues/RosterView';
 import Profile from './components/user/Profile';
 import api from './utils/axios';
 import Header from './components/Header';
+import BottomNavigation from './components/BottomNavigation';
 import './styles/transitions.css';
 import SquadView from './components/squads/SquadView';
 import MatchView from './components/matches/MatchView';
@@ -22,7 +23,39 @@ import HowItWorksComponent from './components/HowItWorksComponent';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import { DraftModalProvider } from './context/DraftModalContext';
 import DraftModalContainer from './components/leagues/modals/DraftModalContainer';
-import MatchPreview from './components/matches/MatchPreview'; // Import MatchPreview
+import MatchPreview from './components/matches/MatchPreview';
+
+// New component to redirect old squad URLs to league context
+const SquadRedirect = () => {
+  const { squadId } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [leagueId, setLeagueId] = useState(null);
+
+  useEffect(() => {
+    const fetchSquadLeague = async () => {
+      try {
+        const response = await api.get(`/squads/${squadId}/`);
+        setLeagueId(response.data.league_id);
+      } catch (error) {
+        console.error('Failed to fetch squad league:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSquadLeague();
+  }, [squadId]);
+
+  if (loading) {
+    return <LoadingScreen message="Redirecting..." />;
+  }
+
+  if (leagueId) {
+    return <Navigate to={`/leagues/${leagueId}/my_squad`} replace />;
+  }
+
+  return <Navigate to="/dashboard" replace />;
+};
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -33,9 +66,33 @@ const AppContent = () => {
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     return prefersDarkMode ? 'dark' : 'light';
   });
+  
+  const [isStandalone, setIsStandalone] = useState(false);
 
   // Set default document title
   useDocumentTitle('Home');
+
+  // Detect standalone mode
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isRunningStandalone = 
+        window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone || 
+        document.referrer.includes('android-app://');
+      
+      setIsStandalone(isRunningStandalone);
+    };
+    
+    checkStandalone();
+    
+    // Listen for display mode changes
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    mediaQuery.addEventListener('change', checkStandalone);
+    
+    return () => {
+      mediaQuery.removeEventListener('change', checkStandalone);
+    };
+  }, []);
 
   // Always apply theme when theme state changes
   useEffect(() => {
@@ -103,26 +160,43 @@ const AppContent = () => {
     return <LoadingScreen message="Loading your leagues..." />;
   }
 
+  // Calculate bottom padding based on standalone mode and screen size
+  const getBottomPadding = () => {
+    if (!user) return '';
+    
+    // No bottom padding on desktop (md and up)
+    // On mobile, adjust for bottom nav height and standalone mode
+    if (isStandalone) {
+      return 'pb-20 md:pb-6'; // Less padding in standalone mode
+    } else {
+      return 'pb-24 md:pb-6'; // Standard padding in browser mode
+    }
+  };
+
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className={`
-        min-h-screen 
-        theme-transition
-        bg-white dark:bg-neutral-900 
-        text-neutral-900 dark:text-white
-        relative
-      `}>
-        {user && (
-          <Header 
-            theme={theme}
-            onThemeChange={handleThemeChange}
-          />
-        )}
-        <div className={`
-          theme-transition 
-          dark:bg-neutral-900
-          ${user ? 'pb-16' : ''} //
-        `}>
+    <>
+      {/* Fixed Header */}
+      {user && (
+        <Header 
+          theme={theme}
+          onThemeChange={handleThemeChange}
+        />
+      )}
+
+      {/* Main Content Area with Pull to Refresh */}
+      <PullToRefresh onRefresh={handleRefresh}>
+        <main 
+          className={`
+            theme-transition 
+            bg-white dark:bg-neutral-900 
+            text-neutral-900 dark:text-white
+            ${user ? 'pt-0' : 'min-h-screen'}
+            ${getBottomPadding()}
+          `}
+          style={{
+            minHeight: user ? 'calc(100vh - 80px)' : '100vh'
+          }}
+        >
           <Routes>
             {/* Public Routes */}
             <Route 
@@ -191,6 +265,7 @@ const AppContent = () => {
                 <Navigate to="/login" />
               }
             />
+            
             {/* League routes with nested tab routes */}
             <Route 
               path="/leagues/:leagueId"
@@ -203,7 +278,10 @@ const AppContent = () => {
               <Route path="trades" element={null} />
               <Route path="stats" element={null} />
               <Route path="squads" element={null} />
+              {/* NEW: My Squad route within league context */}
+              <Route path="my_squad" element={null} />
             </Route>
+            
             <Route 
               path="/leagues/:leagueId/roster" 
               element={
@@ -212,14 +290,17 @@ const AppContent = () => {
                 <Navigate to="/login" />
               }
             />
+            
+            {/* OLD ROUTE: Redirect old squad URLs to new league context */}
             <Route 
               path="/squads/:squadId"
               element={
                 user ? 
-                <SquadView /> : 
+                <SquadRedirect /> : 
                 <Navigate to="/login" />
               }
             />
+            
             <Route 
               path="/matches/:matchId" 
               element={
@@ -255,9 +336,12 @@ const AppContent = () => {
             />
             <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} /> {/* Adjusted fallback */}
           </Routes>
-        </div>
-      </div>
-    </PullToRefresh>
+        </main>
+      </PullToRefresh>
+
+      {/* Fixed Bottom Navigation - Mobile only */}
+      {user && <BottomNavigation />}
+    </>
   );
 };
 
@@ -266,7 +350,9 @@ const App = () => {
     <Router>
       <AuthProvider>
         <PlayerModalProvider>
-          <AppContent />
+          <div className="relative w-full h-full overflow-hidden">
+            <AppContent />
+          </div>
         </PlayerModalProvider>
       </AuthProvider>
     </Router>

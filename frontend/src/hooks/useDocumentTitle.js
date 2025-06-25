@@ -8,13 +8,13 @@ import { useEffect } from 'react';
  * @returns {void}
  * 
  * Usage examples:
- * useDocumentTitle('Dashboard'); // Sets "Dashboard | Pitch Perfect"
- * useDocumentTitle('My Cool League - Dashboard'); // Sets "My Cool League - Dashboard | Pitch Perfect"
+ * useDocumentTitle('Dashboard'); // Sets "Dashboard | Squadly"
+ * useDocumentTitle('My Cool League - Dashboard'); // Sets "My Cool League - Dashboard | Squadly"
  * useDocumentTitle('Full Title', false); // Sets just "Full Title" without the suffix
  */
 const useDocumentTitle = (title, withSuffix = true) => {
   useEffect(() => {
-    const appName = 'Pitch Perfect';
+    const appName = 'Squadly';
     document.title = withSuffix ? `${title} | ${appName}` : title;
     
     // Cleanup function to reset the title when component unmounts

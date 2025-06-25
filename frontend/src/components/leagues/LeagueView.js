@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import api from '../../utils/axios';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
+import { useAuth } from '../../context/AuthContext';
 
 // Import tab components
 import LeagueDashboard from './LeagueDashboard';
@@ -12,6 +13,7 @@ import TradeTutorial from './TradeTutorial';
 import LeagueStats from './LeagueStats';
 import DraftOrderModal from './modals/DraftOrderModal';
 import LeagueSquads from './LeagueSquads';
+import SquadView from '../squads/SquadView'; // Import SquadView for My Squad tab
 
 // Constants 
 const DRAFT_DEADLINE = new Date('2025-03-21T14:00:00Z'); // March 21, 2025 10:00 AM ET
@@ -20,6 +22,7 @@ const LeagueView = () => {
   const { leagueId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [league, setLeague] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,6 +33,7 @@ const LeagueView = () => {
   const [draftSaveError, setDraftSaveError] = useState(null);
   const [isDraftDeadlinePassed, setIsDraftDeadlinePassed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mySquadId, setMySquadId] = useState(null);
 
   // Handle responsive design
   useEffect(() => {
@@ -42,17 +46,29 @@ const LeagueView = () => {
   }, []);
 
   // Define the core tabs that are always available
-  const coreTabs = [
-    { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
-    { id: 'matches', label: 'Matches', component: MatchList },
-    { id: 'squads', label: 'Squads', component: LeagueSquads },
-    { id: 'table', label: 'Standings', component: LeagueTable },
-    { id: 'stats', label: 'Stats', component: LeagueStats },
-  ];
+  const getCoreTabs = useCallback(() => {
+    const tabs = [
+      { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
+      { id: 'matches', label: 'Matches', component: MatchList },
+    ];
+
+    // Add My Squad tab if user has a squad in this league
+    if (mySquadId) {
+      tabs.push({ id: 'my_squad', label: 'My Squad', component: SquadView });
+    }
+
+    tabs.push(
+      { id: 'squads', label: 'Squads', component: LeagueSquads },
+      { id: 'table', label: 'Standings', component: LeagueTable },
+      { id: 'stats', label: 'Stats', component: LeagueStats }
+    );
+
+    return tabs;
+  }, [mySquadId]);
 
   // Create tabs based on draft status
   const getTabs = useCallback((isDraftCompleted) => {
-    const allTabs = [...coreTabs];
+    const allTabs = [...getCoreTabs()];
     
     // Add trades tab with the appropriate component based on draft status
     if (isDraftCompleted) {
@@ -62,10 +78,10 @@ const LeagueView = () => {
     }
     
     return allTabs;
-  }, []);
+  }, [getCoreTabs]);
 
   // Initialize tabs with empty draft status, will be updated after league data loads
-  const [tabs, setTabs] = useState(getTabs(false));
+  const [tabs, setTabs] = useState([]);
 
   // Get current active tab from URL path
   const getActiveTabFromPath = () => {
@@ -114,10 +130,13 @@ const LeagueView = () => {
   const fetchLeagueData = async () => {
     try {
       const response = await api.get(`/leagues/${leagueId}/`);
-      setLeague(response.data);
+      const leagueData = response.data;
+      setLeague(leagueData);
       
-      // Update tabs based on draft status
-      setTabs(getTabs(response.data.draft_completed));
+      // Set mySquadId if user has a squad in this league
+      if (leagueData.my_squad) {
+        setMySquadId(leagueData.my_squad.id);
+      }
       
       setError(null);
     } catch (err) {
@@ -126,10 +145,16 @@ const LeagueView = () => {
       } else {
         setError(err.response?.data?.detail || 'Failed to fetch league data');
       }
-    } finally {
-      setLoading(false);
     }
   };
+
+  // Update tabs when league data or my squad changes
+  useEffect(() => {
+    if (league) {
+      setTabs(getTabs(league.draft_completed));
+      setLoading(false);
+    }
+  }, [league, getTabs]);
 
   // Fetch player data
   const fetchPlayerData = useCallback(async () => {
@@ -227,10 +252,18 @@ const LeagueView = () => {
   
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
 
+  // Special handling for My Squad component to pass the correct props
+  const renderActiveComponent = () => {
+    if (activeTab === 'my_squad' && mySquadId) {
+      return <SquadView squadId={mySquadId} leagueContext={true} />;
+    }
+    return ActiveComponent && <ActiveComponent league={league} />;
+  };
+
   return (
     <div className="container mx-auto px-4 py-4">
       {/* Tab Content */}
-      {ActiveComponent && <ActiveComponent league={league} />}
+      {renderActiveComponent()}
       
       {/* This is where nested routes would render */}
       <Outlet />

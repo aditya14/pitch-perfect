@@ -3,9 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import { 
-  Trophy, ChevronRight, Moon, Sun, Home, LogOut, User, 
-  ShieldHalf, Shield, UsersRound, ChevronsUpDown, Check,
-  Menu
+  ChevronRight, Moon, Sun, Home, LogOut, User, 
+  ChevronsUpDown, Check, Menu, Shield
 } from 'lucide-react';
 import MidSeasonDraftModal from './leagues/modals/MidSeasonDraftModal';
 import UpdatePointsButton from './UpdatePointsButton';
@@ -30,7 +29,6 @@ const Header = ({ theme, onThemeChange }) => {
   const [userLeagues, setUserLeagues] = useState([]);
   const [isLeagueDropdownOpen, setIsLeagueDropdownOpen] = useState(false);
   const leagueDropdownRef = useRef(null);
-  
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
 
   // Extract leagueId from URL path pattern
@@ -39,7 +37,7 @@ const Header = ({ theme, onThemeChange }) => {
     return match ? match[1] : null;
   };
 
-  // Extract squadId from URL path pattern
+  // Extract squadId from URL path pattern (for legacy routes)
   const getSquadIdFromPath = () => {
     const match = location.pathname.match(/\/squads\/([^\/]+)/);
     return match ? match[1] : null;
@@ -49,6 +47,7 @@ const Header = ({ theme, onThemeChange }) => {
   const squadId = getSquadIdFromPath();
   const isLeagueView = location.pathname.includes('/leagues/') && leagueId;
   const isSquadView = location.pathname.includes('/squads/') && squadId;
+  const isMySquadView = location.pathname.includes('/my_squad');
   
   // Fetch league info when in league view
   useEffect(() => {
@@ -87,7 +86,7 @@ const Header = ({ theme, onThemeChange }) => {
     fetchUserLeagues();
   }, [user]);
 
-  // Fetch squad info when in squad view
+  // Fetch squad info when in squad view (legacy route)
   useEffect(() => {
     if (isSquadView && squadId) {
       const fetchSquadInfo = async () => {
@@ -191,7 +190,7 @@ const Header = ({ theme, onThemeChange }) => {
     if (!isLeagueView) return null;
     const pathSegments = location.pathname.split('/');
     const lastSegment = pathSegments[pathSegments.length - 1];
-    const tabIds = ['dashboard', 'matches', 'squads', 'table', 'stats', 'trades'];
+    const tabIds = ['dashboard', 'matches', 'squads', 'table', 'stats', 'trades', 'my_squad'];
     if (tabIds.includes(lastSegment)) {
       return lastSegment;
     }
@@ -200,10 +199,12 @@ const Header = ({ theme, onThemeChange }) => {
 
   const activeTab = getActiveTab();
 
-  // League navigation tabs
+  // League navigation tabs - updated to include My Squad
   const leagueTabs = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'matches', label: 'Matches' },
+    // Only show My Squad tab if user has a squad in this league
+    ...(leagueInfo?.my_squad ? [{ id: 'my_squad', label: 'My Squad' }] : []),
     { id: 'squads', label: 'Squads' },
     { id: 'table', label: 'Standings' },
     { id: 'stats', label: 'Stats' },
@@ -250,70 +251,69 @@ const Header = ({ theme, onThemeChange }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full fix-fixed">
-        {/* Liquid Glass Header Background */}
+      <header className="sticky top-0 z-40 w-full">
         <div className="lg-nav border-0 rounded-none">
           {/* Safe area padding for notch/status bar */}
           <div className="w-full safe-area-top"></div>
           
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto px-2 sm:px-6 lg:px-8">
             {/* Main Header Row */}
-            <div className="flex items-center justify-between h-16">
+            <div className="flex items-center justify-between h-16 flex-nowrap">
               {/* Left side - Logo and League Name/Switcher */}
-              <div className="flex items-center">
+              <div className="flex items-center min-w-0">
                 <Link 
                   to="/dashboard"
-                  className="flex items-center group"
+                  className="flex items-center group flex-shrink-0"
                 >
-                  <div className="lg-glass-secondary lg-rounded-md p-2 mr-3 group-hover:scale-105 transition-transform duration-200">
-                    <img src="/icon.png" alt="Logo" className="h-8 w-8" />
+                  <div className="lg-glass-secondary lg-rounded-md p-2 mr-2 sm:mr-3 flex-shrink-0">
+                    <img src="/icon.png" alt="Logo" className="h-8 w-8 min-w-[2rem] min-h-[2rem]" />
                   </div>
-                  <div className="text-xl font-extrabold dark:text-white hover:text-primary-300 transition-colors duration-300 hidden sm:block font-caption">
+                  <div className="text-xl font-extrabold text-primary-950 dark:text-white hover:text-primary-300 transition-colors duration-300 hidden xs:block sm:block font-caption whitespace-nowrap">
                     <span className="text-primary-400">Pitch</span>Perfect
-                    {/* <span className="text-primary-400">Squad</span>ly */}
                   </div>
                 </Link>
                 
                 {/* League Info or Switcher */}
-                <div className="ml-4 sm:ml-6 sm:pl-4 sm:border-l sm:border-white/20 relative" ref={leagueDropdownRef}>
+                <div className="ml-2 sm:ml-6 sm:pl-4 sm:border-l sm:border-white/20 relative min-w-0" ref={leagueDropdownRef}>
                   {canShowLeagueSwitcher && leagueInfo ? (
                     // League Switcher Dropdown Button
                     <button
                       onClick={() => setIsLeagueDropdownOpen(!isLeagueDropdownOpen)}
-                      className="lg-glass-tertiary lg-rounded-md flex items-center gap-2 py-1 px-2 pl-3 transition-colors group hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)]"
+                      className="lg-glass-tertiary lg-rounded-md flex items-center gap-2 py-1 px-2 pl-3 transition-colors group hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)] min-w-0 max-w-[60vw] sm:max-w-xs overflow-x-auto"
+                      style={{whiteSpace: 'nowrap'}}
                     >
-                      <div className="flex flex-col items-start">
-                        <span className="dark:text-white font-bold font-caption text-sm leading-tight group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors">
+                      <div className="flex flex-col items-start min-w-0">
+                        <span className="text-primary-900 dark:text-white font-bold font-caption text-sm leading-tight group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors truncate max-w-[40vw] sm:max-w-[10rem]">
                           {leagueInfo.name}
                         </span>
                         {leagueInfo.season && (
-                          <span className="text-xs text-primary-300 leading-tight group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors">
+                          <span className="text-xs text-primary-300 leading-tight group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors truncate max-w-[40vw] sm:max-w-[10rem]">
                             {leagueInfo.season.name}
                           </span>
                         )}
                       </div>
-                      <ChevronsUpDown className="h-4 w-4 text-slate-400 group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors" />
+                      <ChevronsUpDown className="h-4 w-4 text-slate-400 group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors flex-shrink-0" />
                     </button>
                   ) : isLeagueView && leagueInfo ? (
                     // Static League Info
-                    <div className="lg-glass-tertiary lg-rounded-md p-3">
-                      <div className="text-white font-bold font-caption text-sm leading-tight">
+                    <div className="lg-glass-tertiary lg-rounded-md p-3 min-w-0 max-w-[60vw] sm:max-w-xs overflow-x-auto" style={{whiteSpace: 'nowrap'}}>
+                      <div className="text-white font-bold font-caption text-sm leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                         {leagueInfo.name}
                       </div>
                       {leagueInfo.season && (
-                        <div className="text-xs text-primary-300 leading-tight">
+                        <div className="text-xs text-primary-300 leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                           {leagueInfo.season.name}
                         </div>
                       )}
                     </div>
                   ) : isSquadView && squadInfo ? (
-                    // Squad Info
-                    <div className="lg-glass-tertiary lg-rounded-md p-3">
-                      <div className="text-white font-medium text-sm leading-tight">
+                    // Squad Info (for legacy route)
+                    <div className="lg-glass-tertiary lg-rounded-md p-3 min-w-0 max-w-[60vw] sm:max-w-xs overflow-x-auto" style={{whiteSpace: 'nowrap'}}>
+                      <div className="text-white font-medium text-sm leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                         {squadInfo.name}
                       </div>
                       {squadInfo.league_name && (
-                        <div className="text-xs text-primary-300 leading-tight">
+                        <div className="text-xs text-primary-300 leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                           {squadInfo.league_name}
                         </div>
                       )}
@@ -323,9 +323,7 @@ const Header = ({ theme, onThemeChange }) => {
                   {/* League Switcher Dropdown Menu */}
                   {canShowLeagueSwitcher && isLeagueDropdownOpen && (
                     <>
-                      {/* Backdrop overlay to prevent text bleeding */}
                       <div className="fixed inset-0 z-40" onClick={() => setIsLeagueDropdownOpen(false)}></div>
-                      
                       <div className="absolute left-0 mt-2 w-64 py-2 lg-dropdown max-h-60 overflow-y-auto z-50">
                         {userLeagues.map((league) => (
                           <button
@@ -338,7 +336,7 @@ const Header = ({ theme, onThemeChange }) => {
                             }`}
                             disabled={league.id === leagueInfo?.id}
                           >
-                            <span className="font-medium">{league.name}</span>
+                            <span className="font-medium truncate">{league.name}</span>
                             {league.id === leagueInfo?.id && <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
                           </button>
                         ))}
@@ -348,40 +346,18 @@ const Header = ({ theme, onThemeChange }) => {
                 </div>
               </div>
     
-              {/* Right side - Navigation buttons and User Menu */}
-              <div className="flex items-center gap-3">
-                {/* My Squad button (for league views) */}
-                {isLeagueView && leagueInfo && (
-                  <Link 
-                    to={leagueInfo.my_squad ? `/squads/${leagueInfo.my_squad.id}` : '#'}
-                    className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium font-caption lg-rounded-md transition-all duration-200 ${
-                      leagueInfo.my_squad 
-                        ? 'lg-button text-white hover:scale-105' 
-                        : 'lg-glass-tertiary text-slate-400 cursor-not-allowed'
-                    }`}
-                    onClick={e => (!leagueInfo.my_squad) && e.preventDefault()}
-                  >
-                    <Shield className="h-4 w-4" />
-                    <span>My Squad</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                )}
+              {/* Right side - Action buttons and User Menu */}
+              <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
 
-                {/* Admin-only Update Points Button */}
-                {/* {isAdmin && (
-                  <div className="flex-shrink-0">
-                    <UpdatePointsButton />
-                  </div>
-                )} */}
-    
                 {/* Mid-Season Draft button (for squad views) */}
-                {SHOW_MID_SEASON_DRAFT && isSquadView && squadInfo && squadInfo.user_id === user?.id && (
+                {SHOW_MID_SEASON_DRAFT && (isSquadView || isMySquadView) && (
                   <button 
                     onClick={handleOpenDraftModal}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium lg-rounded-md text-white lg-button lg-gradient-x hover:scale-105 transition-all duration-200"
+                    className="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm font-medium lg-rounded-md text-white lg-button lg-gradient-x hover:scale-105 transition-all duration-200 whitespace-nowrap"
+                    style={{minWidth: '0'}}
                   >
-                    <span>Mid-Season Draft</span>
-                    <ChevronRight className="h-4 w-4" />
+                    <span className="truncate">Mid-Season Draft</span>
+                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
                   </button>
                 )}
     
@@ -413,9 +389,7 @@ const Header = ({ theme, onThemeChange }) => {
                   {/* Dropdown Menu */}
                   {isDropdownOpen && (
                     <>
-                      {/* Backdrop overlay to prevent text bleeding */}
                       <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
-                      
                       <div className="absolute right-0 mt-2 w-48 py-2 lg-dropdown z-50">
                         <Link
                           to="/profile"
@@ -470,10 +444,10 @@ const Header = ({ theme, onThemeChange }) => {
             </div>
           </div>
           
-          {/* League Navigation Tabs */}
+          {/* League Navigation Tabs - Desktop only (hidden on mobile) */}
           {isLeagueView && (
-            <div className="border-t border-white/10">
-              <div className="container mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide" style={{WebkitOverflowScrolling: 'touch'}}>
+            <div className="border-t border-white/10 hidden md:block">
+              <div className="container mx-auto px-2 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide" style={{WebkitOverflowScrolling: 'touch'}}>
                 <nav className="flex space-x-1 min-w-max">
                   {leagueTabs.map(tab => (
                     <button
@@ -496,12 +470,12 @@ const Header = ({ theme, onThemeChange }) => {
       </header>
       
       {/* Render the Modal separately */}
-      {isSquadView && squadInfo && (
+      {(isSquadView || isMySquadView) && (
         <MidSeasonDraftModal
           isOpen={isDraftModalOpen}
           onClose={() => setIsDraftModalOpen(false)}
-          leagueId={squadInfo.league_id}
-          squadId={squadId}
+          leagueId={squadInfo?.league_id || leagueId}
+          squadId={squadInfo?.id || leagueInfo?.my_squad?.id}
         />
       )}
     </>

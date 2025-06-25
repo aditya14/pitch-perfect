@@ -229,9 +229,9 @@ const DetailedMatchPerformance = ({
         </div>
       </div>
       
-      <div className="overflow-x-auto max-h-[calc(100vh-12rem)] scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600 scrollbar-track-transparent">
+      <div className="overflow-x-auto max-h-[calc(100vh-12rem)] scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600 scrollbar-track-transparent lg-glass-tertiary rounded-lg">
         <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
-          <thead className="bg-neutral-50 dark:bg-neutral-950 sticky top-0 z-20">
+          <thead className="lg-glass-tertiary sticky top-0 z-20">
             {/* Main header groups */}
             <tr>
               <th scope="col" className="sticky left-0 z-10 bg-neutral-50 dark:bg-neutral-950 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider w-20">

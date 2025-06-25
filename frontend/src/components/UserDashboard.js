@@ -217,7 +217,7 @@ const LeagueCard = ({ league }) => {
                 <div className="flex flex-col">
                   {isUserLeading ? (
                     <>
-                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">WINNER</span>
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{league.season.status == "ONGOING" ? 'LEADING' : league.season.status == 'COMPLETED' ? 'WINNER' : ''}</span>
                       <div className="flex items-center">
                         <Trophy className="h-4 w-4 text-amber-500 dark:text-amber-400 mr-2" />
                         <span className="font-bold text-amber-600 dark:text-amber-400 font-caption">
@@ -271,7 +271,7 @@ const LeagueCard = ({ league }) => {
                   <>
                     <Trophy className="h-4 w-4 text-amber-500 dark:text-amber-400 mr-2" />
                     <span className="text-xs text-slate-600 dark:text-slate-400">
-                      Winner:
+                      {league.season.status == "ONGOING" ? 'Leading' : league.season.status == 'COMPLETED' ? 'Winner' : ''}:
                     </span>
                   </>
                 )}
@@ -312,7 +312,8 @@ const UserDashboard = () => {
   const [leagues, setLeagues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [seasonFilter, setSeasonFilter] = useState('ONGOING'); // 'ONGOING' | 'UPCOMING' | 'COMPLETED'
+
   // Set document title for dashboard
   useDocumentTitle('Home');
 
@@ -332,6 +333,17 @@ const UserDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Group leagues by season status
+  const ongoingLeagues = leagues.filter(l => l.season?.status === "ONGOING");
+  const upcomingLeagues = leagues.filter(l => l.season?.status === "UPCOMING");
+  const completedLeagues = leagues.filter(l => l.season?.status === "COMPLETED");
+
+  // Filtered leagues for current tab
+  let filteredLeagues = [];
+  if (seasonFilter === 'ONGOING') filteredLeagues = ongoingLeagues;
+  if (seasonFilter === 'UPCOMING') filteredLeagues = upcomingLeagues;
+  if (seasonFilter === 'COMPLETED') filteredLeagues = completedLeagues;
 
   if (loading) {
     return <LoadingScreen message="Loading your leagues..." />;
@@ -364,11 +376,11 @@ const UserDashboard = () => {
           <div className="lg-glass lg-rounded-lg relative overflow-hidden lg-glow">
             <div className="lg-shine absolute inset-0 lg-rounded-lg"></div>
             
-            <div className="relative z-10 p-8">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
+            <div className="relative z-10 p-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
                 <div className="flex-1">
-                  <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-caption">
-                    Welcome back! <span className="text-primary-600 dark:text-primary-400">{user?.first_name}</span>
+                  <h1 className="text-3xl md:text-3xl font-bold text-slate-900 dark:text-white font-caption">
+                    Welcome back, <span className="text-primary-600 dark:text-primary-400">{user?.first_name}</span>
                   </h1>
                   
                   {/* Quick Stats */}
@@ -389,6 +401,16 @@ const UserDashboard = () => {
                     <div className="flex items-center justify-center">
                       {/* <Plus className="w-5 h-5 mr-2" /> */}
                       Join League
+                      <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </Link>
+                  <Link
+                    to="/leagues/create"
+                    className="lg-button-secondary lg-rounded-md px-6 py-3 font-semibold group transition-all duration-300"
+                  >
+                    <div className="flex items-center justify-center">
+                      {/* <Plus className="w-5 h-5 mr-2" /> */}
+                      Create League
                       <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </Link>
@@ -438,30 +460,105 @@ const UserDashboard = () => {
                 ))}
               </div>
               
-              <Link
-                to="/leagues/join"
-                className="lg-button lg-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center group"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Join Your First League
-                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <Link
+                  to="/leagues/join"
+                  className="lg-button lg-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center group"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Join Your First League
+                  <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  to="/leagues/create"
+                  className="lg-button-secondary lg-rounded-md px-8 py-4 font-semibold inline-flex items-center group"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Create League
+                  <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
           </div>
         ) : (
           <div>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white font-caption">My Leagues</h2>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                {leagues.length} league{leagues.length !== 1 ? 's' : ''}
+            <div className="flex flex-col sm:flex-row sm:justify-between mb-8 min-w-0 space-y-2 sm:space-y-0">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white font-caption">
+                My Leagues
+              </h2>
+              {/* Pill Filter Bar: below on mobile, right on desktop */}
+              <div className="flex space-x-2 flex-nowrap overflow-x-auto -mx-1.5 px-1.5 w-full sm:w-auto">
+                <button
+                  onClick={() => setSeasonFilter('ONGOING')}
+                  className={`px-3 py-1.5 text-sm lg-rounded-md transition-all duration-200 ${
+                    seasonFilter === 'ONGOING'
+                      ? 'lg-glass-primary text-primary-700 dark:text-primary-300 font-medium'
+                      : 'lg-glass-tertiary text-slate-700 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/10'
+                  }`}
+                >
+                  Ongoing
+                  <span className="ml-2 text-xs font-normal">{ongoingLeagues.length}</span>
+                </button>
+                <button
+                  onClick={() => setSeasonFilter('UPCOMING')}
+                  className={`px-3 py-1.5 text-sm lg-rounded-md transition-all duration-200 ${
+                    seasonFilter === 'UPCOMING'
+                      ? 'lg-glass-primary text-blue-700 dark:text-blue-300 font-medium'
+                      : 'lg-glass-tertiary text-slate-700 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/10'
+                  }`}
+                >
+                  Upcoming
+                  <span className="ml-2 text-xs font-normal">{upcomingLeagues.length}</span>
+                </button>
+                <button
+                  onClick={() => setSeasonFilter('COMPLETED')}
+                  className={`px-3 py-1.5 text-sm lg-rounded-md transition-all duration-200 ${
+                    seasonFilter === 'COMPLETED'
+                      ? 'lg-glass-primary text-slate-700 dark:text-slate-200 font-medium'
+                      : 'lg-glass-tertiary text-slate-700 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/10'
+                  }`}
+                >
+                  Completed
+                  <span className="ml-2 text-xs font-normal">{completedLeagues.length}</span>
+                </button>
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {leagues.map(league => (
-                <LeagueCard key={league.id} league={league} />
-              ))}
-            </div>
+            {/* Filtered Leagues */}
+            {filteredLeagues.length === 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="lg-glass-tertiary lg-rounded-lg px-8 py-10 flex flex-col items-center justify-center shadow-lg min-h-[260px] min-w-0 w-full md:w-auto md:min-w-[320px] text-center self-start mt-0 md:mt-0">
+                  <div className="mb-6">
+                    {seasonFilter === 'ONGOING' && (
+                      <Trophy className="w-12 h-12 text-primary-400 dark:text-primary-300 opacity-80" />
+                    )}
+                    {seasonFilter === 'UPCOMING' && (
+                      <Calendar className="w-12 h-12 text-blue-400 dark:text-blue-300 opacity-80" />
+                    )}
+                    {seasonFilter === 'COMPLETED' && (
+                      <Check className="w-12 h-12 text-green-400 dark:text-green-300 opacity-80" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 font-caption">
+                      {seasonFilter === 'ONGOING' && "No Ongoing Leagues"}
+                      {seasonFilter === 'UPCOMING' && "No Upcoming Seasons"}
+                      {seasonFilter === 'COMPLETED' && "No Completed Seasons"}
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-base max-w-xs mx-auto mb-6">
+                      {seasonFilter === 'ONGOING' && "You are not participating in any ongoing seasons. Join or create a league to get started!"}
+                      {seasonFilter === 'UPCOMING' && "There are no upcoming seasons for your leagues. Check back soon or join a new league!"}
+                      {seasonFilter === 'COMPLETED' && "You haven't completed any seasons yet. Play through a season to see your results here!"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredLeagues.map(league => (
+                  <LeagueCard key={league.id} league={league} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

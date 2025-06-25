@@ -176,12 +176,12 @@ const Register = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center mb-6">
               <div className="liquid-glass-card glass-rounded-lg p-4 mr-6 brand-glow">
-                <img src="/icon.png" alt="PitchPerfect Logo" className="w-12 h-12" />
+                <img src="/icon.png" alt="Squadly Logo" className="w-12 h-12" />
               </div>
               <div>
                 <h1 className="text-4xl md:text-6xl font-bold text-white font-caption">
-                  <span className="text-primary-400">Pitch</span>
-                  <span>Perfect</span>
+                  <span className="text-primary-400">Squad</span>
+                  <span>ly</span>
                 </h1>
                 <p className="text-slate-300 text-lg mt-2">Fantasy Cricket Evolved</p>
               </div>

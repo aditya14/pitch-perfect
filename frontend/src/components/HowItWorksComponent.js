@@ -44,7 +44,7 @@ const HowItWorksComponent = () => {
             Back to Dashboard
           </Link>
         </nav>
-        <h1 className="text-3xl font-bold">How PitchPerfect Works</h1>
+        <h1 className="text-3xl font-bold">How Squadly Works</h1>
       </div>
 
       {/* Pre-Season Draft Section */}
@@ -58,7 +58,7 @@ const HowItWorksComponent = () => {
             <h3 className="text-xl font-semibold mb-2">Draft Order and Snake Draft Format</h3>
             
             <p className="mb-4">
-            PitchPerfect uses a <span className="font-semibold">Snake Draft</span> format to ensure fair player distribution. 
+            Squadly uses a <span className="font-semibold">Snake Draft</span> format to ensure fair player distribution. 
             This means the draft order reverses in each round.
             </p>
             
@@ -607,7 +607,7 @@ const HowItWorksComponent = () => {
       >
         <div className="space-y-6">
           <p className="mb-6">
-            Trading is a key strategic element in PitchPerfect. It allows you to adapt your Squad throughout 
+            Trading is a key strategic element in Squadly. It allows you to adapt your Squad throughout 
             the season, balance your team composition, and respond to player injuries or form changes.
           </p>
           

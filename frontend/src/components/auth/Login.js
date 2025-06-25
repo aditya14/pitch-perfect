@@ -61,12 +61,12 @@ const Login = () => {
           <div className="text-center mb-16">
             <div className="inline-flex items-center mb-8">
               <div className="liquid-glass-card glass-rounded-lg p-4 mr-6 brand-glow">
-                <img src="/icon.png" alt="PitchPerfect Logo" className="w-14 h-14" />
+                <img src="/icon.png" alt="Squadly Logo" className="w-14 h-14" />
               </div>
               <div>
                 <h1 className="text-5xl md:text-7xl font-bold font-caption">
-                  <span className="text-primary-400">Pitch</span>
-                  <span className="text-white">Perfect</span>
+                  <span className="text-primary-400">Squad</span>
+                  <span className="text-white">ly</span>
                 </h1>
                 <p className="text-slate-300 text-xl mt-3">Fantasy Cricket Evolved</p>
               </div>
@@ -164,7 +164,7 @@ const Login = () => {
                     <div className="text-center mb-8">
                       <h3 className="text-2xl font-bold text-white mb-3">Welcome Back</h3>
                       <p className="text-slate-300">
-                        New to PitchPerfect?{' '}
+                        New to Squadly?{' '}
                         <Link to="/register" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
                           Create account
                         </Link>
