@@ -272,6 +272,7 @@ const LeagueCard = ({ league }) => {
                     <Trophy className="h-4 w-4 text-amber-500 dark:text-amber-400 mr-2" />
                     <span className="text-xs text-slate-600 dark:text-slate-400">
                       {league.season.status == "ONGOING" ? 'Leading' : league.season.status == 'COMPLETED' ? 'Winner' : ''}:
+
                     </span>
                   </>
                 )}
