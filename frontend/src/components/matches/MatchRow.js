@@ -358,7 +358,7 @@ const MatchRow = ({ match, leagueId }) => {
         {['COMPLETED', 'NO_RESULT', 'LIVE'].includes(match.status) && (
           <button
             onClick={handleMatchClick}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs font-medium flex items-center"
+            className="lg-button-ghost lg-rounded-md px-2 py-1 text-xs flex items-center transition-all duration-150 focus:lg-focus hover:bg-[rgba(31,190,221,0.08)] dark:hover:bg-[rgba(31,190,221,0.12)]"
             aria-label="View match details"
           >
             Details

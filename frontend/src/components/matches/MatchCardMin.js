@@ -182,10 +182,9 @@ const MatchCardMin = ({ match, leagueId }) => {
   const isClickable = ['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status);
 
   return (
-    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800 flex flex-col h-full">
+    <div className="lg-list-item flex flex-col h-full min-h-[180px] transition-shadow">
       {/* Header section with match info */}
-      {/* Mobile: all info in one line; sm+: original layout */}
-      <div className="p-3 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="pb-2 border-b border-white/10 dark:border-white/10 mb-2">
         {/* Mobile compact header */}
         <div className="flex flex-col sm:hidden">
           <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
@@ -246,7 +245,7 @@ const MatchCardMin = ({ match, leagueId }) => {
       </div>
       
       {/* Main content area */}
-      <div className="p-3 flex-grow flex flex-col">
+      <div className="flex-grow flex flex-col">
         <div className="flex-grow">
           {/* Teams and scores - compact for mobile, improved alignment */}
           <div className="flex flex-col sm:hidden mb-2">
@@ -373,7 +372,7 @@ const MatchCardMin = ({ match, leagueId }) => {
           
           {/* Match Result */}
           {match.status === 'COMPLETED' && match.winner && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-1">
               <div className="flex items-center">
                 <Trophy className="h-3 w-3 text-yellow-500 mr-1.5" />
                 <span className="text-neutral-700 dark:text-neutral-300 text-xs">
@@ -398,7 +397,7 @@ const MatchCardMin = ({ match, leagueId }) => {
               {isClickable && (
                 <button
                   onClick={handleMatchClick}
-                  className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center"
+                  className="lg-button-ghost lg-rounded-md px-2 py-1 text-xs ml-2 flex items-center transition-all duration-150 focus:lg-focus hover:bg-[rgba(31,190,221,0.08)] dark:hover:bg-[rgba(31,190,221,0.12)]"
                   aria-label="View match details"
                 >
                   Details
@@ -412,7 +411,7 @@ const MatchCardMin = ({ match, leagueId }) => {
 
           {/* NO_RESULT or ABANDONED (with or without winner) */}
           {(match.status === 'NO_RESULT' || match.status === 'ABANDONED') && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-1">
               <div className="flex items-center">
                 <Info className="h-3 w-3 text-neutral-500 mr-1.5" />
                 <span className="text-neutral-700 dark:text-neutral-300 text-sm">
@@ -422,7 +421,7 @@ const MatchCardMin = ({ match, leagueId }) => {
               {isClickable && (
                 <button
                   onClick={handleMatchClick}
-                  className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center"
+                  className="lg-button-ghost lg-rounded-md px-2 py-1 text-xs ml-2 flex items-center transition-all duration-150 focus:lg-focus hover:bg-[rgba(31,190,221,0.08)] dark:hover:bg-[rgba(31,190,221,0.12)]"
                   aria-label="View match details"
                 >
                   Details
@@ -439,7 +438,7 @@ const MatchCardMin = ({ match, leagueId }) => {
             <div className="text-right mb-1">
               <button
                 onClick={handleMatchClick}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center ml-auto"
+                className="lg-button-ghost lg-rounded-md px-2 py-1 text-xs flex items-center ml-auto transition-all duration-150 focus:lg-focus hover:bg-[rgba(31,190,221,0.08)] dark:hover:bg-[rgba(31,190,221,0.12)]"
                 aria-label="View live match details"
               >
                 Live Updates
@@ -451,7 +450,7 @@ const MatchCardMin = ({ match, leagueId }) => {
           )}
 
           {/* Horizontal line separating match details from fantasy stats */}
-          <div className="border-t border-neutral-200 dark:border-neutral-800 my-2" />
+          <div className="border-t border-white/10 dark:border-white/10 my-2" />
 
           {/* Fantasy Stats Section - Top Squads */}
           {/* Mobile: both squads in one grid row for alignment */}
@@ -539,7 +538,7 @@ const MatchCardMin = ({ match, leagueId }) => {
           )}
 
           {match.status !== 'SCHEDULED' &&
-          <div className="border-t border-neutral-200 dark:border-neutral-800 my-2" />
+          <div className="border-t border-white/10 dark:border-white/10 my-2" />
           }
           
           {/* Fantasy Stats Section - Top Performers */}
@@ -677,7 +676,7 @@ const MatchCardMin = ({ match, leagueId }) => {
         </div>
         {/* Countdown for upcoming matches - Properly positioned at the bottom of the card */}
         {match.status === 'SCHEDULED' && timeRemaining && (
-          <div className="flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 py-1 rounded-md mt-auto">
+          <div className="flex items-center justify-center bg-white/30 dark:bg-black/30 py-1 rounded-md mt-auto">
             <span className="text-xs text-neutral-500 dark:text-neutral-500 flex items-center">
               <Hourglass className="h-3 w-3 inline mr-1 text-neutral-400 dark:text-neutral-600" />
               {formattedCountdown}
@@ -689,7 +688,7 @@ const MatchCardMin = ({ match, leagueId }) => {
           <div className="text-right mt-2">
             <button
               onClick={handlePreviewClick}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center ml-auto"
+              className="lg-button-ghost lg-rounded-md px-2 py-1 text-xs flex items-center ml-auto transition-all duration-150 focus:lg-focus hover:bg-[rgba(31,190,221,0.08)] dark:hover:bg-[rgba(31,190,221,0.12)]"
               aria-label="Preview match"
             >
               <span className='font-caption font-bold'>Preview</span>

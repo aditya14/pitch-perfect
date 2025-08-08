@@ -9,10 +9,15 @@ import { getTextColorForBackground } from '../../utils/colorUtils';
 import { ArrowLeft } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
 
-const SquadView = () => {
-  const { squadId } = useParams();
+const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
+  const { squadId: paramSquadId, leagueId: paramLeagueId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Use squadId from props (league context) or from params (direct access)
+  const squadId = propSquadId || paramSquadId;
+  const leagueIdFromContext = paramLeagueId; // When in league context, get from URL params
+  
   const [activeTab, setActiveTab] = useState('players');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,13 +26,14 @@ const SquadView = () => {
   const [boostRoles, setBoostRoles] = useState([]);
   const [playerEvents, setPlayerEvents] = useState({});
   const [isOwnSquad, setIsOwnSquad] = useState(false);
-
   const [rankInfo, setRankInfo] = useState({ rank: null, totalSquads: null });
   
   // Set document title based on squad name and active tab
   const getPageTitle = () => {
     if (!squadData) return 'Squad Details';
-    // console.log('Squad Data:', squadData);
+    if (leagueContext) {
+      return `My Squad - ${squadData.name}`;
+    }
     return `${squadData.name} (${squadData.league_name})`;
   };
   
@@ -40,7 +46,6 @@ const SquadView = () => {
         setLoading(true);
         
         const squadResponse = await api.get(`/squads/${squadId}/`);
-        // console.log('Squad Response:', squadResponse.data);
         const squadData = squadResponse.data;
         setSquadData(squadData);
         
@@ -89,7 +94,9 @@ const SquadView = () => {
       }
     };
   
-    fetchSquadData();
+    if (squadId) {
+      fetchSquadData();
+    }
   }, [squadId, user]);
 
   const updateFutureCoreSquad = async (boost_id, player_id) => {
@@ -110,9 +117,23 @@ const SquadView = () => {
   };
 
   const handleBackToLeague = () => {
-    if (squadData?.league_id) {
-      navigate(`/leagues/${squadData.league_id}`);
+    if (leagueContext && leagueIdFromContext) {
+      // When in league context, go back to league dashboard
+      navigate(`/leagues/${leagueIdFromContext}/dashboard`);
+    } else if (squadData?.league_id) {
+      // When accessed directly, go to league dashboard
+      navigate(`/leagues/${squadData.league_id}/dashboard`);
+    } else {
+      // Fallback to user dashboard
+      navigate('/dashboard');
     }
+  };
+
+  const getBackButtonText = () => {
+    if (leagueContext) {
+      return squadData?.league_name || 'Back to League';
+    }
+    return squadData?.league_name || 'Back';
   };
 
   if (loading) {
@@ -127,18 +148,29 @@ const SquadView = () => {
     );
   }
 
+  if (!squadData) {
+    return (
+      <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 dark:bg-yellow-900 dark:border-yellow-600 dark:text-yellow-100 px-4 py-3 rounded">
+        Squad not found or you don't have access to this squad.
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-start mb-6">
         <div>
-          {/* Back Navigation */}
-          <button
-            onClick={handleBackToLeague}
-            className="flex items-center text-primary-600 dark:text-primary-400 mb-4 hover:text-primary-800 dark:hover:text-primary-300 transition-colors"
-          >
-            <ArrowLeft size={16} className="mr-1" />
-            <span className="text-sm">{squadData.league_name}</span>
-          </button>
+          {/* Back Navigation - only show if not in league context */}
+          {!leagueContext && (
+            <button
+              onClick={handleBackToLeague}
+              className="flex items-center text-primary-600 dark:text-primary-400 mb-4 hover:text-primary-800 dark:hover:text-primary-300 transition-colors"
+            >
+              <ArrowLeft size={16} className="mr-1" />
+              <span className="text-sm">{getBackButtonText()}</span>
+            </button>
+          )}
+          
           <h1 className="flex items-center text-2xl font-bold mb-2">
             <span className="inline-block h-8 w-2 mr-2 rounded-md" style={{backgroundColor: squadData.color}}></span>
             <span className="text-base font-caption">{squadData.name}</span>

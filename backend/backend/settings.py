@@ -42,9 +42,11 @@ TRUSTED_DOMAINS = [
     'https://pitchperfectcricket.com',
     'https://www.pitchperfectcricket.com',
     'https://api.pitchperfectcricket.com',
+    'https://stage.pitchperfectcricket.com',
     'http://pitchperfectcricket.com',
     'http://www.pitchperfectcricket.com',
     'http://api.pitchperfectcricket.com',
+    'http://stage.pitchperfectcricket.com',
     'https://frontend-production-13c38.up.railway.app',
     'https://backend-production-1610.up.railway.app',
 ]

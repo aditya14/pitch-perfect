@@ -50,6 +50,13 @@ const Fireworks = ({ color }) => {
     let fireworkInterval = setInterval(createFirework, 800);
     createFirework();
 
+    let stopped = false;
+    // Stop fireworks after 20 seconds
+    const stopTimeout = setTimeout(() => {
+      clearInterval(fireworkInterval);
+      stopped = true;
+    }, 20000);
+
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach((p, idx) => {
@@ -69,7 +76,13 @@ const Fireworks = ({ color }) => {
         p.alpha -= 0.012;
       });
       particles = particles.filter(p => p.alpha > 0);
-      animationFrameId = requestAnimationFrame(animate);
+      // Only keep animating if there are particles or not stopped
+      if (!stopped || particles.length > 0) {
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
+        // Remove canvas when done
+        document.body.removeChild(canvas);
+      }
     }
     animate();
 
@@ -82,9 +95,12 @@ const Fireworks = ({ color }) => {
 
     return () => {
       clearInterval(fireworkInterval);
+      clearTimeout(stopTimeout);
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
-      document.body.removeChild(canvas);
+      if (document.body.contains(canvas)) {
+        document.body.removeChild(canvas);
+      }
     };
   }, [color]);
   return null;
@@ -172,15 +188,14 @@ const LeagueDashboard = ({ league }) => {
       {/* Congratulatory banner */}
       {isSeasonCompleted && firstSquad && (
         <div
-          className="flex flex-col sm:flex-row items-center justify-center rounded-lg shadow mb-2 py-3 px-3 sm:py-4 sm:px-6 font-caption text-lg sm:text-xl text-center gap-2 sm:gap-0"
+          className="lg-glass-frosted lg-rounded-xl lg-shine flex flex-col sm:flex-row items-center justify-center shadow-lg mb-2 py-4 px-4 sm:py-5 sm:px-8 font-caption text-lg sm:text-xl text-center gap-2 sm:gap-0"
           style={{
-            background: `linear-gradient(90deg, ${firstSquad.color}22 0%, #fff 100%)`,
-            border: `2px solid ${firstSquad.color || '#FFD700'}`,
-            wordBreak: 'break-word',
+            borderLeft: `4px solid ${firstSquad.color || '#FFD700'}`,
+            background: `linear-gradient(90deg, ${firstSquad.color}10, rgba(255, 255, 255, 0.6))`,
           }}
         >
-          <span style={{ fontSize: 28, marginRight: 5, marginBottom: 4 }}>🎉</span>
-          <span>
+          <span style={{ fontSize: 28, marginRight: 8, marginBottom: 0 }}>🏆</span>
+          <span className="text-neutral-900 dark:text-white">
             Congratulations <span className="font-bold">{firstSquad.name}</span>! Winner of <span className="font-bold">{league.name} {league.season.name}</span>!
           </span>
         </div>
@@ -188,7 +203,7 @@ const LeagueDashboard = ({ league }) => {
       {/* League table and recent/upcoming matches */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* League Table */}
-        <div className="bg-white dark:bg-neutral-950 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
+        <div className="lg-glass lg-rounded-xl overflow-hidden lg-shine">
           <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
             <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
               Table
@@ -196,7 +211,7 @@ const LeagueDashboard = ({ league }) => {
           </div>
           <div className="p-1">
             <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
-              <thead className="bg-neutral-50 dark:bg-black">
+              <thead className="bg-white/30 dark:bg-black/30">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
                     Rank
@@ -209,7 +224,7 @@ const LeagueDashboard = ({ league }) => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-neutral-950 divide-y divide-neutral-200 dark:divide-neutral-900">
+              <tbody className="bg-white/20 dark:bg-black/20 divide-y divide-neutral-200/70 dark:divide-neutral-800/70">
                 {league.squads
                   ?.sort((a, b) => b.total_points - a.total_points)
                   .map((squad, index) => (
@@ -218,14 +233,14 @@ const LeagueDashboard = ({ league }) => {
                       onClick={() => handleSquadClick(squad.id)}
                       className={`cursor-pointer ${
                         index === 0
-                          ? 'h-16' 
-                          : 'hover:bg-neutral-50 dark:hover:bg-black'
+                          ? 'h-16 lg-glow' 
+                          : 'hover:bg-white/40 dark:hover:bg-white/5 transition-colors duration-200'
                       }`}
-                      style={index === 0 ? { backgroundColor: `${squad.color}15` } : {}}
+                      style={index === 0 ? { background: `${squad.color}15` } : {}}
                     >
                       <td className={`px-6 py-4 whitespace-nowrap text-neutral-900 dark:text-white ${index === 0 ? 'text-md font-semibold' : 'text-sm'}`}>
                         {index === 0 && isSeasonCompleted ? (
-                          <span role="img" aria-label="Trophy" title="Winner" style={{ fontSize: 28, verticalAlign: 'middle', color: firstSquad?.color || '#FFD700', filter: 'drop-shadow(0 0 2px #0003)' }}>
+                          <span role="img" aria-label="Trophy" title="Winner" style={{ fontSize: 28, verticalAlign: 'middle', color: firstSquad?.color || '#FFD700', filter: 'drop-shadow(0 0 3px rgba(0,0,0,0.2))' }}>
                             🏆
                           </span>
                         ) : (
@@ -265,48 +280,48 @@ const LeagueDashboard = ({ league }) => {
                     <div className="flex items-center justify-between">
                       <div className="flex space-x-2">
                         <button
-                    onClick={() => setMatchTab('recent')}
-                    className={`px-2 py-1 text-sm rounded ${
-                      matchTab === 'recent' 
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-                    }`}
+                          onClick={() => setMatchTab('recent')}
+                          className={`px-3 py-1.5 text-sm lg-rounded-md transition-all duration-200 ${
+                            matchTab === 'recent' 
+                              ? 'lg-glass-primary text-primary-700 dark:text-primary-300 font-medium' 
+                              : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
+                          }`}
                         >
-                    Live/Recent
+                          Live/Recent
                         </button>
                         <button
-                    onClick={() => setMatchTab('upcoming')}
-                    className={`px-2 py-1 text-sm rounded ${
-                      matchTab === 'upcoming' 
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-                    }`}
+                          onClick={() => setMatchTab('upcoming')}
+                          className={`px-3 py-1.5 text-sm lg-rounded-md transition-all duration-200 ${
+                            matchTab === 'upcoming' 
+                              ? 'lg-glass-primary text-primary-700 dark:text-primary-300 font-medium' 
+                              : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
+                          }`}
                         >
-                    Upcoming
+                          Upcoming
                         </button>
                       </div>
                     </div>
                     {loadingMatches ? (
                       <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                    <div key={i} className="h-40 bg-neutral-200 dark:bg-neutral-700 rounded-lg animate-pulse"></div>
+                          <div key={i} className="h-40 lg-glass-tertiary lg-rounded-lg lg-shimmer"></div>
                         ))}
                       </div>
                     ) : matchTab === 'recent' ? (
                       recentMatches.length > 0 ? (
                         <div className="space-y-4">
-                    {recentMatches.map(match => (
-                      <MatchCard 
-                        key={match.id} 
-                        match={match} 
-                        leagueId={league.id} 
-                        compact={true}
-                      />
-                    ))}
+                          {recentMatches.map(match => (
+                            <MatchCard 
+                              key={match.id} 
+                              match={match} 
+                              leagueId={league.id} 
+                              compact={true}
+                            />
+                          ))}
                         </div>
                       ) : (
-                        <div className="bg-white dark:bg-neutral-800 shadow border border-neutral-200 dark:border-neutral-700 rounded-lg p-6 text-center">
-                    <p className="text-neutral-500 dark:text-neutral-400">No recent matches available</p>
+                        <div className="lg-glass-secondary lg-rounded-lg p-6 text-center">
+                          <p className="text-neutral-500 dark:text-neutral-400">No recent matches available</p>
                         </div>
                       )
                     ) : (
@@ -330,16 +345,18 @@ const LeagueDashboard = ({ league }) => {
                         ))}
                         </div>
                       ) : (
-                        <div className="bg-white dark:bg-neutral-800 shadow border border-neutral-200 dark:border-neutral-700 rounded-lg p-6 text-center">
-                    <p className="text-neutral-500 dark:text-neutral-400">No upcoming matches available</p>
+                        <div className="lg-glass-secondary lg-rounded-lg p-6 text-center">
+                          <p className="text-neutral-500 dark:text-neutral-400">No upcoming matches available</p>
                         </div>
                       )
                     )}
                   </div>
-                      </div>
-                      {/* Running Total Graph */}
-      <LeagueRunningTotal league={league} />
-    </div>
+                </div>
+                {/* Running Total Graph */}
+                <div className="lg-glass lg-rounded-xl p-4">
+                  <LeagueRunningTotal league={league} />
+                </div>
+              </div>
   );
 };
 

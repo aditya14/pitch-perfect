@@ -70,7 +70,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-neutral-900 shadow rounded-lg p-4 h-full">
+      <div className="lg-card p-4 h-full">
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3"></div>
           <div className="space-y-3">
@@ -85,7 +85,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-neutral-900 shadow rounded-lg p-4 h-full">
+      <div className="lg-card p-4 h-full">
         <div className="text-red-500 dark:text-red-400">
           {error}
         </div>
@@ -96,7 +96,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   // If there are no squads to display
   if (squadData.length === 0) {
     return (
-      <div className="bg-white dark:bg-neutral-900 overflow-hidden h-full">
+      <div className="lg-card overflow-hidden h-full">
         <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-700">
           <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
             Squad Points
@@ -113,7 +113,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   const useGridLayout = squadData.length >= 4;
   
   return (
-    <div className="bg-white dark:bg-black overflow-hidden h-full shadow rounded-lg">
+    <div className="lg-card overflow-hidden h-full">
       <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
           Squad Points
@@ -125,7 +125,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
         {squadData.map((squad) => (
           <div 
             key={`squad-${squad.id}`}
-            className={`transition-all py-2 px-3 ${squad.id === activeSquadId ? 'bg-blue-50 dark:bg-blue-900/20 rounded-md' : ''}`}
+            className={`transition-all py-2 px-3 lg-glass-tertiary ${squad.id === activeSquadId ? 'bg-blue-50 dark:bg-blue-900/20 rounded-md' : 'rounded-md'}`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">

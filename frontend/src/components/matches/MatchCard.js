@@ -189,7 +189,7 @@ const MatchCard = ({ match, leagueId }) => {
     : null;
 
   return (
-    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow overflow-hidden border border-neutral-200 dark:border-neutral-800 transition-transform hover:shadow-md">
+    <div className="lg-glass lg-rounded-lg overflow-hidden transition-all duration-300 hover:transform-gpu hover:-translate-y-1 lg-shine">
 
       {/* Accent Line */}
       <div 
@@ -198,7 +198,7 @@ const MatchCard = ({ match, leagueId }) => {
       />
 
       {/* Header: compact, single line, smaller */}
-      <div className="flex items-center justify-between p-2 px-4 border-b border-neutral-200 dark:border-neutral-800 text-xs">
+      <div className="flex items-center justify-between p-2 px-4 border-b border-neutral-200/50 dark:border-neutral-800/50 text-xs backdrop-blur-sm">
         <div className="flex items-center space-x-2">
           <span className="text-neutral-900 dark:text-white font-medium">Match {match.match_number}</span>
           <span className="text-neutral-500 dark:text-neutral-400">•</span>
@@ -225,7 +225,7 @@ const MatchCard = ({ match, leagueId }) => {
           <div className="flex items-center space-x-2">
             {battingFirstTeam ? (
               <span
-                className="px-2 py-0.5 text-xs font-caption font-semibold rounded-md"
+                className="px-2 py-0.5 text-xs font-caption font-semibold rounded-md lg-shine"
                 style={{ backgroundColor: firstColorHex, color: getTextColorForBackground(firstColorHex) }}
               >
                 {battingFirstTeam.short_name || battingFirstTeam.name}
@@ -292,7 +292,7 @@ const MatchCard = ({ match, leagueId }) => {
         
         {/* Countdown for upcoming matches */}
         {match.status === 'SCHEDULED' && timeRemaining && (
-          <div className="flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 py-2 rounded-md mt-auto">
+          <div className="flex items-center justify-center lg-glass-inset py-2 rounded-md mt-auto">
             <span className="text-sm text-neutral-500 dark:text-neutral-500 flex items-center">
               <Hourglass className="h-4 w-4 inline mr-1 text-neutral-400 dark:text-neutral-600" />
               {formattedCountdown}
@@ -301,13 +301,13 @@ const MatchCard = ({ match, leagueId }) => {
         )}
 
         {/* Horizontal line separating match details from fantasy stats */}
-        <div className="border-t border-neutral-200 dark:border-neutral-800 my-2" />
+        <div className="border-t border-neutral-200/50 dark:border-neutral-800/50 my-2" />
 
         {/* View Match Details or Preview button */}
         {isClickable ? (
           <button
             onClick={handleMatchClick}
-            className="my-2 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
+            className="my-2 w-full py-2 px-4 lg-button text-white text-xs font-medium lg-rounded-md transition-all duration-200 flex items-center justify-center"
           >
             <span className='font-caption font-bold'>{match.status === 'LIVE' ? 'Match Details' : 'Match Details'}</span>
             <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -317,7 +317,7 @@ const MatchCard = ({ match, leagueId }) => {
         ) : match.status === 'SCHEDULED' && battingFirstTeam && battingSecondTeam && (
           <button
             onClick={handlePreviewClick}
-            className="mt-3 w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center"
+            className="mt-3 w-full py-2 px-4 lg-button lg-gradient-x text-white text-xs font-medium lg-rounded-md transition-all duration-200 flex items-center justify-center"
           >
             <span className='font-caption font-bold'>Match Preview</span>
             <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -336,10 +336,11 @@ const MatchCard = ({ match, leagueId }) => {
             {/* Squad 1 */}
             {topSquads.length > 0 && (
               <div
-                className="flex items-center justify-between mb-2 p-2 py-1 rounded-md"
+                className="flex items-center justify-between mb-2 p-2 py-1 lg-rounded-md transition-all duration-200 hover:shadow-sm"
                 style={{
                   backgroundColor: hexToRgba(topSquads[0]?.color || '#6B7280', 0.1),
-                  border: `1px solid ${topSquads[0]?.color || '#6B7280'}`
+                  border: `1px solid ${topSquads[0]?.color || '#6B7280'}`,
+                  boxShadow: `inset 0 1px 0 rgba(255, 255, 255, 0.2)`
                 }}
               >
                 <div className="flex items-center">

@@ -319,7 +319,7 @@ const TimelineComponent = () => {
           <div className="mt-4 flex">
             <Link to="/how-it-works" className="text-blue-500 hover:text-blue-600 dark:text-blue-400 hover:underline flex items-center text-sm font-medium">
               <HelpCircle size={14} className="mr-1" />
-              Learn more about PitchPerfect fantasy rules
+              Learn more about Pitch Perfect fantasy rules
             </Link>
           </div>
         </div>

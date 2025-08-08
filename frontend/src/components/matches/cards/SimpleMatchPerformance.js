@@ -108,7 +108,7 @@ const SimpleMatchPerformance = ({
   };
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto lg-glass-tertiary rounded-lg">
       <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 mb-4">
         <thead className="bg-neutral-50 dark:bg-neutral-950 sticky top-0 z-20">
           <tr>

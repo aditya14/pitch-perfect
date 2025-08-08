@@ -282,7 +282,7 @@ const LeagueRunningTotal = ({ league }) => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+      <div className="lg-card">
         <div className="space-y-4">
           <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/4"></div>
           <div className="h-64 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse"></div>
@@ -293,7 +293,7 @@ const LeagueRunningTotal = ({ league }) => {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+      <div className="lg-card">
         <p className="text-red-500 dark:text-red-400">{error}</p>
       </div>
     );
@@ -301,7 +301,7 @@ const LeagueRunningTotal = ({ league }) => {
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+      <div className="lg-card">
         <p className="text-neutral-500 dark:text-neutral-400 text-center">
           No match data available to display running totals.
         </p>
@@ -386,7 +386,7 @@ const LeagueRunningTotal = ({ league }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800">
+    <div className="p-0"> {/* No glass class here, parent provides glass */}
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
           Running Total
@@ -394,21 +394,23 @@ const LeagueRunningTotal = ({ league }) => {
         <div className="flex space-x-2">
           <button 
             onClick={() => setViewMode('zoomed')}
-            className={`px-2 py-1 text-xs rounded ${
-              viewMode === 'zoomed' 
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-            }`}
+            className={`
+              lg-button-secondary lg-rounded-md px-3 py-1 text-xs min-w-[90px]
+              ${viewMode === 'zoomed' ? 'lg-button dark:text-white' : ''}
+            `}
+            tabIndex={0}
+            type="button"
           >
             Last 10 Matches
           </button>
           <button 
             onClick={() => setViewMode('all')}
-            className={`px-2 py-1 text-xs rounded ${
-              viewMode === 'all' 
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-            }`}
+            className={`
+              lg-button-secondary lg-rounded-md px-3 py-1 text-xs min-w-[90px]
+              ${viewMode === 'all' ? 'lg-button dark:text-white' : ''}
+            `}
+            tabIndex={0}
+            type="button"
           >
             All Matches
           </button>
@@ -484,17 +486,22 @@ const LeagueRunningTotal = ({ league }) => {
       {/* Squad Filter Toggles */}
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
         {league?.squads?.map((squad) => (
-          <div 
+          <button
             key={squad.id}
             className={`
-              flex items-center p-2 rounded-md cursor-pointer transition-colors
+              flex items-center w-full p-2 lg-glass-tertiary lg-rounded-md cursor-pointer transition-colors
+              min-h-[36px] text-left
               ${visibleSquads[squad.id] 
-                ? `bg-opacity-20 bg-neutral-400 dark:bg-neutral-700` 
-                : `bg-neutral-50 dark:bg-neutral-900 bg-opacity-50 text-neutral-400 dark:text-neutral-600`}
+                ? 'opacity-100' 
+                : 'opacity-50 grayscale'}
+              focus:lg-focus
             `}
             onClick={() => toggleSquadVisibility(squad.id)}
+            tabIndex={0}
+            type="button"
+            aria-pressed={visibleSquads[squad.id]}
           >
-            <div 
+            <span
               className={`
                 h-3 w-3 rounded-full mr-2
                 ${visibleSquads[squad.id] ? 'opacity-100' : 'opacity-30'}
@@ -504,21 +511,23 @@ const LeagueRunningTotal = ({ league }) => {
             <span className="text-sm truncate">
               {squad.name}
             </span>
-          </div>
+          </button>
         ))}
       </div>
       
-      {/* Show/Hide All buttons moved to bottom */}
+      {/* Show/Hide All buttons */}
       <div className="mt-4 flex justify-center space-x-4">
         <button 
           onClick={() => toggleAllSquads(true)}
-          className="px-3 py-1 text-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+          className="lg-button-secondary lg-rounded-md px-3 py-1 text-sm min-w-[90px]"
+          type="button"
         >
           Show All
         </button>
         <button 
           onClick={() => toggleAllSquads(false)}
-          className="px-3 py-1 text-sm bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+          className="lg-button-secondary lg-rounded-md px-3 py-1 text-sm min-w-[90px]"
+          type="button"
         >
           Hide All
         </button>

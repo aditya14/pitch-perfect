@@ -197,20 +197,20 @@ const LeagueTable = ({ league }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+    <div className="lg-glass lg-rounded-xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/10">
         <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
           League Standings
         </h2>
       </div>
       <div className="overflow-x-auto relative">
-        <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
-          <thead className="bg-neutral-50 dark:bg-neutral-700 sticky top-0 z-10">
+        <table className="min-w-full divide-y divide-white/10">
+          <thead className="lg-glass-tertiary">
             <tr>
               {/* Rank Column - sticky on small screens */}
               <th 
                 scope="col" 
-                className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider whitespace-nowrap sticky left-0 z-20 bg-neutral-50 dark:bg-neutral-700"
+                className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider whitespace-nowrap sticky left-0 z-20 lg-glass-tertiary"
               >
                 <div className="flex items-center">
                   <span>Rank</span>
@@ -220,7 +220,7 @@ const LeagueTable = ({ league }) => {
               {/* Squad Column - sticky on small screens */}
               <th 
                 scope="col" 
-                className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider sticky left-14 sm:left-16 z-20 bg-neutral-50 dark:bg-neutral-700"
+                className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider sticky left-14 sm:left-16 z-20 lg-glass-tertiary"
               >
                 <div className="flex items-center">
                   <span>Squad</span>
@@ -313,7 +313,7 @@ const LeagueTable = ({ league }) => {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-neutral-800 divide-y divide-neutral-200 dark:divide-neutral-700">
+          <tbody>
             {isLoading ? (
               <tr>
                 <td colSpan="9" className="px-6 py-4">
@@ -334,11 +334,10 @@ const LeagueTable = ({ league }) => {
                 return (
                   <tr 
                     key={squad.id} 
-                    className="hover:bg-neutral-50 dark:hover:bg-neutral-700"
-                    // onClick={() => handleSquadClick(squad.id)}
+                    className="hover:bg-white/30 dark:hover:bg-black/20 transition"
                   >
                     {/* Rank - uses true rank based on total points */}
-                    <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap sticky left-0 z-10 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700">
+                    <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap sticky left-0 z-10 lg-glass-tertiary">
                       <div className="flex items-center">
                         <span className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-white">
                           {trueRank}
@@ -348,7 +347,7 @@ const LeagueTable = ({ league }) => {
                     </td>
                     
                     {/* Squad - sticky on small screens */}
-                    <td className="px-2 sm:px-4 py-2 sm:py-2 whitespace-nowrap sticky left-14 sm:left-16 z-10 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700">
+                    <td className="px-2 sm:px-4 py-2 sm:py-2 whitespace-nowrap sticky left-14 sm:left-16 z-10 lg-glass-tertiary">
                       <div className="flex items-center">
                         <div 
                           className="h-4 w-1 mr-1 rounded-sm"
@@ -419,7 +418,7 @@ const LeagueTable = ({ league }) => {
             )}
             {(!squadStats || squadStats.length === 0) && !isLoading && (
               <tr>
-                <td colSpan="9" className="px-6 py-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                <td colSpan="9" className="px-6 py-4 text-center text-sm text-neutral-500 dark:text-neutral-400 lg-glass-tertiary">
                   No squads have joined this league yet.
                 </td>
               </tr>

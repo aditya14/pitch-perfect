@@ -69,20 +69,20 @@ const MatchList = ({ league }) => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
-        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
+      <div className="lg-glass lg-rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center">
           <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
             Matches
           </h2>
           <div className="flex gap-2">
             {['All', 'Upcoming', 'Completed'].map(label => (
-              <div key={label} className="h-8 w-20 bg-neutral-200 dark:bg-neutral-700 rounded-md animate-pulse"></div>
+              <div key={label} className="h-8 w-20 lg-glass-tertiary lg-rounded-md animate-pulse"></div>
             ))}
           </div>
         </div>
         <div className="p-6 space-y-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-40 bg-neutral-200 dark:bg-neutral-700 rounded-lg animate-pulse"></div>
+            <div key={i} className="h-40 lg-glass-tertiary lg-rounded-lg animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -91,8 +91,8 @@ const MatchList = ({ league }) => {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
-        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+      <div className="lg-glass lg-rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/10">
           <h2 className="text-xl font-semibold text-neutral-900 dark:text-white font-caption">
             Matches
           </h2>
@@ -109,45 +109,50 @@ const MatchList = ({ league }) => {
   const groupedMatches = getGroupedMatches();
 
   return (
-    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
-      <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 flex flex-wrap justify-between items-center">
+    <div className="lg-glass lg-rounded-xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-white/10 flex flex-wrap justify-between items-center">
         <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
           Matches
         </h2>
         <div className="flex gap-2 mt-2 sm:mt-0">
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-1 rounded-md text-sm font-medium ${
-              filter === 'all'
-                ? 'bg-neutral-600 text-white'
-                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
-            }`}
+            className={`
+              px-3 py-1.5 text-sm font-medium lg-rounded-md transition-all duration-150
+              ${filter === 'all'
+                ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+                : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'}
+            `}
+            type="button"
           >
             All
           </button>
           <button
             onClick={() => setFilter('upcoming')}
-            className={`px-3 py-1 rounded-md text-sm font-medium ${
-              filter === 'upcoming'
-                ? 'bg-neutral-600 text-white'
-                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
-            }`}
+            className={`
+              px-3 py-1.5 text-sm font-medium lg-rounded-md transition-all duration-150
+              ${filter === 'upcoming'
+                ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+                : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'}
+            `}
+            type="button"
           >
             Upcoming
           </button>
           <button
             onClick={() => setFilter('completed')}
-            className={`px-3 py-1 rounded-md text-sm font-medium ${
-              filter === 'completed'
-                ? 'bg-neutral-600 text-white'
-                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
-            }`}
+            className={`
+              px-3 py-1.5 text-sm font-medium lg-rounded-md transition-all duration-150
+              ${filter === 'completed'
+                ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+                : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'}
+            `}
+            type="button"
           >
             Completed
           </button>
         </div>
       </div>
-      
       <div className="p-2">
         {/* Mobile: Card grid (current behavior) */}
         <div className="block sm:hidden">

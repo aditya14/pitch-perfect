@@ -47,9 +47,9 @@ const MatchOverview = ({ matchData }) => {
   });
 
   return (
-    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
+    <div className="">
       {/* Header */}
-      <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center bg-gradient-to-r from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800">
+      <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
         <div className="flex items-center">
           <Info className="w-4 h-4 mr-2 text-neutral-500 dark:text-neutral-400" />
           <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
@@ -80,7 +80,7 @@ const MatchOverview = ({ matchData }) => {
         </div>
         
         {/* Teams and Score */}
-        <div className="mb-6 overflow-hidden rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700">
+        <div className="mb-6 overflow-hidden lg-glass border border-neutral-200 dark:border-neutral-700 rounded-lg">
           {/* First innings */}
           <div className="p-3 flex items-center justify-between">
             <div className="flex items-center">
@@ -170,7 +170,7 @@ const MatchOverview = ({ matchData }) => {
         </div>
 
         {/* Match Result and Details - Table Format */}
-        <div className="bg-neutral-50 dark:bg-neutral-900 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700">
+        <div className="lg-glass-tertiary p-3 rounded-lg border border-neutral-200 dark:border-neutral-700">
           <table className="w-full text-sm">
             <tbody>
               {/* Toss info */}

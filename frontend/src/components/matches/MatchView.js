@@ -195,18 +195,16 @@ const MatchView = () => {
       </div>
       
       {/* Match Performance Container */}
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg">
-        <MatchPerformanceContainer 
-          playerEvents={playerEvents}
-          loading={loading}
-          error={error}
-          sortConfig={sortConfig}
-          handleSort={handleSort}
-          activeSquadId={activeSquadId}
-          leagueId={leagueId}
-          isMobile={isMobile}
-        />
-      </div>
+      <MatchPerformanceContainer 
+        playerEvents={playerEvents}
+        loading={loading}
+        error={error}
+        sortConfig={sortConfig}
+        handleSort={handleSort}
+        activeSquadId={activeSquadId}
+        leagueId={leagueId}
+        isMobile={isMobile}
+      />
     </div>
   );
 };
