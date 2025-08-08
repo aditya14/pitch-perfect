@@ -65,8 +65,8 @@ const Login = () => {
               </div>
               <div>
                 <h1 className="text-5xl md:text-7xl font-bold font-caption">
-                  <span className="text-primary-400">Squad</span>
-                  <span className="text-white">ly</span>
+                  <span className="text-primary-400">Pitch </span>
+                  <span className="text-white">Perfect</span>
                 </h1>
                 <p className="text-slate-300 text-xl mt-3">Fantasy Cricket Evolved</p>
               </div>
