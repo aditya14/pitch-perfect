@@ -176,7 +176,7 @@ const Register = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center mb-6">
               <div className="liquid-glass-card glass-rounded-lg p-4 mr-6 brand-glow">
-                <img src="/icon.png" alt="Squadly Logo" className="w-12 h-12" />
+                <img src="/icon.png" alt="Pitch Perfect Logo" className="w-12 h-12" />
               </div>
               <div>
                 <h1 className="text-4xl md:text-6xl font-bold text-white font-caption">
