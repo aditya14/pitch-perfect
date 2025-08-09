@@ -11,14 +11,26 @@ export const AuthProvider = ({ children }) => {
   
   // Apply system theme preference or stored theme on initial load
   useEffect(() => {
-    // First check localStorage
-    const storedTheme = localStorage.getItem('theme');
+    // Check if we're on an auth page (login/register)
+    const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
     
-    // Apply theme from localStorage or system preference
-    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (isAuthPage) {
+      // Always force dark mode for auth pages
       document.documentElement.classList.add('dark');
+      document.documentElement.style.backgroundColor = '#0a0a0a';
+      document.documentElement.dataset.theme = 'dark';
     } else {
-      document.documentElement.classList.remove('dark');
+      // For non-auth pages, apply normal theme logic
+      const storedTheme = localStorage.getItem('theme');
+      
+      // Apply theme from localStorage or system preference
+      if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.backgroundColor = '#0a0a0a';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.backgroundColor = '#ffffff';
+      }
     }
   }, []);
 
@@ -88,9 +100,16 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    // Clear theme preferences on logout so next login uses default dark mode
+    localStorage.removeItem('theme');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
     setIsAuthenticated(false);
+    
+    // Force dark mode for login screen
+    document.documentElement.classList.add('dark');
+    document.documentElement.style.backgroundColor = '#0a0a0a';
+    document.documentElement.dataset.theme = 'dark';
   };
 
   const value = {

@@ -190,11 +190,11 @@ const AppContent = () => {
             theme-transition 
             bg-white dark:bg-neutral-900 
             text-neutral-900 dark:text-white
-            ${user ? 'pt-0' : 'min-h-screen'}
+            ${user ? 'pt-16 md:mt-10' : 'min-h-screen'} // Add top padding when user exists
             ${getBottomPadding()}
           `}
           style={{
-            minHeight: user ? 'calc(100vh - 80px)' : '100vh'
+            minHeight: user ? 'calc(100vh - 40px)' : '100vh' // Adjust for header height
           }}
         >
           <Routes>

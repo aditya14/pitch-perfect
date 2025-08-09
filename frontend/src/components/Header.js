@@ -251,7 +251,7 @@ const Header = ({ theme, onThemeChange }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-700">
         <div className="lg-nav border-0 rounded-none">
           {/* Safe area padding for notch/status bar */}
           <div className="w-full safe-area-top"></div>

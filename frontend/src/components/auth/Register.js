@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/axios';
@@ -25,6 +25,31 @@ const Register = () => {
     password: null,
     passwordMatch: null
   });
+
+  // Force dark mode for register screen
+  useEffect(() => {
+    // Save current theme state
+    const currentTheme = document.documentElement.classList.contains('dark');
+    const currentBodyBg = document.documentElement.style.backgroundColor;
+    
+    // Force dark mode
+    document.documentElement.classList.add('dark');
+    document.documentElement.style.backgroundColor = '#0a0a0a';
+    document.documentElement.dataset.theme = 'dark';
+    
+    // Cleanup function to restore theme when component unmounts
+    return () => {
+      // Only restore if we're not staying on auth screens
+      const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
+      if (!isAuthPage) {
+        // Let the app handle theme restoration based on user preferences
+        if (!currentTheme) {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = currentBodyBg || '#ffffff';
+        }
+      }
+    };
+  }, []);
   
   // Validation functions
   const validateEmail = (email) => {
@@ -180,8 +205,8 @@ const Register = () => {
               </div>
               <div>
                 <h1 className="text-4xl md:text-6xl font-bold text-white font-caption">
-                  <span className="text-primary-400">Squad</span>
-                  <span>ly</span>
+                  <span className="text-primary-400">Pitch </span>
+                  <span>Perfect</span>
                 </h1>
                 <p className="text-slate-300 text-lg mt-2">Fantasy Cricket Evolved</p>
               </div>
