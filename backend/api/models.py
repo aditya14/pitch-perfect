@@ -18,6 +18,17 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
 
+class Tournament(TimeStampedModel):
+    name = models.CharField(max_length=100)
+    international = models.BooleanField(default=False)
+    format = models.CharField(max_length=50)  # e.g. "T20", "ODI", "Test"
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
 class Season(TimeStampedModel):
     class Status(models.TextChoices):
         UPCOMING = 'UPCOMING', _('Upcoming')
@@ -27,6 +38,7 @@ class Season(TimeStampedModel):
 
     year = models.IntegerField(unique=True)
     name = models.CharField(max_length=100)  # e.g. "TATA IPL 2024"
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
     start_date = models.DateField()
     end_date = models.DateField()
     status = models.CharField(
@@ -46,7 +58,7 @@ class Season(TimeStampedModel):
     def __str__(self):
         return f"IPL {self.year}"
 
-class IPLTeam(SoftDeleteModel, TimeStampedModel):
+class Team(SoftDeleteModel, TimeStampedModel):
     name = models.CharField(max_length=100)
     short_name = models.CharField(max_length=5)  # e.g. "RCB", "CSK"
     home_ground = models.CharField(max_length=100)
@@ -55,6 +67,7 @@ class IPLTeam(SoftDeleteModel, TimeStampedModel):
     secondary_color = models.CharField(max_length=7)  # hex color
     logo = models.ImageField(upload_to='ipl_teams/', null=True, blank=True)
     other_names = models.JSONField(default=list)  # historical names
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, null=True, blank=True)
 
     # M2M relationship with seasons through an intermediate table
     seasons = models.ManyToManyField(
@@ -74,13 +87,13 @@ class IPLTeam(SoftDeleteModel, TimeStampedModel):
         return self.name
 
 class TeamSeason(TimeStampedModel):
-    team = models.ForeignKey(IPLTeam, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     season = models.ForeignKey(Season, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ['team', 'season']
 
-class IPLPlayer(SoftDeleteModel, TimeStampedModel):
+class Player(SoftDeleteModel, TimeStampedModel):
     class Role(models.TextChoices):
         BATSMAN = 'BAT', _('Batter')
         BOWLER = 'BOWL', _('Bowler')
@@ -122,7 +135,7 @@ class IPLPlayer(SoftDeleteModel, TimeStampedModel):
 
     # Current team relationship handled through PlayerTeamHistory
     teams = models.ManyToManyField(
-        IPLTeam,
+        Team,
         through='PlayerTeamHistory',
         related_name='players'
     )
@@ -145,8 +158,8 @@ class IPLPlayer(SoftDeleteModel, TimeStampedModel):
         ).first()
 
 class PlayerTeamHistory(TimeStampedModel):
-    player = models.ForeignKey(IPLPlayer, on_delete=models.CASCADE)
-    team = models.ForeignKey(IPLTeam, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     season = models.ForeignKey(Season, on_delete=models.CASCADE)
     points = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
@@ -157,7 +170,7 @@ class PlayerTeamHistory(TimeStampedModel):
             models.Index(fields=['player', 'season']),
         ]
 
-class IPLMatch(TimeStampedModel):
+class Match(TimeStampedModel):
     class Status(models.TextChoices):
         SCHEDULED = 'SCHEDULED', _('Scheduled')
         LIVE = 'LIVE', _('Live')
@@ -193,13 +206,13 @@ class IPLMatch(TimeStampedModel):
     )
     phase = models.IntegerField(default=1)
     team_1 = models.ForeignKey(
-        IPLTeam,
+        Team,
         on_delete=models.CASCADE,
         related_name='home_matches',
         null=True, blank=True
     )
     team_2 = models.ForeignKey(
-        IPLTeam,
+        Team,
         on_delete=models.CASCADE,
         related_name='away_matches',
         null=True, blank=True
@@ -212,7 +225,7 @@ class IPLMatch(TimeStampedModel):
         default=Status.SCHEDULED
     )
     toss_winner = models.ForeignKey(
-        IPLTeam,
+        Team,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -225,7 +238,7 @@ class IPLMatch(TimeStampedModel):
         blank=True
     )
     winner = models.ForeignKey(
-        IPLTeam,
+        Team,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -240,7 +253,7 @@ class IPLMatch(TimeStampedModel):
     )
 
     player_of_match = models.ForeignKey(
-        IPLPlayer,
+        Player,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -283,12 +296,12 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 
-class IPLPlayerEvent(models.Model):
+class PlayerEvent(models.Model):
     # Foreign Key Relationships
-    player = models.ForeignKey('IPLPlayer', on_delete=models.CASCADE)
-    match = models.ForeignKey('IPLMatch', on_delete=models.CASCADE)
-    for_team = models.ForeignKey('IPLTeam', on_delete=models.CASCADE, related_name='home_events')
-    vs_team = models.ForeignKey('IPLTeam', on_delete=models.CASCADE, related_name='away_events')
+    player = models.ForeignKey('Player', on_delete=models.CASCADE)
+    match = models.ForeignKey('Match', on_delete=models.CASCADE)
+    for_team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='home_events')
+    vs_team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='away_events')
     
     # Batting Stats
     bat_runs = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
@@ -342,7 +355,7 @@ class IPLPlayerEvent(models.Model):
             return True
             
         try:
-            old_obj = IPLPlayerEvent.objects.get(pk=self.pk)
+            old_obj = PlayerEvent.objects.get(pk=self.pk)
             
             # Check batting fields
             if (self.bat_runs != old_obj.bat_runs or
@@ -372,7 +385,7 @@ class IPLPlayerEvent(models.Model):
                 return True
                 
             return False
-        except IPLPlayerEvent.DoesNotExist:
+        except PlayerEvent.DoesNotExist:
             return True
     
     # Calculated Fields
@@ -591,7 +604,7 @@ class FantasyBoostRole(models.Model):
     multiplier_options = [(1.0, '1x'), (1.5, '1.5x'), (2.0, '2x')]
 
     label = models.CharField(max_length=20)
-    role = MultiSelectField(choices=IPLPlayer.Role.choices, max_length=50)
+    role = MultiSelectField(choices=Player.Role.choices, max_length=50)
     multiplier_runs = models.FloatField(choices=multiplier_options)
     multiplier_fours = models.FloatField(choices=multiplier_options)
     multiplier_sixes = models.FloatField(choices=multiplier_options)
@@ -616,7 +629,7 @@ class FantasyBoostRole(models.Model):
         return self.label
     
 class FantasyPlayerEvent(models.Model):
-    match_event = models.ForeignKey(IPLPlayerEvent, on_delete=models.CASCADE)
+    match_event = models.ForeignKey(PlayerEvent, on_delete=models.CASCADE)
     fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='player_events')
     boost = models.ForeignKey(FantasyBoostRole, on_delete=models.CASCADE, null=True, blank=True)
     boost_points = models.FloatField(default=0)
@@ -655,7 +668,7 @@ class FantasyTrade(models.Model):
         return f"{self.initiator.name} -> {self.receiver.name}"
     
 class FantasyMatchEvent(models.Model):
-    match = models.ForeignKey(IPLMatch, on_delete=models.CASCADE)
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
     fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='match_events')
     total_base_points = models.FloatField(default=0)
     total_boost_points = models.FloatField(default=0)
