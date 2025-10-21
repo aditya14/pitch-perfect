@@ -327,7 +327,7 @@ const Register = () => {
               </div>
 
               {/* Mobile Stats - Only visible on mobile */}
-              <div className="lg:hidden grid grid-cols-3 gap-3 mt-6">
+              {/* <div className="lg:hidden grid grid-cols-3 gap-3 mt-6">
                 <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md text-center hover:shadow-lg hover:border-primary-300 transition-all duration-300">
                   <div className="text-xl font-bold font-mono text-primary-600 mb-1">1000+</div>
                   <div className="text-xs text-slate-600">Managers</div>
@@ -340,7 +340,7 @@ const Register = () => {
                   <div className="text-xl font-bold font-mono text-primary-600 mb-1">10K+</div>
                   <div className="text-xs text-slate-600">Matches</div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
