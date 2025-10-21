@@ -280,18 +280,18 @@ const DetailedMatchPerformance = ({
               {/* Points columns - different based on fantasy/non-fantasy */}
               {hasFantasyData && leagueId ? (
                 <>
-                  <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-16 border-l dark:border-neutral-600">
+                  <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider font-bold w-16 border-l dark:border-neutral-600">
+                    <SortableHeader label="Total" sortKey="fantasy_points" />
+                  </th>
+                  <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-16">
                     <SortableHeader label="Base" sortKey="base_points" />
                   </th>
                   <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-16">
                     <SortableHeader label="Boost" sortKey="boost_points" />
                   </th>
-                  <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider font-bold w-16">
-                    <SortableHeader label="Total" sortKey="fantasy_points" />
-                  </th>
                 </>
               ) : (
-                <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-16 border-l dark:border-neutral-600">
+                <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider font-bold w-16 border-l dark:border-neutral-600">
                   <SortableHeader label="Total" sortKey="total_points_all" />
                 </th>
               )}
@@ -414,21 +414,21 @@ const DetailedMatchPerformance = ({
                     {/* Points columns - different based on fantasy/non-fantasy */}
                     {hasFantasyData && leagueId ? (
                       <>
-                        <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white border-l dark:border-neutral-600">
+                        <td className="px-1 py-2 whitespace-nowrap text-xs text-left font-bold text-neutral-900 dark:text-white font-number border-l dark:border-neutral-600">
+                          {data.fantasy_points}
+                        </td>
+                        <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">
                           <span className={getPointsColorClass(data.base_points)}>
                             {data.base_points}
                           </span>
                         </td>
-                        <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${data.boost_label ? 'font-medium' : 'opacity-30'}`}>
+                        <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${data.boost_label ? 'font-medium' : 'opacity-10'}`}> 
                           {data.boost_label ? data.boost_points : '-'}
-                        </td>
-                        <td className="px-1 py-2 whitespace-nowrap text-xs text-left font-bold text-neutral-900 dark:text-white font-number">
-                          {data.fantasy_points}
                         </td>
                       </>
                     ) : (
-                      <td className="px-1 py-2 whitespace-nowrap text-xs text-left border-l dark:border-neutral-600 font-number">
-                        <span className={`font-bold ${getPointsColorClass(data.total_points_all)}`}>
+                      <td className="px-1 py-2 whitespace-nowrap text-xs text-left border-l dark:border-neutral-600 font-number font-bold">
+                        <span className={getPointsColorClass(data.total_points_all)}>
                           {data.total_points_all}
                         </span>
                       </td>
@@ -437,7 +437,7 @@ const DetailedMatchPerformance = ({
                     {/* Batting stats */}
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white border-l dark:border-neutral-600
-                      ${data.bat_balls ? 'font-medium' : 'opacity-30'}
+                      ${data.bat_balls ? 'font-medium' : 'opacity-10'}
                     `}>
                       <div className="flex items-center">
                         {data.bat_balls ? `${data.bat_runs}${data.bat_not_out ? '*' : ''}` : '-'}
@@ -446,25 +446,25 @@ const DetailedMatchPerformance = ({
                     </td>
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                      ${!data.bat_balls && 'opacity-30'}
+                      ${!data.bat_balls && 'opacity-10'}
                     `}>
                       {data.bat_balls ? data.bat_balls : '-'}
                     </td>
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                      ${!data.bat_balls && 'opacity-30'}
+                      ${!data.bat_balls && 'opacity-10'}
                     `}>
                       {(data.bat_balls && data.bat_balls > 0) ? data.bat_fours : '-'}
                     </td>
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                      ${!data.bat_balls && 'opacity-30'}
+                      ${!data.bat_balls && 'opacity-10'}
                     `}>
                       {(data.bat_balls && data.bat_balls > 0) ? data.bat_sixes : '-'}
                     </td>
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                      ${!data.bat_balls && 'opacity-30'}
+                      ${!data.bat_balls && 'opacity-10'}
                     `}>
                       <div className="flex items-center">
                         {(data.bat_balls > 0) ? data.bat_strike_rate?.toFixed(2) : '-'}
@@ -478,7 +478,7 @@ const DetailedMatchPerformance = ({
                     {/* Bowling stats */}
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight border-l dark:border-neutral-600
-                      ${!data.bowl_balls && 'opacity-30'}
+                      ${!data.bowl_balls && 'opacity-10'}
                     `}>
                       {data.bowl_balls ? 
                         `${Math.floor(data.bowl_balls / 6)}${data.bowl_balls % 6 ? '.' + (data.bowl_balls % 6) : ''}` 
@@ -487,26 +487,26 @@ const DetailedMatchPerformance = ({
                     </td>
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                      ${!data.bowl_balls && 'opacity-30'}
+                      ${!data.bowl_balls && 'opacity-10'}
                     `}>
                       {data.bowl_balls ? data.bowl_maidens : '-'}
                     </td>
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white font-extralight
-                      ${!data.bowl_runs && 'opacity-30'}
+                      ${!data.bowl_runs && 'opacity-10'}
                     `}>
                       {data.bowl_runs ? data.bowl_runs : '-'}
                     </td>
                     <td className={`
                       px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white
-                      ${data.bowl_wickets ? 'font-medium' : data.bowl_balls ? '' : 'opacity-30'}
+                      ${data.bowl_wickets ? 'font-medium' : data.bowl_balls ? '' : 'opacity-10'}
                     `}>
                       <div className="flex items-center">
                         {data.bowl_wickets ? data.bowl_wickets : data.bowl_balls ? 0 : '-'}
                         {renderWicketsChevrons(data.bowl_wickets)}
                       </div>
                     </td>
-                    <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${!data.bowl_balls && 'opacity-30'}`}>
+                    <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${!data.bowl_balls && 'opacity-10'}`}>
                       <div className="flex items-center">
                         {data.bowl_economy ? data.bowl_economy?.toFixed(2) : '-'}
                         {renderEconomyChevrons(data.bowl_economy, data.bowl_balls)}
@@ -517,13 +517,13 @@ const DetailedMatchPerformance = ({
                     </td>
                     
                     {/* Fielding stats */}
-                    <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white border-l dark:border-neutral-600 ${(!data.field_catch && !data.wk_catch) && 'opacity-30'}`}>
+                    <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white border-l dark:border-neutral-600 ${(!data.field_catch && !data.wk_catch) && 'opacity-10'}`}>
                       {(data.field_catch || 0) + (data.wk_catch || 0) || '-'}
                     </td>
-                    <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${(!data.run_out_solo && !data.run_out_collab) && 'opacity-30'}`}>
+                    <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${(!data.run_out_solo && !data.run_out_collab) && 'opacity-10'}`}>
                       {(data.run_out_solo || 0) + (data.run_out_collab || 0) || '-'}
                     </td>
-                    <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${!data.wk_stumping && 'opacity-30'}`}>
+                    <td className={`px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white ${!data.wk_stumping && 'opacity-10'}`}>
                       {data.wk_stumping || '-'}
                     </td>
                     <td className="px-1 py-2 whitespace-nowrap text-xs text-left text-neutral-900 dark:text-white">

@@ -37,8 +37,8 @@ ALLOWED_HOSTS = ['*']
 # Hard-code domains to ensure they're always included
 TRUSTED_DOMAINS = [
     'http://localhost:3000',
-    'http://10.0.0.119:3000',
-    'http://10.0.0.119:8000',
+    'http://192.168.68.61:3000',
+    'http://192.168.68.61:8000',
     'https://pitchperfectcricket.com',
     'https://www.pitchperfectcricket.com',
     'https://api.pitchperfectcricket.com',

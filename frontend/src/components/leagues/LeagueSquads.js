@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../../utils/axios';
-import { Users, Shield, Zap, Trophy, Globe, Crown, Swords, Anchor, Handshake, Bomb, EarthLock, Sparkles, BarChartHorizontal, ShieldHalf, Volleyball } from 'lucide-react';
+import { Users, Zap, Trophy, Globe, Crown, Swords, Anchor, Handshake, Bomb, Shield, Sparkles, BarChartHorizontal, ShieldHalf, Volleyball } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
 
 // Helper function to get role icon
@@ -19,14 +20,15 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
       return <Handshake size={size} style={{color: squadColor}} />;
     case 'Rattler':
       return <Bomb size={size} style={{color: squadColor}} />;
-    case 'Constrictor':
-      return <EarthLock size={size} style={{color: squadColor}} />;
+    case 'Guardian':
+      return <Shield size={size} style={{color: squadColor}} />;
     default: // Virtuoso
       return <Sparkles size={size} style={{color: squadColor}} />;
   }
 };
 
 const LeagueSquads = ({ league }) => {
+  const { user } = useAuth();
   const [squads, setSquads] = useState([]);
   const [playersData, setPlayersData] = useState([]);
   const [squadPlayers, setSquadPlayers] = useState({});
@@ -295,7 +297,7 @@ const LeagueSquads = ({ league }) => {
                   style={{ minWidth: '120px' }}
                 >
                   <Link 
-                    to={`/squads/${squad.id}`}
+                    to={squad.user === user?.id ? `/leagues/${league.id}/my_squad` : `/leagues/${league.id}/squads/${squad.id}`}
                     className="flex flex-col items-center"
                   >
                     <span 
@@ -479,7 +481,7 @@ const LeagueSquads = ({ league }) => {
                   safe_hands: 'Safe Hands',
                   virtuoso: 'Virtuoso',
                   rattler: 'Rattler',
-                  constrictor: 'Constrictor',
+                  guardian: 'Guardian',
                 }).map(([roleKey, roleLabel], roleIndex) => (
                   <tr key={roleKey} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
                     <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-xs text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
@@ -501,7 +503,7 @@ const LeagueSquads = ({ league }) => {
                           'accumulator': 4,
                           'safe_hands': 5,
                           'rattler': 6,
-                          'constrictor': 7,
+                          'guardian': 7,
                           'virtuoso': 8
                         };
                         const boostObj = coreSquad.find(b => b.boost_id === roleKeyToId[roleKey]);

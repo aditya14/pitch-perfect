@@ -57,10 +57,11 @@ def _get_match_info(match_id):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-@cache_page_with_bypass(60 * 10)
+@cache_page_with_bypass(60 * 60 * 24 * 7)  # Cache for 1 week (season is over)
 def league_stats_running_total(request, league_id):
     """
     Get running total data for league (from FantasyStats, by phase if requested)
+    Cached for 1 week since season data doesn't change.
     """
     try:
         squads_param = request.query_params.get('squads', '')

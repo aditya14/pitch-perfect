@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, User } from 'lucide-react';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
-import { Anchor, Bomb, Crown, EarthLock, Handshake, Sparkles, Swords, Zap, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Anchor, Bomb, Crown, Shield, Handshake, Sparkles, Swords, Zap, ArrowLeft, AlertTriangle } from 'lucide-react';
 
 // Helper function to get role icon
 const getRoleIcon = (roleName, size = 16, squadColor) => {
@@ -18,8 +18,8 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
         return <Handshake size={size} style={{color: squadColor}} />;
       case 'Rattler':
         return <Bomb size={size} style={{color: squadColor}} />;
-      case 'Constrictor':
-        return <EarthLock size={size} style={{color: squadColor}} />;
+      case 'Guardian':
+        return <Shield size={size} style={{color: squadColor}} />;
       default: // Virtuoso
         return <Sparkles size={size} style={{color: squadColor}} />;
     }

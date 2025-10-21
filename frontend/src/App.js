@@ -34,7 +34,9 @@ const SquadRedirect = () => {
   useEffect(() => {
     const fetchSquadLeague = async () => {
       try {
+        console.log('Fetching league for squad:', squadId);
         const response = await api.get(`/squads/${squadId}/`);
+        console.log('Data received for squad:', response.data);
         setLeagueId(response.data.league_id);
       } catch (error) {
         console.error('Failed to fetch squad league:', error);
@@ -265,6 +267,11 @@ const AppContent = () => {
                 <Navigate to="/login" />
               }
             />
+
+            <Route 
+              path="/leagues/:leagueId/squads/:squadId"
+              element={user ? <SquadView leagueContext={true} /> : <Navigate to="/login" />}
+            />
             
             {/* League routes with nested tab routes */}
             <Route 
@@ -278,7 +285,6 @@ const AppContent = () => {
               <Route path="trades" element={null} />
               <Route path="stats" element={null} />
               <Route path="squads" element={null} />
-              {/* NEW: My Squad route within league context */}
               <Route path="my_squad" element={null} />
             </Route>
             

@@ -7,7 +7,7 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  ReferenceLine // Import ReferenceLine
+  ReferenceLine
 } from 'recharts';
 import api from '../../../utils/axios';
 
@@ -21,7 +21,7 @@ const LeagueRunningTotal = ({ league }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (league?.id && league?.season?.id) {
+    if (league?.id) {
       // Initialize all squads as visible
       const initialVisibility = {};
       league.squads.forEach(squad => {
@@ -54,94 +54,26 @@ const LeagueRunningTotal = ({ league }) => {
       window.removeEventListener('resize', checkMobile);
     };
 
-  }, [league?.id, league?.season?.id]);
+  }, [league?.id]);
 
   const fetchRunningTotalData = async () => {
     try {
       setLoading(true);
       
-      // Fetch all completed matches for the season
-      const matchesResponse = await api.get(`/seasons/${league.season.id}/matches/`);
-      const matches = matchesResponse.data
-        .filter(match => match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT')
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      // Use the optimized pre-computed stats endpoint
+      // This replaces 70+ API calls with a single cached call
+      const response = await api.get(`/leagues/${league.id}/stats/running-total/`);
+      const runningTotalData = response.data;
       
-      if (matches.length === 0) {
+      if (!runningTotalData || runningTotalData.length === 0) {
         setChartData([]);
         setLoading(false);
         return;
       }
 
-      // Initialize data structure for chart
-      const chartDataPoints = [];
+      // Data is already in the correct format from the backend
+      setChartData(runningTotalData);
       
-      // Process each match sequentially
-      for (const match of matches) {
-        try {
-          // Fetch match standings data (using the new endpoint)
-          const standingsResponse = await api.get(`/matches/${match.id}/standings/?league_id=${league.id}`);
-          const standings = standingsResponse.data;
-          
-          // Create a map of squad data for this match
-          const matchSquadData = {};
-          
-          // Create a previous data point to get running totals
-          const previousDataPoint = chartDataPoints.length > 0 
-            ? chartDataPoints[chartDataPoints.length - 1] 
-            : null;
-          
-          // Calculate running totals for each squad
-          league.squads.forEach(squad => {
-            // Find this squad's data in the standings
-            const squadStanding = standings.find(s => s.fantasy_squad === squad.id);
-            
-            // If squad has data for this match
-            if (squadStanding) {
-              const matchPoints = squadStanding.total_points || 0;
-              const previousTotal = previousDataPoint ? 
-                (previousDataPoint[`squad_${squad.id}`] || 0) : 0;
-              
-              // Store both match points and running total
-              matchSquadData[squad.id] = {
-                matchPoints: matchPoints,
-                runningTotal: previousTotal + matchPoints
-              };
-            } else {
-              // Squad didn't participate in this match
-              const previousTotal = previousDataPoint ? 
-                (previousDataPoint[`squad_${squad.id}`] || 0) : 0;
-              
-              matchSquadData[squad.id] = {
-                matchPoints: 0,
-                runningTotal: previousTotal
-              };
-            }
-          });
-          
-          // Create data point for chart
-          const dataPoint = {
-            name: match.match_number.toString(),
-            match_id: match.id,
-            date: new Date(match.date).toLocaleDateString(undefined, { 
-              weekday: 'short', month: 'short', day: 'numeric' 
-            }),
-            match_name: `${match.team_1.short_name} vs ${match.team_2.short_name}`,
-            matchData: matchSquadData,
-          };
-          
-          // Add squad-specific running totals
-          league.squads.forEach(squad => {
-            dataPoint[`squad_${squad.id}`] = matchSquadData[squad.id].runningTotal;
-          });
-          
-          chartDataPoints.push(dataPoint);
-        } catch (err) {
-          console.error(`Error fetching standings for match ${match.id}:`, err);
-          // Continue with next match if this one fails
-        }
-      }
-      
-      setChartData(chartDataPoints);
     } catch (err) {
       console.error('Failed to fetch running total data:', err);
       setError('Failed to load running total data');

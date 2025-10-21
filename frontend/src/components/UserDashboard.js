@@ -4,8 +4,50 @@ import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import TimelineComponent from './TimelineComponent';
-import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle, Plus, Zap, BarChart3, Star } from 'lucide-react';
+import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle, Plus, Zap, BarChart3, Star, Info } from 'lucide-react';
 import LoadingScreen from './elements/LoadingScreen';
+
+// Custom Tooltip Component following Liquid Glass design
+const Tooltip = ({ children, content, align = 'right' }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Responsive alignment logic
+  // On mobile, use align prop; on desktop, always right
+  // Tailwind's 'sm:' prefix is used for >=640px
+  // We'll use align prop for both, but parent sets it based on context
+
+  let tooltipPositionClass = '';
+  if (align === 'left') {
+    tooltipPositionClass = 'left-0';
+  } else if (align === 'right') {
+    tooltipPositionClass = 'right-0';
+  }
+
+  return (
+    <div 
+      className="relative inline-block"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      {isVisible && (
+        <div
+          className={`absolute top-full ${tooltipPositionClass} mt-1 z-[100] pointer-events-none lg-float`}
+          style={{width: 'max-content', maxWidth: 320}}
+        >
+          <div className="lg-glass lg-rounded-md px-4 py-3 shadow-2xl border border-primary-400/40 dark:border-primary-400/30 w-[280px] lg-glow backdrop-blur-2xl relative">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-slate-900 dark:text-white font-medium leading-relaxed">
+                {content}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const LeagueCard = ({ league }) => {
   const navigate = useNavigate();
@@ -346,6 +388,8 @@ const UserDashboard = () => {
   if (seasonFilter === 'UPCOMING') filteredLeagues = upcomingLeagues;
   if (seasonFilter === 'COMPLETED') filteredLeagues = completedLeagues;
 
+  const DISABLED_MESSAGE = "Pitch Perfect will return for the 2026 Men's T20 World Cup";
+
   if (loading) {
     return <LoadingScreen message="Loading your leagues..." />;
   }
@@ -373,48 +417,77 @@ const UserDashboard = () => {
       <div className="relative z-10 container mx-auto px-6 py-8">
         
         {/* Header Section */}
-        <div className="mb-12">
-          <div className="lg-glass lg-rounded-lg relative overflow-hidden lg-glow">
+        <div className="mb-12 relative z-20">
+          <div className="lg-glass lg-rounded-lg relative overflow-visible lg-glow">
             <div className="lg-shine absolute inset-0 lg-rounded-lg"></div>
             
             <div className="relative z-10 p-4">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
                 <div className="flex-1">
+                  {user?.first_name ? 
                   <h1 className="text-3xl md:text-3xl font-bold text-slate-900 dark:text-white font-caption">
-                    Welcome back, <span className="text-primary-600 dark:text-primary-400">{user?.first_name}</span>
+                    Welcome, <span className="text-primary-600 dark:text-primary-400">{user?.first_name}</span>
                   </h1>
-                  
-                  {/* Quick Stats */}
-                  {/* <div className="flex flex-wrap gap-4">
-                    <div className="lg-badge lg-rounded-sm px-4 py-2 flex items-center">
-                      <Users className="w-4 h-4 text-primary-600 dark:text-primary-400 mr-2" />
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">{leagues.length} Active League{leagues.length !== 1 ? 's' : ''}</span>
-                    </div>
-                  </div> */}
+                  :
+                  <h1 className="text-xl md:text-xl font-bold text-slate-900 dark:text-white font-caption">
+                    Welcome to Pitch Perfect
+                  </h1>
+                  }
                 </div>
                 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link
-                    to="/leagues/join"
-                    className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white group transition-all duration-300"
-                  >
-                    <div className="flex items-center justify-center">
-                      {/* <Plus className="w-5 h-5 mr-2" /> */}
-                      Join League
-                      <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </Link>
-                  <Link
-                    to="/leagues/create"
-                    className="lg-button-secondary lg-rounded-md px-6 py-3 font-semibold group transition-all duration-300"
-                  >
-                    <div className="flex items-center justify-center">
-                      {/* <Plus className="w-5 h-5 mr-2" /> */}
-                      Create League
-                      <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </Link>
+                {/* Mobile: inline, Desktop: spaced */}
+                <div className="relative z-30">
+                  {/* Mobile inline */}
+                  <div className="flex flex-row gap-2 sm:hidden">
+                    <Tooltip content={DISABLED_MESSAGE} align="left">
+                      <button
+                        disabled
+                        className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white opacity-50 cursor-not-allowed transition-all duration-300"
+                      >
+                        <div className="flex items-center justify-center">
+                          Join League
+                          <ChevronRight className="w-5 h-5 ml-2" />
+                        </div>
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={DISABLED_MESSAGE} align="right">
+                      <button
+                        disabled
+                        className="lg-button-secondary lg-rounded-md px-6 py-3 font-semibold opacity-50 cursor-not-allowed transition-all duration-300"
+                      >
+                        <div className="flex items-center justify-center">
+                          Create League
+                          <ChevronRight className="w-5 h-5 ml-2" />
+                        </div>
+                      </button>
+                    </Tooltip>
+                  </div>
+                  {/* Desktop spaced */}
+                  <div className="hidden sm:flex flex-col sm:flex-row gap-3">
+                    <Tooltip content={DISABLED_MESSAGE} align="right">
+                      <button
+                        disabled
+                        className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white opacity-50 cursor-not-allowed transition-all duration-300"
+                      >
+                        <div className="flex items-center justify-center">
+                          Join League
+                          <ChevronRight className="w-5 h-5 ml-2" />
+                        </div>
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={DISABLED_MESSAGE} align="right">
+                      <button
+                        disabled
+                        className="lg-button-secondary lg-rounded-md px-6 py-3 font-semibold opacity-50 cursor-not-allowed transition-all duration-300"
+                      >
+                        <div className="flex items-center justify-center">
+                          Create League
+                          <ChevronRight className="w-5 h-5 ml-2" />
+                        </div>
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
             </div>
@@ -431,7 +504,7 @@ const UserDashboard = () => {
 
         {/* Leagues Section */}
         {leagues.length === 0 ? (
-          <div className="lg-glass lg-rounded-lg text-center py-16 lg-glow">
+          <div className="lg-glass lg-rounded-lg text-center py-16 lg-glow relative">
             <div className="lg-shine absolute inset-0 lg-rounded-lg"></div>
             
             <div className="relative z-10">
@@ -461,23 +534,27 @@ const UserDashboard = () => {
                 ))}
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <Link
-                  to="/leagues/join"
-                  className="lg-button lg-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center group"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Join Your First League
-                  <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link
-                  to="/leagues/create"
-                  className="lg-button-secondary lg-rounded-md px-8 py-4 font-semibold inline-flex items-center group"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Create League
-                  <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center relative z-30">
+                <Tooltip content={DISABLED_MESSAGE}>
+                  <button
+                    disabled
+                    className="lg-button lg-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center opacity-50 cursor-not-allowed"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Join Your First League
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </button>
+                </Tooltip>
+                <Tooltip content={DISABLED_MESSAGE}>
+                  <button
+                    disabled
+                    className="lg-button-secondary lg-rounded-md px-8 py-4 font-semibold inline-flex items-center opacity-50 cursor-not-allowed"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Create League
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </button>
+                </Tooltip>
               </div>
             </div>
           </div>

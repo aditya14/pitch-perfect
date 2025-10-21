@@ -7,7 +7,7 @@ import {
   Anchor,
   Swords,
   Bomb,
-  EarthLock
+  Shield
 } from 'lucide-react';
 
 // Helper function to get role icon
@@ -31,8 +31,8 @@ export const getRoleIcon = (roleName, size = 16, squadColor) => {
       return <Handshake size={size} style={outlineStyle} className="text-cyan-500 dark:text-cyan-400" />;
     case 'Rattler':
       return <Bomb size={size} style={outlineStyle} className="text-green-500 dark:text-green-400" />;
-    case 'Constrictor':
-      return <EarthLock size={size} style={outlineStyle} className="text-emerald-500 dark:text-emerald-400" />;
+    case 'Guardian':
+      return <Shield size={size} style={outlineStyle} className="text-emerald-500 dark:text-emerald-400" />;
     default: // Virtuoso
       return <Sparkles size={size} style={outlineStyle} className="text-purple-500 dark:text-purple-400" />;
   }
