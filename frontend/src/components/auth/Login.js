@@ -155,119 +155,8 @@ const Login = () => {
         <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-gradient-to-bl from-primary-50/30 to-slate-50/30 rounded-full blur-3xl animate-float-slow" />
       </div>
 
-      {/* Sticky Header with Dropdown Login */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
-                <img src="/icon.png" alt="Pitch Perfect" className="w-10 h-10 sm:w-12 sm:h-12" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold font-caption bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
-                  Pitch Perfect
-                </h1>
-              </div>
-            </div>
-
-            {/* Auth Buttons */}
-            <div className="flex items-center space-x-3 relative" ref={loginDropdownRef}>
-              <button
-                onClick={() => setShowLoginDropdown(!showLoginDropdown)}
-                className="px-5 py-2.5 text-sm font-semibold text-slate-700 hover:text-primary-600 rounded-xl hover:bg-slate-50 transition-all duration-200"
-              >
-                Login
-              </button>
-              <Link
-                to="/register"
-                className="px-5 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 hover:scale-105 transition-all duration-200"
-              >
-                Sign Up
-              </Link>
-
-              {/* Login Dropdown */}
-              {showLoginDropdown && (
-                <div className="absolute top-full right-0 mt-3 w-80 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 p-8 animate-fade-in-up">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-primary-600">Welcome Back</h3>
-                    <button
-                      onClick={() => setShowLoginDropdown(false)}
-                      className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all duration-200"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-
-                  {error && (
-                    <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start">
-                      <AlertCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-red-700">{error}</span>
-                    </div>
-                  )}
-
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
-                        placeholder="you@example.com"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="w-full px-5 py-3.5 pr-12 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all duration-200"
-                        >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
-                    >
-                      {isSubmitting ? 'Signing in...' : 'Sign In'}
-                    </button>
-                  </form>
-
-                  <p className="text-center text-sm text-slate-600 mt-6">
-                    New to Pitch Perfect?{' '}
-                    <Link to="/register" className="text-primary-600 hover:text-primary-700 font-semibold">
-                      Create account
-                    </Link>
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="relative z-10 pt-0 pb-32 px-0 lg:px-4">
+      {/* Hero Section with Auth */}
+      <section className="relative z-10 pt-0 px-0 lg:px-4 hero-section">
         <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
           <video
             src="https://pub-83784c6e5d2c48c98bbfb52f217af0ad.r2.dev/hero.webm"
@@ -275,26 +164,135 @@ const Login = () => {
             loop
             muted
             playsInline
-            className="w-full h-full object-cover object-center"
-            style={{ minHeight: '480px', maxHeight: '700px', background: 'transparent' }}
+            className="w-full h-full object-cover object-center hero-video"
+            style={{ background: 'transparent' }}
           />
-          <div className="absolute inset-0 bg-primary-600/80" />
+          <div className="absolute inset-0 bg-slate-700/85" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-white/10" />
         </div>
-        <div className="relative z-10 max-w-6xl mx-auto text-center pt-32 pb-24 px-4 flex flex-col items-center justify-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold font-caption mb-6 leading-tight px-8 py-6">
-            <span className="bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-lg">
-              Fantasy Cricket, Evolved
-            </span>
-          </h1>
-          <p className="text-xl sm:text-2xl text-white mb-10 max-w-2xl mx-auto font-medium px-6 py-4">
-            Season-long play. Real drafts. Real strategy.
+
+        {/* Auth Buttons - Top Right */}
+        <div className="absolute top-8 right-8 z-50 flex items-center space-x-4" ref={loginDropdownRef}>
+          <button
+            onClick={() => setShowLoginDropdown(!showLoginDropdown)}
+            className="px-6 py-3 text-lg font-semibold text-white hover:text-white/80 transition-all duration-200"
+          >
+            Login
+          </button>
+          <Link
+            to="/register"
+            className="px-8 py-3 text-lg font-semibold text-white rounded-xl border-2 border-white hover:bg-white/10 backdrop-blur-sm hover:scale-105 transition-all duration-300 shadow-lg"
+          >
+            Sign Up
+          </Link>
+
+          {/* Login Dropdown */}
+          {showLoginDropdown && (
+            <div className="absolute top-full right-0 mt-3 w-80 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 p-8 animate-fade-in-up">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-primary-600">Welcome Back</h3>
+                <button
+                  onClick={() => setShowLoginDropdown(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all duration-200"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {error && (
+                <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start">
+                  <AlertCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-red-700">{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-5 py-3.5 pr-12 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
+                      placeholder="••••••••"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all duration-200"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
+                >
+                  {isSubmitting ? 'Signing in...' : 'Sign In'}
+                </button>
+              </form>
+
+              <p className="text-center text-sm text-slate-600 mt-6">
+                New to Pitch Perfect?{' '}
+                <Link to="/register" className="text-primary-600 hover:text-primary-700 font-semibold">
+                  Create account
+                </Link>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Main Hero Content - Centered Logo */}
+        <div
+          className="relative z-10 max-w-6xl mx-auto text-center flex flex-col items-center justify-center px-4"
+          style={{ minHeight: '100vh' }}
+        >
+          {/* Large Logo and Title - always one line */}
+          <div className="flex flex-nowrap items-center justify-center space-x-4 mb-8 w-full">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 rounded-3xl overflow-hidden flex items-center justify-center flex-shrink-0">
+              <img
+                src="/icon.png"
+                alt="Pitch Perfect Logo"
+                className="w-full h-full object-contain"
+                style={{ filter: 'drop-shadow(0 2px 24px rgba(31,190,221,0.25))' }}
+              />
+            </div>
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-bold font-caption bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent drop-shadow-2xl whitespace-nowrap">
+              Pitch Perfect
+            </h1>
+          </div>
+          {/* Subheader */}
+          <p className="text-2xl sm:text-3xl lg:text-3xl text-white/90 mb-12 font-light">
+            Fantasy Cricket, Evolved
           </p>
+
+          {/* CTA Button */}
           <button
             onClick={() => scrollToSection('how-it-works')}
             className="px-8 py-4 bg-white/20 backdrop-blur-xl border border-white/30 text-white font-semibold rounded-xl hover:bg-white/30 hover:scale-105 transition-all duration-300 shadow-2xl flex items-center gap-2"
           >
-            Discover How It Works
+            Learn More
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
@@ -320,15 +318,21 @@ const Login = () => {
               <p className="text-slate-600 text-base leading-relaxed mb-6">
                 Build a 15-player team through a live snake draft. Rank your players, make your picks, and own your season.
               </p>
-              <video
-                src="https://pub-83784c6e5d2c48c98bbfb52f217af0ad.r2.dev/snake_draft_animation.webm"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full max-w-md mx-auto border border-slate-200 rounded-lg mt-2"
-                style={{ background: 'rgba(248,250,252,0.9)', backdropFilter: 'blur(8px)', objectFit: 'cover', objectPosition: 'center', clipPath: 'inset(0 5px 0 5px)' }}
-              />
+              <div className="w-full max-w-md mx-auto mt-2 rounded-lg overflow-hidden border border-slate-200 bg-[rgba(248,250,252,0.9)] backdrop-blur-[8px]">
+                <video
+                  src="https://pub-83784c6e5d2c48c98bbfb52f217af0ad.r2.dev/snake_draft_animation.webm"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-auto object-contain object-top video-mobile-zoom"
+                  style={{
+                    minHeight: '180px',
+                    maxHeight: '320px',
+                    background: 'rgba(248,250,252,0.9)',
+                  }}
+                />
+              </div>
             </div>
 
             {/* Step 2 */}
@@ -367,44 +371,44 @@ const Login = () => {
               <p className="text-slate-600 text-base mb-6 leading-relaxed">
                 Points update ball-by-ball. Every boundary, wicket, and catch moves the standings in real time.
               </p>
-              {/* Scoring details */}
+              {/* Scoring details - Compact Grid */}
               <div className="mt-2 animate-fade-in-up text-left w-full space-y-3">
                 <div className="bg-slate-50 backdrop-blur-sm rounded-xl p-4 border border-slate-200">
-                  <div className="font-bold text-primary-600 mb-2 flex items-center gap-2">
+                  <div className="font-bold text-primary-600 mb-3">
                     Batting
                   </div>
-                  <ul className="text-sm text-slate-600 space-y-1">
-                    <li>Run: <span className="font-mono font-bold text-primary-600">+1</span></li>
-                    <li>Four: <span className="font-mono font-bold text-primary-600">+1</span></li>
-                    <li>Six: <span className="font-mono font-bold text-primary-600">+2</span></li>
-                    <li>50+: <span className="font-mono font-bold text-primary-600">+8</span></li>
-                    <li>100+: <span className="font-mono font-bold text-primary-600">+16</span></li>
-                    <li>SR Bonus: <span className="font-mono font-bold text-primary-600">-6 → +6</span></li>
-                  </ul>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-600">
+                    <div>Run <span className="font-mono font-bold text-primary-600 float-right">+1</span></div>
+                    <div>Four <span className="font-mono font-bold text-primary-600 float-right">+1</span></div>
+                    <div>Six <span className="font-mono font-bold text-primary-600 float-right">+2</span></div>
+                    <div>50+ <span className="font-mono font-bold text-primary-600 float-right">+8</span></div>
+                    <div>100+ <span className="font-mono font-bold text-primary-600 float-right">+16</span></div>
+                    <div>Strike Rate <span className="font-mono font-bold text-primary-600 float-right">-6 → +6</span></div>
+                  </div>
                 </div>
                 <div className="bg-slate-50 backdrop-blur-sm rounded-xl p-4 border border-slate-200">
-                  <div className="font-bold text-primary-600 mb-2 flex items-center gap-2">
+                  <div className="font-bold text-primary-600 mb-3">
                     Bowling
                   </div>
-                  <ul className="text-sm text-slate-600 space-y-1">
-                    <li>Wicket: <span className="font-mono font-bold text-primary-600">+25</span></li>
-                    <li>Maiden: <span className="font-mono font-bold text-primary-600">+8</span></li>
-                    <li>3+ Wickets: <span className="font-mono font-bold text-primary-600">+8</span></li>
-                    <li>5+ Wickets: <span className="font-mono font-bold text-primary-600">+16</span></li>
-                    <li>Eco Bonus: <span className="font-mono font-bold text-primary-600">-6 → +6</span></li>
-                  </ul>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-600">
+                    <div>Wicket <span className="font-mono font-bold text-primary-600 float-right">+25</span></div>
+                    <div>Maiden <span className="font-mono font-bold text-primary-600 float-right">+8</span></div>
+                    <div>3+ Wkts <span className="font-mono font-bold text-primary-600 float-right">+8</span></div>
+                    <div>5+ Wkts <span className="font-mono font-bold text-primary-600 float-right">+16</span></div>
+                    <div className="col-span-2">Economy <span className="font-mono font-bold text-primary-600 float-right">-6 → +6</span></div>
+                  </div>
                 </div>
                 <div className="bg-slate-50 backdrop-blur-sm rounded-xl p-4 border border-slate-200">
-                  <div className="font-bold text-primary-600 mb-2 flex items-center gap-2">
+                  <div className="font-bold text-primary-600 mb-3">
                     Fielding & Other
                   </div>
-                  <ul className="text-sm text-slate-600 space-y-1">
-                    <li>Catch: <span className="font-mono font-bold text-primary-600">+8</span></li>
-                    <li>Stumping: <span className="font-mono font-bold text-primary-600">+12</span></li>
-                    <li>Run Out: <span className="font-mono font-bold text-primary-600">+8</span></li>
-                    <li>Player of Match: <span className="font-mono font-bold text-primary-600">+50</span></li>
-                    <li>Playing XI: <span className="font-mono font-bold text-primary-600">+4</span></li>
-                  </ul>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-600">
+                    <div>Catch <span className="font-mono font-bold text-primary-600 float-right">+8</span></div>
+                    <div>Stumping <span className="font-mono font-bold text-primary-600 float-right">+12</span></div>
+                    <div>Run Out <span className="font-mono font-bold text-primary-600 float-right">+8</span></div>
+                    <div>PotM <span className="font-mono font-bold text-primary-600 float-right">+50</span></div>
+                    <div className="col-span-2">Playing XI <span className="font-mono font-bold text-primary-600 float-right">+4</span></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -417,11 +421,8 @@ const Login = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold font-caption mb-4 text-primary-600">
-              Why Pitch Perfect?
+              A New Way to Compete
             </h2>
-            <p className="text-xl text-slate-600">
-              More than just another fantasy cricket app
-            </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="group bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 shadow-lg hover:shadow-xl hover:border-primary-300 transition-all duration-300">
@@ -562,6 +563,43 @@ const Login = () => {
           box-shadow: 0 0 0 1000px #f8fafc inset !important;
           background-color: #f8fafc !important;
           color: #334155 !important;
+        }
+
+        .video-mobile-zoom {
+          /* Always scale up, keep top fixed */
+          transform: scale(1.08) translateY(0);
+          transform-origin: top center;
+        }
+
+        /* Ensure hero section and video fill viewport on mobile and desktop */
+        .hero-section {
+          min-height: 100vh;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        .hero-video {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          object-fit: cover;
+        }
+        @media (min-width: 1024px) {
+          .hero-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+          }
+          .hero-video {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+          }
         }
       `}</style>
     </div>

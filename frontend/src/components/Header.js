@@ -419,15 +419,15 @@ const Header = ({ theme, onThemeChange }) => {
                           )}
                         </button>
                         
-                        {isMobile && !isStandalone && (
+                        {/* {isMobile && !isStandalone && (
                           <button
                             onClick={handleAddToHomeScreen}
                             className="lg-dropdown-item text-slate-800 dark:text-slate-200 flex items-center w-full"
                           >
                             <Home className="h-4 w-4 mr-3" />
-                            Add to Home Screen
+                            Add to Home
                           </button>
-                        )}
+                        )} */}
                         
                         <div className="border-t border-slate-300/30 dark:border-white/10 my-2"></div>
                         
