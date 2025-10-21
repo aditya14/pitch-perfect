@@ -316,7 +316,7 @@ const Login = () => {
                 Draft Your Squad
               </h3>
               <p className="text-slate-600 text-base leading-relaxed mb-6">
-                Build a 15-player team through a live snake draft. Rank your players, make your picks, and own your season.
+                Build your squad through a live snake draft. Rank your player choices, get them drafted, and own your season.
               </p>
               <div className="w-full max-w-md mx-auto mt-2 rounded-lg overflow-hidden border border-slate-200 bg-[rgba(248,250,252,0.9)] backdrop-blur-[8px]">
                 <video
