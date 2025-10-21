@@ -265,11 +265,13 @@ const Header = ({ theme, onThemeChange }) => {
                   to="/dashboard"
                   className="flex items-center group flex-shrink-0"
                 >
-                  <div className="lg-glass-secondary lg-rounded-md p-2 mr-2 sm:mr-3 flex-shrink-0">
-                    <img src="/icon.png" alt="Logo" className="h-8 w-8 min-w-[2rem] min-h-[2rem]" />
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center">
+                    <img src="/icon.png" alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl" />
                   </div>
-                  <div className="text-xl font-extrabold text-primary-950 dark:text-white hover:text-primary-300 transition-colors duration-300 hidden xs:block sm:block font-caption whitespace-nowrap">
-                    <span className="text-primary-400">Pitch</span>Perfect
+                  <div className="ml-3">
+                    <h1 className="text-md sm:text-lg font-bold font-caption bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+                      Pitch Perfect
+                    </h1>
                   </div>
                 </Link>
                 

@@ -12,7 +12,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
     4: "Accumulator", 
     5: "Safe Hands",
     6: "Rattler",
-    7: "Constrictor",
+    7: "Guardian",
     8: "Virtuoso"
   };
 
@@ -24,7 +24,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
     4: ['BAT', 'WK'], // Accumulator - BAT or WK only
     5: ['WK'],       // Safe Hands - WK only
     6: ['BOWL'],     // Rattler - BOWL only
-    7: ['BOWL'],     // Constrictor - BOWL only
+    7: ['BOWL'],     // Guardian - BOWL only
     8: ['ALL']       // Virtuoso - ALL only
   };
 

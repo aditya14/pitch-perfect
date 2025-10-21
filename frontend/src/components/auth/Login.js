@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { AlertCircle, Eye, EyeOff, Users, BarChart3, Zap, ChevronRight, Star, Globe, ChevronDown } from 'lucide-react';
+import { 
+  AlertCircle, Eye, EyeOff, Users, BarChart3, Zap, Star, 
+  TrendingUp, Clock, Trophy, Sparkles, Crown, ChevronRight,
+  Swords, Anchor, Handshake, Bomb, Shield, Target, Award,
+  X, ChevronDown, ChevronUp, ArrowRight
+} from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -9,33 +14,46 @@ const Login = () => {
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showLoginDropdown, setShowLoginDropdown] = useState(false);
+  const [showScoringDetails, setShowScoringDetails] = useState(false);
   const { login } = useAuth();
-  const loginRef = useRef(null);
+  const navigate = useNavigate();
+  const loginDropdownRef = useRef(null);
 
-  // Force dark mode for login screen
+  // Force light mode for login screen
   useEffect(() => {
-    // Save current theme state
     const currentTheme = document.documentElement.classList.contains('dark');
-    const currentBodyBg = document.documentElement.style.backgroundColor;
     
-    // Force dark mode
-    document.documentElement.classList.add('dark');
-    document.documentElement.style.backgroundColor = '#0a0a0a';
-    document.documentElement.dataset.theme = 'dark';
+    // Force light mode
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.backgroundColor = '#ffffff';
+    document.documentElement.dataset.theme = 'light';
     
-    // Cleanup function to restore theme when component unmounts
     return () => {
-      // Only restore if we're not staying on auth screens
       const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
-      if (!isAuthPage) {
-        // Let the app handle theme restoration based on user preferences
-        if (!currentTheme) {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.style.backgroundColor = currentBodyBg || '#ffffff';
-        }
+      if (!isAuthPage && currentTheme) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.backgroundColor = '#0a0a0a';
       }
     };
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (loginDropdownRef.current && !loginDropdownRef.current.contains(event.target)) {
+        setShowLoginDropdown(false);
+      }
+    };
+
+    if (showLoginDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showLoginDropdown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,6 +62,7 @@ const Login = () => {
     
     try {
       await login(username, password);
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
       setError(error.response?.data?.detail || 'Invalid credentials');
@@ -52,229 +71,499 @@ const Login = () => {
     }
   };
 
-  const scrollToLogin = () => {
-    loginRef.current?.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'center'
-    });
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Boost roles data - ALL SAME COLOR NOW
+  const boostRoles = {
+    leadership: [
+      {
+        name: 'Captain',
+        icon: Crown,
+        eligible: 'Any',
+        boost: '2× all points',
+        description: 'Your star player'
+      },
+      {
+        name: 'Vice Captain',
+        icon: Swords,
+        eligible: 'Any',
+        boost: '1.5× all points',
+        description: 'Reliable performer'
+      }
+    ],
+    batting: [
+      {
+        name: 'Slogger',
+        icon: Zap,
+        eligible: 'BAT, WK',
+        boost: '2× SR, Fours & Sixes',
+        description: 'Big hitting power'
+      },
+      {
+        name: 'Accumulator',
+        icon: Anchor,
+        eligible: 'BAT, WK',
+        boost: '2× Runs & Milestones',
+        description: 'Consistent scorer'
+      }
+    ],
+    specialist: [
+      {
+        name: 'Safe Hands',
+        icon: Handshake,
+        eligible: 'WK',
+        boost: '2× Fielding',
+        description: 'Keeper excellence'
+      },
+      {
+        name: 'Virtuoso',
+        icon: Sparkles,
+        eligible: 'ALL',
+        boost: '1.5× Runs, Wickets, Fielding',
+        description: 'All-round impact'
+      }
+    ],
+    bowling: [
+      {
+        name: 'Rattler',
+        icon: Bomb,
+        eligible: 'BOWL',
+        boost: '2× Wickets',
+        description: 'Strike bowler'
+      },
+      {
+        name: 'Guardian',
+        icon: Shield,
+        eligible: 'BOWL',
+        boost: '2× Economy',
+        description: 'Tight bowling'
+      }
+    ]
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-10 md:pt-16">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/5 w-72 h-72 rounded-full bg-gradient-to-br from-primary-400/20 to-primary-600/20 floating-orb"></div>
-        <div className="absolute bottom-1/4 right-1/5 w-56 h-56 rounded-full bg-gradient-to-tr from-blue-400/15 to-primary-500/15 floating-orb" style={{animationDelay: '5s'}}></div>
-        <div className="absolute top-1/2 right-1/4 w-40 h-40 rounded-full bg-gradient-to-bl from-primary-300/10 to-primary-700/10 floating-orb" style={{animationDelay: '10s'}}></div>
-        
-        <div 
-          className="absolute inset-0 opacity-5" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(31,190,221,0.3) 1px, transparent 0)`,
-            backgroundSize: '50px 50px'
-          }}
-        ></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 relative overflow-hidden">
+      {/* Animated Background Orbs - More subtle */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-primary-100/40 to-slate-100/40 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-tr from-slate-100/40 to-primary-100/40 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-gradient-to-bl from-primary-50/30 to-slate-50/30 rounded-full blur-3xl animate-float-slow" />
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 md:p-6">
-        <div className="w-full max-w-7xl">
-          
-          {/* Header Section - Mobile Optimized */}
-          <div className="text-center mb-8 md:mb-16">
-            <div className="inline-flex items-center mb-6 md:mb-8">
-              <div className="liquid-glass-card glass-rounded-lg p-3 md:p-4 mr-4 md:mr-6 brand-glow">
-                <img src="/icon.png" alt="Pitch Perfect Logo" className="w-10 h-10 md:w-14 md:h-14" />
+      {/* Sticky Header with Dropdown Login */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
+                <img src="/icon.png" alt="Pitch Perfect" className="w-10 h-10 sm:w-12 sm:h-12" />
               </div>
               <div>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold font-caption">
-                  <span className="text-primary-400">Pitch </span>
-                  <span className="text-white">Perfect</span>
+                <h1 className="text-xl sm:text-2xl font-bold font-caption bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+                  Pitch Perfect
                 </h1>
-                <p className="text-slate-300 text-base md:text-xl mt-2 md:mt-3">Fantasy Cricket Evolved</p>
               </div>
             </div>
-            
-            {/* Enhanced Mobile CTA Button */}
-            <div className="lg:hidden mt-8 md:mt-12">
+
+            {/* Auth Buttons */}
+            <div className="flex items-center space-x-3 relative" ref={loginDropdownRef}>
               <button
-                onClick={scrollToLogin}
-                className="liquid-glass-button glass-rounded-lg px-6 py-4 w-full max-w-sm mx-auto block group relative overflow-hidden"
+                onClick={() => setShowLoginDropdown(!showLoginDropdown)}
+                className="px-5 py-2.5 text-sm font-semibold text-slate-700 hover:text-primary-600 rounded-xl hover:bg-slate-50 transition-all duration-200"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-primary-600/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-center justify-center">
-                  <span className="text-lg font-semibold text-white mr-3">Ready to step out into the field?</span>
-                  <ChevronDown className="w-6 h-6 text-primary-400 animate-bounce" />
-                </div>
-                <div className="text-xs text-primary-300 mt-1">Tap to login</div>
+                Login
               </button>
+              <Link
+                to="/register"
+                className="px-5 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 hover:scale-105 transition-all duration-200"
+              >
+                Sign Up
+              </Link>
+
+              {/* Login Dropdown */}
+              {showLoginDropdown && (
+                <div className="absolute top-full right-0 mt-3 w-80 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 p-8 animate-fade-in-up">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-primary-600">Welcome Back</h3>
+                    <button
+                      onClick={() => setShowLoginDropdown(false)}
+                      className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all duration-200"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {error && (
+                    <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start">
+                      <AlertCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-red-700">{error}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
+                        placeholder="you@example.com"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full px-5 py-3.5 pr-12 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
+                          placeholder="••••••••"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all duration-200"
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
+                    >
+                      {isSubmitting ? 'Signing in...' : 'Sign In'}
+                    </button>
+                  </form>
+
+                  <p className="text-center text-sm text-slate-600 mt-6">
+                    New to Pitch Perfect?{' '}
+                    <Link to="/register" className="text-primary-600 hover:text-primary-700 font-semibold">
+                      Create account
+                    </Link>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
+        </div>
+      </header>
 
-          {/* Main Layout */}
-          <div className="grid lg:grid-cols-5 gap-8 lg:gap-12 items-start">
-            
-            {/* Left Side - Feature Showcase */}
-            <div className="lg:col-span-3 space-y-6 md:space-y-8">
-              
-              {/* Hero Message */}
-              <div className="liquid-glass-main glass-rounded relative overflow-hidden">
-                <div className="glass-shine absolute inset-0 glass-rounded"></div>
-                <div className="relative z-10 p-6 md:p-8">
-                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4 md:mb-6">
-                    The Future of Fantasy Cricket
-                  </h2>
-                  <p className="text-slate-200 text-base md:text-lg leading-relaxed mb-6 md:mb-8">
-                    Experience cricket fantasy like never before with our innovative draft-based platform. 
-                    Build your squad, deploy strategic roles, and compete throughout entire seasons.
-                  </p>
-                  
-                  {/* Status Badges */}
-                  <div className="flex flex-wrap gap-3 md:gap-4 mb-4 md:mb-6">
-                    <div className="liquid-glass-badge rounded-full px-4 md:px-5 py-2 md:py-3 flex items-center">
-                      <div className="w-2.5 h-2.5 bg-green-400 rounded-full mr-2 md:mr-3 animate-pulse"></div>
-                      <span className="text-xs md:text-sm font-medium text-white">IPL Available Now</span>
-                    </div>
-                    <div className="liquid-glass-badge rounded-full px-4 md:px-5 py-2 md:py-3 flex items-center">
-                      <Globe className="w-3 md:w-4 h-3 md:h-4 text-primary-400 mr-2 md:mr-3" />
-                      <span className="text-xs md:text-sm font-medium text-white">International Cricket Coming Soon</span>
-                    </div>
-                  </div>
-                  
-                  {/* International Formats */}
-                  <div className="pl-3 md:pl-4 border-l-2 border-primary-400/30">
-                    <p className="text-slate-300 text-xs md:text-sm mb-2 md:mb-3">Upcoming formats:</p>
-                    <div className="flex flex-wrap gap-2 md:gap-3">
-                      {['Tests', 'ODIs', 'T20Is'].map((format) => (
-                        <div key={format} className="liquid-glass-input glass-rounded-sm px-3 md:px-4 py-1.5 md:py-2">
-                          <span className="text-xs md:text-sm text-primary-300 font-medium">{format}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+      {/* Hero Section */}
+      <section className="relative z-10 pt-0 pb-32 px-0 lg:px-4">
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+          <video
+            src="https://pub-83784c6e5d2c48c98bbfb52f217af0ad.r2.dev/hero.webm"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover object-center"
+            style={{ minHeight: '480px', maxHeight: '700px', background: 'transparent' }}
+          />
+          <div className="absolute inset-0 bg-primary-600/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-white/10" />
+        </div>
+        <div className="relative z-10 max-w-6xl mx-auto text-center pt-32 pb-24 px-4 flex flex-col items-center justify-center">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold font-caption mb-6 leading-tight px-8 py-6">
+            <span className="bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-lg">
+              Fantasy Cricket, Evolved
+            </span>
+          </h1>
+          <p className="text-xl sm:text-2xl text-white mb-10 max-w-2xl mx-auto font-medium px-6 py-4">
+            Season-long play. Real drafts. Real strategy.
+          </p>
+          <button
+            onClick={() => scrollToSection('how-it-works')}
+            className="px-8 py-4 bg-white/20 backdrop-blur-xl border border-white/30 text-white font-semibold rounded-xl hover:bg-white/30 hover:scale-105 transition-all duration-300 shadow-2xl flex items-center gap-2"
+          >
+            Discover How It Works
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="relative z-10 py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-bold font-caption mb-4 text-primary-600">
+              How It Works
+            </h2>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="w-14 h-14 bg-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-xl mb-6 shadow-md">
+                1
               </div>
+              <h3 className="text-2xl font-bold font-caption text-primary-600 mb-3">
+                Draft Your Squad
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed mb-6">
+                Build a 15-player team through a live snake draft. Rank your players, make your picks, and own your season.
+              </p>
+              <video
+                src="https://pub-83784c6e5d2c48c98bbfb52f217af0ad.r2.dev/snake_draft_animation.webm"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full max-w-md mx-auto border border-slate-200 rounded-lg mt-2"
+                style={{ background: 'rgba(248,250,252,0.9)', backdropFilter: 'blur(8px)', objectFit: 'cover', objectPosition: 'center', clipPath: 'inset(0 5px 0 5px)' }}
+              />
+            </div>
 
-              {/* Feature Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-                {[
-                  { icon: Users, title: "Draft & Trade", desc: "Build your squad through strategic drafts and active trading throughout the season" },
-                  { icon: BarChart3, title: "Core Squad Roles", desc: "Boost player performance with specialized role multipliers and strategic assignments" },
-                  { icon: Star, title: "Season-Long Play", desc: "Compete throughout entire cricket seasons, not just individual matches" },
-                  { icon: Zap, title: "Live Scoring", desc: "Real-time fantasy points during every ball of every match" }
-                ].map((feature, index) => (
-                  <div key={index} className="liquid-glass-card glass-rounded-lg p-4 md:p-6 group hover:scale-105 transition-all duration-300 cursor-pointer">
-                    <div className="flex items-start space-x-3 md:space-x-4">
-                      <div className="liquid-glass-input glass-rounded-md p-2 md:p-3 group-hover:bg-primary-500/20 transition-colors">
-                        <feature.icon className="w-5 h-5 md:w-6 md:h-6 text-primary-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-white mb-1 md:mb-2 text-base md:text-lg">{feature.title}</h3>
-                        <p className="text-xs md:text-sm text-slate-300 leading-relaxed">{feature.desc}</p>
-                      </div>
+            {/* Step 2 */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="w-14 h-14 bg-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-xl mb-6 shadow-md">
+                2
+              </div>
+              <h3 className="text-2xl font-bold font-caption text-primary-600 mb-3">
+                Set Your Boosts
+              </h3>
+              <p className="text-slate-600 text-base mb-6 leading-relaxed">
+                Each week, assign eight roles that shape your scoring strategy. Smart multipliers reward different styles and player types.
+              </p>
+              {/* Boost Role Cards - Monochrome */}
+              <div className="grid grid-cols-2 gap-3 w-full">
+                {[...boostRoles.leadership, ...boostRoles.batting, ...boostRoles.specialist, ...boostRoles.bowling].map((role, idx) => (
+                  <div key={idx} className="group bg-white/95 backdrop-blur-sm rounded-xl p-4 flex flex-col items-center text-center border border-slate-200 hover:border-primary-300 hover:shadow-md transition-all duration-200">
+                    <div className="mb-3">
+                      <role.icon className="w-8 h-8 text-slate-600 group-hover:text-primary-600 transition-colors" strokeWidth={1.5} />
                     </div>
+                    <div className="font-bold text-primary-600 text-sm mb-1">{role.name}</div>
+                    <div className="text-xs text-slate-600 font-medium">{role.boost}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right Side - Login Form */}
-            <div className="lg:col-span-2 flex justify-center lg:justify-end" ref={loginRef}>
-              <div className="w-full max-w-md">
-                <div className="liquid-glass-main glass-rounded relative overflow-hidden">
-                  <div className="glass-shine absolute inset-0 glass-rounded"></div>
-                  
-                  <div className="relative z-10 p-6 md:p-8">
-                    {/* Form Header */}
-                    <div className="text-center mb-6 md:mb-8">
-                      <h3 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-3">Welcome Back</h3>
-                      <p className="text-slate-300 text-sm md:text-base">
-                        New to Pitch Perfect?{' '}
-                        <Link to="/register" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
-                          Create account
-                        </Link>
-                      </p>
-                    </div>
-
-                    {/* Error Display */}
-                    {error && (
-                      <div className="liquid-glass-card glass-rounded-md p-3 md:p-4 mb-4 md:mb-6 border border-red-400/20">
-                        <div className="flex items-start text-red-300">
-                          <AlertCircle className="w-4 h-4 md:w-5 md:h-5 mr-2 md:mr-3 mt-0.5 flex-shrink-0" />
-                          <span className="text-xs md:text-sm font-medium">{error}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-                      {/* Email Input */}
-                      <div>
-                        <label className="block text-sm font-medium text-slate-200 mb-2 md:mb-3">
-                          Email Address
-                        </label>
-                        <div className="liquid-glass-input glass-rounded-md">
-                          <input
-                            type="email"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className="w-full px-3 md:px-4 py-3 md:py-4 bg-transparent border-0 text-white placeholder-slate-400 focus:outline-none rounded-lg text-sm md:text-base"
-                            placeholder="you@example.com"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      {/* Password Input */}
-                      <div>
-                        <label className="block text-sm font-medium text-slate-200 mb-2 md:mb-3">
-                          Password
-                        </label>
-                        <div className="liquid-glass-input glass-rounded-md relative">
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-3 md:px-4 py-3 md:py-4 pr-10 md:pr-12 bg-transparent border-0 text-white placeholder-slate-400 focus:outline-none rounded-lg text-sm md:text-base"
-                            placeholder="••••••••"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="w-4 h-4 md:w-5 md:h-5" /> : <Eye className="w-4 h-4 md:w-5 md:h-5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Sign In Button */}
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="liquid-glass-button glass-rounded-md w-full py-3 md:py-4 px-4 md:px-6 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed group"
-                      >
-                        <div className="flex items-center justify-center">
-                          {isSubmitting ? 'Signing in...' : 'Sign In'}
-                          {!isSubmitting && <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-2 group-hover:translate-x-1 transition-transform" />}
-                        </div>
-                      </button>
-                    </form>
-
-                    {/* Bottom Text */}
-                    <div className="mt-6 md:mt-8 text-center">
-                      <p className="text-xs md:text-sm text-slate-400">
-                        Join thousands of cricket fans worldwide
-                      </p>
-                    </div>
+            {/* Step 3 */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="w-14 h-14 bg-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-xl mb-6 shadow-md">
+                3
+              </div>
+              <h3 className="text-2xl font-bold font-caption text-primary-600 mb-3">
+                Track It Live
+              </h3>
+              <p className="text-slate-600 text-base mb-6 leading-relaxed">
+                Points update ball-by-ball. Every boundary, wicket, and catch moves the standings in real time.
+              </p>
+              {/* Scoring details */}
+              <div className="mt-2 animate-fade-in-up text-left w-full space-y-3">
+                <div className="bg-slate-50 backdrop-blur-sm rounded-xl p-4 border border-slate-200">
+                  <div className="font-bold text-primary-600 mb-2 flex items-center gap-2">
+                    Batting
                   </div>
+                  <ul className="text-sm text-slate-600 space-y-1">
+                    <li>Run: <span className="font-mono font-bold text-primary-600">+1</span></li>
+                    <li>Four: <span className="font-mono font-bold text-primary-600">+1</span></li>
+                    <li>Six: <span className="font-mono font-bold text-primary-600">+2</span></li>
+                    <li>50+: <span className="font-mono font-bold text-primary-600">+8</span></li>
+                    <li>100+: <span className="font-mono font-bold text-primary-600">+16</span></li>
+                    <li>SR Bonus: <span className="font-mono font-bold text-primary-600">-6 → +6</span></li>
+                  </ul>
+                </div>
+                <div className="bg-slate-50 backdrop-blur-sm rounded-xl p-4 border border-slate-200">
+                  <div className="font-bold text-primary-600 mb-2 flex items-center gap-2">
+                    Bowling
+                  </div>
+                  <ul className="text-sm text-slate-600 space-y-1">
+                    <li>Wicket: <span className="font-mono font-bold text-primary-600">+25</span></li>
+                    <li>Maiden: <span className="font-mono font-bold text-primary-600">+8</span></li>
+                    <li>3+ Wickets: <span className="font-mono font-bold text-primary-600">+8</span></li>
+                    <li>5+ Wickets: <span className="font-mono font-bold text-primary-600">+16</span></li>
+                    <li>Eco Bonus: <span className="font-mono font-bold text-primary-600">-6 → +6</span></li>
+                  </ul>
+                </div>
+                <div className="bg-slate-50 backdrop-blur-sm rounded-xl p-4 border border-slate-200">
+                  <div className="font-bold text-primary-600 mb-2 flex items-center gap-2">
+                    Fielding & Other
+                  </div>
+                  <ul className="text-sm text-slate-600 space-y-1">
+                    <li>Catch: <span className="font-mono font-bold text-primary-600">+8</span></li>
+                    <li>Stumping: <span className="font-mono font-bold text-primary-600">+12</span></li>
+                    <li>Run Out: <span className="font-mono font-bold text-primary-600">+8</span></li>
+                    <li>Player of Match: <span className="font-mono font-bold text-primary-600">+50</span></li>
+                    <li>Playing XI: <span className="font-mono font-bold text-primary-600">+4</span></li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Feature Highlights - Why Pitch Perfect */}
+      <section className="relative z-10 py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl sm:text-5xl font-bold font-caption mb-4 text-primary-600">
+              Why Pitch Perfect?
+            </h2>
+            <p className="text-xl text-slate-600">
+              More than just another fantasy cricket app
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="group bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 shadow-lg hover:shadow-xl hover:border-primary-300 transition-all duration-300">
+              <div className="w-14 h-14 mb-4 flex items-center justify-center">
+                <Trophy className="w-10 h-10 text-slate-700 group-hover:text-primary-600 group-hover:scale-110 transition-all duration-300" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-bold text-primary-600 mb-3">Season-Long Play</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Compete throughout the entire seasons, not just individual matches. Build a legacy.
+              </p>
+            </div>
+            <div className="group bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 shadow-lg hover:shadow-xl hover:border-primary-300 transition-all duration-300">
+              <div className="w-14 h-14 mb-4 flex items-center justify-center">
+                <Target className="w-10 h-10 text-slate-700 group-hover:text-primary-600 group-hover:scale-110 transition-all duration-300" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-bold text-primary-600 mb-3">Deep Strategy</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                8 unique boost roles, draft positioning, and squad composition create endless strategic depth.
+              </p>
+            </div>
+            <div className="group bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 shadow-lg hover:shadow-xl hover:border-primary-300 transition-all duration-300">
+              <div className="w-14 h-14 mb-4 flex items-center justify-center">
+                <Zap className="w-10 h-10 text-slate-700 group-hover:text-primary-600 group-hover:scale-110 transition-all duration-300" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-bold text-primary-600 mb-3">Real-Time Action</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Watch your fantasy points update ball-by-ball. Every delivery matters.
+              </p>
+            </div>
+            <div className="group bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-slate-200 shadow-lg hover:shadow-xl hover:border-primary-300 transition-all duration-300">
+              <div className="w-14 h-14 mb-4 flex items-center justify-center">
+                <Users className="w-10 h-10 text-slate-700 group-hover:text-primary-600 group-hover:scale-110 transition-all duration-300" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-bold text-primary-600 mb-3">Private Leagues</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Create leagues with friends. Draft together. Compete all season long.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="relative z-10 py-20 px-4 mb-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl p-12 text-center shadow-2xl">
+            <Award className="w-16 h-16 text-white mx-auto mb-6" />
+            <h2 className="text-4xl sm:text-5xl font-bold font-caption text-white mb-4">
+              Ready to Play?
+            </h2>
+            <p className="text-xl text-primary-50 mb-8 max-w-2xl mx-auto">
+              Get your friends together, set up a league, and show them who's boss
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                to="/register"
+                className="px-8 py-4 bg-white text-primary-600 font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
+              >
+                Create Your Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CSS for animations */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          33% { transform: translateY(-20px) translateX(10px); }
+          66% { transform: translateY(10px) translateX(-10px); }
+        }
+
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          33% { transform: translateY(15px) translateX(-15px); }
+          66% { transform: translateY(-10px) translateX(10px); }
+        }
+
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+          50% { transform: translateY(-15px) translateX(15px) rotate(5deg); }
+        }
+
+        @keyframes fade-in-up {
+          from { 
+            opacity: 0; 
+            transform: translateY(-10px) scale(0.98); 
+          }
+          to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+          }
+        }
+
+        .animate-float {
+          animation: float 20s ease-in-out infinite;
+        }
+
+        .animate-float-delayed {
+          animation: float-delayed 25s ease-in-out infinite;
+        }
+
+        .animate-float-slow {
+          animation: float-slow 30s ease-in-out infinite;
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Glass effect ring styles */
+        input:focus, button:focus-visible {
+          outline: none;
+        }
+
+        /* Smooth button morphing */
+        button, a {
+          transform-origin: center;
+        }
+
+        /* Autofill fix for input fields in login dropdown */
+        input:-webkit-autofill,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:active {
+          box-shadow: 0 0 0 1000px #f8fafc inset !important; /* slate-50 */
+          -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important;
+          background-color: #f8fafc !important;
+          color: #334155 !important; /* slate-700 */
+          transition: background-color 9999s ease-in-out 0s;
+        }
+        input:-webkit-autofill::first-line {
+          color: #334155 !important;
+        }
+        /* For Firefox */
+        input:-moz-autofill {
+          box-shadow: 0 0 0 1000px #f8fafc inset !important;
+          background-color: #f8fafc !important;
+          color: #334155 !important;
+        }
+      `}</style>
     </div>
   );
 };

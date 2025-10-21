@@ -1338,7 +1338,7 @@ def fantasy_boost_roles(request):
         "Safe Hands", 
         "Virtuoso", 
         "Rattler", 
-        "Constrictor"
+        "Guardian"
     ]
     
     # Get all roles from database

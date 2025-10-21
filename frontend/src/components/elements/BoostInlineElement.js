@@ -7,7 +7,7 @@ import {
   Sparkles,
   Swords,
   Bomb,
-  EarthLock
+  Shield
 } from 'lucide-react';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 
@@ -68,8 +68,8 @@ const BoostInlineElement = ({ boostName, color, showLabel = false, size = 'M', c
         return <Handshake size={size} />;
       case 'Rattler':
         return <Bomb size={size} />;
-      case 'Constrictor':
-        return <EarthLock size={size} />;
+      case 'Guardian':
+        return <Shield size={size} />;
       case 'Virtuoso':
         return <Sparkles size={size} />;
       default:

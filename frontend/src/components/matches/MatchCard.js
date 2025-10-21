@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Clock, Calendar, Hourglass } from 'lucide-react';
+import { Clock, Calendar, Hourglass } from 'lucide-react';
 import api from '../../utils/axios';
 import { getTextColorForBackground } from '../../utils/colorUtils';
 import BoostInlineElement from '../elements/BoostInlineElement';
@@ -45,8 +45,8 @@ const MatchCard = ({ match, leagueId }) => {
     }
   }
 
-  const firstColorHex = battingFirstTeam.primary_color ? `#${battingFirstTeam.primary_color}` : '#6B7280';
-  const secondColorHex = battingSecondTeam.primary_color ? `#${battingSecondTeam.primary_color}` : '#6B7280';
+  const firstColorHex = battingFirstTeam?.primary_color ? `#${battingFirstTeam.primary_color}` : '#6B7280';
+  const secondColorHex = battingSecondTeam?.primary_color ? `#${battingSecondTeam.primary_color}` : '#6B7280';
 
   useEffect(() => {
     // Reset state when match or leagueId changes before fetching
@@ -113,24 +113,19 @@ const MatchCard = ({ match, leagueId }) => {
     }
   };
 
-  const handleMatchClick = () => {
-    if (!['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status)) {
-      return;
-    }
-    
-    if (leagueId) {
-      navigate(`/leagues/${leagueId}/matches/${match.id}`);
-    } else {
-      navigate(`/matches/${match.id}`);
-    }
-  };
-
-  // Add preview navigation for SCHEDULED matches
-  const handlePreviewClick = () => {
-    if (leagueId) {
-      navigate(`/leagues/${leagueId}/matches/${match.id}/preview`);
-    } else {
-      navigate(`/matches/${match.id}/preview`);
+  const handleCTAClick = () => {
+    if (match.status === 'SCHEDULED' && battingFirstTeam && battingSecondTeam) {
+      if (leagueId) {
+        navigate(`/leagues/${leagueId}/matches/${match.id}/preview`);
+      } else {
+        navigate(`/matches/${match.id}/preview`);
+      }
+    } else if (['COMPLETED', 'NO_RESULT', 'ABANDONED', 'LIVE'].includes(match.status)) {
+      if (leagueId) {
+        navigate(`/leagues/${leagueId}/matches/${match.id}`);
+      } else {
+        navigate(`/matches/${match.id}`);
+      }
     }
   };
 
@@ -181,12 +176,17 @@ const MatchCard = ({ match, leagueId }) => {
 
   const formattedDateTime = formatMatchDateTime();
   const formattedCountdown = formatCountdown();
-  const isClickable = ['COMPLETED', 'NO_RESULT', 'LIVE'].includes(match.status);
 
   // Determine winner ID for conditional styling
   const winnerId = (match.status === 'COMPLETED' && match.winner) 
     ? match.winner.id 
     : null;
+
+  const getCTAText = () => {
+    if (match.status === 'SCHEDULED') return 'Match Preview';
+    if (match.status === 'LIVE') return 'Live Updates';
+    return 'Match Details';
+  };
 
   return (
     <div className="lg-glass lg-rounded-lg overflow-hidden transition-all duration-300 hover:transform-gpu hover:-translate-y-1 lg-shine">
@@ -220,7 +220,7 @@ const MatchCard = ({ match, leagueId }) => {
 
       {/* Main content area */}
       <div className="p-3 px-4">
-        {/* Teams and scores combined on one line */}
+        {/* CHANGE 1: Teams and scores combined on one line */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             {battingFirstTeam ? (
@@ -244,6 +244,15 @@ const MatchCard = ({ match, leagueId }) => {
             )}
           </div>
           <div className="flex items-center space-x-2">
+            {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
+              <span className={`text-md ${
+                winnerId === battingSecondTeam?.id
+                  ? 'text-green-600 dark:text-green-500 font-semibold'
+                  : 'text-neutral-900 dark:text-white'
+              }`}>
+                {formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}
+              </span>
+            )}
             {battingSecondTeam ? (
               <span
                 className="px-2 py-0.5 text-xs font-caption font-semibold rounded-md"
@@ -254,22 +263,12 @@ const MatchCard = ({ match, leagueId }) => {
             ) : (
               <span className="text-neutral-900 dark:text-white text-xs">TBD</span>
             )}
-            {(match.status === 'COMPLETED' || match.status === 'LIVE' || match.status === 'NO_RESULT') && (
-              <span className={`text-md ${
-                winnerId === battingSecondTeam?.id
-                  ? 'text-green-600 dark:text-green-500 font-semibold'
-                  : 'text-neutral-900 dark:text-white'
-              }`}>
-                {formatScore(match.inns_2_runs, match.inns_2_wickets, match.inns_2_overs)}
-              </span>
-            )}
           </div>
         </div>
         
-        {/* Match Result */}
+        {/* CHANGE 4: Match Result - Removed Trophy icon */}
         {((match.status === 'COMPLETED' && match.winner) || match.status === 'ABANDONED' || match.status === 'NO_RESULT') && (
           <div className="flex items-center mb-3">
-            <Trophy className="h-4 w-4 text-yellow-500 mr-1.5" />
             <span className="text-neutral-700 dark:text-neutral-300 text-sm">
               {match.win_type === 'RUNS' && (
                 <>{match.winner.name} won by {match.win_margin} {match.win_margin === 1 ? 'run' : 'runs'}</>
@@ -285,6 +284,9 @@ const MatchCard = ({ match, leagueId }) => {
               )}
               {match.win_type === 'NO_RESULT' && (
                 <>No Result</>
+              )}
+              {match.status === 'ABANDONED' && (
+                <>Match Abandoned</>
               )}
             </span>
           </div>
@@ -303,86 +305,54 @@ const MatchCard = ({ match, leagueId }) => {
         {/* Horizontal line separating match details from fantasy stats */}
         <div className="border-t border-neutral-200/50 dark:border-neutral-800/50 my-2" />
 
-        {/* View Match Details or Preview button */}
-        {isClickable ? (
-          <button
-            onClick={handleMatchClick}
-            className="my-2 w-full py-2 px-4 lg-button text-white text-xs font-medium lg-rounded-md transition-all duration-200 flex items-center justify-center"
-          >
-            <span className='font-caption font-bold'>{match.status === 'LIVE' ? 'Match Details' : 'Match Details'}</span>
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        ) : match.status === 'SCHEDULED' && battingFirstTeam && battingSecondTeam && (
-          <button
-            onClick={handlePreviewClick}
-            className="mt-3 w-full py-2 px-4 lg-button lg-gradient-x text-white text-xs font-medium lg-rounded-md transition-all duration-200 flex items-center justify-center"
-          >
-            <span className='font-caption font-bold'>Match Preview</span>
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
-
-        {/* Fantasy Stats Section - Top Squads */}
+        {/* CHANGE 3: Top Squads - BOTH on ONE line */}
         {!loading && topSquads.length > 0 && (
           <div className="mb-3">
             <div className="text-neutral-500 dark:text-neutral-400 text-xs uppercase font-medium mb-2">
               {match.status === 'LIVE' ? 'LEADING' : 'TOP'} SQUADS
             </div>
             
-            {/* Squad 1 */}
-            {topSquads.length > 0 && (
-              <div
-                className="flex items-center justify-between mb-2 p-2 py-1 lg-rounded-md transition-all duration-200 hover:shadow-sm"
-                style={{
-                  backgroundColor: hexToRgba(topSquads[0]?.color || '#6B7280', 0.1),
-                  border: `1px solid ${topSquads[0]?.color || '#6B7280'}`,
-                  boxShadow: `inset 0 1px 0 rgba(255, 255, 255, 0.2)`
-                }}
-              >
+            <div className="flex items-center justify-between">
+              {/* Squad 1 */}
+              {topSquads[0] && (
                 <div className="flex items-center">
                   <CapIcon
                     size={24}
                     strokeWidth={30}
-                    color={topSquads[0]?.color || '#6B7280'} 
+                    color={topSquads[0].color || '#6B7280'} 
                     className="mr-1.5" 
                   />
                   <span className="text-neutral-900 dark:text-white text-md font-bold truncate max-w-[150px] font-caption">
-                    {topSquads[0]?.name}
+                    {topSquads[0].name}
+                  </span>
+                  <span className="text-green-600 dark:text-green-500 text-md font-bold whitespace-nowrap ml-2">
+                    <span className="font-number">{topSquads[0].match_points}</span> pts
                   </span>
                 </div>
-                <span className="text-green-600 dark:text-green-500 text-md font-bold whitespace-nowrap ml-2">
-                  <span className="font-number">{topSquads[0]?.match_points}</span> pts
-                </span>
-              </div>
-            )}
-            
-            {/* Squad 2 */}
-            {topSquads.length > 1 && (
-              <div className="flex items-center justify-between">
+              )}
+              
+              {/* Squad 2 */}
+              {topSquads[1] && (
                 <div className="flex items-center">
                   <div 
                     className="h-4 w-1 mr-1.5 rounded-sm"
-                    style={{ backgroundColor: topSquads[1]?.color || '#6B7280' }}
+                    style={{ backgroundColor: topSquads[1].color || '#6B7280' }}
                   />
                   <span className="text-neutral-900 dark:text-white text-sm truncate max-w-[150px]">
-                    {topSquads[1]?.name}
+                    {topSquads[1].name}
+                  </span>
+                  <span className="text-neutral-900 dark:text-white text-sm whitespace-nowrap ml-2">
+                    <span className="font-number">{topSquads[1].match_points}</span> pts
                   </span>
                 </div>
-                <span className="text-neutral-900 dark:text-white text-sm whitespace-nowrap ml-2">
-                  <span className="font-number">{topSquads[1]?.match_points}</span> pts
-                </span>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
         
         {/* Fantasy Stats Section - Top Performers */}
         {!loading && topPlayers.length > 0 && (
-          <div>
+          <div className="mb-3">
             <div className="text-neutral-500 dark:text-neutral-400 text-xs uppercase font-medium mb-2">
               {match.status === 'LIVE' ? 'LEADING' : 'TOP'} PERFORMERS
             </div>
@@ -413,7 +383,7 @@ const MatchCard = ({ match, leagueId }) => {
                     )}
                 </div>
                 <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
-                  <span class="font-number">{topPlayers[0]?.fantasy_points}</span> pts
+                  <span className="font-number">{topPlayers[0]?.fantasy_points}</span> pts
                 </span>
               </div>
             )}
@@ -444,12 +414,23 @@ const MatchCard = ({ match, leagueId }) => {
                     )}
                 </div>
                 <span className="text-neutral-900 dark:text-white text-xs whitespace-nowrap ml-2">
-                  <span class="font-number">{topPlayers[1]?.fantasy_points}</span> pts
+                  <span className="font-number">{topPlayers[1]?.fantasy_points}</span> pts
                 </span>
               </div>
             )}
           </div>
         )}
+
+        {/* CHANGE 2: CTA Button added */}
+        <button
+          onClick={handleCTAClick}
+          className="w-full py-2 px-4 lg-button text-white text-xs font-medium lg-rounded-md transition-all duration-200 flex items-center justify-center"
+        >
+          <span className='font-caption font-bold'>{getCTAText()}</span>
+          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </div>
   );

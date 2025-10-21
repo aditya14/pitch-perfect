@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Medal, Award } from 'lucide-react';
 import api from '../../../utils/axios';
+import CapIcon from '../../elements/icons/CapIcon';
 
 const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   const [squadData, setSquadData] = useState([]);
@@ -51,18 +52,22 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   // Get rank background color
   const getRankStyle = (rank) => {
     switch (rank) {
-      case 1:
-        return "bg-yellow-50 dark:bg-yellow-900";
       default:
         return "bg-white dark:bg-neutral-800";
     }
   };
 
   // Get rank icon
-  const getRankIcon = (rank) => {
+  const getRankIcon = (rank, color) => {
     switch (rank) {
       case 1:
-        return <Trophy className="w-5 h-5 text-yellow-500" />;
+        return (
+          <CapIcon
+            size={24}
+            strokeWidth={30}
+            color={color || '#6B7280'} 
+          />
+        );
       default:
         return null;
     }
@@ -113,7 +118,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   const useGridLayout = squadData.length >= 4;
   
   return (
-    <div className="lg-card overflow-hidden h-full">
+    <div className=" overflow-hidden h-full">
       <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
           Squad Points
@@ -130,10 +135,10 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className={`flex items-center justify-center w-8 h-8 ${getRankStyle(squad.rank)} rounded-full text-sm font-bold`}>
-                  {getRankIcon(squad.rank) || squad.rank}
+                  {getRankIcon(squad.rank, squad.color) || squad.rank}
                 </div>
                 <div 
-                  className="h-10 w-2 mr-2 rounded-md"
+                  className="h-10 w-1 mr-2 rounded-sm"
                   style={{ backgroundColor: squad.color }}
                 />
                 <div className="flex flex-col">

@@ -1,154 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../utils/axios';
-import { AlertCircle, Eye, EyeOff, Check, X, Users, BarChart3, Zap, ChevronRight, Star, Globe, Shield } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, ArrowLeft, CheckCircle2, Mail, Lock, Sparkles } from 'lucide-react';
 
 const Register = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: ''
   });
-  
+  const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Validation states
-  const [validations, setValidations] = useState({
-    email: null,
-    password: null,
-    passwordMatch: null
-  });
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
-  // Force dark mode for register screen
+  // Force light mode for register screen
   useEffect(() => {
-    // Save current theme state
     const currentTheme = document.documentElement.classList.contains('dark');
-    const currentBodyBg = document.documentElement.style.backgroundColor;
     
-    // Force dark mode
-    document.documentElement.classList.add('dark');
-    document.documentElement.style.backgroundColor = '#0a0a0a';
-    document.documentElement.dataset.theme = 'dark';
+    // Force light mode
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.backgroundColor = '#ffffff';
+    document.documentElement.dataset.theme = 'light';
     
-    // Cleanup function to restore theme when component unmounts
     return () => {
-      // Only restore if we're not staying on auth screens
       const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
-      if (!isAuthPage) {
-        // Let the app handle theme restoration based on user preferences
-        if (!currentTheme) {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.style.backgroundColor = currentBodyBg || '#ffffff';
-        }
+      if (!isAuthPage && currentTheme) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.backgroundColor = '#0a0a0a';
       }
     };
   }, []);
-  
-  // Validation functions
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-  
-  const validatePassword = (password) => {
-    return password.length >= 8;
-  };
-  
-  const validatePasswordMatch = (password, confirmPassword) => {
-    return password === confirmPassword;
-  };
-  
-  // Handle input changes
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Validate as user types
-    if (name === 'email') {
-      setValidations(prev => ({
-        ...prev,
-        email: value ? validateEmail(value) : null
-      }));
-    } else if (name === 'password') {
-      setValidations(prev => ({
-        ...prev,
-        password: value ? validatePassword(value) : null,
-        passwordMatch: formData.confirmPassword 
-          ? validatePasswordMatch(value, formData.confirmPassword)
-          : null
-      }));
-    } else if (name === 'confirmPassword') {
-      setValidations(prev => ({
-        ...prev,
-        passwordMatch: formData.password 
-          ? validatePasswordMatch(formData.password, value)
-          : null
-      }));
-    }
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
-  
-  // Handle form submission
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    
-    // Validate all fields
-    const emailValid = validateEmail(formData.email);
-    const passwordValid = validatePassword(formData.password);
-    const passwordsMatch = validatePasswordMatch(formData.password, formData.confirmPassword);
-    
-    setValidations({
-      email: emailValid,
-      password: passwordValid,
-      passwordMatch: passwordsMatch
-    });
-    
-    // Check if all validations pass
-    if (!emailValid || !passwordValid || !passwordsMatch) {
-      setError('Please correct the errors in the form');
+
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
-    
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
     setIsSubmitting(true);
-    
+
     try {
-      // Register the user - username is set to the email value
-      await api.post('/register/', {
-        username: formData.email,
-        email: formData.email,
-        password: formData.password
-      });
-      
-      // Auto-login after successful registration
-      await login(formData.email, formData.password);
-      
-      // Redirect to dashboard
+      // Use email as username
+      await register(formData.email, formData.email, formData.password);
       navigate('/dashboard');
     } catch (error) {
-      console.error('Registration error:', error);
-      
-      // Handle different types of errors
-      if (error.response?.data?.email) {
-        setError(`Email error: ${error.response.data.email[0]}`);
-      } else if (error.response?.data?.username) {
-        setError(`Username error: ${error.response.data.username[0]}`);
-      } else if (error.response?.data?.password) {
-        setError(`Password error: ${error.response.data.password[0]}`);
-      } else if (error.response?.data?.non_field_errors) {
-        setError(error.response.data.non_field_errors[0]);
-      } else if (error.response?.data?.detail) {
-        setError(error.response.data.detail);
+      console.error('Registration error:', error.response?.data || error.message);
+      if (error.response?.data) {
+        // Handle multiple error messages
+        const errorData = error.response.data;
+        if (typeof errorData === 'object') {
+          const errorMessages = Object.entries(errorData)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+            .join('; ');
+          setError(errorMessages);
+        } else {
+          setError(errorData.detail || 'Registration failed. Please try again.');
+        }
       } else {
         setError('Registration failed. Please try again.');
       }
@@ -156,285 +82,316 @@ const Register = () => {
       setIsSubmitting(false);
     }
   };
-  
-  // Inline validation indicators
-  const ValidationIndicator = ({ isValid, errorMessage }) => {
-    if (isValid === null) return null;
-    
-    return isValid ? (
-      <div className="flex items-center text-green-400 mt-2">
-        <Check className="h-4 w-4 mr-1" />
-        <span className="text-xs">Looks good</span>
-      </div>
-    ) : (
-      <div className="flex items-center text-red-300 mt-2">
-        <X className="h-4 w-4 mr-1" />
-        <span className="text-xs">{errorMessage}</span>
-      </div>
-    );
-  };
-  
+
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0">
-        {/* Floating Glass Orbs */}
-        <div className="absolute top-1/4 left-1/5 w-72 h-72 rounded-full bg-gradient-to-br from-primary-400/20 to-primary-600/20 floating-orb"></div>
-        <div className="absolute bottom-1/4 right-1/5 w-56 h-56 rounded-full bg-gradient-to-tr from-blue-400/15 to-primary-500/15 floating-orb" style={{animationDelay: '5s'}}></div>
-        <div className="absolute top-1/2 right-1/4 w-40 h-40 rounded-full bg-gradient-to-bl from-primary-300/10 to-primary-700/10 floating-orb" style={{animationDelay: '10s'}}></div>
-        
-        {/* Subtle grid pattern */}
-        <div 
-          className="absolute inset-0 opacity-5" 
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(31,190,221,0.3) 1px, transparent 0)`,
-            backgroundSize: '50px 50px'
-          }}
-        ></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 relative overflow-hidden">
+      {/* Animated Background Orbs - More subtle */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-primary-100/40 to-slate-100/40 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-tr from-slate-100/40 to-primary-100/40 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-gradient-to-bl from-primary-50/30 to-slate-50/30 rounded-full blur-3xl animate-float-slow" />
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-7xl">
-          
-          {/* Header Section */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center mb-6">
-              <div className="liquid-glass-card glass-rounded-lg p-4 mr-6 brand-glow">
-                <img src="/icon.png" alt="Pitch Perfect Logo" className="w-12 h-12" />
+      {/* Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
+                <img src="/icon.png" alt="Pitch Perfect" className="w-10 h-10 sm:w-12 sm:h-12" />
               </div>
               <div>
-                <h1 className="text-4xl md:text-6xl font-bold text-white font-caption">
-                  <span className="text-primary-400">Pitch </span>
-                  <span>Perfect</span>
+                <h1 className="text-xl sm:text-2xl font-bold font-caption bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+                  Pitch Perfect
                 </h1>
-                <p className="text-slate-300 text-lg mt-2">Fantasy Cricket Evolved</p>
+                <p className="text-xs text-slate-500 hidden sm:block">Fantasy Cricket Evolved</p>
               </div>
             </div>
+
+            {/* Back to Login */}
+            <Link
+              to="/login"
+              className="flex items-center space-x-2 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:text-primary-600 rounded-xl hover:bg-slate-50 transition-all duration-200"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Back to Login</span>
+            </Link>
           </div>
+        </div>
+      </header>
 
-          {/* Main Layout - Side by Side */}
-          <div className="grid lg:grid-cols-5 gap-12 items-start">
-            
-            {/* Left Side - Feature Showcase (3 columns) */}
-            <div className="lg:col-span-3 space-y-8 order-last lg:order-first">
-              
-              {/* Hero Message */}
-              <div className="liquid-glass-main glass-rounded relative overflow-hidden">
-                <div className="glass-shine absolute inset-0 glass-rounded"></div>
-                <div className="relative z-10 p-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                    Join the Revolution
+      {/* Main Content */}
+      <div className="relative z-10 py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Marketing Content */}
+            <div className="hidden lg:block">
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-5xl font-bold font-caption mb-4 leading-tight text-slate-900">
+                    Join the Future
+                    <br />
+                    <span className="bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+                      of Fantasy Cricket
+                    </span>
                   </h2>
-                  <p className="text-slate-200 text-lg leading-relaxed mb-8">
-                    Create your account and experience fantasy cricket like never before. 
-                    Join thousands of cricket fans who have already transformed their 
-                    fantasy experience with our innovative platform.
+                  <p className="text-xl text-slate-600 leading-relaxed">
+                    Create your account and start building your squad.
                   </p>
-                  
-                  {/* Status Badges */}
-                  <div className="flex flex-wrap gap-4 mb-6">
-                    <div className="liquid-glass-badge rounded-full px-5 py-3 flex items-center">
-                      <div className="w-2.5 h-2.5 bg-green-400 rounded-full mr-3 animate-pulse"></div>
-                      <span className="text-sm font-medium text-white">IPL Available Now</span>
+                </div>
+
+                {/* Features - Monochrome with hover */}
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-4 p-5 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                    <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-6 h-6 text-slate-700" strokeWidth={2} />
                     </div>
-                    <div className="liquid-glass-badge rounded-full px-5 py-3 flex items-center">
-                      <Globe className="w-4 h-4 text-primary-400 mr-3" />
-                      <span className="text-sm font-medium text-white">International Cricket Coming Soon</span>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 mb-1">Snake Draft System</h3>
+                      <p className="text-sm text-slate-600">Fair drafting that gives everyone a chance at top players</p>
                     </div>
                   </div>
-                  
-                  {/* International Formats */}
-                  <div className="pl-4 border-l-2 border-primary-400/30">
-                    <p className="text-slate-300 text-sm mb-3">Upcoming formats:</p>
-                    <div className="flex flex-wrap gap-3">
-                      {['Tests', 'ODIs', 'T20Is'].map((format) => (
-                        <div key={format} className="liquid-glass-input glass-rounded-sm px-4 py-2">
-                          <span className="text-sm text-primary-300 font-medium">{format}</span>
-                        </div>
-                      ))}
+
+                  <div className="flex items-start space-x-4 p-5 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                    <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-6 h-6 text-slate-700" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 mb-1">8 Strategic Boosts</h3>
+                      <p className="text-sm text-slate-600">Multiply your players' points with unique role assignments</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4 p-5 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                    <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-6 h-6 text-slate-700" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 mb-1">Live Ball-by-Ball Scoring</h3>
+                      <p className="text-sm text-slate-600">Watch your fantasy points grow in real-time</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4 p-5 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                    <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-6 h-6 text-slate-700" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 mb-1">Season-Long Competition</h3>
+                      <p className="text-sm text-slate-600">Compete throughout entire seasons, not just one match</p>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Feature Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {[
-                  { icon: Users, title: "Draft System", desc: "Unique squad building through strategic snake drafts with your league" },
-                  { icon: BarChart3, title: "Core Squad Strategy", desc: "Boost key players with specialized roles and point multipliers" },
-                  { icon: Shield, title: "Season-Long", desc: "Compete throughout entire cricket seasons with trades and strategy" },
-                  { icon: Zap, title: "Real-Time", desc: "Live scoring and instant updates during every match" }
-                ].map((feature, index) => (
-                  <div key={index} className="liquid-glass-card glass-rounded-lg p-6 group hover:scale-105 transition-all duration-300 cursor-pointer">
-                    <div className="flex items-start space-x-4">
-                      <div className="liquid-glass-input glass-rounded-md p-3 group-hover:bg-primary-500/20 transition-colors">
-                        <feature.icon className="w-6 h-6 text-primary-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-white mb-2 text-lg">{feature.title}</h3>
-                        <p className="text-sm text-slate-300 leading-relaxed">{feature.desc}</p>
-                      </div>
-                    </div>
+                {/* Stats - Monochrome */}
+                {/* <div className="grid grid-cols-3 gap-4">
+                  <div className="p-5 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md text-center hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                    <div className="text-2xl font-bold font-mono text-primary-600 mb-1">1000+</div>
+                    <div className="text-xs text-slate-600">Managers</div>
                   </div>
-                ))}
+                  <div className="p-5 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md text-center hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                    <div className="text-2xl font-bold font-mono text-primary-600 mb-1">50+</div>
+                    <div className="text-xs text-slate-600">Leagues</div>
+                  </div>
+                  <div className="p-5 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md text-center hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                    <div className="text-2xl font-bold font-mono text-primary-600 mb-1">10K+</div>
+                    <div className="text-xs text-slate-600">Matches</div>
+                  </div>
+                </div> */}
               </div>
             </div>
 
-            {/* Right Side - Register Form (2 columns) */}
-            <div className="lg:col-span-2 flex justify-center lg:justify-end order-first lg:order-last">
-              <div className="w-full max-w-md">
-                <div className="liquid-glass-main glass-rounded relative overflow-hidden">
-                  <div className="glass-shine absolute inset-0 glass-rounded"></div>
-                  
-                  <div className="relative z-10 p-8">
-                    {/* Form Header */}
-                    <div className="text-center mb-8">
-                      <h3 className="text-2xl font-bold text-white mb-3">Create Your Account</h3>
-                      <p className="text-slate-300">
-                        Already have an account?{' '}
-                        <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
-                          Sign in
-                        </Link>
-                      </p>
-                    </div>
-
-                    {/* Error Display */}
-                    {error && (
-                      <div className="liquid-glass-card glass-rounded-md p-4 mb-6 border border-red-400/20">
-                        <div className="flex items-start text-red-300">
-                          <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm font-medium">{error}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      {/* Email Input */}
-                      <div>
-                        <label className="block text-sm font-medium text-slate-200 mb-3">
-                          Email Address <span className="text-red-400">*</span>
-                        </label>
-                        <div className={`liquid-glass-input glass-rounded-md ${
-                          validations.email === false ? 'border-red-400/50' : ''
-                        }`}>
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full px-4 py-4 bg-transparent border-0 text-white placeholder-slate-400 focus:outline-none rounded-lg"
-                            placeholder="you@example.com"
-                            required
-                          />
-                        </div>
-                        <ValidationIndicator 
-                          isValid={validations.email} 
-                          errorMessage="Please enter a valid email address" 
-                        />
-                      </div>
-
-                      {/* Password Input */}
-                      <div>
-                        <label className="block text-sm font-medium text-slate-200 mb-3">
-                          Password <span className="text-red-400">*</span>
-                        </label>
-                        <div className={`liquid-glass-input glass-rounded-md relative ${
-                          validations.password === false ? 'border-red-400/50' : ''
-                        }`}>
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="w-full px-4 py-4 pr-12 bg-transparent border-0 text-white placeholder-slate-400 focus:outline-none rounded-lg"
-                            placeholder="••••••••"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                          </button>
-                        </div>
-                        <ValidationIndicator 
-                          isValid={validations.password} 
-                          errorMessage="Password must be at least 8 characters long" 
-                        />
-                      </div>
-
-                      {/* Confirm Password Input */}
-                      <div>
-                        <label className="block text-sm font-medium text-slate-200 mb-3">
-                          Confirm Password <span className="text-red-400">*</span>
-                        </label>
-                        <div className={`liquid-glass-input glass-rounded-md relative ${
-                          validations.passwordMatch === false ? 'border-red-400/50' : ''
-                        }`}>
-                          <input
-                            type={showConfirmPassword ? "text" : "password"}
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className="w-full px-4 py-4 pr-12 bg-transparent border-0 text-white placeholder-slate-400 focus:outline-none rounded-lg"
-                            placeholder="••••••••"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
-                          >
-                            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                          </button>
-                        </div>
-                        <ValidationIndicator 
-                          isValid={validations.passwordMatch} 
-                          errorMessage="Passwords do not match" 
-                        />
-                      </div>
-
-                      {/* Sign Up Button */}
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="liquid-glass-button glass-rounded-md w-full py-4 px-6 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed group"
-                      >
-                        <div className="flex items-center justify-center">
-                          {isSubmitting ? 'Creating Account...' : 'Create Account'}
-                          {!isSubmitting && <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />}
-                        </div>
-                      </button>
-                    </form>
-
-                    {/* Bottom Text */}
-                    <div className="mt-8 text-center">
-                      <p className="text-sm text-slate-400">
-                        Join thousands of cricket fans worldwide
-                      </p>
-                    </div>
+            {/* Right Side - Registration Form */}
+            <div className="w-full max-w-md mx-auto lg:mx-0">
+              <div className="bg-white/95 backdrop-blur-xl rounded-3xl border border-slate-200 shadow-2xl p-8 sm:p-10">
+                <div className="text-center mb-8">
+                  <div className="inline-block p-4 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-4 shadow-lg">
+                    <Sparkles className="w-8 h-8 text-white" />
                   </div>
+                  <h2 className="text-3xl font-bold font-caption text-slate-900 mb-2">
+                    Create Account
+                  </h2>
+                  <p className="text-slate-600">
+                    Start your fantasy cricket journey today
+                  </p>
                 </div>
 
-                {/* Benefits */}
-                <div className="mt-6 space-y-3">
-                  <div className="flex items-center text-sm text-slate-300">
-                    <Users className="w-4 h-4 mr-3 text-primary-400" />
-                    <span>Join thousands of fantasy cricket enthusiasts</span>
+                {/* Error Display */}
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start">
+                    <AlertCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-red-700">{error}</span>
                   </div>
-                  <div className="flex items-center text-sm text-slate-300">
-                    <Zap className="w-4 h-4 mr-3 text-yellow-400" />
-                    <span>Get started with IPL 2025 season</span>
+                )}
+
+                {/* Registration Form */}
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors">
+                        <Mail className="w-5 h-5" />
+                      </div>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
+                        placeholder="you@example.com"
+                        required
+                      />
+                    </div>
                   </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Password
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors">
+                        <Lock className="w-5 h-5" />
+                      </div>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
+                        placeholder="••••••••"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all duration-200"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">Must be at least 8 characters</p>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors">
+                        <Lock className="w-5 h-5" />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400 transition-all duration-200 placeholder:text-slate-400"
+                        placeholder="••••••••"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all duration-200"
+                      >
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
+                  >
+                    {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                  </button>
+                </form>
+
+                {/* Sign In Link */}
+                <div className="mt-6 text-center">
+                  <p className="text-sm text-slate-600">
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-primary-600 hover:text-primary-700 font-semibold transition-colors">
+                      Sign In
+                    </Link>
+                  </p>
+                </div>
+              </div>
+
+              {/* Mobile Stats - Only visible on mobile */}
+              <div className="lg:hidden grid grid-cols-3 gap-3 mt-6">
+                <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md text-center hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                  <div className="text-xl font-bold font-mono text-primary-600 mb-1">1000+</div>
+                  <div className="text-xs text-slate-600">Managers</div>
+                </div>
+                <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md text-center hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                  <div className="text-xl font-bold font-mono text-primary-600 mb-1">50+</div>
+                  <div className="text-xs text-slate-600">Leagues</div>
+                </div>
+                <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200 shadow-md text-center hover:shadow-lg hover:border-primary-300 transition-all duration-300">
+                  <div className="text-xl font-bold font-mono text-primary-600 mb-1">10K+</div>
+                  <div className="text-xs text-slate-600">Matches</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* CSS for animations */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          33% { transform: translateY(-20px) translateX(10px); }
+          66% { transform: translateY(10px) translateX(-10px); }
+        }
+
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          33% { transform: translateY(15px) translateX(-15px); }
+          66% { transform: translateY(-10px) translateX(10px); }
+        }
+
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+          50% { transform: translateY(-15px) translateX(15px) rotate(5deg); }
+        }
+
+        .animate-float {
+          animation: float 20s ease-in-out infinite;
+        }
+
+        .animate-float-delayed {
+          animation: float-delayed 25s ease-in-out infinite;
+        }
+
+        .animate-float-slow {
+          animation: float-slow 30s ease-in-out infinite;
+        }
+
+        /* Glass effect ring styles */
+        input:focus, button:focus-visible {
+          outline: none;
+        }
+
+        /* Smooth button morphing */
+        button, a {
+          transform-origin: center;
+        }
+
+        /* Icon color transition on focus */
+        .group:focus-within .text-slate-400 {
+          color: rgb(31 190 221); /* primary-600 */
+        }
+      `}</style>
     </div>
   );
 };

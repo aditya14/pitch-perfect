@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Award, Users, Star, Repeat, Zap, Clock, ChevronDown, ChevronUp, Check, Sparkles, Crown, Handshake, Anchor, Swords, Bomb, EarthLock } from 'lucide-react';
+import { ArrowLeft, Award, Users, Star, Repeat, Zap, Clock, ChevronDown, ChevronUp, Check, Sparkles, Crown, Handshake, Anchor, Swords, Bomb, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AccordionItem = ({ title, icon, isOpen, toggleAccordion, children }) => {
@@ -533,11 +533,11 @@ const HowItWorksComponent = () => {
               <p className="text-sm text-neutral-600 dark:text-neutral-400">Ideal for strike bowlers who take lots of wickets.</p>
             </div>
             
-            {/* Constrictor */}
+            {/* Guardian */}
             <div className="bg-teal-50 dark:bg-teal-900/40 border border-teal-200 dark:border-teal-800 rounded-lg p-4 shadow-sm">
               <div className="flex items-center mb-2">
-                <EarthLock className="text-teal-600 dark:text-teal-400 mr-2" size={20} />
-                <h3 className="font-bold text-lg text-teal-700 dark:text-teal-300">Constrictor</h3>
+                <Shield className="text-teal-600 dark:text-teal-400 mr-2" size={20} />
+                <h3 className="font-bold text-lg text-teal-700 dark:text-teal-300">Guardian</h3>
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BOWL</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 1.5× Wickets, 1.5× Bowling Milestones, 2× Maidens, 2× Economy</p>

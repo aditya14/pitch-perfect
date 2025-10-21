@@ -49,7 +49,7 @@ const MatchOverview = ({ matchData }) => {
   return (
     <div className="">
       {/* Header */}
-      <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
+      <div className="py-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
         <div className="flex items-center">
           <Info className="w-4 h-4 mr-2 text-neutral-500 dark:text-neutral-400" />
           <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
@@ -63,7 +63,7 @@ const MatchOverview = ({ matchData }) => {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="py-4">
         {/* Match date and venue info */}
         <div className="flex flex-col sm:flex-row sm:justify-between mb-4 text-sm">
           <div className="flex items-center mb-2 sm:mb-0 text-neutral-600 dark:text-neutral-300">
@@ -80,7 +80,7 @@ const MatchOverview = ({ matchData }) => {
         </div>
         
         {/* Teams and Score */}
-        <div className="mb-6 overflow-hidden lg-glass border border-neutral-200 dark:border-neutral-700 rounded-lg">
+        <div className="mb-6 overflow-hidden border border-neutral-200 dark:border-neutral-700 rounded-lg">
           {/* First innings */}
           <div className="p-3 flex items-center justify-between">
             <div className="flex items-center">
