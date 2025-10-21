@@ -520,10 +520,10 @@ const UserDashboard = () => {
               </p>
               
               {/* Feature highlights */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto mb-8 px-4">
                 {[
                   { icon: Users, title: "Draft & Trade", desc: "Build your squad strategically" },
-                  { icon: BarChart3, title: "Core Squad Roles", desc: "Boost player performance" },
+                  { icon: BarChart3, title: "Boosted Roles", desc: "Get the most out of your players" },
                   { icon: Star, title: "Season-Long", desc: "Compete all season long" }
                 ].map((feature, index) => (
                   <div key={index} className="lg-glass-tertiary lg-rounded-md p-4 text-center">
