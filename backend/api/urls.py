@@ -9,7 +9,10 @@ from . import views_stats
 from .views import match_preview, league_match_preview
 
 router = DefaultRouter()
+router.register(r'competitions', views.CompetitionViewSet)
 router.register(r'seasons', views.SeasonViewSet)
+router.register(r'phases', views.SeasonPhaseViewSet)
+router.register(r'draft-windows', views.DraftWindowViewSet)
 router.register(r'teams', views.IPLTeamViewSet)
 router.register(r'players', views.IPLPlayerViewSet)
 router.register(r'matches', views.IPLMatchViewSet, basename='match')

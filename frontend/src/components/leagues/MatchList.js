@@ -50,21 +50,28 @@ const MatchList = ({ league }) => {
       new Date(a.date) - new Date(b.date)
     );
     
-    // Group the sorted matches by phase
-    const groupedByPhase = sortedMatches.reduce((groups, match) => {
-      const phase = match.phase || 1; // Default to phase 1 if not set
-      if (!groups[phase]) {
-        groups[phase] = [];
-      }
-      groups[phase].push(match);
-      return groups;
-    }, {});
+    const groupedByPhase = new Map();
     
-    // Convert to array of phase groups for rendering
-    return Object.entries(groupedByPhase).map(([phase, phaseMatches]) => ({
-      phase: parseInt(phase, 10),
-      matches: phaseMatches
-    }));
+    for (const match of sortedMatches) {
+      const phaseNumber = match?.season_phase?.phase ?? match.phase ?? 1;
+      const phaseLabel = match?.season_phase?.label || `Week ${phaseNumber}`;
+      const phaseKey = match?.season_phase?.id
+        ? `season-phase-${match.season_phase.id}`
+        : `phase-${phaseNumber}`;
+      
+      if (!groupedByPhase.has(phaseKey)) {
+        groupedByPhase.set(phaseKey, {
+          key: phaseKey,
+          phase: phaseNumber,
+          label: phaseLabel,
+          matches: []
+        });
+      }
+      
+      groupedByPhase.get(phaseKey).matches.push(match);
+    }
+    
+    return Array.from(groupedByPhase.values());
   };
 
   if (loading) {
@@ -159,9 +166,9 @@ const MatchList = ({ league }) => {
           {groupedMatches.length > 0 ? (
             <div className="space-y-6">
               {groupedMatches.map((group) => (
-                <div key={`phase-${group.phase}`} className="space-y-2">
+                <div key={`phase-${group.key}`} className="space-y-2">
                   <div className="sticky top-0 z-10 bg-neutral-100 dark:bg-neutral-900 px-4 py-2 rounded-md font-medium font-caption text-neutral-800 dark:text-neutral-200 border-l-2 border-primary-500">
-                    Week {group.phase}
+                    {group.label}
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-2">
                     {group.matches.map((match) => (
@@ -188,9 +195,9 @@ const MatchList = ({ league }) => {
           {groupedMatches.length > 0 ? (
             <div className="space-y-10">
               {groupedMatches.map((group) => (
-                <div key={`phase-table-${group.phase}`}>
+                <div key={`phase-table-${group.key}`}>
                   <div className="sticky top-0 z-10 bg-neutral-100 dark:bg-neutral-900 px-4 py-2 rounded-md font-medium font-caption text-neutral-800 dark:text-neutral-200 border-l-2 border-primary-500 mb-2">
-                    Week {group.phase}
+                    {group.label}
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">

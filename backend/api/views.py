@@ -12,17 +12,49 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
-    Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, 
-    IPLMatch, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, IPLPlayerEvent, FantasyTrade, FantasyMatchEvent
+    Competition,
+    Season,
+    SeasonPhase,
+    DraftWindow,
+    SquadPhaseBoost,
+    IPLTeam,
+    TeamSeason,
+    IPLPlayer,
+    PlayerTeamHistory,
+    IPLMatch,
+    FantasyLeague,
+    FantasySquad,
+    UserProfile,
+    FantasyDraft,
+    FantasyPlayerEvent,
+    FantasyBoostRole,
+    IPLPlayerEvent,
+    FantasyTrade,
+    FantasyMatchEvent,
 )
 from .serializers import (
-    SeasonSerializer, IPLTeamSerializer, TeamSeasonSerializer,
-    IPLPlayerSerializer, PlayerTeamHistorySerializer, IPLMatchSerializer,
-    IPLMatchCreateUpdateSerializer, RegisterSerializer, UserSerializer,
-    CreateLeagueRequestSerializer, LeagueDetailSerializer,
-    FantasySquadSerializer, CreateSquadSerializer, SquadDetailSerializer,
-    CoreSquadUpdateSerializer, FantasyPlayerEventSerializer, IPLPlayerEventSerializer,
-    FantasyTradeSerializer, FantasyMatchEventSerializer
+    CompetitionSerializer,
+    SeasonSerializer,
+    SeasonPhaseSerializer,
+    DraftWindowSerializer,
+    IPLTeamSerializer,
+    TeamSeasonSerializer,
+    IPLPlayerSerializer,
+    PlayerTeamHistorySerializer,
+    IPLMatchSerializer,
+    IPLMatchCreateUpdateSerializer,
+    RegisterSerializer,
+    UserSerializer,
+    CreateLeagueRequestSerializer,
+    LeagueDetailSerializer,
+    FantasySquadSerializer,
+    CreateSquadSerializer,
+    SquadDetailSerializer,
+    CoreSquadUpdateSerializer,
+    FantasyPlayerEventSerializer,
+    IPLPlayerEventSerializer,
+    FantasyTradeSerializer,
+    FantasyMatchEventSerializer,
 )
 from .roster_serializers import PlayerRosterSerializer
 from .draft_serializers import FantasyDraftSerializer, OptimizedFantasyDraftSerializer
@@ -31,6 +63,12 @@ from functools import reduce
 from operator import or_
 from django.utils import timezone
 from api.services.cricket_data_service import CricketDataService
+from api.services.draft_window_service import (
+    resolve_draft_window,
+    get_retained_player_ids_for_squad,
+    get_retained_player_map,
+    build_draft_pool,
+)
 from django.core.cache import cache
 from django.db.models import F, Case, When, BooleanField, Value, DecimalField, ExpressionWrapper
 
@@ -39,7 +77,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
     serializer_class = SeasonSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['status', 'year']
+    filterset_fields = ['competition', 'status', 'year']
     ordering_fields = ['year', 'start_date']
 
     def list(self, request, *args, **kwargs):
@@ -67,6 +105,56 @@ class SeasonViewSet(viewsets.ModelViewSet):
         
         serializer = IPLMatchSerializer(matches, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def phases(self, request, pk=None):
+        """Get all phases for a specific season"""
+        season = self.get_object()
+        phases = SeasonPhase.objects.filter(season=season).order_by('phase')
+        serializer = SeasonPhaseSerializer(phases, many=True)
+        return Response(serializer.data)
+
+
+class CompetitionViewSet(viewsets.ModelViewSet):
+    queryset = Competition.objects.all()
+    serializer_class = CompetitionSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['format', 'grade']
+    ordering_fields = ['name']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+
+class SeasonPhaseViewSet(viewsets.ModelViewSet):
+    queryset = SeasonPhase.objects.all()
+    serializer_class = SeasonPhaseSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['season']
+    ordering_fields = ['phase', 'start', 'open_at']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+
+class DraftWindowViewSet(viewsets.ModelViewSet):
+    queryset = DraftWindow.objects.all()
+    serializer_class = DraftWindowSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['season', 'kind']
+    ordering_fields = ['sequence', 'open_at']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
 
 class IPLTeamViewSet(viewsets.ModelViewSet):
     queryset = IPLTeam.objects.filter(is_active=True)
@@ -256,7 +344,7 @@ class IPLPlayerViewSet(viewsets.ModelViewSet):
 class IPLMatchViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['season', 'status', 'team_1', 'team_2']
+    filterset_fields = ['season', 'season_phase', 'status', 'team_1', 'team_2']
     ordering_fields = ['date', 'match_number']
 
     def get_queryset(self):
@@ -290,6 +378,7 @@ class IPLMatchViewSet(viewsets.ModelViewSet):
     @action(detail=False)
     def by_season(self, request):
         season_id = request.query_params.get('season')
+        phase_number = request.query_params.get('phase')
         if not season_id:
             return Response(
                 {"error": "Season parameter is required"},
@@ -297,6 +386,8 @@ class IPLMatchViewSet(viewsets.ModelViewSet):
             )
         
         matches = self.get_queryset().filter(season_id=season_id)
+        if phase_number and phase_number.isdigit():
+            matches = matches.filter(season_phase__phase=int(phase_number))
         serializer = self.get_serializer(matches, many=True)
         return Response(serializer.data)
     
@@ -1378,9 +1469,18 @@ def fantasy_boost_roles(request):
 def update_core_squad(request, squad_id):
     """Update future core squad assignments"""
     squad = get_object_or_404(FantasySquad, id=squad_id)
+    phase_id = request.data.get('phase_id')
     
     # Get current future_core_squad or empty list
-    future_core_squad = list(squad.future_core_squad or [])
+    if phase_id:
+        phase = get_object_or_404(SeasonPhase, id=phase_id)
+        phase_boost, _ = SquadPhaseBoost.objects.get_or_create(
+            fantasy_squad=squad,
+            phase=phase
+        )
+        future_core_squad = list(phase_boost.assignments or [])
+    else:
+        future_core_squad = list(squad.future_core_squad or [])
     new_assignment = request.data
     
     # Update specific role assignment
@@ -1409,6 +1509,14 @@ def update_core_squad(request, squad_id):
         )
     
     # Update the squad
+    if phase_id:
+        phase_boost.assignments = future_core_squad
+        phase_boost.save()
+        return Response({
+            'phase_id': phase.id,
+            'assignments': future_core_squad
+        })
+
     squad.future_core_squad = future_core_squad
     squad.save()
     
@@ -1987,20 +2095,28 @@ def mid_season_draft_pool(request, league_id):
     try:
         league = get_object_or_404(FantasyLeague, id=league_id)
         squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+
+        draft_window_id = request.query_params.get('draft_window')
+        draft_window = resolve_draft_window(
+            league,
+            draft_window_id=int(draft_window_id) if draft_window_id else None,
+            kind=DraftWindow.Kind.MID_SEASON
+        )
         
-        # Get the draft pool
-        if not league.draft_pool:
+        draft_pool = draft_window.draft_pool or build_draft_pool(league, draft_window)
+        if not draft_pool:
             return Response(
-                {'error': 'Draft pool has not been compiled yet'}, 
+                {'error': 'Draft pool is empty for this draft window'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+        if not draft_window.draft_pool:
+            draft_window.draft_pool = draft_pool
+            draft_window.save(update_fields=['draft_pool'])
         
         # Get player details with season stats
         from django.db.models import Avg, Count, Q
         
-        players = IPLPlayer.objects.filter(
-            id__in=league.draft_pool
-        ).annotate(
+        players = IPLPlayer.objects.filter(id__in=draft_pool).annotate(
             matches=Count('iplplayerevent', filter=Q(iplplayerevent__match__season=league.season)),
             avg_points=Avg('iplplayerevent__total_points_all', filter=Q(iplplayerevent__match__season=league.season))
         )
@@ -2009,17 +2125,11 @@ def mid_season_draft_pool(request, league_id):
         draft = FantasyDraft.objects.filter(
             league=league,
             squad=squad,
-            type='Mid-Season'
+            draft_window=draft_window
         ).first()
         
         # Get player retention status
-        retained_player_ids = []
-        if squad.current_core_squad:
-            retained_player_ids = [
-                boost['player_id'] 
-                for boost in squad.current_core_squad 
-                if 'player_id' in boost
-            ]
+        retained_player_ids = get_retained_player_ids_for_squad(squad, draft_window)
         
         # Prepare response with player details
         player_data = []
@@ -2085,6 +2195,15 @@ def mid_season_draft_order(request, league_id):
     try:
         league = get_object_or_404(FantasyLeague, id=league_id)
         squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+
+        draft_window_id = request.query_params.get('draft_window')
+        if request.method == 'POST' and not draft_window_id:
+            draft_window_id = request.data.get('draft_window')
+        draft_window = resolve_draft_window(
+            league,
+            draft_window_id=int(draft_window_id) if draft_window_id else None,
+            kind=DraftWindow.Kind.MID_SEASON
+        )
         
         # Check if mid-season draft has already been executed
         if getattr(league, 'mid_season_draft_completed', False):
@@ -2094,18 +2213,13 @@ def mid_season_draft_order(request, league_id):
             )
         
         # Get retained players (core squad)
-        retained_player_ids = []
-        if squad.current_core_squad:
-            retained_player_ids = [
-                boost['player_id'] 
-                for boost in squad.current_core_squad 
-                if 'player_id' in boost
-            ]
+        retained_player_ids = get_retained_player_ids_for_squad(squad, draft_window)
         
         # Get or create draft order
         draft, created = FantasyDraft.objects.get_or_create(
             league=league,
             squad=squad,
+            draft_window=draft_window,
             type='Mid-Season',
             defaults={'order': []}
         )
@@ -2113,37 +2227,17 @@ def mid_season_draft_order(request, league_id):
         if request.method == 'GET':
             # If empty order and we need to create a default
             if not draft.order:
-                # First, compile the mid-season draft pool if it doesn't exist
-                if not league.draft_pool:
-                    # Get all player IDs from all squads, except retained players
-                    draft_pool = []
-                    for league_squad in FantasySquad.objects.filter(league=league):
-                        squad_core_ids = []
-                        if league_squad.current_core_squad:
-                            squad_core_ids = [
-                                boost['player_id'] 
-                                for boost in league_squad.current_core_squad 
-                                if 'player_id' in boost
-                            ]
-                        
-                        # Add players that are in the current squad but not in core squad
-                        if league_squad.current_squad:
-                            draft_pool.extend([
-                                player_id 
-                                for player_id in league_squad.current_squad 
-                                if player_id not in squad_core_ids
-                            ])
-                    
-                    # Update league draft pool
-                    league.draft_pool = list(set(draft_pool))  # Remove duplicates
-                    league.save()
+                draft_pool = draft_window.draft_pool or build_draft_pool(league, draft_window)
+                if not draft_window.draft_pool:
+                    draft_window.draft_pool = draft_pool
+                    draft_window.save(update_fields=['draft_pool'])
                 
                 # Create default order based on current season points (for players not retained)
                 from django.db.models import Avg
                 
                 # First, get all players with current season match data
                 default_order = list(IPLPlayer.objects.filter(
-                    id__in=league.draft_pool
+                    id__in=draft_pool
                 ).exclude(
                     id__in=retained_player_ids
                 ).annotate(
@@ -2155,7 +2249,7 @@ def mid_season_draft_order(request, league_id):
                 
                 # For players with no matches this season, append sorted by historical data
                 no_matches_players = list(IPLPlayer.objects.filter(
-                    id__in=league.draft_pool
+                    id__in=draft_pool
                 ).exclude(
                     id__in=retained_player_ids + default_order
                 ).annotate(
@@ -2165,7 +2259,7 @@ def mid_season_draft_order(request, league_id):
                 
                 # Finally add any remaining players alphabetically
                 remaining_players = list(IPLPlayer.objects.filter(
-                    id__in=league.draft_pool
+                    id__in=draft_pool
                 ).exclude(
                     id__in=retained_player_ids + default_order + no_matches_players
                 ).order_by('name').values_list('id', flat=True))
@@ -2198,6 +2292,10 @@ def mid_season_draft_order(request, league_id):
                     {'error': 'No order provided'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+            if not draft_window.draft_pool:
+                draft_window.draft_pool = build_draft_pool(league, draft_window)
+                draft_window.save(update_fields=['draft_pool'])
             
             # Validate all draft pool players are included
             all_player_ids = retained_player_ids + [
@@ -2206,7 +2304,7 @@ def mid_season_draft_order(request, league_id):
             ]
             
             missing_ids = [
-                pid for pid in league.draft_pool 
+                pid for pid in draft_window.draft_pool 
                 if pid not in all_player_ids
             ]
             
@@ -2239,15 +2337,16 @@ def get_retained_players(request, league_id):
     try:
         league = get_object_or_404(FantasyLeague, id=league_id)
         squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+
+        draft_window_id = request.query_params.get('draft_window')
+        draft_window = resolve_draft_window(
+            league,
+            draft_window_id=int(draft_window_id) if draft_window_id else None,
+            kind=DraftWindow.Kind.MID_SEASON
+        )
         
         # Get retained player IDs from current_core_squad
-        retained_player_ids = []
-        if squad.current_core_squad:
-            retained_player_ids = [
-                boost['player_id'] 
-                for boost in squad.current_core_squad 
-                if 'player_id' in boost
-            ]
+        retained_player_ids = get_retained_player_ids_for_squad(squad, draft_window)
         
         # Get player details
         retained_players = []
@@ -2279,43 +2378,33 @@ def get_retained_players(request, league_id):
 def compile_mid_season_draft_pools(request):
     """Admin endpoint to compile the mid-season draft pools for all leagues"""
     try:
-        leagues = FantasyLeague.objects.filter(
-            season__status='ONGOING'
-        )
+        draft_window_id = request.data.get('draft_window')
+        if draft_window_id:
+            draft_window = DraftWindow.objects.filter(id=draft_window_id).first()
+            if not draft_window:
+                return Response(
+                    {'error': 'Draft window not found'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            leagues = FantasyLeague.objects.filter(season=draft_window.season)
+        else:
+            draft_window = None
+            leagues = FantasyLeague.objects.filter(season__status='ONGOING')
         
         results = []
         for league in leagues:
-            draft_pool = []
-            retained_players = {}
-            
-            # Get all squads in the league
-            for squad in FantasySquad.objects.filter(league=league):
-                # Get retained player IDs from core squad
-                squad_core_ids = []
-                if squad.current_core_squad:
-                    squad_core_ids = [
-                        boost['player_id'] 
-                        for boost in squad.current_core_squad 
-                        if 'player_id' in boost
-                    ]
-                    retained_players[squad.id] = squad_core_ids
-                
-                # Add players that are in the current squad but not in core squad
-                if squad.current_squad:
-                    draft_pool.extend([
-                        player_id 
-                        for player_id in squad.current_squad 
-                        if player_id not in squad_core_ids
-                    ])
-            
-            # Remove duplicates and update league
-            league.draft_pool = list(set(draft_pool))
-            league.save()
+            active_window = draft_window or resolve_draft_window(league, kind=DraftWindow.Kind.MID_SEASON)
+            draft_pool = build_draft_pool(league, active_window)
+            retained_players = get_retained_player_map(league, active_window)
+
+            active_window.draft_pool = list(set(draft_pool))
+            active_window.save(update_fields=['draft_pool'])
             
             results.append({
                 'league_id': league.id,
                 'league_name': league.name,
-                'draft_pool_size': len(league.draft_pool),
+                'draft_window_id': active_window.id,
+                'draft_pool_size': len(active_window.draft_pool),
                 'retained_players': retained_players
             })
         
@@ -2342,6 +2431,13 @@ def execute_mid_season_draft_api(request, league_id):
     """Execute the mid-season draft for a league"""
     try:
         league = get_object_or_404(FantasyLeague, id=league_id)
+
+        draft_window_id = request.data.get('draft_window') or request.query_params.get('draft_window')
+        draft_window = resolve_draft_window(
+            league,
+            draft_window_id=int(draft_window_id) if draft_window_id else None,
+            kind=DraftWindow.Kind.MID_SEASON
+        )
         
         # Check if draft has already been completed
         if getattr(league, 'mid_season_draft_completed', False):
@@ -2349,16 +2445,27 @@ def execute_mid_season_draft_api(request, league_id):
                 {'error': 'Mid-season draft has already been completed for this league'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        draft_pool = draft_window.draft_pool or build_draft_pool(league, draft_window)
+        if not draft_pool:
+            return Response(
+                {'error': 'Draft pool is empty for this draft window'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not draft_window.draft_pool:
+            draft_window.draft_pool = draft_pool
+            draft_window.save(update_fields=['draft_pool'])
+
         # Get squads in order of their standings (lowest to highest for snake draft)
         squads = FantasySquad.objects.filter(league=league).order_by('total_points')
+        retained_map = get_retained_player_map(league, draft_window)
         
         # Create snake draft order
         draft_rounds = []
         squad_ids = [squad.id for squad in squads]
         
         # Calculate how many rounds we need
-        avg_players_needed = len(league.draft_pool) // squads.count() if league.draft_pool else 0
+        avg_players_needed = len(draft_pool) // squads.count() if draft_pool else 0
         num_rounds = max(1, avg_players_needed)
         
         # Create snake draft rounds
@@ -2381,18 +2488,12 @@ def execute_mid_season_draft_api(request, league_id):
             draft = FantasyDraft.objects.filter(
                 league=league,
                 squad=squad,
-                type='Mid-Season'
+                draft_window=draft_window
             ).first()
             
             if draft and draft.order:
                 # Get only non-retained players from draft preferences
-                retained_ids = []
-                if squad.current_core_squad:
-                    retained_ids = [
-                        boost['player_id'] 
-                        for boost in squad.current_core_squad 
-                        if 'player_id' in boost
-                    ]
+                retained_ids = retained_map.get(squad.id, [])
                 
                 # Filter out retained players from draft preferences
                 squad_preferences[squad.id] = [
@@ -2404,7 +2505,7 @@ def execute_mid_season_draft_api(request, league_id):
                 from django.db.models import Avg
                 
                 default_order = list(IPLPlayer.objects.filter(
-                    id__in=league.draft_pool
+                    id__in=draft_pool
                 ).annotate(
                     avg_points=Avg('iplplayerevent__total_points_all')
                 ).order_by('-avg_points').values_list('id', flat=True))
@@ -2412,7 +2513,7 @@ def execute_mid_season_draft_api(request, league_id):
                 squad_preferences[squad.id] = default_order
         
         # Track available players and assignments
-        available_players = set(league.draft_pool)
+        available_players = set(draft_pool)
         squad_assignments = {squad.id: [] for squad in squads}
         
         # Execute the draft
@@ -2453,13 +2554,7 @@ def execute_mid_season_draft_api(request, league_id):
         # Update squad rosters
         for squad in squads:
             # Get core squad players (retained)
-            retained_players = []
-            if squad.current_core_squad:
-                retained_players = [
-                    boost['player_id'] 
-                    for boost in squad.current_core_squad 
-                    if 'player_id' in boost
-                ]
+            retained_players = retained_map.get(squad.id, [])
             
             # Add drafted players
             drafted_players = squad_assignments.get(squad.id, [])

@@ -7,7 +7,12 @@ from django.shortcuts import redirect, render
 from django.contrib import messages
 import json
 import random
-from .models import FantasyLeague, FantasySquad, FantasyDraft, IPLPlayer
+from .models import FantasyLeague, FantasySquad, FantasyDraft, IPLPlayer, DraftWindow
+from api.services.draft_window_service import (
+    resolve_draft_window,
+    build_draft_pool,
+    get_retained_player_map,
+)
 import logging
 from django.db import transaction
 from django.db.models import Avg
@@ -304,6 +309,7 @@ def run_mid_season_draft_process(league_id, dry_run=False, verbose=False):
     """
     # Get the league
     league = FantasyLeague.objects.get(id=league_id)
+    draft_window = resolve_draft_window(league, kind=DraftWindow.Kind.MID_SEASON)
     
     # Check if mid-season draft already completed
     if getattr(league, 'mid_season_draft_completed', False) and not dry_run:
@@ -319,23 +325,22 @@ def run_mid_season_draft_process(league_id, dry_run=False, verbose=False):
     if verbose:
         print(f"Found {squad_count} squads")
     
-    # Check if draft pool exists
-    if not league.draft_pool:
-        raise ValueError('Draft pool has not been compiled yet')
+    draft_pool = draft_window.draft_pool or build_draft_pool(league, draft_window)
+    if not draft_pool:
+        raise ValueError('Draft pool is empty for this draft window')
+    if not draft_window.draft_pool:
+        draft_window.draft_pool = draft_pool
+        draft_window.save(update_fields=['draft_pool'])
     
     # Get retained players for each squad
-    retained_players = {}
-    for squad in squads:
-        if squad.current_core_squad:
-            retained_ids = [boost['player_id'] for boost in squad.current_core_squad if 'player_id' in boost]
-            retained_players[squad.id] = retained_ids
+    retained_players = get_retained_player_map(league, draft_window)
     
     # Create snake draft order
     draft_rounds = []
     squad_ids = [squad.id for squad in squads]
     
     # Calculate how many rounds we need
-    available_players = set(league.draft_pool)
+    available_players = set(draft_pool)
     avg_players_needed = len(available_players) // squad_count
     num_rounds = max(1, avg_players_needed)
     
@@ -362,7 +367,7 @@ def run_mid_season_draft_process(league_id, dry_run=False, verbose=False):
         draft = FantasyDraft.objects.filter(
             league=league,
             squad=squad,
-            type='Mid-Season'
+            draft_window=draft_window
         ).first()
         
         if draft and draft.order:
@@ -373,7 +378,7 @@ def run_mid_season_draft_process(league_id, dry_run=False, verbose=False):
         else:
             # Create a default order based on points
             default_order = list(IPLPlayer.objects.filter(
-                id__in=league.draft_pool
+                id__in=draft_pool
             ).exclude(
                 id__in=retained_players.get(squad.id, [])
             ).annotate(

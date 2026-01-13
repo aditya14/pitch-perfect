@@ -18,6 +18,32 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
 
+class Competition(TimeStampedModel):
+    class Format(models.TextChoices):
+        T20 = 'T20', _('T20')
+        ODI = 'ODI', _('ODI')
+        TEST = 'TEST', _('Test')
+
+    class Grade(models.TextChoices):
+        DOMESTIC = 'DOMESTIC', _('Domestic')
+        FRANCHISE = 'FRANCHISE', _('Franchise')
+        INTERNATIONAL = 'INTERNATIONAL', _('International')
+
+    name = models.CharField(max_length=255)
+    format = models.CharField(max_length=10, choices=Format.choices)
+    grade = models.CharField(max_length=20, choices=Grade.choices)
+
+    class Meta:
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['format'], name='competition_format_idx'),
+            models.Index(fields=['grade'], name='competition_grade_idx'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class Season(TimeStampedModel):
     class Status(models.TextChoices):
         UPCOMING = 'UPCOMING', _('Upcoming')
@@ -25,7 +51,14 @@ class Season(TimeStampedModel):
         COMPLETED = 'COMPLETED', _('Completed')
         CANCELLED = 'CANCELLED', _('Cancelled')
 
-    year = models.IntegerField(unique=True)
+    competition = models.ForeignKey(
+        Competition,
+        on_delete=models.CASCADE,
+        related_name='seasons',
+        null=True,
+        blank=True,
+    )
+    year = models.IntegerField()
     name = models.CharField(max_length=100)  # e.g. "TATA IPL 2024"
     start_date = models.DateField()
     end_date = models.DateField()
@@ -38,13 +71,35 @@ class Season(TimeStampedModel):
 
     class Meta:
         ordering = ['-year']
+        constraints = [
+            models.UniqueConstraint(fields=['competition', 'year'], name='uniq_competition_year'),
+        ]
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['start_date']),
         ]
 
     def __str__(self):
-        return f"IPL {self.year}"
+        if self.competition:
+            return f"{self.competition.name} {self.year}"
+        return f"Season {self.year}"
+
+
+class SeasonPhase(models.Model):
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='phases')
+    phase = models.PositiveIntegerField()
+    label = models.CharField(max_length=100)
+    open_at = models.DateTimeField()
+    lock_at = models.DateTimeField()
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+
+    class Meta:
+        unique_together = ('season', 'phase')
+        ordering = ['season_id', 'phase']
+
+    def __str__(self):
+        return f"{self.season} - {self.label}"
 
 class IPLTeam(SoftDeleteModel, TimeStampedModel):
     name = models.CharField(max_length=100)
@@ -192,6 +247,13 @@ class IPLMatch(TimeStampedModel):
         default=Stage.LEAGUE
     )
     phase = models.IntegerField(default=1)
+    season_phase = models.ForeignKey(
+        'SeasonPhase',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='matches'
+    )
     team_1 = models.ForeignKey(
         IPLTeam,
         on_delete=models.CASCADE,
@@ -526,6 +588,35 @@ class UserProfile(models.Model):
 
 #    Fantasy Models
 
+class DraftWindow(models.Model):
+    class Kind(models.TextChoices):
+        PRE_SEASON = 'PRE_SEASON', _('Pre-Season')
+        MID_SEASON = 'MID_SEASON', _('Mid-Season')
+        PLAYOFF = 'PLAYOFF', _('Playoff')
+        CUSTOM = 'CUSTOM', _('Custom')
+
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='draft_windows')
+    label = models.CharField(max_length=100)
+    kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.CUSTOM)
+    sequence = models.PositiveIntegerField()
+    open_at = models.DateTimeField()
+    lock_at = models.DateTimeField()
+    retention_phase = models.ForeignKey(
+        SeasonPhase,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='draft_windows',
+    )
+    draft_pool = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        unique_together = ('season', 'sequence')
+        ordering = ['season_id', 'sequence']
+
+    def __str__(self):
+        return f"{self.season} - {self.label}"
+
 class FantasyLeague(models.Model):
     name = models.CharField(max_length=100)
     logo = models.ImageField(upload_to='league_logos/', null=True, blank=True)
@@ -570,10 +661,32 @@ class FantasySquad(TimeStampedModel):
 
     def __str__(self):
         return f"{self.name} ({self.league.name})"
+
+
+class SquadPhaseBoost(models.Model):
+    fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='phase_boosts')
+    phase = models.ForeignKey(SeasonPhase, on_delete=models.CASCADE, related_name='squad_boosts')
+    assignments = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('fantasy_squad', 'phase')
+        ordering = ['phase_id', 'fantasy_squad_id']
+
+    def __str__(self):
+        return f"{self.fantasy_squad.name} - {self.phase.label}"
     
 class FantasyDraft(models.Model):
     league = models.ForeignKey(FantasyLeague, on_delete=models.CASCADE, related_name='draft_order')
     squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='draft_order')
+    draft_window = models.ForeignKey(
+        DraftWindow,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='drafts',
+    )
     type = models.CharField(max_length=10, choices=[('Pre-Season', 'Pre-Season'), ('Mid-Season', 'Mid-Season')])
     order = models.JSONField(default=list)
 

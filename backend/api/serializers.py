@@ -1,6 +1,21 @@
 from rest_framework import serializers
-from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, FantasySquad, FantasyLeague, 
-                     FantasyPlayerEvent, IPLPlayerEvent, FantasyTrade, FantasyMatchEvent)
+from .models import (
+    Competition,
+    Season,
+    SeasonPhase,
+    DraftWindow,
+    IPLTeam,
+    TeamSeason,
+    IPLPlayer,
+    PlayerTeamHistory,
+    IPLMatch,
+    FantasySquad,
+    FantasyLeague,
+    FantasyPlayerEvent,
+    IPLPlayerEvent,
+    FantasyTrade,
+    FantasyMatchEvent,
+)
 from django.contrib.auth.models import User
 import random
 import string
@@ -31,10 +46,35 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
         
+class CompetitionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Competition
+        fields = ['id', 'name', 'format', 'grade']
+
+
 class SeasonSerializer(serializers.ModelSerializer):
+    competition = serializers.PrimaryKeyRelatedField(
+        queryset=Competition.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    competition_detail = CompetitionSerializer(source='competition', read_only=True)
+
     class Meta:
         model = Season
-        fields = ['id', 'year', 'name', 'start_date', 'end_date', 'status']
+        fields = ['id', 'competition', 'competition_detail', 'year', 'name', 'start_date', 'end_date', 'status']
+
+
+class SeasonPhaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SeasonPhase
+        fields = ['id', 'season', 'phase', 'label', 'open_at', 'lock_at', 'start', 'end']
+
+
+class DraftWindowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DraftWindow
+        fields = ['id', 'season', 'label', 'kind', 'sequence', 'open_at', 'lock_at', 'retention_phase', 'draft_pool']
 
 class IPLTeamSerializer(serializers.ModelSerializer):
     class Meta:
@@ -85,11 +125,12 @@ class IPLMatchSerializer(serializers.ModelSerializer):
     winner = IPLTeamSerializer()
     toss_winner = IPLTeamSerializer()
     player_of_match = IPLPlayerSerializer()
+    season_phase = SeasonPhaseSerializer()
 
     class Meta:
         model = IPLMatch
         fields = [
-            'id', 'season', 'match_number', 'stage', 'phase',
+            'id', 'season', 'season_phase', 'match_number', 'stage', 'phase',
             'team_1', 'team_2', 'date', 'venue', 'status',
             'toss_winner', 'toss_decision', 'winner',
             'win_margin', 'win_type', 'player_of_match',

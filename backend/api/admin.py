@@ -7,8 +7,28 @@ from django.utils.html import format_html
 from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.urls import path, reverse
-from .models import (Season, IPLTeam, TeamSeason, IPLPlayer, PlayerTeamHistory, IPLMatch, 
-                     IPLPlayerEvent, FantasyLeague, FantasySquad, UserProfile, FantasyDraft, FantasyPlayerEvent, FantasyBoostRole, FantasyTrade, FantasyMatchEvent, FantasyStats)
+from .models import (
+    Competition,
+    Season,
+    SeasonPhase,
+    DraftWindow,
+    IPLTeam,
+    TeamSeason,
+    IPLPlayer,
+    PlayerTeamHistory,
+    IPLMatch,
+    IPLPlayerEvent,
+    FantasyLeague,
+    FantasySquad,
+    SquadPhaseBoost,
+    UserProfile,
+    FantasyDraft,
+    FantasyPlayerEvent,
+    FantasyBoostRole,
+    FantasyTrade,
+    FantasyMatchEvent,
+    FantasyStats,
+)
 
 from .forms import CSVUploadForm
 import csv
@@ -103,11 +123,39 @@ def update_default_draft_order(modeladmin, request, queryset):
 
 
 # Register the action with the Season admin
+@admin.register(Competition)
+class CompetitionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'format', 'grade')
+    list_filter = ('format', 'grade')
+    search_fields = ('name',)
+
+
+@admin.register(SeasonPhase)
+class SeasonPhaseAdmin(admin.ModelAdmin):
+    list_display = ('season', 'phase', 'label', 'open_at', 'lock_at')
+    list_filter = ('season',)
+    search_fields = ('label', 'season__name')
+
+
+@admin.register(DraftWindow)
+class DraftWindowAdmin(admin.ModelAdmin):
+    list_display = ('season', 'label', 'kind', 'sequence', 'open_at', 'lock_at', 'retention_phase')
+    list_filter = ('season', 'kind')
+    search_fields = ('label', 'season__name')
+
+
+@admin.register(SquadPhaseBoost)
+class SquadPhaseBoostAdmin(admin.ModelAdmin):
+    list_display = ('fantasy_squad', 'phase', 'created_at', 'updated_at')
+    list_filter = ('phase', 'fantasy_squad__league')
+    search_fields = ('fantasy_squad__name', 'phase__label')
+
+
 class SeasonAdmin(admin.ModelAdmin):
     actions = [update_default_draft_order]
-    list_display = ('year', 'name', 'start_date', 'end_date', 'status', 'default_draft_order')
-    list_filter = ('status',)
-    search_fields = ('name', 'year')
+    list_display = ('competition', 'year', 'name', 'start_date', 'end_date', 'status', 'default_draft_order')
+    list_filter = ('competition', 'status')
+    search_fields = ('name', 'year', 'competition__name')
 
 admin.site.register(Season, SeasonAdmin)
 
@@ -178,13 +226,13 @@ class PlayerTeamHistoryAdmin(admin.ModelAdmin):
 @admin.register(IPLMatch)
 class IPLMatchAdmin(admin.ModelAdmin):
     list_display = ('formatted_match', 'match_number', 'season', 'date', 'status', 'player_of_match')
-    list_filter = ('season', 'status', 'team_1', 'team_2')
+    list_filter = ('season', 'season_phase', 'status', 'team_1', 'team_2')
     search_fields = ('team_1__name', 'team_2__name', 'venue')
     date_hierarchy = 'date'
     
     fieldsets = (
         ('Basic Info', {
-            'fields': ('season', 'match_number', 'stage', 'phase', 'date', 'venue', 'status')
+            'fields': ('season', 'season_phase', 'match_number', 'stage', 'phase', 'date', 'venue', 'status')
         }),
         ('Teams', {
             'fields': ('team_1', 'team_2')

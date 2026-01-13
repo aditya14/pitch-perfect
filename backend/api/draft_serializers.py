@@ -12,16 +12,25 @@ class FantasyDraftSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FantasyDraft
-        fields = ['id', 'league', 'squad', 'type', 'order', 'can_edit', 'closes_in']
-        read_only_fields = ['league', 'squad', 'type']
+        fields = ['id', 'league', 'squad', 'draft_window', 'type', 'order', 'can_edit', 'closes_in']
+        read_only_fields = ['league', 'squad', 'draft_window', 'type']
 
     def get_can_edit(self, obj):
+        now = timezone.now()
+        if obj.draft_window:
+            return obj.draft_window.open_at <= now <= obj.draft_window.lock_at
         if not obj.league.season:
             return False
-        days_until_season = (obj.league.season.start_date - timezone.now().date()).days
+        days_until_season = (obj.league.season.start_date - now.date()).days
         return days_until_season >= 2
 
     def get_closes_in(self, obj):
+        now = timezone.now()
+        if obj.draft_window:
+            closes_at = obj.draft_window.lock_at
+            if closes_at < now:
+                return 0
+            return int((closes_at - now).total_seconds())
         if not obj.league.season:
             return None
         from datetime import datetime, time
@@ -30,7 +39,6 @@ class FantasyDraftSerializer(serializers.ModelSerializer):
         if not timezone.is_aware(start_datetime):
             start_datetime = timezone.make_aware(start_datetime, timezone.get_current_timezone())
         closes_at = start_datetime - timezone.timedelta(days=2)
-        now = timezone.now()
         if closes_at < now:
             return 0
         return int((closes_at - now).total_seconds())
@@ -61,16 +69,25 @@ class OptimizedFantasyDraftSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FantasyDraft
-        fields = ['id', 'league', 'squad', 'type', 'order', 'can_edit', 'closes_in', 'players']
-        read_only_fields = ['league', 'squad', 'type']
+        fields = ['id', 'league', 'squad', 'draft_window', 'type', 'order', 'can_edit', 'closes_in', 'players']
+        read_only_fields = ['league', 'squad', 'draft_window', 'type']
 
     def get_can_edit(self, obj):
+        now = timezone.now()
+        if obj.draft_window:
+            return obj.draft_window.open_at <= now <= obj.draft_window.lock_at
         if not obj.league.season:
             return False
-        days_until_season = (obj.league.season.start_date - timezone.now().date()).days
+        days_until_season = (obj.league.season.start_date - now.date()).days
         return days_until_season >= 2
 
     def get_closes_in(self, obj):
+        now = timezone.now()
+        if obj.draft_window:
+            closes_at = obj.draft_window.lock_at
+            if closes_at < now:
+                return 0
+            return int((closes_at - now).total_seconds())
         if not obj.league.season:
             return None
         from datetime import datetime, time
@@ -79,7 +96,6 @@ class OptimizedFantasyDraftSerializer(serializers.ModelSerializer):
         if not timezone.is_aware(start_datetime):
             start_datetime = timezone.make_aware(start_datetime, timezone.get_current_timezone())
         closes_at = start_datetime - timezone.timedelta(days=2)
-        now = timezone.now()
         if closes_at < now:
             return 0
         return int((closes_at - now).total_seconds())

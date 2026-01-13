@@ -401,14 +401,18 @@ def recalculate_all_stats(stats, league_id):
         status__in=['COMPLETED', 'NO_RESULT']
     ).distinct().order_by('date')
 
-    all_phases = matches.values_list('phase', flat=True).distinct()
+    all_phases = matches.values_list('season_phase__phase', flat=True).distinct()
     all_phases = [p for p in all_phases if p is not None]
     all_phases = sorted(set(all_phases))
+    if not all_phases:
+        all_phases = matches.values_list('phase', flat=True).distinct()
+        all_phases = [p for p in all_phases if p is not None]
+        all_phases = sorted(set(all_phases))
 
     def get_matches_for_phase(phase=None):
         if phase is None:
             return matches
-        return matches.filter(phase=phase)
+        return matches.filter(Q(season_phase__phase=phase) | Q(season_phase__isnull=True, phase=phase))
 
     for phase in [None] + all_phases:
         key = str(phase) if phase is not None else "overall"
