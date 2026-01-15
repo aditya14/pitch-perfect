@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, User } from 'lucide-react';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
-import { Anchor, Bomb, Crown, Shield, Handshake, Sparkles, Swords, Zap, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Anchor, Bomb, Crown, Shield, Handshake, Sparkles, Swords, Zap, ArrowLeft } from 'lucide-react';
 
 // Helper function to get role icon
 const getRoleIcon = (roleName, size = 16, squadColor) => {
@@ -26,11 +26,16 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
   };
   
   // Countdown Timer Component
-  const CountdownTimer = ({ onExpire }) => {
+  const CountdownTimer = ({ lockAt, onExpire }) => {
     const [timeLeft, setTimeLeft] = useState({});
-    const lockDate = new Date('2025-05-29T14:00:00Z'); // May 19, 2025, 2pm UTC
+    const lockDate = lockAt ? new Date(lockAt) : null;
   
     useEffect(() => {
+      if (!lockDate) {
+        setTimeLeft({ expired: true });
+        return undefined;
+      }
+
       const calculateTimeLeft = () => {
         const difference = lockDate - new Date();
         
@@ -62,8 +67,16 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
       }, 1000);
   
       return () => clearInterval(timer);
-    }, [onExpire]);
+    }, [lockDate, onExpire]);
   
+    if (!lockDate) {
+      return (
+        <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 px-4 py-2 text-center w-full">
+          <div className="text-sm text-neutral-600 dark:text-neutral-300">No lock time set</div>
+        </div>
+      );
+    }
+
     if (timeLeft.expired) {
       return (
         <div className="rounded-lg bg-red-100 dark:bg-red-900 px-4 py-2 text-center w-full">
@@ -74,7 +87,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
   
     return (
       <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 px-4 py-3 w-full">
-        <div className="text-xs text-neutral-600 dark:text-neutral-300 mb-1">Boost Picks Lock For The Week In:</div>
+        <div className="text-xs text-neutral-600 dark:text-neutral-300 mb-1">Boost picks lock in:</div>
         <div className="flex space-x-2 text-center justify-center md:justify-start">
           <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
             <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.days}</div>
@@ -97,48 +110,24 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
     );
   };
 
-// List of qualified teams for playoffs
-const QUALIFIED_TEAMS = [
-  'Royal Challengers Bengaluru',
-  'Punjab Kings',
-  'Gujarat Titans',
-  'Mumbai Indians'
-];
-
-// Helper to check if a player is from a qualified team
-const isQualifiedTeam = (player) => {
-  return QUALIFIED_TEAMS.includes(player.current_team?.name);
-};
-
-// Tooltip for player warning (styled like HeaderTooltip)
-const PlayerTooltip = ({ children, tooltip }) => (
-  <span className="relative inline-flex group">
-    {children}
-    {tooltip && (
-      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 mt-2 z-30 hidden group-hover:block px-2 py-1 rounded bg-neutral-900 text-white text-xs shadow-lg whitespace-nowrap min-w-max"
-        style={{ top: '100%' }}
-      >
-        {tooltip}
-      </span>
-    )}
-  </span>
-);
-
 const BoostSelection = ({
   players,
   boostRoles,
-  futureCoreSquad,
+  phaseAssignments,
   selectedPlayer,
   setSelectedPlayer,
   handleRoleAssignment,
-  isDeadlinePassed,
   getPlayerById,
   getRoleById,
   canAssignPlayerToRole,
   isPlayerAssigned,
   getPlayerRole,
   error,
-  squadColor
+  squadColor,
+  phaseLabel,
+  phaseWindow,
+  lockAt,
+  isEditable
 }) => {
   const { openPlayerModal } = usePlayerModal();
   const [searchQuery, setSearchQuery] = useState('');
@@ -222,15 +211,26 @@ const BoostSelection = ({
       {/* Header */}
       <div className="p-4 md:p-6 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4">
-          Playoffs (May 29 - Jun 3)
+          {phaseLabel || 'Upcoming Phase'}
         </h2>
+        {phaseWindow && (
+          <div className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+            {phaseWindow}
+          </div>
+        )}
         
         {/* Countdown and retention info */}
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="lg:w-1/2">
-            <CountdownTimer onExpire={() => {}} />
+            <CountdownTimer lockAt={lockAt} onExpire={() => {}} />
           </div>
         </div>
+
+        {!isEditable && (
+          <div className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
+            This phase is locked. You can review assignments but can’t edit them.
+          </div>
+        )}
         
         {error && (
           <div className="mt-4 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
@@ -241,11 +241,11 @@ const BoostSelection = ({
 
       {/* Summary of next week's assignments */}
       <div className="bg-neutral-50 dark:bg-neutral-700 p-4 border-b border-neutral-200 dark:border-neutral-700">
-        <h3 className="font-medium text-neutral-900 dark:text-white mb-3">Next Week's Boosts</h3>
+        <h3 className="font-medium text-neutral-900 dark:text-white mb-3">Boost assignments</h3>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {boostRoles.map(role => {
-            const assignment = futureCoreSquad?.find(a => a.boost_id === role.id);
+            const assignment = phaseAssignments?.find(a => a.boost_id === role.id);
             const player = assignment ? getPlayerById(assignment.player_id) : null;
             
             return (
@@ -286,15 +286,6 @@ const BoostSelection = ({
           <div className="mb-5 pb-4 border-b border-neutral-200 dark:border-neutral-700">
             <h3 className="text-lg font-medium text-neutral-900 dark:text-white flex items-center">
               {selectedPlayer.name}
-              {!isQualifiedTeam(selectedPlayer) && (
-                <PlayerTooltip tooltip="Not in Playoffs">
-                  <AlertTriangle
-                    className="ml-2 text-yellow-500"
-                    size={18}
-                    title="Not in Playoffs"
-                  />
-                </PlayerTooltip>
-              )}
             </h3>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {selectedPlayer.role} • {selectedPlayer.current_team?.name || 'No team'}
@@ -307,21 +298,21 @@ const BoostSelection = ({
           </h4>
           <div className="space-y-3">
             {getEligibleRolesForPlayer(selectedPlayer).map(role => {
-              const currentAssignment = futureCoreSquad?.find(a => a.boost_id === role.id);
+              const currentAssignment = phaseAssignments?.find(a => a.boost_id === role.id);
               const isCurrentlyAssigned = currentAssignment?.player_id === selectedPlayer.id;
               const hasOtherPlayerAssigned = currentAssignment && !isCurrentlyAssigned;
               
               return (
                 <div key={role.id} className="group relative">
                   <button
-                    onClick={() => !isDeadlinePassed && handleRoleAssignment(role.id, selectedPlayer.id)}
-                    disabled={isDeadlinePassed}
+                    onClick={() => isEditable && handleRoleAssignment(role.id, selectedPlayer.id)}
+                    disabled={!isEditable}
                     className={`
                       w-full flex items-start p-3 rounded-lg text-left transition-all
                       ${isCurrentlyAssigned 
                         ? 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800' 
                         : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/30'}
-                      ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
+                      ${!isEditable ? 'opacity-75 cursor-not-allowed' : ''}
                     `}
                   >
                     <div className="h-10 w-10 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700 mr-3 flex-shrink-0">
@@ -425,30 +416,20 @@ const BoostSelection = ({
               {filteredPlayers.map(player => {
                 const isAssigned = isPlayerAssigned(player.id);
                 const assignedRole = isAssigned ? getRoleById(getPlayerRole(player.id)) : null;
-                const notQualified = !isQualifiedTeam(player);
                 return (
                   <div 
                     key={player.id}
-                    onClick={() => !isDeadlinePassed && handlePlayerSelect(player)}
+                    onClick={() => isEditable && handlePlayerSelect(player)}
                     className={`
                       rounded-lg p-3 cursor-pointer border transition-all
                       border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700
-                      ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
+                      ${!isEditable ? 'opacity-75 cursor-not-allowed' : ''}
                     `}
                   >
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-medium text-neutral-900 dark:text-white flex items-center">
                           {player.name}
-                          {notQualified && (
-                            <PlayerTooltip tooltip="Not in Playoffs">
-                              <AlertTriangle
-                                className="ml-2 text-yellow-500"
-                                size={16}
-                                title="Not in Playoffs"
-                              />
-                            </PlayerTooltip>
-                          )}
                         </div>
                         <div className="text-xs text-neutral-500 dark:text-neutral-400">
                           {player.role} • {player.current_team?.name || 'No team'}
@@ -553,32 +534,22 @@ const BoostSelection = ({
                 const isAssigned = isPlayerAssigned(player.id);
                 const isSelected = selectedPlayer?.id === player.id;
                 const assignedRole = isAssigned ? getRoleById(getPlayerRole(player.id)) : null;
-                const notQualified = !isQualifiedTeam(player);
                 return (
                   <div 
                     key={player.id}
-                    onClick={() => !isDeadlinePassed && setSelectedPlayer(player)}
+                    onClick={() => isEditable && setSelectedPlayer(player)}
                     className={`
                       rounded-lg p-3 cursor-pointer border transition-all
                       ${isSelected 
                         ? 'border-neutral-500 bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700' 
                         : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700'}
-                      ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
+                      ${!isEditable ? 'opacity-75 cursor-not-allowed' : ''}
                     `}
                   >
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-medium text-neutral-900 dark:text-white flex items-center">
                           {player.name}
-                          {notQualified && (
-                            <PlayerTooltip tooltip="Not in Playoffs">
-                              <AlertTriangle
-                                className="ml-2 text-yellow-500"
-                                size={16}
-                                title="Not in Playoffs"
-                              />
-                            </PlayerTooltip>
-                          )}
                         </div>
                         <div className="text-xs text-neutral-500 dark:text-neutral-400">
                           {player.role} • {player.current_team?.name || 'No team'}
@@ -625,15 +596,6 @@ const BoostSelection = ({
                   <div>
                     <h3 className="text-lg font-medium text-neutral-900 dark:text-white flex items-center">
                       {selectedPlayer.name}
-                      {!isQualifiedTeam(selectedPlayer) && (
-                        <PlayerTooltip tooltip="Not in Playoffs">
-                          <AlertTriangle
-                            className="ml-2 text-yellow-500"
-                            size={18}
-                            title="Not in Playoffs"
-                          />
-                        </PlayerTooltip>
-                      )}
                     </h3>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
                       {selectedPlayer.role} • {selectedPlayer.current_team?.name || 'No team'}
@@ -648,21 +610,21 @@ const BoostSelection = ({
                 
                 <div className="space-y-3">
                   {getEligibleRolesForPlayer(selectedPlayer).map(role => {
-                    const currentAssignment = futureCoreSquad?.find(a => a.boost_id === role.id);
+                    const currentAssignment = phaseAssignments?.find(a => a.boost_id === role.id);
                     const isCurrentlyAssigned = currentAssignment?.player_id === selectedPlayer.id;
                     const hasOtherPlayerAssigned = currentAssignment && !isCurrentlyAssigned;
                     
                     return (
                       <div key={role.id} className="group relative">
                         <button
-                          onClick={() => !isDeadlinePassed && handleRoleAssignment(role.id, selectedPlayer.id)}
-                          disabled={isDeadlinePassed}
+                          onClick={() => isEditable && handleRoleAssignment(role.id, selectedPlayer.id)}
+                          disabled={!isEditable}
                           className={`
                             w-full flex items-start p-3 rounded-lg text-left transition-all
                             ${isCurrentlyAssigned 
                               ? 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800' 
                               : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/30'}
-                            ${isDeadlinePassed ? 'opacity-75 cursor-not-allowed' : ''}
+                            ${!isEditable ? 'opacity-75 cursor-not-allowed' : ''}
                           `}
                         >
                           <div className="h-10 w-10 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700 mr-3 flex-shrink-0">

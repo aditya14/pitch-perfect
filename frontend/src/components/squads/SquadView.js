@@ -99,18 +99,22 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
     }
   }, [squadId, user]);
 
-  const updateFutureCoreSquad = async (boost_id, player_id) => {
+  const updateFutureCoreSquad = async (boost_id, player_id, phase_id) => {
     if (!isOwnSquad) return; // Prevent updates for other users' squads
     
     try {
-      await api.patch(`/squads/${squadId}/core-squad/`, {
+      const response = await api.patch(`/squads/${squadId}/core-squad/`, {
         boost_id,
-        player_id
+        player_id,
+        phase_id
       });
       
       // Refresh squad data to get updated core squad assignments
-      const response = await api.get(`/squads/${squadId}/`);
-      setSquadData(response.data);
+      if (!phase_id) {
+        const squadResponse = await api.get(`/squads/${squadId}/`);
+        setSquadData(squadResponse.data);
+      }
+      return response.data;
     } catch (err) {
       throw new Error(err.response?.data?.error || 'Failed to update core squad roles');
     }
@@ -248,10 +252,10 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
           />
         ) : (
           <BoostTab
+            squadId={squadId}
             players={players}
             boostRoles={boostRoles}
             currentCoreSquad={squadData.current_core_squad}
-            futureCoreSquad={squadData.future_core_squad}
             onUpdateRole={updateFutureCoreSquad}
             isOwnSquad={isOwnSquad}
             leagueId={squadData.league_id}

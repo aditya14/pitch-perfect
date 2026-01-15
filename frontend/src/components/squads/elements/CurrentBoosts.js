@@ -6,25 +6,22 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { getRoleIcon } from '../../../utils/roleUtils'; 
 
 const CurrentBoosts = ({ 
-  currentCoreSquad, 
+  phaseAssignments, 
   boostRoles,
   getRoleById, 
   getPlayerById, 
   leagueId, 
   showCurrent, 
   setShowCurrent,
-  squadColor 
+  squadColor,
+  title,
+  subtitle
 }) => {
   const { openPlayerModal } = usePlayerModal();
   
-  // Don't render anything if squad is empty (draft hasn't completed)
-  if (!currentCoreSquad?.length) {
-    return null;
-  }
-  
   // Create a map of role ID to assignment for quick lookup
   const assignmentMap = {};
-  currentCoreSquad.forEach(assignment => {
+  (phaseAssignments || []).forEach(assignment => {
     assignmentMap[assignment.boost_id] = assignment;
   });
   
@@ -34,17 +31,24 @@ const CurrentBoosts = ({
         onClick={() => setShowCurrent(!showCurrent)}
         className="w-full flex justify-between items-center"
       >
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
-          Current Week Boosts
-        </h2>
+        <div>
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+            {title || 'Boost Assignments'}
+          </h2>
+          {subtitle && (
+            <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+              {subtitle}
+            </div>
+          )}
+        </div>
         {showCurrent ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
       </button>
       
       {showCurrent && (
         <>
-          {currentCoreSquad?.length > 0 ? (
+          {phaseAssignments?.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-              {/* Iterate through boostRoles array instead of currentCoreSquad */}
+              {/* Iterate through boostRoles array instead of phase assignments */}
               {boostRoles.map(role => {
                 const assignment = assignmentMap[role.id];
                 const player = assignment ? getPlayerById(assignment.player_id) : null;
@@ -80,7 +84,7 @@ const CurrentBoosts = ({
             </div>
           ) : (
             <div className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">
-              No players assigned for current week
+              No boosts assigned for this phase
             </div>
           )}
         </>

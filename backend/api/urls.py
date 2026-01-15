@@ -36,6 +36,7 @@ urlpatterns = [
     
     path('squads/<int:squad_id>/players/', views.squad_players),
     path('squads/<int:squad_id>/player-events/', views.squad_player_events),
+    path('squads/<int:squad_id>/phase-boosts/', views.squad_phase_boosts),
     path('fantasy/boost-roles/', views.fantasy_boost_roles),
     path('squads/<int:squad_id>/core-squad/', views.update_core_squad),
     path('leagues/<int:league_id>/players/<int:player_id>/', views.get_player_fantasy_stats),

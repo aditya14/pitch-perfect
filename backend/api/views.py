@@ -1417,6 +1417,30 @@ def squad_player_events(request, squad_id):
     
     return Response(stats_dict)
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def squad_phase_boosts(request, squad_id):
+    """Get phase boosts for a squad along with season phases."""
+    squad = get_object_or_404(FantasySquad, id=squad_id)
+    season = squad.league.season
+    if not season:
+        return Response({'error': 'Squad has no season set'}, status=status.HTTP_400_BAD_REQUEST)
+
+    phases = SeasonPhase.objects.filter(season=season).order_by('phase')
+    phase_ids = list(phases.values_list('id', flat=True))
+    boosts = SquadPhaseBoost.objects.filter(
+        fantasy_squad=squad,
+        phase_id__in=phase_ids
+    )
+    assignments = {boost.phase_id: boost.assignments for boost in boosts}
+
+    return Response({
+        'season_id': season.id,
+        'phases': SeasonPhaseSerializer(phases, many=True).data,
+        'assignments': assignments
+    })
+
 @api_view(['GET'])
 def fantasy_boost_roles(request):
     """Get all available fantasy boost roles and their multipliers in a specific order"""
