@@ -118,7 +118,7 @@ const HowItWorksComponent = () => {
                 Draft Timing
                 </h4>
                 <p className="text-sm">
-                The draft begins approximately one week before the IPL season starts. Players can rank their preferences 
+                The draft begins approximately one week before the season starts. Players can rank their preferences 
                 until one day before the season begins, giving everyone time to review their squads and set their boosts for Week 1.
                 </p>
             </div>
@@ -643,7 +643,7 @@ const HowItWorksComponent = () => {
                 </li>
                 <li className="flex items-start">
                   <Check size={18} className="text-green-500 dark:text-green-400 mr-2 mt-1 flex-shrink-0" />
-                  <span>Diversify by acquiring players from multiple IPL teams for better point opportunities</span>
+                  <span>Diversify by acquiring players from multiple teams for better point opportunities</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={18} className="text-green-500 dark:text-green-400 mr-2 mt-1 flex-shrink-0" />

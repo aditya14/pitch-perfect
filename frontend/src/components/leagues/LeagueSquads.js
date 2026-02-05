@@ -122,7 +122,7 @@ const LeagueSquads = ({ league }) => {
     return result;
   }, [squadPlayers]);
   
-  // Group players by IPL team
+  // Group players by team
   const playersByTeam = useMemo(() => {
     const result = {};
     Object.entries(squadPlayers).forEach(([squadId, players]) => {
@@ -264,7 +264,7 @@ const LeagueSquads = ({ league }) => {
           }`}
         >
           <ShieldHalf className="h-3 w-3 mr-1" />
-          By IPL Team
+          By Team
         </button>
         
         <button
@@ -286,7 +286,7 @@ const LeagueSquads = ({ league }) => {
             <tr className="bg-neutral-50 dark:bg-neutral-700">
               {activeView !== 'names' && (
                 <th className="sticky left-0 bg-neutral-50 dark:bg-neutral-700 z-30 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600">
-                  {activeView === 'teams' ? 'IPL Team' : (activeView === 'draft' || activeView === 'mid_season_draft' ? 'Rank' : activeView === 'roles' ? 'Role' : 'Boost')}
+                  {activeView === 'teams' ? 'Team' : (activeView === 'draft' || activeView === 'mid_season_draft' ? 'Rank' : activeView === 'roles' ? 'Role' : 'Boost')}
                 </th>
               )}
               

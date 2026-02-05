@@ -6,7 +6,7 @@ import useDocumentTitle from '../../hooks/useDocumentTitle'; // Add this import
 
 const GROUP_OPTIONS = [
     { value: 'squad', label: 'By Squad' },
-    { value: 'team', label: 'By IPL Team' },
+    { value: 'team', label: 'By Team' },
     { value: 'role', label: 'By Role' },
 ];
 
@@ -197,7 +197,7 @@ const MatchPreview = ({ leagueContext }) => {
                     </div>
                     {/* Info row below name */}
                     {groupBy === 'squad' && leagueContext ? (
-                      // By Fantasy Squad: show IPL team only (no squad name)
+                      // By Fantasy Squad: show team only (no squad name)
                       <div className="text-[11px] font-caption text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
                         {p.ipl_team || '-'}
                       </div>
@@ -216,7 +216,7 @@ const MatchPreview = ({ leagueContext }) => {
                         </div>
                       ) : null
                     ) : (
-                      // By IPL Team: show squad name and color (if available)
+                      // By Team: show squad name and color (if available)
                       p.fantasy_squad ? (
                         <div className="flex items-center gap-1 mt-0.5">
                           <span
