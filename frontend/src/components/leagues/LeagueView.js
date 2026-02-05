@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useParams, useLocation, Outlet } from 'react-router-dom';
 import api from '../../utils/axios';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
-import { useAuth } from '../../context/AuthContext';
 
 // Import tab components
 import LeagueDashboard from './LeagueDashboard';
@@ -11,48 +10,32 @@ import LeagueTable from './LeagueTable';
 import TradeList from './TradeList';
 import TradeTutorial from './TradeTutorial';
 import LeagueStats from './LeagueStats';
-import DraftOrderModal from './modals/DraftOrderModal';
 import LeagueSquads from './LeagueSquads';
 import SquadView from '../squads/SquadView'; // Import SquadView for My Squad tab
-
-// Constants 
-const DRAFT_DEADLINE = new Date('2025-03-21T14:00:00Z'); // March 21, 2025 10:00 AM ET
+import PreSeasonDraftPanel from './PreSeasonDraftPanel';
 
 const LeagueView = () => {
   const { leagueId } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
   const [league, setLeague] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
-  const [players, setPlayers] = useState([]);
-  const [draftOrder, setDraftOrder] = useState(null);
-  const [draftLoading, setDraftLoading] = useState(false);
-  const [draftSaveError, setDraftSaveError] = useState(null);
-  const [isDraftDeadlinePassed, setIsDraftDeadlinePassed] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mySquadId, setMySquadId] = useState(null);
 
-  // Handle responsive design
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const getCoreTabs = useCallback((isPreDraftPhase) => {
+    if (isPreDraftPhase) {
+      return [
+        { id: 'dashboard', label: 'Draft', component: LeagueDashboard },
+        { id: 'matches', label: 'Matches', component: MatchList },
+        { id: 'table', label: 'Standings', component: LeagueTable },
+      ];
+    }
 
-  // Define the core tabs that are always available
-  const getCoreTabs = useCallback(() => {
     const tabs = [
       { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
       { id: 'matches', label: 'Matches', component: MatchList },
     ];
 
-    // Add My Squad tab if user has a squad in this league
     if (mySquadId) {
       tabs.push({ id: 'my_squad', label: 'My Squad', component: SquadView });
     }
@@ -67,8 +50,12 @@ const LeagueView = () => {
   }, [mySquadId]);
 
   // Create tabs based on draft status
-  const getTabs = useCallback((isDraftCompleted) => {
-    const allTabs = [...getCoreTabs()];
+  const getTabs = useCallback((isDraftCompleted, isPreDraftPhase) => {
+    const allTabs = [...getCoreTabs(isPreDraftPhase)];
+
+    if (isPreDraftPhase) {
+      return allTabs;
+    }
     
     // Add trades tab with the appropriate component based on draft status
     if (isDraftCompleted) {
@@ -113,21 +100,7 @@ const LeagueView = () => {
   // Apply the document title
   useDocumentTitle(getPageTitle());
 
-  // Check if draft deadline has passed
-  useEffect(() => {
-    const checkDeadline = () => {
-      const now = new Date();
-      setIsDraftDeadlinePassed(now >= DRAFT_DEADLINE);
-    };
-    
-    checkDeadline();
-    const timer = setInterval(checkDeadline, 30000); // Check every 30 seconds
-    
-    return () => clearInterval(timer);
-  }, []);
-
-  // Fetch league data
-  const fetchLeagueData = async () => {
+  const fetchLeagueData = useCallback(async () => {
     try {
       const response = await api.get(`/leagues/${leagueId}/`);
       const leagueData = response.data;
@@ -136,8 +109,10 @@ const LeagueView = () => {
       // Set mySquadId if user has a squad in this league
       if (leagueData.my_squad) {
         setMySquadId(leagueData.my_squad.id);
+      } else {
+        setMySquadId(null);
       }
-      
+
       setError(null);
     } catch (err) {
       if (err.response?.status === 403) {
@@ -146,93 +121,25 @@ const LeagueView = () => {
         setError(err.response?.data?.detail || 'Failed to fetch league data');
       }
     }
-  };
+  }, [leagueId]);
 
   // Update tabs when league data or my squad changes
   useEffect(() => {
     if (league) {
-      setTabs(getTabs(league.draft_completed));
+      const seasonStartDate = league?.season?.start_date ? new Date(league.season.start_date) : null;
+      const isSeasonUpcoming =
+        (league?.season?.status || '').toUpperCase() === 'UPCOMING' ||
+        (seasonStartDate && !Number.isNaN(seasonStartDate.getTime()) && seasonStartDate > new Date());
+      const isPreDraftPhase = isSeasonUpcoming && !league.draft_completed;
+
+      setTabs(getTabs(league.draft_completed, isPreDraftPhase));
       setLoading(false);
     }
   }, [league, getTabs]);
 
-  // Fetch player data
-  const fetchPlayerData = useCallback(async () => {
-    if (!league?.season?.id) return;
-    
-    try {
-      const playersResponse = await api.get(
-        `/leagues/${leagueId}/players?season=${league.season.id}`
-      );
-      setPlayers(playersResponse.data);
-    } catch (err) {
-      console.error('Error fetching players:', err);
-    }
-  }, [leagueId, league]);
-
-  // Fetch draft order data
-  const fetchDraftOrder = useCallback(async () => {
-    try {
-      const response = await api.get(`/drafts/get_draft_order/?league_id=${leagueId}`);
-      setDraftOrder(response.data);
-      setDraftSaveError(null);
-      return response.data;
-    } catch (err) {
-      console.error('Error fetching draft order:', err);
-      setDraftSaveError(err.response?.data?.detail || 'Failed to fetch draft order');
-      throw err;
-    }
-  }, [leagueId]);
-
-  // Save draft order
-  const saveDraftOrder = async (newOrder) => {
-    if (!draftOrder?.id) return;
-    
-    try {
-      await api.patch(`/drafts/${draftOrder.id}/update_order/`, {
-        order: newOrder
-      });
-      setDraftOrder(prev => ({...prev, order: newOrder}));
-      return true;
-    } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to save draft order';
-      setDraftSaveError(errorMessage);
-      throw new Error(errorMessage);
-    }
-  };
-  
-  const handleDraftModalOpen = () => {
-    // Open the modal immediately
-    setIsDraftModalOpen(true);
-    
-    // Start loading data
-    setDraftLoading(true);
-    
-    // Load player data if needed, then fetch draft order
-    const loadData = async () => {
-      try {
-        // Load players if they're not loaded yet
-        if (players.length === 0) {
-          await fetchPlayerData();
-        }
-        
-        // Then fetch draft order
-        await fetchDraftOrder();
-      } catch (err) {
-        console.error("Error loading draft data:", err);
-        setDraftSaveError("Failed to load data. Please try again.");
-      } finally {
-        setDraftLoading(false);
-      }
-    };
-    
-    // Start the loading process
-    loadData();
-  };
-
   useEffect(() => {
     fetchLeagueData();
-  }, [leagueId]);
+  }, [fetchLeagueData]);
 
   if (loading) {
     return (
@@ -251,11 +158,19 @@ const LeagueView = () => {
   }
   
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
+  const seasonStartDate = league?.season?.start_date ? new Date(league.season.start_date) : null;
+  const isSeasonUpcoming =
+    (league?.season?.status || '').toUpperCase() === 'UPCOMING' ||
+    (seasonStartDate && !Number.isNaN(seasonStartDate.getTime()) && seasonStartDate > new Date());
+  const isPreDraftPhase = isSeasonUpcoming && !league?.draft_completed;
 
   // Special handling for My Squad component to pass the correct props
   const renderActiveComponent = () => {
     if (activeTab === 'my_squad' && mySquadId) {
       return <SquadView squadId={mySquadId} leagueContext={true} />;
+    }
+    if (activeTab === 'dashboard' && isPreDraftPhase) {
+      return <PreSeasonDraftPanel league={league} leagueId={leagueId} />;
     }
     return ActiveComponent && <ActiveComponent league={league} />;
   };
@@ -267,19 +182,6 @@ const LeagueView = () => {
       
       {/* This is where nested routes would render */}
       <Outlet />
-      
-      {/* Draft Order Modal */}
-      <DraftOrderModal 
-        isOpen={isDraftModalOpen} 
-        onClose={() => setIsDraftModalOpen(false)}
-        leagueId={leagueId}
-        players={players}
-        fetchDraftOrder={fetchDraftOrder}
-        saveDraftOrder={saveDraftOrder}
-        draftOrder={draftOrder}
-        isLoading={draftLoading}
-        saveError={draftSaveError}
-      />
     </div>
   );
 };

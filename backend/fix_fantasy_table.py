@@ -31,7 +31,7 @@ def fix_fantasy_event_table():
         cursor.execute("""
             SELECT COUNT(*) 
             FROM api_fantasyplayerevent fpe
-            LEFT JOIN api_iplplayerevent ipe ON fpe.match_event_id = ipe.id
+            LEFT JOIN api_playermatchevent ipe ON fpe.match_event_id = ipe.id
             WHERE ipe.id IS NULL;
         """)
         orphaned_count = cursor.fetchone()[0]
@@ -46,7 +46,7 @@ def fix_fantasy_event_table():
                     WHERE id IN (
                         SELECT fpe.id
                         FROM api_fantasyplayerevent fpe
-                        LEFT JOIN api_iplplayerevent ipe ON fpe.match_event_id = ipe.id
+                        LEFT JOIN api_playermatchevent ipe ON fpe.match_event_id = ipe.id
                         WHERE ipe.id IS NULL
                     );
                 """)

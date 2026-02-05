@@ -10,7 +10,7 @@ from .models import (
     FantasyLeague,
     FantasySquad,
     FantasyMatchEvent,
-    IPLMatch,
+    Match,
     FantasyStats,
     FantasyPlayerEvent  # <-- add this import
 )
@@ -46,13 +46,13 @@ def _get_squad_info(squad_id, league):
 
 def _get_match_info(match_id):
     try:
-        match = IPLMatch.objects.get(id=match_id)
+        match = Match.objects.get(id=match_id)
         return {
             "id": match.id,
             "number": match.match_number,
             "name": f"{match.team_1.short_name} vs {match.team_2.short_name} - Match {match.match_number}"
         }
-    except IPLMatch.DoesNotExist:
+    except Match.DoesNotExist:
         return {"id": match_id, "number": None, "name": "Unknown Match"}
 
 @api_view(['GET'])

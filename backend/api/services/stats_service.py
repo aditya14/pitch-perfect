@@ -3,7 +3,7 @@ import logging
 from django.db.models import Sum, Count, Q, F
 from ..models import (
     FantasyLeague, FantasySquad, 
-    FantasyMatchEvent, FantasyPlayerEvent, IPLMatch, FantasyStats
+    FantasyMatchEvent, FantasyPlayerEvent, Match, FantasyStats
 )
 
 logger = logging.getLogger("api.stats_service")
@@ -396,7 +396,7 @@ def recalculate_all_stats(stats, league_id):
         "squad_mvps": {}
     }
 
-    matches = IPLMatch.objects.filter(
+    matches = Match.objects.filter(
         fantasymatchevent__fantasy_squad__league_id=league_id,
         status__in=['COMPLETED', 'NO_RESULT']
     ).distinct().order_by('date')

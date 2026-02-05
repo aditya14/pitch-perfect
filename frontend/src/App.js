@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import { PlayerModalProvider } from './context/PlayerModalContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/auth/Login';
@@ -24,6 +24,7 @@ import useDocumentTitle from './hooks/useDocumentTitle';
 import { DraftModalProvider } from './context/DraftModalContext';
 import DraftModalContainer from './components/leagues/modals/DraftModalContainer';
 import MatchPreview from './components/matches/MatchPreview';
+import PlayerPage from './components/players/PlayerPage';
 
 // New component to redirect old squad URLs to league context
 const SquadRedirect = () => {
@@ -61,6 +62,7 @@ const SquadRedirect = () => {
 
 const AppContent = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [theme, setTheme] = useState(() => {
     // Prefer user profile theme if available, else localStorage, else system
     const storedTheme = localStorage.getItem('theme');
@@ -70,6 +72,16 @@ const AppContent = () => {
   });
   
   const [isStandalone, setIsStandalone] = useState(false);
+
+  const getLeagueIdFromPath = () => {
+    const match = location.pathname.match(/\/leagues\/([^\/]+)/);
+    if (!match) return null;
+    const candidate = match[1]?.toLowerCase();
+    if (candidate === 'join' || candidate === 'create') return null;
+    return match[1];
+  };
+
+  const isLeagueView = location.pathname.includes('/leagues/') && getLeagueIdFromPath();
 
   // Set default document title
   useDocumentTitle('Home');
@@ -192,11 +204,11 @@ const AppContent = () => {
             theme-transition 
             bg-white dark:bg-neutral-900 
             text-neutral-900 dark:text-white
-            ${user ? 'pt-16 md:mt-10' : 'min-h-screen'} // Add top padding when user exists
+            ${user ? `pt-16 ${isLeagueView ? 'md:mt-10' : ''}` : 'min-h-screen'}
             ${getBottomPadding()}
           `}
           style={{
-            minHeight: user ? 'calc(100vh - 40px)' : '100vh' // Adjust for header height
+            minHeight: user ? 'calc(100vh - 40px)' : '100vh'
           }}
         >
           <Routes>
@@ -328,6 +340,14 @@ const AppContent = () => {
               element={
                 user ? 
                 <MatchView /> : 
+                <Navigate to="/login" />
+              }
+            />
+            <Route 
+              path="/leagues/:leagueId/players/:playerId" 
+              element={
+                user ? 
+                <PlayerPage /> : 
                 <Navigate to="/login" />
               }
             />

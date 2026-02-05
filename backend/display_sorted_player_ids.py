@@ -9,7 +9,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 
 # Now import the models after Django setup
-from api.models import Season, PlayerTeamHistory, IPLPlayerEvent
+from api.models import Season, PlayerSeasonTeam, PlayerMatchEvent
 
 def get_sorted_player_ids(season_id):
     try:
@@ -18,7 +18,7 @@ def get_sorted_player_ids(season_id):
         print(f"Found season: {season.name}")
         
         # Get all players with team history for this season
-        player_histories = PlayerTeamHistory.objects.filter(season=season)
+        player_histories = PlayerSeasonTeam.objects.filter(season=season)
         print(f"Found {player_histories.count()} player team histories")
         
         # Get player info
@@ -51,7 +51,7 @@ def get_sorted_player_ids(season_id):
                 print(f"Processing player {idx}/{len(player_ids)}")
             
             # Get all events for this player 
-            events = IPLPlayerEvent.objects.filter(
+            events = PlayerMatchEvent.objects.filter(
                 player_id=player_id,
                 match__season__in=relevant_seasons
             )

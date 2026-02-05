@@ -251,12 +251,7 @@ export const SquadForm = ({
           <button
             type="submit"
             disabled={isProcessing}
-            className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium 
-                   text-white bg-neutral-600 hover:bg-neutral-700 
-                   dark:bg-neutral-700 dark:hover:bg-neutral-800
-                   transition-colors duration-200
-                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-neutral-800
-                   disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full lg-button lg-rounded-md py-2.5 px-4 text-sm font-semibold text-white inline-flex items-center justify-center transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isProcessing ? (
               <>

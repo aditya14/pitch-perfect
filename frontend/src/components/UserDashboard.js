@@ -1,59 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import TimelineComponent from './TimelineComponent';
-import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle, Plus, Zap, BarChart3, Star, Info } from 'lucide-react';
+import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle, Plus, Zap, BarChart3, Star } from 'lucide-react';
 import LoadingScreen from './elements/LoadingScreen';
 
-// Custom Tooltip Component following Liquid Glass design
-const Tooltip = ({ children, content, align = 'right' }) => {
-  const [isVisible, setIsVisible] = useState(false);
+const parseSeasonDate = (dateValue) => {
+  if (!dateValue) return null;
+  const date = new Date(dateValue);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 
-  // Responsive alignment logic
-  // On mobile, use align prop; on desktop, always right
-  // Tailwind's 'sm:' prefix is used for >=640px
-  // We'll use align prop for both, but parent sets it based on context
+const getSeasonBucket = (season, referenceDate = new Date()) => {
+  if (!season) return null;
 
-  let tooltipPositionClass = '';
-  if (align === 'left') {
-    tooltipPositionClass = 'left-0';
-  } else if (align === 'right') {
-    tooltipPositionClass = 'right-0';
+  const status = (season.status || '').toString().trim().toUpperCase();
+  const startDate = parseSeasonDate(season.start_date);
+  const endDate = parseSeasonDate(season.end_date);
+
+  // Future start date should always appear under Upcoming.
+  if (startDate && startDate > referenceDate) return 'UPCOMING';
+  if (status === 'UPCOMING') return 'UPCOMING';
+
+  if (status === 'COMPLETED') return 'COMPLETED';
+  if (endDate && endDate < referenceDate) return 'COMPLETED';
+
+  if (status === 'ONGOING') return 'ONGOING';
+  if (startDate && startDate <= referenceDate && (!endDate || endDate >= referenceDate)) {
+    return 'ONGOING';
   }
 
-  return (
-    <div 
-      className="relative inline-block"
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-    >
-      {children}
-      {isVisible && (
-        <div
-          className={`absolute top-full ${tooltipPositionClass} mt-1 z-[100] pointer-events-none lg-float`}
-          style={{width: 'max-content', maxWidth: 320}}
-        >
-          <div className="lg-glass lg-rounded-md px-4 py-3 shadow-2xl border border-primary-400/40 dark:border-primary-400/30 w-[280px] lg-glow backdrop-blur-2xl relative">
-            <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-slate-900 dark:text-white font-medium leading-relaxed">
-                {content}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return status || null;
 };
 
 const LeagueCard = ({ league }) => {
   const navigate = useNavigate();
   
   // Check if season is upcoming
-  const isUpcomingSeason = league.season?.status === "UPCOMING";
+  const isUpcomingSeason = getSeasonBucket(league.season) === 'UPCOMING';
   
   // Format start date if available
   const formatDate = (dateString) => {
@@ -68,10 +54,15 @@ const LeagueCard = ({ league }) => {
   
   // Calculate days until season starts
   const getDaysUntilStart = () => {
-    if (!league.season?.start_date) return null;
+    const startDate = parseSeasonDate(league.season?.start_date);
+    if (!startDate) return null;
+
     const today = new Date();
-    const startDate = new Date(league.season.start_date);
-    const diffTime = startDate - today;
+    today.setHours(0, 0, 0, 0);
+    const normalizedStartDate = new Date(startDate);
+    normalizedStartDate.setHours(0, 0, 0, 0);
+
+    const diffTime = normalizedStartDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
@@ -129,11 +120,15 @@ const LeagueCard = ({ league }) => {
                   <Calendar className="h-5 w-5 text-primary-600 dark:text-primary-400 mr-3 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
-                      Season starts Mar 22, 2025
+                      Season starts {formatDate(league.season?.start_date)}
                     </p>
                     {daysUntilStart !== null && (
                       <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                        Less than a day to go!
+                        {daysUntilStart > 1
+                          ? `${daysUntilStart} days to go`
+                          : daysUntilStart === 1
+                            ? '1 day to go'
+                            : 'Starts today'}
                       </p>
                     )}
                   </div>
@@ -142,19 +137,19 @@ const LeagueCard = ({ league }) => {
               
               {/* Draft Status */}
               <div className={`lg-glass-tertiary lg-rounded-md p-4 ${
-                league.draft_completed ? 'border-green-400/20' : 'border-amber-400/20'
+                league.draft_completed ? 'border-green-400/20' : 'border-green-400/20'
               }`}>
                 <div className="flex items-start">
                   {league.draft_completed ? (
                     <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                   ) : (
-                    <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-400 mr-3 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                   )}
                   <div>
                     <p className={`text-sm font-medium ${
-                      league.draft_completed ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'
+                      league.draft_completed ? 'text-green-700 dark:text-green-300' : 'text-green-700 dark:text-green-300'
                     }`}>
-                      {league.draft_completed ? "Draft completed" : "Draft pending"}
+                      {league.draft_completed ? "Draft completed" : "Draft open"}
                     </p>
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                       {league.draft_completed ? 
@@ -352,6 +347,7 @@ const LeagueCard = ({ league }) => {
 
 const UserDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [leagues, setLeagues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -368,6 +364,17 @@ const UserDashboard = () => {
     try {
       const response = await api.get('/leagues/my_leagues/');
       console.log('Leagues:', response.data);
+
+      const now = new Date();
+      const hasOngoingLeagues = response.data.some((league) => getSeasonBucket(league.season, now) === 'ONGOING');
+      const hasUpcomingLeagues = response.data.some((league) => getSeasonBucket(league.season, now) === 'UPCOMING');
+
+      if (!hasOngoingLeagues && hasUpcomingLeagues) {
+        setSeasonFilter('UPCOMING');
+      } else {
+        setSeasonFilter('ONGOING');
+      }
+
       setLeagues(response.data);
       setLoading(false);
     } catch (error) {
@@ -377,18 +384,17 @@ const UserDashboard = () => {
     }
   };
 
-  // Group leagues by season status
-  const ongoingLeagues = leagues.filter(l => l.season?.status === "ONGOING");
-  const upcomingLeagues = leagues.filter(l => l.season?.status === "UPCOMING");
-  const completedLeagues = leagues.filter(l => l.season?.status === "COMPLETED");
+  // Group leagues by season state (status + dates)
+  const now = new Date();
+  const ongoingLeagues = leagues.filter((league) => getSeasonBucket(league.season, now) === 'ONGOING');
+  const upcomingLeagues = leagues.filter((league) => getSeasonBucket(league.season, now) === 'UPCOMING');
+  const completedLeagues = leagues.filter((league) => getSeasonBucket(league.season, now) === 'COMPLETED');
 
   // Filtered leagues for current tab
   let filteredLeagues = [];
   if (seasonFilter === 'ONGOING') filteredLeagues = ongoingLeagues;
   if (seasonFilter === 'UPCOMING') filteredLeagues = upcomingLeagues;
   if (seasonFilter === 'COMPLETED') filteredLeagues = completedLeagues;
-
-  const DISABLED_MESSAGE = "Pitch Perfect will return for the 2026 Men's T20 World Cup";
 
   if (loading) {
     return <LoadingScreen message="Loading your leagues..." />;
@@ -440,53 +446,27 @@ const UserDashboard = () => {
                 <div className="relative z-30">
                   {/* Mobile inline */}
                   <div className="flex flex-row gap-2 sm:hidden">
-                    <Tooltip content={DISABLED_MESSAGE} align="left">
-                      <button
-                        disabled
-                        className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white opacity-50 cursor-not-allowed transition-all duration-300"
-                      >
-                        <div className="flex items-center justify-center">
-                          Join League
-                          <ChevronRight className="w-5 h-5 ml-2" />
-                        </div>
-                      </button>
-                    </Tooltip>
-                    <Tooltip content={DISABLED_MESSAGE} align="right">
-                      <button
-                        disabled
-                        className="lg-button-secondary lg-rounded-md px-6 py-3 font-semibold opacity-50 cursor-not-allowed transition-all duration-300"
-                      >
-                        <div className="flex items-center justify-center">
-                          Create League
-                          <ChevronRight className="w-5 h-5 ml-2" />
-                        </div>
-                      </button>
-                    </Tooltip>
+                    <button
+                      onClick={() => navigate('/leagues/join')}
+                      className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white transition-all duration-300"
+                    >
+                      <div className="flex items-center justify-center">
+                        Join League
+                        <ChevronRight className="w-5 h-5 ml-2" />
+                      </div>
+                    </button>
                   </div>
                   {/* Desktop spaced */}
                   <div className="hidden sm:flex flex-col sm:flex-row gap-3">
-                    <Tooltip content={DISABLED_MESSAGE} align="right">
-                      <button
-                        disabled
-                        className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white opacity-50 cursor-not-allowed transition-all duration-300"
-                      >
-                        <div className="flex items-center justify-center">
-                          Join League
-                          <ChevronRight className="w-5 h-5 ml-2" />
-                        </div>
-                      </button>
-                    </Tooltip>
-                    <Tooltip content={DISABLED_MESSAGE} align="right">
-                      <button
-                        disabled
-                        className="lg-button-secondary lg-rounded-md px-6 py-3 font-semibold opacity-50 cursor-not-allowed transition-all duration-300"
-                      >
-                        <div className="flex items-center justify-center">
-                          Create League
-                          <ChevronRight className="w-5 h-5 ml-2" />
-                        </div>
-                      </button>
-                    </Tooltip>
+                    <button
+                      onClick={() => navigate('/leagues/join')}
+                      className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white transition-all duration-300"
+                    >
+                      <div className="flex items-center justify-center">
+                        Join League
+                        <ChevronRight className="w-5 h-5 ml-2" />
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -522,7 +502,7 @@ const UserDashboard = () => {
               {/* Feature highlights */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto mb-8 px-4">
                 {[
-                  { icon: Users, title: "Draft & Trade", desc: "Build your squad strategically" },
+                  { icon: Users, title: "Draft", desc: "Build your squad strategically" },
                   { icon: BarChart3, title: "Boosted Roles", desc: "Get the most out of your players" },
                   { icon: Star, title: "Season-Long", desc: "Compete all season long" }
                 ].map((feature, index) => (
@@ -535,26 +515,14 @@ const UserDashboard = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center items-center relative z-30">
-                <Tooltip content={DISABLED_MESSAGE}>
-                  <button
-                    disabled
-                    className="lg-button lg-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center opacity-50 cursor-not-allowed"
-                  >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Join Your First League
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </button>
-                </Tooltip>
-                <Tooltip content={DISABLED_MESSAGE}>
-                  <button
-                    disabled
-                    className="lg-button-secondary lg-rounded-md px-8 py-4 font-semibold inline-flex items-center opacity-50 cursor-not-allowed"
-                  >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Create League
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </button>
-                </Tooltip>
+                <button
+                  onClick={() => navigate('/leagues/join')}
+                  className="lg-button lg-rounded-md px-8 py-4 font-semibold text-white inline-flex items-center"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Join Your First League
+                  <ChevronRight className="w-5 h-5 ml-2" />
+                </button>
               </div>
             </div>
           </div>
@@ -623,7 +591,7 @@ const UserDashboard = () => {
                       {seasonFilter === 'COMPLETED' && "No Completed Seasons"}
                     </h3>
                     <p className="text-slate-600 dark:text-slate-400 text-base max-w-xs mx-auto mb-6">
-                      {seasonFilter === 'ONGOING' && "You are not participating in any ongoing seasons. Join or create a league to get started!"}
+                      {seasonFilter === 'ONGOING' && "You are not participating in any ongoing seasons. Join a league to get started!"}
                       {seasonFilter === 'UPCOMING' && "There are no upcoming seasons for your leagues. Check back soon or join a new league!"}
                       {seasonFilter === 'COMPLETED' && "You haven't completed any seasons yet. Play through a season to see your results here!"}
                     </p>

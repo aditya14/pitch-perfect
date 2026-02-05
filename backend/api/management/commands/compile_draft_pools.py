@@ -1,6 +1,6 @@
 # api/management/commands/compile_draft_pools.py
 from django.core.management.base import BaseCommand
-from api.models import DraftWindow, FantasyLeague, FantasySquad, IPLPlayer
+from api.models import DraftWindow, FantasyLeague, FantasySquad, Player
 from api.services.draft_window_service import build_draft_pool, resolve_draft_window
 
 class Command(BaseCommand):

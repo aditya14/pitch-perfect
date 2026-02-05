@@ -1,6 +1,6 @@
 # management/commands/process_trades.py
 from django.core.management.base import BaseCommand
-from api.models import FantasyTrade, IPLMatch
+from api.models import FantasyTrade, Match
 from api.views import process_trade
 
 class Command(BaseCommand):
@@ -8,7 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Check if there's a live match
-        live_match = IPLMatch.objects.filter(status='LIVE').exists()
+        live_match = Match.objects.filter(status='LIVE').exists()
         
         if not live_match:
             # Process all accepted trades

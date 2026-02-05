@@ -12,6 +12,33 @@ import UpdatePointsButton from './UpdatePointsButton';
 // Flag to show/hide mid-season draft button
 const SHOW_MID_SEASON_DRAFT = new Date() <= new Date(Date.UTC(2025, 3, 22, 13, 0, 0));
 
+const parseSeasonDate = (dateValue) => {
+  if (!dateValue) return null;
+  const date = new Date(dateValue);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getSeasonBucket = (season, referenceDate = new Date()) => {
+  if (!season) return null;
+
+  const status = (season.status || '').toString().trim().toUpperCase();
+  const startDate = parseSeasonDate(season.start_date);
+  const endDate = parseSeasonDate(season.end_date);
+
+  if (startDate && startDate > referenceDate) return 'UPCOMING';
+  if (status === 'UPCOMING') return 'UPCOMING';
+
+  if (status === 'COMPLETED') return 'COMPLETED';
+  if (endDate && endDate < referenceDate) return 'COMPLETED';
+
+  if (status === 'ONGOING') return 'ONGOING';
+  if (startDate && startDate <= referenceDate && (!endDate || endDate >= referenceDate)) {
+    return 'ONGOING';
+  }
+
+  return status || null;
+};
+
 const Header = ({ theme, onThemeChange }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -34,7 +61,10 @@ const Header = ({ theme, onThemeChange }) => {
   // Extract leagueId from URL path pattern
   const getLeagueIdFromPath = () => {
     const match = location.pathname.match(/\/leagues\/([^\/]+)/);
-    return match ? match[1] : null;
+    if (!match) return null;
+    const candidate = match[1]?.toLowerCase();
+    if (candidate === 'join' || candidate === 'create') return null;
+    return match[1];
   };
 
   // Extract squadId from URL path pattern (for legacy routes)
@@ -74,7 +104,11 @@ const Header = ({ theme, onThemeChange }) => {
       if (user) {
         try {
           const response = await api.get('/leagues/my_leagues/');
-          setUserLeagues(response.data || []);
+          const activeLeagues = (response.data || []).filter((league) => {
+            const seasonBucket = getSeasonBucket(league.season, new Date());
+            return seasonBucket === 'ONGOING' || seasonBucket === 'UPCOMING';
+          });
+          setUserLeagues(activeLeagues);
         } catch (err) {
           console.error('Failed to fetch user leagues:', err);
           setUserLeagues([]);
@@ -199,17 +233,35 @@ const Header = ({ theme, onThemeChange }) => {
 
   const activeTab = getActiveTab();
 
-  // League navigation tabs - updated to include My Squad
-  const leagueTabs = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'matches', label: 'Matches' },
-    // Only show My Squad tab if user has a squad in this league
-    ...(leagueInfo?.my_squad ? [{ id: 'my_squad', label: 'My Squad' }] : []),
-    { id: 'squads', label: 'Squads' },
-    { id: 'table', label: 'Standings' },
-    { id: 'stats', label: 'Stats' },
-    // { id: 'trades', label: 'Trades' },
-  ];
+  const getIsPreDraftPhase = () => {
+    if (!leagueInfo?.season) return false;
+    if (leagueInfo?.draft_completed) return false;
+
+    const status = (leagueInfo.season.status || '').toString().toUpperCase();
+    const startDate = leagueInfo.season.start_date ? new Date(leagueInfo.season.start_date) : null;
+    const hasFutureStart = startDate && !Number.isNaN(startDate.getTime()) && startDate > new Date();
+
+    return status === 'UPCOMING' || hasFutureStart;
+  };
+
+  const isPreDraftPhase = getIsPreDraftPhase();
+
+  // League navigation tabs
+  const leagueTabs = isPreDraftPhase
+    ? [
+        { id: 'dashboard', label: 'Draft' },
+        { id: 'matches', label: 'Matches' },
+        { id: 'table', label: 'Standings' },
+      ]
+    : [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'matches', label: 'Matches' },
+        ...(leagueInfo?.my_squad ? [{ id: 'my_squad', label: 'My Squad' }] : []),
+        { id: 'squads', label: 'Squads' },
+        { id: 'table', label: 'Standings' },
+        { id: 'stats', label: 'Stats' },
+        // { id: 'trades', label: 'Trades' },
+      ];
   
   // Handle tab change
   const handleTabChange = (tabId) => {
@@ -299,11 +351,11 @@ const Header = ({ theme, onThemeChange }) => {
                   ) : isLeagueView && leagueInfo ? (
                     // Static League Info
                     <div className="lg-glass-tertiary lg-rounded-md p-3 min-w-0 max-w-[60vw] sm:max-w-xs overflow-x-auto" style={{whiteSpace: 'nowrap'}}>
-                      <div className="text-white font-bold font-caption text-sm leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
+                      <div className="text-slate-900 dark:text-white font-bold font-caption text-sm leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                         {leagueInfo.name}
                       </div>
                       {leagueInfo.season && (
-                        <div className="text-xs text-primary-300 leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
+                        <div className="text-xs text-slate-600 dark:text-primary-300 leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                           {leagueInfo.season.name}
                         </div>
                       )}
@@ -311,11 +363,11 @@ const Header = ({ theme, onThemeChange }) => {
                   ) : isSquadView && squadInfo ? (
                     // Squad Info (for legacy route)
                     <div className="lg-glass-tertiary lg-rounded-md p-3 min-w-0 max-w-[60vw] sm:max-w-xs overflow-x-auto" style={{whiteSpace: 'nowrap'}}>
-                      <div className="text-white font-medium text-sm leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
+                      <div className="text-slate-900 dark:text-white font-medium text-sm leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                         {squadInfo.name}
                       </div>
                       {squadInfo.league_name && (
-                        <div className="text-xs text-primary-300 leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
+                        <div className="text-xs text-slate-600 dark:text-primary-300 leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                           {squadInfo.league_name}
                         </div>
                       )}

@@ -7,7 +7,7 @@ from django.shortcuts import redirect, render
 from django.contrib import messages
 import json
 import random
-from .models import FantasyLeague, FantasySquad, FantasyDraft, IPLPlayer, DraftWindow
+from .models import FantasyLeague, FantasySquad, FantasyDraft, Player, DraftWindow
 from api.services.draft_window_service import (
     resolve_draft_window,
     build_draft_pool,
@@ -15,9 +15,87 @@ from api.services.draft_window_service import (
 )
 import logging
 from django.db import transaction
-from django.db.models import Avg
+from django.db.models import Avg, Count, Q
 
 logger = logging.getLogger(__name__)
+
+ROLE_DRAFT_CONFIG = (
+    (FantasyDraft.Role.BAT, False),
+    (FantasyDraft.Role.WK, True),
+    (FantasyDraft.Role.ALL, True),
+    (FantasyDraft.Role.BOWL, False),
+)
+
+
+def build_role_default_order(league, role):
+    role_player_ids = list(
+        Player.objects.filter(
+            playerseasonteam__season=league.season,
+            role=role,
+        ).distinct().values_list('id', flat=True)
+    )
+    role_player_set = set(role_player_ids)
+
+    configured_default = []
+    configured_default_set = set()
+    default_payload = league.season.default_draft_order if league.season else []
+    if isinstance(default_payload, list):
+        raw_default_ids = []
+        role_matched = False
+        for item in default_payload:
+            if isinstance(item, dict):
+                item_role = str(item.get('role', '')).upper()
+                if item_role == role:
+                    role_matched = True
+                    if isinstance(item.get('order'), list):
+                        raw_default_ids.extend(item['order'])
+            elif not role_matched:
+                # Backward compatible support for legacy flat default order lists.
+                raw_default_ids.append(item)
+
+        for raw_player_id in raw_default_ids:
+            try:
+                player_id = int(raw_player_id)
+            except (TypeError, ValueError):
+                continue
+            if player_id in role_player_set and player_id not in configured_default_set:
+                configured_default.append(player_id)
+                configured_default_set.add(player_id)
+
+    if configured_default:
+        default_order = configured_default + [
+            player_id for player_id in role_player_ids if player_id not in configured_default_set
+        ]
+    else:
+        ranked_players = Player.objects.filter(
+            id__in=role_player_ids,
+            role=role,
+        ).annotate(
+            matches=Count('playermatchevent', filter=Q(playermatchevent__match__season=league.season)),
+            avg_points=Avg('playermatchevent__total_points_all', filter=Q(playermatchevent__match__season=league.season)),
+        ).order_by('-avg_points', 'name')
+        ranked_ids = list(ranked_players.values_list('id', flat=True))
+        ranked_set = set(ranked_ids)
+        default_order = ranked_ids + [player_id for player_id in role_player_ids if player_id not in ranked_set]
+
+    return default_order, role_player_set
+
+
+def normalize_role_order(existing_order, eligible_player_set, default_order):
+    existing_order = existing_order if isinstance(existing_order, list) else []
+    normalized_existing = []
+    seen_existing = set()
+    for raw_player_id in existing_order:
+        try:
+            player_id = int(raw_player_id)
+        except (TypeError, ValueError):
+            continue
+        if player_id in eligible_player_set and player_id not in seen_existing:
+            normalized_existing.append(player_id)
+            seen_existing.add(player_id)
+    return normalized_existing + [
+        player_id for player_id in default_order if player_id not in seen_existing
+    ]
 
 @staff_member_required
 @require_POST
@@ -76,9 +154,9 @@ def run_draft_process(league_id, dry_run=False):
         if not dry_run:
             league.save()
     
-    # Get all eligible players
-    eligible_players = league.season.default_draft_order
-    total_players = len(eligible_players)
+    total_players = Player.objects.filter(
+        playerseasonteam__season=league.season
+    ).distinct().count()
     
     # Run the draft - assign all available players
     draft_results = run_complete_draft(
@@ -107,79 +185,111 @@ def run_draft_process(league_id, dry_run=False):
     }
 
 def run_complete_draft(league, squads):
-    """Run the snake draft for the league and assign ALL players"""
-    # Get all draft orders
-    draft_orders = {}
-    for squad in squads:
-        draft_obj = FantasyDraft.objects.get(league=league, squad=squad, type='Pre-Season')
-        draft_orders[squad.id] = list(draft_obj.order)
-    
-    # Convert snake_draft_order to a list if it's not already
-    snake_order = list(league.snake_draft_order)
-    
-    # Track which players have been drafted
-    drafted_players = set()
-    
-    # Store the results of the draft
-    results = {squad.id: [] for squad in squads}
-    
-    # Get all eligible players
-    all_player_ids = set()
-    for squad_id, order in draft_orders.items():
-        all_player_ids.update(order)
-    
-    # Continue drafting until all players have been assigned
-    round_num = 0
-    while len(drafted_players) < len(all_player_ids):
-        # In even rounds, go forward
-        if round_num % 2 == 0:
-            round_order = snake_order
-        # In odd rounds, go backward (snake draft)
-        else:
-            round_order = list(reversed(snake_order))
-        
-        # Each squad picks a player
-        for squad_id in round_order:
-            # Find the highest ranked available player for this squad
-            available_player = None
-            for player_id in draft_orders[squad_id]:
-                if player_id not in drafted_players:
-                    available_player = player_id
-                    break
-            
-            # If no available player is found for this squad, continue to the next squad
-            if available_player is None:
-                continue
-            
-            # Add the player to the squad's results
-            results[squad_id].append(available_player)
-            # Mark the player as drafted
-            drafted_players.add(available_player)
-            
-            # If all players have been drafted, we're done
-            if len(drafted_players) >= len(all_player_ids):
-                break
-        
-        round_num += 1
-    
-    return results
+    """Run role-based snake drafts for the league and assign all players."""
+    squad_ids = list(squads.values_list('id', flat=True))
+    squad_id_set = set(squad_ids)
+    base_snake_order = [sid for sid in (league.snake_draft_order or []) if sid in squad_id_set]
+    base_snake_order.extend([sid for sid in squad_ids if sid not in base_snake_order])
 
-def ensure_draft_orders(league, squads):
-    """Ensure all squads have a draft order object."""
-    for squad in squads:
-        draft_order = FantasyDraft.objects.filter(league=league, squad=squad, type='Pre-Season').first()
-        
-        if not draft_order:
-            # Use default order from season
-            default_order = list(league.season.default_draft_order)
-            
-            # Create the draft order object
-            FantasyDraft.objects.create(
+    results = {squad.id: [] for squad in squads}
+
+    for role, reverse_base_order in ROLE_DRAFT_CONFIG:
+        default_order, eligible_role_players = build_role_default_order(league, role)
+        if not eligible_role_players:
+            continue
+
+        role_draft_orders = {}
+        for squad in squads:
+            draft_obj = FantasyDraft.objects.filter(
                 league=league,
                 squad=squad,
                 type='Pre-Season',
-                order=default_order
+                role=role,
+            ).first()
+            if not draft_obj:
+                draft_obj = FantasyDraft.objects.create(
+                    league=league,
+                    squad=squad,
+                    type='Pre-Season',
+                    role=role,
+                    order=default_order,
+                )
+
+            normalized_order = normalize_role_order(
+                draft_obj.order,
+                eligible_role_players,
+                default_order,
             )
+            if normalized_order != draft_obj.order:
+                draft_obj.order = normalized_order
+                draft_obj.save(update_fields=['order'])
+
+            role_draft_orders[squad.id] = normalized_order
+
+        drafted_role_players = set()
+        round_num = 0
+        role_base_order = list(reversed(base_snake_order)) if reverse_base_order else list(base_snake_order)
+
+        while len(drafted_role_players) < len(eligible_role_players):
+            round_order = role_base_order if round_num % 2 == 0 else list(reversed(role_base_order))
+            picked_in_round = False
+
+            for squad_id in round_order:
+                available_player = next(
+                    (
+                        player_id
+                        for player_id in role_draft_orders.get(squad_id, [])
+                        if player_id in eligible_role_players and player_id not in drafted_role_players
+                    ),
+                    None,
+                )
+                if available_player is None:
+                    continue
+
+                results[squad_id].append(available_player)
+                drafted_role_players.add(available_player)
+                picked_in_round = True
+
+                if len(drafted_role_players) >= len(eligible_role_players):
+                    break
+
+            if not picked_in_round:
+                break
+
+            round_num += 1
+
+    return results
+
+def ensure_draft_orders(league, squads):
+    """Ensure all squads have role-specific pre-season draft order objects."""
+    for role, _ in ROLE_DRAFT_CONFIG:
+        default_order, eligible_role_players = build_role_default_order(league, role)
+        for squad in squads:
+            draft_order = FantasyDraft.objects.filter(
+                league=league,
+                squad=squad,
+                type='Pre-Season',
+                role=role,
+            ).first()
+
+            if not draft_order:
+                FantasyDraft.objects.create(
+                    league=league,
+                    squad=squad,
+                    type='Pre-Season',
+                    role=role,
+                    order=default_order,
+                )
+                continue
+
+            normalized_order = normalize_role_order(
+                draft_order.order,
+                eligible_role_players,
+                default_order,
+            )
+            if normalized_order != draft_order.order:
+                draft_order.order = normalized_order
+                draft_order.save(update_fields=['order'])
 
 def generate_draft_order(squads):
     """Generate a random draft order using squad IDs."""
@@ -377,12 +487,12 @@ def run_mid_season_draft_process(league_id, dry_run=False, verbose=False):
             squad_preferences[squad.id] = preferences
         else:
             # Create a default order based on points
-            default_order = list(IPLPlayer.objects.filter(
+            default_order = list(Player.objects.filter(
                 id__in=draft_pool
             ).exclude(
                 id__in=retained_players.get(squad.id, [])
             ).annotate(
-                avg_points=Avg('iplplayerevent__total_points_all')
+                avg_points=Avg('playermatchevent__total_points_all')
             ).order_by('-avg_points').values_list('id', flat=True))
             
             squad_preferences[squad.id] = default_order
@@ -418,7 +528,7 @@ def run_mid_season_draft_process(league_id, dry_run=False, verbose=False):
             
             if verbose:
                 squad = FantasySquad.objects.get(id=squad_id)
-                player = IPLPlayer.objects.get(id=selected_player)
+                player = Player.objects.get(id=selected_player)
                 print(f"Pick {pick_num+1}: {squad.name} selects {player.name}")
         else:
             if verbose:

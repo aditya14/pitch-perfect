@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from multiselectfield import MultiSelectField
@@ -55,8 +56,6 @@ class Season(TimeStampedModel):
         Competition,
         on_delete=models.CASCADE,
         related_name='seasons',
-        null=True,
-        blank=True,
     )
     year = models.IntegerField()
     name = models.CharField(max_length=100)  # e.g. "TATA IPL 2024"
@@ -101,7 +100,7 @@ class SeasonPhase(models.Model):
     def __str__(self):
         return f"{self.season} - {self.label}"
 
-class IPLTeam(SoftDeleteModel, TimeStampedModel):
+class Team(SoftDeleteModel, TimeStampedModel):
     name = models.CharField(max_length=100)
     short_name = models.CharField(max_length=5)  # e.g. "RCB", "CSK"
     home_ground = models.CharField(max_length=100)
@@ -111,14 +110,23 @@ class IPLTeam(SoftDeleteModel, TimeStampedModel):
     logo = models.ImageField(upload_to='ipl_teams/', null=True, blank=True)
     other_names = models.JSONField(default=list)  # historical names
 
+    # A team can participate in many competition families (IPL, ODI WC, bilateral series, etc.).
+    competitions = models.ManyToManyField(
+        Competition,
+        through='CompetitionTeam',
+        related_name='registered_teams',
+        blank=True,
+    )
+
     # M2M relationship with seasons through an intermediate table
     seasons = models.ManyToManyField(
         Season,
-        through='TeamSeason',
+        through='SeasonTeam',
         related_name='teams'
     )
 
     class Meta:
+        db_table = 'api_iplteam'
         ordering = ['name']
         indexes = [
             models.Index(fields=['short_name']),
@@ -128,14 +136,49 @@ class IPLTeam(SoftDeleteModel, TimeStampedModel):
     def __str__(self):
         return self.name
 
-class TeamSeason(TimeStampedModel):
-    team = models.ForeignKey(IPLTeam, on_delete=models.CASCADE)
+
+class CompetitionTeam(TimeStampedModel):
+    competition = models.ForeignKey(
+        Competition,
+        on_delete=models.CASCADE,
+        related_name='team_memberships',
+    )
+    team = models.ForeignKey(
+        Team,
+        on_delete=models.CASCADE,
+        related_name='competition_memberships',
+    )
+
+    class Meta:
+        unique_together = [('competition', 'team')]
+        ordering = ['competition__name', 'team__name']
+        indexes = [
+            models.Index(fields=['competition', 'team']),
+            models.Index(fields=['team']),
+        ]
+
+    def __str__(self):
+        return f"{self.team} in {self.competition}"
+
+
+class SeasonTeam(TimeStampedModel):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     season = models.ForeignKey(Season, on_delete=models.CASCADE)
 
     class Meta:
+        db_table = 'api_teamseason'
         unique_together = ['team', 'season']
 
-class IPLPlayer(SoftDeleteModel, TimeStampedModel):
+    def save(self, *args, **kwargs):
+        # Keep competition-level membership in sync when season participation is created.
+        if self.season_id and self.team_id and self.season.competition_id:
+            CompetitionTeam.objects.get_or_create(
+                competition=self.season.competition,
+                team=self.team,
+            )
+        super().save(*args, **kwargs)
+
+class Player(SoftDeleteModel, TimeStampedModel):
     class Role(models.TextChoices):
         BATSMAN = 'BAT', _('Batter')
         BOWLER = 'BOWL', _('Bowler')
@@ -175,14 +218,15 @@ class IPLPlayer(SoftDeleteModel, TimeStampedModel):
     img = models.ImageField(upload_to='players/', null=True, blank=True)
     cricdata_id = models.CharField(max_length=60, blank=True, null=True)
 
-    # Current team relationship handled through PlayerTeamHistory
+    # Current team relationship handled through PlayerSeasonTeam
     teams = models.ManyToManyField(
-        IPLTeam,
-        through='PlayerTeamHistory',
+        Team,
+        through='PlayerSeasonTeam',
         related_name='players'
     )
 
     class Meta:
+        db_table = 'api_iplplayer'
         ordering = ['name']
         indexes = [
             models.Index(fields=['role']),
@@ -195,24 +239,30 @@ class IPLPlayer(SoftDeleteModel, TimeStampedModel):
 
     @property
     def current_team(self):
-        return self.playerteamhistory_set.filter(
+        return self.playerseasonteam_set.filter(
             season__status__in=[Season.Status.UPCOMING, Season.Status.ONGOING]
         ).first()
 
-class PlayerTeamHistory(TimeStampedModel):
-    player = models.ForeignKey(IPLPlayer, on_delete=models.CASCADE)
-    team = models.ForeignKey(IPLTeam, on_delete=models.CASCADE)
+class PlayerSeasonTeam(TimeStampedModel):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     season = models.ForeignKey(Season, on_delete=models.CASCADE)
     points = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     class Meta:
+        db_table = 'api_playerteamhistory'
         unique_together = ['player', 'season']
         ordering = ['-season__year']
         indexes = [
             models.Index(fields=['player', 'season']),
         ]
 
-class IPLMatch(TimeStampedModel):
+    def clean(self):
+        if self.team_id and self.season_id:
+            if not SeasonTeam.objects.filter(team_id=self.team_id, season_id=self.season_id).exists():
+                raise ValidationError({'team': _('Team is not registered for this season.')})
+
+class Match(TimeStampedModel):
     class Status(models.TextChoices):
         SCHEDULED = 'SCHEDULED', _('Scheduled')
         LIVE = 'LIVE', _('Live')
@@ -222,6 +272,8 @@ class IPLMatch(TimeStampedModel):
 
     class Stage(models.TextChoices):
         LEAGUE = 'LEAGUE', _('League')
+        GROUP = 'GROUP', _('Group')
+        SUPER_SIXES = 'SUPER_SIXES', _('Super Sixes')
         QUALIFIER = 'QUALIFIER', _('Qualifier')
         ELIMINATOR = 'ELIMINATOR', _('Eliminator')
         SEMI_FINAL = 'SEMI_FINAL', _('Semi Final')
@@ -255,13 +307,13 @@ class IPLMatch(TimeStampedModel):
         related_name='matches'
     )
     team_1 = models.ForeignKey(
-        IPLTeam,
+        Team,
         on_delete=models.CASCADE,
         related_name='home_matches',
         null=True, blank=True
     )
     team_2 = models.ForeignKey(
-        IPLTeam,
+        Team,
         on_delete=models.CASCADE,
         related_name='away_matches',
         null=True, blank=True
@@ -274,7 +326,7 @@ class IPLMatch(TimeStampedModel):
         default=Status.SCHEDULED
     )
     toss_winner = models.ForeignKey(
-        IPLTeam,
+        Team,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -287,7 +339,7 @@ class IPLMatch(TimeStampedModel):
         blank=True
     )
     winner = models.ForeignKey(
-        IPLTeam,
+        Team,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -302,7 +354,7 @@ class IPLMatch(TimeStampedModel):
     )
 
     player_of_match = models.ForeignKey(
-        IPLPlayer,
+        Player,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -321,12 +373,52 @@ class IPLMatch(TimeStampedModel):
 
 
     class Meta:
+        db_table = 'api_iplmatch'
         unique_together = ['season', 'match_number']
         ordering = ['season', 'match_number']
         indexes = [
             models.Index(fields=['date']),
             models.Index(fields=['status']),
         ]
+
+    def clean(self):
+        errors = {}
+
+        if self.team_1_id and self.team_2_id and self.team_1_id == self.team_2_id:
+            errors['team_2'] = _('team_2 must be different from team_1.')
+
+        if self.season_phase_id and self.season_phase.season_id != self.season_id:
+            errors['season_phase'] = _('season_phase must belong to the selected season.')
+
+        season_team_ids = {
+            team_id
+            for team_id in [self.team_1_id, self.team_2_id, self.toss_winner_id, self.winner_id]
+            if team_id is not None
+        }
+        if self.season_id and season_team_ids:
+            registered_team_ids = set(
+                SeasonTeam.objects.filter(
+                    season_id=self.season_id,
+                    team_id__in=season_team_ids,
+                ).values_list('team_id', flat=True)
+            )
+            for field_name, team_id in (
+                ('team_1', self.team_1_id),
+                ('team_2', self.team_2_id),
+                ('toss_winner', self.toss_winner_id),
+                ('winner', self.winner_id),
+            ):
+                if team_id and team_id not in registered_team_ids:
+                    errors[field_name] = _('Team is not registered for this season.')
+
+        valid_match_team_ids = {team_id for team_id in [self.team_1_id, self.team_2_id] if team_id}
+        if self.toss_winner_id and valid_match_team_ids and self.toss_winner_id not in valid_match_team_ids:
+            errors['toss_winner'] = _('toss_winner must be one of team_1/team_2.')
+        if self.winner_id and valid_match_team_ids and self.winner_id not in valid_match_team_ids:
+            errors['winner'] = _('winner must be one of team_1/team_2.')
+
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self):
         if self.team_1:
@@ -341,16 +433,12 @@ class IPLMatch(TimeStampedModel):
         
         return f"{team_1} vs {team_2} - Match {self.match_number}, {self.season}"
 
-from django.db import models
-from django.core.validators import MinValueValidator
-from decimal import Decimal
-
-class IPLPlayerEvent(models.Model):
+class PlayerMatchEvent(models.Model):
     # Foreign Key Relationships
-    player = models.ForeignKey('IPLPlayer', on_delete=models.CASCADE)
-    match = models.ForeignKey('IPLMatch', on_delete=models.CASCADE)
-    for_team = models.ForeignKey('IPLTeam', on_delete=models.CASCADE, related_name='home_events')
-    vs_team = models.ForeignKey('IPLTeam', on_delete=models.CASCADE, related_name='away_events')
+    player = models.ForeignKey('Player', on_delete=models.CASCADE)
+    match = models.ForeignKey('Match', on_delete=models.CASCADE)
+    for_team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='home_events')
+    vs_team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='away_events')
     
     # Batting Stats
     bat_runs = models.IntegerField(default=0, validators=[MinValueValidator(0)], blank=True, null=True)
@@ -404,7 +492,7 @@ class IPLPlayerEvent(models.Model):
             return True
             
         try:
-            old_obj = IPLPlayerEvent.objects.get(pk=self.pk)
+            old_obj = PlayerMatchEvent.objects.get(pk=self.pk)
             
             # Check batting fields
             if (self.bat_runs != old_obj.bat_runs or
@@ -434,7 +522,7 @@ class IPLPlayerEvent(models.Model):
                 return True
                 
             return False
-        except IPLPlayerEvent.DoesNotExist:
+        except PlayerMatchEvent.DoesNotExist:
             return True
     
     # Calculated Fields
@@ -570,14 +658,41 @@ class IPLPlayerEvent(models.Model):
         )
     
     class Meta:
+        db_table = 'api_iplplayerevent'
         indexes = [
             models.Index(fields=['player', 'match']),
             models.Index(fields=['for_team', 'vs_team']),
         ]
+
+    def clean(self):
+        errors = {}
+
+        if self.for_team_id and self.vs_team_id and self.for_team_id == self.vs_team_id:
+            errors['vs_team'] = _('vs_team must be different from for_team.')
+
+        if self.match_id:
+            valid_team_ids = {team_id for team_id in [self.match.team_1_id, self.match.team_2_id] if team_id}
+            if self.for_team_id and valid_team_ids and self.for_team_id not in valid_team_ids:
+                errors['for_team'] = _('for_team must be one of the two teams in the match.')
+            if self.vs_team_id and valid_team_ids and self.vs_team_id not in valid_team_ids:
+                errors['vs_team'] = _('vs_team must be one of the two teams in the match.')
+
+            if self.player_id and self.for_team_id and self.match.season_id:
+                is_registered = PlayerSeasonTeam.objects.filter(
+                    player_id=self.player_id,
+                    team_id=self.for_team_id,
+                    season_id=self.match.season_id,
+                ).exists()
+                if not is_registered:
+                    errors['player'] = _('Player is not registered for this team in the match season.')
+
+        if errors:
+            raise ValidationError(errors)
         
     def __str__(self):
         return f"{self.player.name} - {self.match}"
-    
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     theme = models.CharField(max_length=10, choices=[('light', 'Light'), ('dark', 'Dark')], default='light')
@@ -678,6 +793,12 @@ class SquadPhaseBoost(models.Model):
         return f"{self.fantasy_squad.name} - {self.phase.label}"
     
 class FantasyDraft(models.Model):
+    class Role(models.TextChoices):
+        BAT = Player.Role.BATSMAN, _('Batter')
+        WK = Player.Role.WICKET_KEEPER, _('Wicket Keeper')
+        ALL = Player.Role.ALL_ROUNDER, _('All-Rounder')
+        BOWL = Player.Role.BOWLER, _('Bowler')
+
     league = models.ForeignKey(FantasyLeague, on_delete=models.CASCADE, related_name='draft_order')
     squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='draft_order')
     draft_window = models.ForeignKey(
@@ -688,6 +809,7 @@ class FantasyDraft(models.Model):
         related_name='drafts',
     )
     type = models.CharField(max_length=10, choices=[('Pre-Season', 'Pre-Season'), ('Mid-Season', 'Mid-Season')])
+    role = models.CharField(max_length=4, choices=Role.choices, null=True, blank=True)
     order = models.JSONField(default=list)
 
     class Meta:
@@ -695,16 +817,18 @@ class FantasyDraft(models.Model):
             models.Index(fields=['league']),
             models.Index(fields=['squad']),
             models.Index(fields=['type']),
+            models.Index(fields=['league', 'type', 'role']),
         ]
 
     def __str__(self):
-        return f"{self.squad.name} - {self.type} Draft Order"
+        role_label = f" ({self.get_role_display()})" if self.role else ""
+        return f"{self.squad.name} - {self.type}{role_label} Draft Order"
     
 class FantasyBoostRole(models.Model):
     multiplier_options = [(1.0, '1x'), (1.5, '1.5x'), (2.0, '2x')]
 
     label = models.CharField(max_length=20)
-    role = MultiSelectField(choices=IPLPlayer.Role.choices, max_length=50)
+    role = MultiSelectField(choices=Player.Role.choices, max_length=50)
     multiplier_runs = models.FloatField(choices=multiplier_options)
     multiplier_fours = models.FloatField(choices=multiplier_options)
     multiplier_sixes = models.FloatField(choices=multiplier_options)
@@ -729,7 +853,7 @@ class FantasyBoostRole(models.Model):
         return self.label
     
 class FantasyPlayerEvent(models.Model):
-    match_event = models.ForeignKey(IPLPlayerEvent, on_delete=models.CASCADE)
+    match_event = models.ForeignKey(PlayerMatchEvent, on_delete=models.CASCADE)
     fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='player_events')
     boost = models.ForeignKey(FantasyBoostRole, on_delete=models.CASCADE, null=True, blank=True)
     boost_points = models.FloatField(default=0)
@@ -768,7 +892,7 @@ class FantasyTrade(models.Model):
         return f"{self.initiator.name} -> {self.receiver.name}"
     
 class FantasyMatchEvent(models.Model):
-    match = models.ForeignKey(IPLMatch, on_delete=models.CASCADE)
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
     fantasy_squad = models.ForeignKey(FantasySquad, on_delete=models.CASCADE, related_name='match_events')
     total_base_points = models.FloatField(default=0)
     total_boost_points = models.FloatField(default=0)

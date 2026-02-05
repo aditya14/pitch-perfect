@@ -4,9 +4,9 @@ import os
 from django.core.management.base import BaseCommand
 from django.core.serializers.json import DjangoJSONEncoder
 from api.models import (
-    Season, IPLTeam, IPLPlayer, 
-    FantasyBoostRole, IPLMatch, IPLPlayerEvent, 
-    PlayerTeamHistory, TeamSeason
+    Season, Team, Player, 
+    FantasyBoostRole, Match, PlayerMatchEvent, 
+    PlayerSeasonTeam, SeasonTeam
 )
 
 class CustomJSONEncoder(DjangoJSONEncoder):
@@ -33,13 +33,13 @@ class Command(BaseCommand):
         
         # Export data for each model
         self.export_model(Season, 'exports/seasons.json')
-        self.export_model(IPLTeam, 'exports/teams.json')
-        self.export_model(IPLPlayer, 'exports/players.json')
+        self.export_model(Team, 'exports/teams.json')
+        self.export_model(Player, 'exports/players.json')
         self.export_model(FantasyBoostRole, 'exports/fantasy_boost_roles.json')
-        self.export_model(TeamSeason, 'exports/team_seasons.json')
-        self.export_model(PlayerTeamHistory, 'exports/player_team_history.json')
-        self.export_model(IPLMatch, 'exports/ipl_matches.json')
-        self.export_model(IPLPlayerEvent, 'exports/ipl_player_events.json')
+        self.export_model(SeasonTeam, 'exports/team_seasons.json')
+        self.export_model(PlayerSeasonTeam, 'exports/player_team_history.json')
+        self.export_model(Match, 'exports/ipl_matches.json')
+        self.export_model(PlayerMatchEvent, 'exports/ipl_player_events.json')
         
         self.stdout.write(self.style.SUCCESS('Export complete. Files saved in the exports directory.'))
     

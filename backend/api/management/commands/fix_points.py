@@ -2,8 +2,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import F, Sum
 from api.models import (
-    IPLPlayerEvent, FantasyPlayerEvent, FantasyMatchEvent, FantasySquad, 
-    IPLMatch, FantasyLeague
+    PlayerMatchEvent, FantasyPlayerEvent, FantasyMatchEvent, FantasySquad, 
+    Match, FantasyLeague
 )
 import logging
 
@@ -26,7 +26,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--player',
             type=int,
-            help='Recalculate points for a specific IPLPlayer ID'
+            help='Recalculate points for a specific Player ID'
         )
         parser.add_argument(
             '--dry-run',
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 savepoint = transaction.savepoint()
             
             # Get the IPL events to process based on filters
-            query = IPLPlayerEvent.objects.all()
+            query = PlayerMatchEvent.objects.all()
             
             if match_id:
                 query = query.filter(match_id=match_id)
@@ -358,7 +358,7 @@ class Command(BaseCommand):
             
             # 3. Update all related FantasyMatchEvents
             for match_id in affected_matches:
-                match = IPLMatch.objects.get(id=match_id)
+                match = Match.objects.get(id=match_id)
                 
                 # Find all squads with players in this match
                 match_squad_ids = FantasyPlayerEvent.objects.filter(
@@ -531,7 +531,7 @@ class Command(BaseCommand):
             squads = FantasySquad.objects.filter(league_id=league_id)
             
             # Get all matches up to this one
-            prev_matches = IPLMatch.objects.filter(
+            prev_matches = Match.objects.filter(
                 season=match.season,
                 date__lte=match.date
             ).order_by('date')

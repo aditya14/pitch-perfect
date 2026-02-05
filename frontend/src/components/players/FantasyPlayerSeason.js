@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from '../../utils/axios';
 import { Calendar, ChevronUp, ChevronDown, Medal, Anchor, Zap, Handshake, Sparkles, Crown, Bomb, Shield, Swords } from 'lucide-react';
 
@@ -65,6 +65,82 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+const formatPoints = (value) => {
+  if (Number.isFinite(value)) {
+    return value.toFixed(1);
+  }
+  return '0.0';
+};
+
+const buildBoostMetrics = (seasonStats, matches) => {
+  if (!seasonStats.length) {
+    return {
+      totalMatches: 0,
+      totalBase: 0,
+      totalBoost: 0,
+      totalPoints: 0,
+      avgBase: 0,
+      avgBoost: 0,
+      avgTotal: 0,
+      boostShare: 0,
+      boostImpact: 0,
+      boostedMatches: 0,
+      topBoostRoles: [],
+      recentMatches: [],
+    };
+  }
+
+  const overall = seasonStats.find((stat) => stat.squad === 'Overall');
+  const totals = overall || seasonStats.reduce(
+    (acc, stat) => ({
+      matches: acc.matches + (stat.matches || 0),
+      basePoints: acc.basePoints + (stat.basePoints || 0),
+      boostPoints: acc.boostPoints + (stat.boostPoints || 0),
+      totalPoints: acc.totalPoints + (stat.totalPoints || 0),
+    }),
+    { matches: 0, basePoints: 0, boostPoints: 0, totalPoints: 0 }
+  );
+
+  const totalMatches = totals.matches || 0;
+  const totalBase = totals.basePoints || 0;
+  const totalBoost = totals.boostPoints || 0;
+  const totalPoints = totals.totalPoints || 0;
+
+  const boostedMatches = matches.filter((match) => Boolean(match.boost_label)).length;
+  const boostRoleCounts = matches.reduce((acc, match) => {
+    if (match.boost_label) {
+      acc[match.boost_label] = (acc[match.boost_label] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
+  const topBoostRoles = Object.entries(boostRoleCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([label, count]) => ({ label, count }));
+
+  const sortedMatches = [...matches].sort((a, b) => {
+    const dateA = a.match?.date ? new Date(a.match.date) : new Date(0);
+    const dateB = b.match?.date ? new Date(b.match.date) : new Date(0);
+    return dateB - dateA;
+  });
+
+  return {
+    totalMatches,
+    totalBase,
+    totalBoost,
+    totalPoints,
+    avgBase: totalMatches ? totalBase / totalMatches : 0,
+    avgBoost: totalMatches ? totalBoost / totalMatches : 0,
+    avgTotal: totalMatches ? totalPoints / totalMatches : 0,
+    boostShare: totalPoints ? totalBoost / totalPoints : 0,
+    boostImpact: totalBase ? totalBoost / totalBase : 0,
+    boostedMatches,
+    topBoostRoles,
+    recentMatches: sortedMatches.slice(0, 5),
+  };
+};
+
 // Helper function to get role icon
 const getRoleIcon = (roleName, size = 16, squadColor) => {
   // Add outline styles for better contrast
@@ -94,11 +170,12 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
 };
 
 // Enhanced MatchCard component with our finalized design
-const MatchCard = ({ match }) => {
+const MatchCard = ({ match, variant = 'collector' }) => {
   const squadColor = match.squad_color || '#3B82F6'; // Default to blue
   const darkerColor = getDarkerColor(squadColor);
   const lighterSquadColor = getLighterColor(squadColor, 0.8);
   const matchDate = formatDate(match.match?.date);
+  const isReport = variant === 'report';
   
   // Extract points data
   const basePoints = match.basePoints || 0;
@@ -209,12 +286,14 @@ const MatchCard = ({ match }) => {
   };
   
   return (
-    <div className="w-full mb-4 max-w-md">
+    <div className={`w-full ${isReport ? 'mb-3' : 'mb-4 max-w-md'}`}>
       {/* Card container with subtle hover effect */}
-      <div className="relative rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950">
+      <div className={`relative rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 ${
+        isReport ? 'shadow-sm' : 'shadow-lg transition-all duration-300 hover:shadow-xl'
+      }`}>
         {/* Top accent strip */}
         <div 
-          className="h-1.5 w-full"
+          className={`${isReport ? 'h-1' : 'h-1.5'} w-full`}
           style={{ backgroundColor: squadColor }}
         ></div>
         
@@ -236,13 +315,13 @@ const MatchCard = ({ match }) => {
           <div className="flex items-center text-xs opacity-90">
             <Calendar size={12} className="mr-1" />
             <span>{matchDate}</span>
-            <span className="mx-1.5">•</span>
+            <span className="mx-1.5">|</span>
             <span>vs {match.opponent}</span>
             
             {/* MVP Badge - only show if player of match */}
             {match.player_of_match && (
               <>
-                <span className="mx-1.5">•</span>
+                <span className="mx-1.5">|</span>
                 <div 
                   className="flex items-center text-xs px-2 py-0.5 rounded-full" 
                   style={{ backgroundColor: "#FFD700", color: '#000' }}
@@ -259,8 +338,8 @@ const MatchCard = ({ match }) => {
         <div className="grid grid-cols-12">
           {/* Points Column */}
           <div className="col-span-4 row-span-2 border-r border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center p-2 relative overflow-hidden">
-            {/* Role badge at top (if exists) */}
-            {match.boost_label && (
+            {/* Role badge at top */}
+            {match.boost_label ? (
               <div 
                 className="inline-flex items-center px-2 py-1 text-xs rounded mb-2"
                 style={{ 
@@ -272,10 +351,15 @@ const MatchCard = ({ match }) => {
                 {getRoleIcon(match.boost_label, 12, textColor)}
                 <span className="font-medium ml-1.5">{match.boost_label}</span>
               </div>
+            ) : (
+              <div className="inline-flex items-center px-2 py-1 text-[10px] rounded mb-2 bg-neutral-100/70 dark:bg-neutral-800/70 text-neutral-600 dark:text-neutral-300">
+                <Zap className="h-3 w-3 mr-1" />
+                No Boost
+              </div>
             )}
             
             {/* Points display with glow effect */}
-            <div className="text-4xl font-bold text-neutral-900 dark:text-white relative">
+            <div className={`font-bold text-neutral-900 dark:text-white relative ${isReport ? 'text-3xl' : 'text-4xl'}`}>
               <span className="relative z-10">{totalPoints}</span>
               <div 
                 className="absolute inset-0 rounded-full opacity-10" 
@@ -303,6 +387,9 @@ const MatchCard = ({ match }) => {
                 </>
               )}
             </div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+              base + boost
+            </div>
           </div>
           
           {/* Stats section header */}
@@ -326,9 +413,9 @@ const MatchCard = ({ match }) => {
                   </div>
                   
                   <div className="text-xs text-neutral-500 dark:text-neutral-500 my-2">
-                    {match.batting.fours > 0 && `${match.batting.fours}×4`} 
-                    {match.batting.fours > 0 && match.batting.sixes > 0 && ' • '}
-                    {match.batting.sixes > 0 && `${match.batting.sixes}×6`}
+                    {match.batting.fours > 0 && `${match.batting.fours}x4`} 
+                    {match.batting.fours > 0 && match.batting.sixes > 0 && ' | '}
+                    {match.batting.sixes > 0 && `${match.batting.sixes}x6`}
                   </div>
                   
                   <div className="text-xs text-neutral-700 dark:text-neutral-300 flex items-center">
@@ -406,7 +493,7 @@ const MatchCard = ({ match }) => {
 };
 
 // Responsive grid layout for match cards
-const MatchGrid = ({ matches }) => {
+const MatchGrid = ({ matches, variant = 'collector' }) => {
   if (matches.length === 0) {
     return (
       <div className="text-center py-10 text-neutral-500 dark:text-neutral-400">
@@ -423,10 +510,10 @@ const MatchGrid = ({ matches }) => {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className={`grid gap-4 ${variant === 'collector' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
       {sortedMatches.map((match, index) => (
         <div key={`match-${index}`}>
-          <MatchCard match={match} />
+          <MatchCard match={match} variant={variant} />
         </div>
       ))}
     </div>
@@ -479,11 +566,115 @@ const SeasonOverviewTable = ({ seasonStats }) => (
   </div>
 );
 
-const FantasyPlayerSeason = ({ player, leagueId }) => {
+const SquadPerformanceCard = ({ metrics }) => {
+  const baseShare = metrics.totalPoints ? (1 - metrics.boostShare) : 0;
+  const basePct = Math.round(baseShare * 100);
+  const boostPct = Math.round(metrics.boostShare * 100);
+
+  return (
+    <div className="lg-glass lg-rounded-xl p-4 border border-white/20 dark:border-neutral-700/40 shadow-lg relative overflow-hidden">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400 font-caption">
+            Squad Performance
+          </div>
+          <div className="mt-2">
+            <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+              Boost Roles Used
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {metrics.topBoostRoles.length > 0 ? (
+                metrics.topBoostRoles.map((role) => (
+                  <span
+                    key={role.label}
+                    className="text-[10px] px-2 py-1 rounded-full bg-white/70 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-200"
+                  >
+                    {role.label} x{role.count}
+                  </span>
+                ))
+              ) : (
+                <span className="text-[10px] text-neutral-500 dark:text-neutral-400">None</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            Matches
+          </div>
+          <div className="text-xl font-number text-neutral-900 dark:text-white">{metrics.totalMatches}</div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="flex h-3 rounded-full overflow-hidden bg-neutral-200/80 dark:bg-neutral-700/70">
+          <div
+            className="h-full bg-neutral-800/70 dark:bg-neutral-200/60"
+            style={{ width: `${basePct}%` }}
+          ></div>
+          <div
+            className="h-full bg-gradient-to-r from-amber-400 via-pink-400 to-purple-500"
+            style={{ width: `${boostPct}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mt-2">
+          <span>Base {basePct}%</span>
+          <span>Boost {boostPct}%</span>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+          <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Base + Boost Total</div>
+          <div className="text-lg font-number text-neutral-900 dark:text-white">{Math.round(metrics.totalPoints)}</div>
+        </div>
+        <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+          <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Total/Game</div>
+          <div className="text-lg font-number text-neutral-900 dark:text-white">{formatPoints(metrics.avgTotal)}</div>
+        </div>
+        <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+          <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Boost/Game</div>
+          <div className="text-lg font-number text-neutral-900 dark:text-white">{formatPoints(metrics.avgBoost)}</div>
+        </div>
+        <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+          <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Boost Total</div>
+          <div className="text-lg font-number text-neutral-900 dark:text-white">{Math.round(metrics.totalBoost)}</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const BaseSeasonCard = ({ metrics }) => {
+  return (
+    <div className="lg-glass-secondary lg-rounded-xl p-4 border border-white/20 dark:border-neutral-700/40 shadow-lg">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400 font-caption">
+        Season Base
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+          <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Base Total</div>
+          <div className="text-lg font-number text-neutral-900 dark:text-white">{Math.round(metrics.totalBase)}</div>
+        </div>
+        <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+          <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Base/Game</div>
+          <div className="text-lg font-number text-neutral-900 dark:text-white">{formatPoints(metrics.avgBase)}</div>
+        </div>
+      </div>
+      <div className="mt-2 lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+        <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Matches</div>
+        <div className="text-lg font-number text-neutral-900 dark:text-white">{metrics.totalMatches}</div>
+      </div>
+    </div>
+  );
+};
+
+const FantasyPlayerSeason = ({ player, leagueId, viewMode = 'collector' }) => {
   const [seasonStats, setSeasonStats] = useState([]);
   const [matches, setMatches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const boostMetrics = useMemo(() => buildBoostMetrics(seasonStats, matches), [seasonStats, matches]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -523,11 +714,26 @@ const FantasyPlayerSeason = ({ player, leagueId }) => {
 
   return (
     <div className="space-y-6">
-      <SeasonOverviewTable seasonStats={seasonStats} />
-      <div>
-        <h3 className="text-sm sm:text-lg font-medium leading-6 text-neutral-900 dark:text-white mb-4">Match History</h3>
-        <MatchGrid matches={matches} />
-      </div>
+      {viewMode === 'collector' ? (
+        <>
+          <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+            <SquadPerformanceCard metrics={boostMetrics} />
+            <BaseSeasonCard metrics={boostMetrics} />
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-lg font-medium leading-6 text-neutral-900 dark:text-white mb-4">Match Reel</h3>
+            <MatchGrid matches={matches} variant="collector" />
+          </div>
+        </>
+      ) : (
+        <>
+          <SeasonOverviewTable seasonStats={seasonStats} />
+          <div>
+            <h3 className="text-sm sm:text-lg font-medium leading-6 text-neutral-900 dark:text-white mb-4">Match History</h3>
+            <MatchGrid matches={matches} variant="report" />
+          </div>
+        </>
+      )}
     </div>
   );
 };

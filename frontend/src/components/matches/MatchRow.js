@@ -18,6 +18,25 @@ const hexToRgba = (hex, opacity) => {
 
 const capitalizeFirst = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
+const getTeamPillProps = (team) => {
+  const hasColor = Boolean(team?.primary_color);
+
+  if (!hasColor) {
+    return {
+      className: 'bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-700/70 dark:text-slate-100 dark:border-slate-500',
+      style: undefined,
+    };
+  }
+
+  return {
+    className: '',
+    style: {
+      backgroundColor: `#${team.primary_color}`,
+      color: getTextColorForBackground(team.primary_color || ''),
+    },
+  };
+};
+
 const MatchRow = ({ match, leagueId }) => {
   const navigate = useNavigate();
   const [topPlayers, setTopPlayers] = useState([]);
@@ -127,6 +146,8 @@ const MatchRow = ({ match, leagueId }) => {
   };
 
   const formattedDateTime = formatMatchDateTime();
+  const firstTeamPill = getTeamPillProps(battingFirstTeam);
+  const secondTeamPill = getTeamPillProps(battingSecondTeam);
 
   // Determine winner id for styling
   const winnerId = (match.status === 'COMPLETED' && match.winner) ? match.winner.id : null;
@@ -148,11 +169,17 @@ const MatchRow = ({ match, leagueId }) => {
     <tr className="hover:bg-neutral-50 dark:hover:bg-neutral-900 transition align-middle">
       {/* Match number + Stage (stacked, both text-xs) */}
       <td className="px-3 py-2 align-middle font-caption font-semibold text-neutral-900 dark:text-white text-xs w-32 min-w-[7rem]">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           <span>Match {match.match_number}</span>
-          <span className="text-xs text-neutral-500 dark:text-neutral-400 font-normal">
+          {/* <span className="text-xs text-neutral-500 dark:text-neutral-400 font-normal">
             {capitalizeFirst(match.stage) || "League"}
-          </span>
+          </span> */}
+          {match.status === 'SCHEDULED' && timeRemaining && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-neutral-100 dark:bg-neutral-900 text-neutral-500 ml-0 mt-1 w-fit">
+              <Hourglass className="h-2.5 w-2.5 mr-1 text-neutral-400 dark:text-neutral-600" />
+              {formatCountdown()}
+            </span>
+          )}
         </div>
       </td>
       {/* Date + Time (stacked, both text-xs) */}
@@ -169,25 +196,15 @@ const MatchRow = ({ match, leagueId }) => {
           {match.status === 'SCHEDULED' ? (
             <div className="flex items-center gap-2 min-h-[1.75rem]">
               <span
-                className="px-2 py-0.5 rounded-md font-caption font-semibold text-xs"
-                style={{
-                  backgroundColor: battingFirstTeam?.primary_color
-                    ? `#${battingFirstTeam.primary_color}`
-                    : '#6B7280',
-                  color: getTextColorForBackground(battingFirstTeam?.primary_color || '')
-                }}
+                className={`px-2 py-0.5 rounded-md font-caption font-semibold text-xs ${firstTeamPill.className}`}
+                style={firstTeamPill.style}
               >
                 {battingFirstTeam?.short_name || battingFirstTeam?.name || 'TBD'}
               </span>
               <span className="mx-1 text-neutral-400 dark:text-neutral-600 font-bold">vs</span>
               <span
-                className="px-2 py-0.5 rounded-md font-caption font-semibold text-xs"
-                style={{
-                  backgroundColor: battingSecondTeam?.primary_color
-                    ? `#${battingSecondTeam.primary_color}`
-                    : '#6B7280',
-                  color: getTextColorForBackground(battingSecondTeam?.primary_color || '')
-                }}
+                className={`px-2 py-0.5 rounded-md font-caption font-semibold text-xs ${secondTeamPill.className}`}
+                style={secondTeamPill.style}
               >
                 {battingSecondTeam?.short_name || battingSecondTeam?.name || 'TBD'}
               </span>
@@ -198,13 +215,8 @@ const MatchRow = ({ match, leagueId }) => {
               <div className="flex items-center gap-1 min-h-[1.75rem]">
                 {battingFirstTeam && (
                   <span
-                    className="px-2 py-0.5 rounded-md font-caption font-semibold text-xs"
-                    style={{
-                      backgroundColor: battingFirstTeam.primary_color
-                        ? `#${battingFirstTeam.primary_color}`
-                        : '#6B7280',
-                      color: getTextColorForBackground(battingFirstTeam.primary_color || '')
-                    }}
+                    className={`px-2 py-0.5 rounded-md font-caption font-semibold text-xs ${firstTeamPill.className}`}
+                    style={firstTeamPill.style}
                   >
                     {battingFirstTeam.short_name || battingFirstTeam.name}
                   </span>
@@ -225,13 +237,8 @@ const MatchRow = ({ match, leagueId }) => {
               <div className="flex items-center gap-1 min-h-[1.75rem]">
                 {battingSecondTeam && (
                   <span
-                    className="px-2 py-0.5 rounded-md font-caption font-semibold text-xs"
-                    style={{
-                      backgroundColor: battingSecondTeam.primary_color
-                        ? `#${battingSecondTeam.primary_color}`
-                        : '#6B7280',
-                      color: getTextColorForBackground(battingSecondTeam.primary_color || '')
-                    }}
+                    className={`px-2 py-0.5 rounded-md font-caption font-semibold text-xs ${secondTeamPill.className}`}
+                    style={secondTeamPill.style}
                   >
                     {battingSecondTeam.short_name || battingSecondTeam.name}
                   </span>
@@ -258,12 +265,6 @@ const MatchRow = ({ match, leagueId }) => {
           {match.status === 'LIVE' && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 ml-0 mt-1 w-fit">
               LIVE
-            </span>
-          )}
-          {match.status === 'SCHEDULED' && timeRemaining && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-500 ml-0 mt-1 w-fit">
-              <Hourglass className="h-3 w-3 mr-1 text-neutral-400 dark:text-neutral-600" />
-              {formatCountdown()}
             </span>
           )}
         </div>

@@ -1,7 +1,7 @@
 # draft_serializers.py
 
 from rest_framework import serializers
-from .models import FantasyDraft, FantasySquad, IPLPlayer
+from .models import FantasyDraft, FantasySquad, Player
 from django.utils import timezone
 from django.db.models import Case, When, F, Value, CharField, Avg
 from django.db.models.functions import Coalesce
@@ -12,8 +12,8 @@ class FantasyDraftSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FantasyDraft
-        fields = ['id', 'league', 'squad', 'draft_window', 'type', 'order', 'can_edit', 'closes_in']
-        read_only_fields = ['league', 'squad', 'draft_window', 'type']
+        fields = ['id', 'league', 'squad', 'draft_window', 'type', 'role', 'order', 'can_edit', 'closes_in']
+        read_only_fields = ['league', 'squad', 'draft_window', 'type', 'role']
 
     def get_can_edit(self, obj):
         now = timezone.now()
@@ -47,11 +47,14 @@ class FantasyDraftSerializer(serializers.ModelSerializer):
         if not isinstance(value, list):
             raise serializers.ValidationError("Order must be a list of player IDs")
         # Ensure all IDs exist
-        from .models import IPLPlayer
-        valid_ids = set(IPLPlayer.objects.filter(
+        from .models import Player
+        player_qs = Player.objects.filter(
             id__in=value, 
-            playerteamhistory__season=self.instance.league.season
-        ).values_list('id', flat=True))
+            playerseasonteam__season=self.instance.league.season
+        )
+        if self.instance.type == 'Pre-Season' and self.instance.role:
+            player_qs = player_qs.filter(role=self.instance.role)
+        valid_ids = set(player_qs.values_list('id', flat=True))
         
         if len(valid_ids) != len(value):
             raise serializers.ValidationError("Invalid player IDs in order")
@@ -69,8 +72,8 @@ class OptimizedFantasyDraftSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FantasyDraft
-        fields = ['id', 'league', 'squad', 'draft_window', 'type', 'order', 'can_edit', 'closes_in', 'players']
-        read_only_fields = ['league', 'squad', 'draft_window', 'type']
+        fields = ['id', 'league', 'squad', 'draft_window', 'type', 'role', 'order', 'can_edit', 'closes_in', 'players']
+        read_only_fields = ['league', 'squad', 'draft_window', 'type', 'role']
 
     def get_can_edit(self, obj):
         now = timezone.now()
@@ -116,14 +119,14 @@ class OptimizedFantasyDraftSerializer(serializers.ModelSerializer):
         
         try:
             # Fetch all players with a single query
-            players = IPLPlayer.objects.filter(id__in=player_ids)
+            players = Player.objects.filter(id__in=player_ids)
             player_dict = {p.id: p for p in players}
             
             # Get teams in a separate query to avoid the select_related issue
             team_map = {}
             if season:
-                from .models import PlayerTeamHistory
-                team_histories = PlayerTeamHistory.objects.filter(
+                from .models import PlayerSeasonTeam
+                team_histories = PlayerSeasonTeam.objects.filter(
                     player_id__in=player_ids,
                     season=season
                 ).select_related('team')
@@ -163,7 +166,13 @@ class OptimizedFantasyDraftSerializer(serializers.ModelSerializer):
         if not isinstance(value, list):
             raise serializers.ValidationError("Order must be a list of player IDs")
         # Validate player IDs exist
-        valid_ids = set(IPLPlayer.objects.filter(id__in=value).values_list('id', flat=True))
+        player_qs = Player.objects.filter(
+            id__in=value,
+            playerseasonteam__season=self.instance.league.season,
+        )
+        if self.instance.type == 'Pre-Season' and self.instance.role:
+            player_qs = player_qs.filter(role=self.instance.role)
+        valid_ids = set(player_qs.values_list('id', flat=True))
         if len(valid_ids) != len(value):
             raise serializers.ValidationError("Invalid player IDs in order")
         return value
