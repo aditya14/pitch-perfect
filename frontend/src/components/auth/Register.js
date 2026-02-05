@@ -59,8 +59,10 @@ const Register = () => {
     setIsSubmitting(true);
 
     try {
-      // Use email as username
-      await register(formData.email, formData.email, formData.password);
+      await register({
+        email: formData.email,
+        password: formData.password
+      });
       navigate('/dashboard');
     } catch (error) {
       console.error('Registration error:', error.response?.data || error.message);
