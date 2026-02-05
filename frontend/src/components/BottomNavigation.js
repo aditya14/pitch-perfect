@@ -17,7 +17,10 @@ const BottomNavigation = () => {
   // Extract leagueId from URL path pattern
   const getLeagueIdFromPath = () => {
     const match = location.pathname.match(/\/leagues\/([^\/]+)/);
-    return match ? match[1] : null;
+    if (!match) return null;
+    const candidate = match[1]?.toLowerCase();
+    if (candidate === 'join' || candidate === 'create') return null;
+    return match[1];
   };
 
   // Extract squadId from URL path pattern (for legacy routes)

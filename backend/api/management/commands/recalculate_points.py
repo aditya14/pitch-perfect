@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasySquad, FantasyBoostRole, FantasyMatchEvent, IPLMatch
+from api.models import PlayerMatchEvent, FantasyPlayerEvent, FantasySquad, FantasyBoostRole, FantasyMatchEvent, Match
 from django.db.models import F, Sum
 from django.db import transaction
 import logging
@@ -21,7 +21,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--skip-ipl',
             action='store_true',
-            help='Skip IPLPlayerEvent recalculation'
+            help='Skip PlayerMatchEvent recalculation'
         )
         parser.add_argument(
             '--skip-fantasy',
@@ -73,17 +73,17 @@ class Command(BaseCommand):
     
     def recalculate_ipl_player_events(self, batch_size, season=None):
         # Create filtered queryset if season is specified
-        queryset = IPLPlayerEvent.objects.all()
+        queryset = PlayerMatchEvent.objects.all()
         if season:
             queryset = queryset.filter(match__season__year=season)
         
         count = 0
         total = queryset.count()
-        self.stdout.write(f'Found {total} IPLPlayerEvent records to process for season {season or "all"}')
+        self.stdout.write(f'Found {total} PlayerMatchEvent records to process for season {season or "all"}')
         
         
         if total == 0:
-            self.stdout.write('No IPLPlayerEvent records to process')
+            self.stdout.write('No PlayerMatchEvent records to process')
             return
         
         # Process in batches to avoid memory issues
@@ -208,7 +208,7 @@ class Command(BaseCommand):
                         batch_count += 1
                         
                     except Exception as e:
-                        self.stderr.write(f"Error processing IPLPlayerEvent {event.id}: {str(e)}")
+                        self.stderr.write(f"Error processing PlayerMatchEvent {event.id}: {str(e)}")
                 
                 count += batch_count
             
@@ -355,7 +355,7 @@ class Command(BaseCommand):
         self.stdout.write(f'Recalculating FantasyMatchEvent points for season {season or "all"}...')
         
         # Get matches with optional season filter
-        matches_query = IPLMatch.objects.filter(
+        matches_query = Match.objects.filter(
             id__in=FantasyPlayerEvent.objects.values('match_event__match').distinct()
         )
         if season:
@@ -419,7 +419,7 @@ class Command(BaseCommand):
         from api.services.cricket_data_service import CricketDataService
         
         service = CricketDataService()
-        matches = IPLMatch.objects.filter(
+        matches = Match.objects.filter(
             id__in=FantasyMatchEvent.objects.values('match').distinct()
         ).order_by('date')
         

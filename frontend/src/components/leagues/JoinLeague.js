@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import api from '../../utils/axios';
-import { Shield, Users, AlertCircle } from 'lucide-react';
+import { Shield, Users, AlertCircle, ChevronRight, Hash } from 'lucide-react';
 import { SquadForm } from '../squads/CreateSquad';
 
 const JoinLeague = () => {
@@ -19,20 +19,19 @@ const JoinLeague = () => {
     setStatus(prev => ({ ...prev, error: null, isSubmitting: true }));
 
     try {
-      // Use the original endpoint from the old JoinLeague component
       const response = await api.post('/leagues/join/', {
         league_code: leagueCode.toUpperCase()
       });
 
-      setStatus(prev => ({ 
-        ...prev, 
+      setStatus(prev => ({
+        ...prev,
         isCreatingSquad: true,
         leagueDetails: response.data.league,
         isSubmitting: false
       }));
     } catch (error) {
       console.error('Error joining league:', error);
-      setStatus(prev => ({ 
+      setStatus(prev => ({
         ...prev,
         error: error.response?.data?.error || 'Failed to join league',
         isSubmitting: false
@@ -44,18 +43,16 @@ const JoinLeague = () => {
     setStatus(prev => ({ ...prev, error: null, isSubmitting: true }));
 
     try {
-      // Create the squad using the league ID from leagueDetails
       await api.post('/squads/', {
         name: formData.name,
         color: formData.color,
         league: status.leagueDetails.id
       });
-      
-      // Redirect on success
+
       setStatus(prev => ({ ...prev, redirect: true }));
     } catch (error) {
       console.error('Error creating squad:', error);
-      setStatus(prev => ({ 
+      setStatus(prev => ({
         ...prev,
         error: error.response?.data?.error || 'Failed to create squad',
         isSubmitting: false
@@ -63,115 +60,113 @@ const JoinLeague = () => {
     }
   };
 
-  // Handle redirect
   if (status.redirect) {
     return <Navigate to="/dashboard" />;
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:py-12">
-      <div className="max-w-md w-full mx-auto">
-        <div className="text-center mb-8">
-          {status.isCreatingSquad ? (
-            <Shield className="h-12 w-12 text-primary-600 dark:text-primary-400 mx-auto mb-3" />
-          ) : (
-            <Users className="h-12 w-12 text-primary-600 dark:text-primary-400 mx-auto mb-3" />
-          )}
-          
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-8 px-4 sm:py-12">
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/6 w-56 h-56 rounded-full bg-gradient-to-br from-primary-400/10 to-primary-600/10 dark:from-primary-400/15 dark:to-primary-600/15 lg-float"></div>
+        <div className="absolute bottom-1/4 right-1/6 w-40 h-40 rounded-full bg-gradient-to-br from-blue-400/10 to-primary-500/10 dark:from-blue-400/15 dark:to-primary-500/15 lg-float" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      <div className="max-w-xl w-full mx-auto relative z-10">
+        <div className="text-center mb-6">
+          <div className="lg-glass-secondary lg-rounded-lg w-16 h-16 mx-auto mb-4 flex items-center justify-center">
             {status.isCreatingSquad ? (
-              `Create Squad for ${status.leagueDetails?.name || 'League'}`
+              <Shield className="h-8 w-8 text-primary-600 dark:text-primary-400" />
             ) : (
-              'Join a League'
+              <Users className="h-8 w-8 text-primary-600 dark:text-primary-400" />
             )}
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-caption">
+            {status.isCreatingSquad
+              ? `Create Squad for ${status.leagueDetails?.name || 'League'}`
+              : 'Join a League'}
           </h2>
-          
+
           {!status.isCreatingSquad && (
-            <p className="mt-2 text-center text-sm text-neutral-600 dark:text-neutral-400">
-              Enter the league code to join
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              Enter your 6-character league code to get started.
             </p>
           )}
         </div>
-        
-        {/* Main Card */}
-        <div className="bg-white dark:bg-neutral-800 shadow-md rounded-lg p-6 mb-6">
-          {/* Error Message */}
+
+        <div className="lg-glass lg-rounded-lg p-6 sm:p-7 lg-glow">
           {status.error && (
-            <div className="mb-6 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900/50 dark:border-red-800 dark:text-red-300 px-4 py-3 rounded-md">
-              <div className="flex">
-                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-                <span>{status.error}</span>
-              </div>
+            <div className="lg-alert lg-glass-danger mb-6">
+              <AlertCircle className="lg-alert-icon" />
+              <span className="text-sm font-medium">{status.error}</span>
             </div>
           )}
-          
+
           {status.isCreatingSquad ? (
-            // Squad creation form
-            <SquadForm
-              leagueId={status.leagueDetails?.id}
-              leagueData={status.leagueDetails}
-              existingSquads={status.leagueDetails?.squads || []}
-              onSubmit={handleSquadSubmit}
-              submitLabel="Create Squad"
-              isProcessing={status.isSubmitting}
-            />
+            <>
+              <div className="lg-glass-tertiary lg-rounded-md px-4 py-3 mb-5">
+                <p className="text-sm text-slate-700 dark:text-slate-300">
+                  You are joining <span className="font-semibold text-slate-900 dark:text-white">{status.leagueDetails?.name}</span>. Create your squad to finish setup.
+                </p>
+              </div>
+              <SquadForm
+                leagueId={status.leagueDetails?.id}
+                leagueData={status.leagueDetails}
+                existingSquads={status.leagueDetails?.squads || []}
+                onSubmit={handleSquadSubmit}
+                submitLabel="Create Squad"
+                isProcessing={status.isSubmitting}
+              />
+            </>
           ) : (
-            // League code input form
-            <form onSubmit={handleJoinSubmit}>
+            <form onSubmit={handleJoinSubmit} className="space-y-5">
               <div>
-                <label htmlFor="leagueCode" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <label htmlFor="leagueCode" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   League Code
                 </label>
-                <input
-                  id="leagueCode"
-                  type="text"
-                  required
-                  maxLength="6"
-                  className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm 
-                    transition-colors duration-200
-                    bg-white dark:bg-neutral-700 
-                    text-neutral-900 dark:text-white
-                    focus:outline-none focus:ring-primary-500 focus:border-primary-500 
-                    dark:border-neutral-600"
-                  placeholder="Enter league code"
-                  value={leagueCode}
-                  onChange={(e) => setLeagueCode(e.target.value.toUpperCase())}
-                />
+                <div className="relative">
+                  <Hash className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+                  <input
+                    id="leagueCode"
+                    type="text"
+                    required
+                    maxLength="6"
+                    className="w-full pl-10 pr-3 py-3 lg-rounded-md border border-slate-300/60 dark:border-slate-600/70 bg-white/80 dark:bg-slate-800/70 text-slate-900 dark:text-white uppercase tracking-[0.2em] font-semibold placeholder:tracking-normal placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/60"
+                    placeholder="ABC123"
+                    value={leagueCode}
+                    onChange={(e) => setLeagueCode(e.target.value.toUpperCase())}
+                  />
+                </div>
               </div>
 
-              <div className="mt-6">
-                <button
-                  type="submit"
-                  disabled={status.isSubmitting}
-                  className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium 
-                         text-white bg-neutral-600 hover:bg-neutral-700 
-                         dark:bg-neutral-700 dark:hover:bg-neutral-800
-                         transition-colors duration-200
-                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-neutral-800
-                         disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {status.isSubmitting ? (
-                    <>
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    'Join League'
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={status.isSubmitting}
+                className="w-full lg-button lg-rounded-md py-3 font-semibold text-white inline-flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {status.isSubmitting ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    <span>Joining...</span>
+                  </>
+                ) : (
+                  <>
+                    Join League
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </>
+                )}
+              </button>
             </form>
           )}
-          
-          {/* Back button when in squad creation mode */}
+
           {status.isCreatingSquad && (
             <div className="mt-4">
               <button
                 type="button"
                 onClick={() => setStatus(prev => ({ ...prev, isCreatingSquad: false }))}
-                className="w-full text-center text-sm text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400"
+                className="w-full text-center text-sm text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
               >
-                ← Back to league code
+                {'<-'} Back to league code
               </button>
             </div>
           )}

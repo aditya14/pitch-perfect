@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import IPLPlayer
+from .models import Player
 from django.db.models import Avg, Count
 
 class PlayerRosterSerializer(serializers.ModelSerializer):
@@ -11,12 +11,12 @@ class PlayerRosterSerializer(serializers.ModelSerializer):
     draft_position = serializers.SerializerMethodField()
 
     class Meta:
-        model = IPLPlayer
+        model = Player
         fields = ['id', 'name', 'role', 'team', 'matches', 'avg_points', 
                  'rank', 'fantasy_squad', 'draft_position']
 
     def get_team(self, obj):
-        team_history = obj.playerteamhistory_set.filter(
+        team_history = obj.playerseasonteam_set.filter(
             season=self.context['season']
         ).first()
         return team_history.team.short_name if team_history else None

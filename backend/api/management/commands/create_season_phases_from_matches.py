@@ -5,7 +5,7 @@ import datetime
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from api.models import Competition, IPLMatch, Season, SeasonPhase
+from api.models import Competition, Match, Season, SeasonPhase
 
 
 class Command(BaseCommand):
@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         season = self._resolve_season(options)
-        matches = IPLMatch.objects.filter(season=season).exclude(phase__isnull=True)
+        matches = Match.objects.filter(season=season).exclude(phase__isnull=True)
         if not matches.exists():
             raise CommandError("No matches found for the season with a phase value.")
 

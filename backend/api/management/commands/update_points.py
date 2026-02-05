@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
-from api.models import IPLMatch
+from api.models import Match
 from api.services.cricket_data_service import CricketDataService
 
 class Command(BaseCommand):
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             # Update all live matches
             self.stdout.write(self.style.SUCCESS('Updating all live matches...'))
             
-            live_matches = IPLMatch.objects.filter(status='LIVE')
+            live_matches = Match.objects.filter(status='LIVE')
             if not live_matches:
                 self.stdout.write(self.style.WARNING('No live matches found'))
                 return

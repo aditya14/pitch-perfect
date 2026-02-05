@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from '../../utils/axios';
 import { Calendar, Trophy, ArrowUp, ArrowDown } from 'lucide-react';
 
@@ -63,6 +63,90 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
+const formatPoints = (value) => {
+  if (Number.isFinite(value)) {
+    return value.toFixed(1);
+  }
+  return '0.0';
+};
+
+const buildLegacyMetrics = (seasonStats, matches) => {
+  const seasons = [...seasonStats].sort((a, b) => a.year - b.year);
+  const totalMatches = seasons.reduce((sum, season) => sum + (season.matches || 0), 0) || matches.length;
+  const totalPoints = seasons.reduce((sum, season) => sum + (season.total_points || 0), 0)
+    || matches.reduce((sum, match) => sum + (match.points || 0), 0);
+
+  const careerPPM = totalMatches ? totalPoints / totalMatches : 0;
+  const peakSeason = seasons.reduce(
+    (best, season) => {
+      const ppm = season.points_per_match || 0;
+      if (ppm > best.points_per_match) {
+        return { year: season.year, points_per_match: ppm };
+      }
+      return best;
+    },
+    { year: null, points_per_match: 0 }
+  );
+
+  const seasonTrend = seasons.map((season, index) => {
+    const ppm = season.points_per_match || 0;
+    const prev = index > 0 ? (seasons[index - 1].points_per_match || 0) : null;
+    return {
+      year: season.year,
+      ppm,
+      delta: prev === null ? null : ppm - prev,
+    };
+  });
+
+  const sortedMatches = [...matches].sort((a, b) => {
+    const dateA = a.match?.date ? new Date(a.match.date) : new Date(0);
+    const dateB = b.match?.date ? new Date(b.match.date) : new Date(0);
+    return dateB - dateA;
+  });
+
+  const signatureMatches = [...matches]
+    .sort((a, b) => (b.points || 0) - (a.points || 0))
+    .slice(0, 3);
+
+  const matchPoints = matches.map((match) => match.points || 0).filter((value) => Number.isFinite(value));
+  const avgPoints = matchPoints.length ? matchPoints.reduce((sum, value) => sum + value, 0) / matchPoints.length : 0;
+  const variance = matchPoints.length
+    ? matchPoints.reduce((sum, value) => sum + Math.pow(value - avgPoints, 2), 0) / matchPoints.length
+    : 0;
+  const stdDev = Math.sqrt(variance);
+  const cv = avgPoints ? stdDev / avgPoints : 0;
+  const consistencyScore = Math.max(0, Math.min(1, 1 - cv));
+
+  let consistencyLabel = 'Steady';
+  if (cv > 0.7) {
+    consistencyLabel = 'Volatile';
+  } else if (cv > 0.35) {
+    consistencyLabel = 'Swingy';
+  }
+
+  const eraTotals = seasons.reduce(
+    (acc, season) => ({
+      runs: acc.runs + (season.runs || 0),
+      wickets: acc.wickets + (season.wickets || 0),
+      catches: acc.catches + (season.catches || 0),
+    }),
+    { runs: 0, wickets: 0, catches: 0 }
+  );
+
+  return {
+    totalMatches,
+    totalPoints,
+    careerPPM,
+    peakSeason,
+    seasonTrend,
+    signatureMatches,
+    consistencyScore,
+    consistencyLabel,
+    eraTotals,
+    recentMatches: sortedMatches.slice(0, 5),
+  };
+};
+
 const SeasonOverview = ({ seasonStats }) => (
   <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm ring-1 ring-neutral-900/5 dark:ring-neutral-700">
     <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-neutral-200 dark:border-neutral-700">
@@ -116,6 +200,148 @@ const SeasonOverview = ({ seasonStats }) => (
     </div>
   </div>
 );
+
+const LegacyStory = ({ metrics }) => {
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <div className="lg-glass lg-rounded-xl p-4 border border-white/20 dark:border-neutral-700/40 shadow-lg">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400 font-caption">
+            Legacy Strip
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Career PPM</div>
+              <div className="text-lg font-number text-neutral-900 dark:text-white">{formatPoints(metrics.careerPPM)}</div>
+            </div>
+            <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Prime Season</div>
+              <div className="text-lg font-number text-neutral-900 dark:text-white">
+                {metrics.peakSeason.year || 'N/A'}
+              </div>
+            </div>
+            <div className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Career Points</div>
+              <div className="text-lg font-number text-neutral-900 dark:text-white">
+                {Math.round(metrics.totalPoints)}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+              Recent Form
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {metrics.recentMatches.length === 0 && (
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">No matches yet.</span>
+              )}
+              {metrics.recentMatches.map((match, index) => (
+                <div
+                  key={`${match.match?.id || 'match'}-${index}`}
+                  className="lg-glass-tertiary lg-rounded-md px-3 py-2 text-center min-w-[64px]"
+                >
+                  <div className="text-sm font-number text-neutral-900 dark:text-white">
+                    {Math.round(match.points || 0)}
+                  </div>
+                  <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                    {formatDate(match.match?.date)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg-glass-secondary lg-rounded-xl p-4 border border-white/20 dark:border-neutral-700/40 shadow-lg">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400 font-caption">
+            Consistency Meter
+          </div>
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
+              <span>{metrics.consistencyLabel}</span>
+              <span>{Math.round(metrics.consistencyScore * 100)}%</span>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-neutral-200/70 dark:bg-neutral-700/70 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500"
+                style={{ width: `${Math.round(metrics.consistencyScore * 100)}%` }}
+              ></div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="lg-glass-tertiary lg-rounded-md px-2 py-2 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Runs</div>
+              <div className="text-sm font-number text-neutral-900 dark:text-white">{metrics.eraTotals.runs}</div>
+            </div>
+            <div className="lg-glass-tertiary lg-rounded-md px-2 py-2 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Wickets</div>
+              <div className="text-sm font-number text-neutral-900 dark:text-white">{metrics.eraTotals.wickets}</div>
+            </div>
+            <div className="lg-glass-tertiary lg-rounded-md px-2 py-2 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Catches</div>
+              <div className="text-sm font-number text-neutral-900 dark:text-white">{metrics.eraTotals.catches}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="lg-glass-tertiary lg-rounded-xl p-4 border border-white/20 dark:border-neutral-700/40 shadow-lg">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400 font-caption">
+          Season Reel
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {metrics.seasonTrend.length === 0 && (
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">No seasons yet.</span>
+          )}
+          {metrics.seasonTrend.map((season) => (
+            <div key={season.year} className="lg-glass lg-rounded-md px-3 py-2 text-center min-w-[72px]">
+              <div className="text-sm font-number text-neutral-900 dark:text-white">{formatPoints(season.ppm)}</div>
+              <div className="text-[9px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{season.year}</div>
+              {season.delta !== null && (
+                <div className={`mt-1 flex items-center justify-center text-[9px] font-medium ${
+                  season.delta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                }`}>
+                  {season.delta >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                  <span>{formatPoints(Math.abs(season.delta))}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="lg-glass-tertiary lg-rounded-xl p-4 border border-white/20 dark:border-neutral-700/40 shadow-lg">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400 font-caption">
+          Signature Moments
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {metrics.signatureMatches.length === 0 && (
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">No match highlights yet.</span>
+          )}
+          {metrics.signatureMatches.map((match, index) => (
+            <div key={`${match.match?.id || 'sig'}-${index}`} className="lg-glass lg-rounded-md px-3 py-3">
+              <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{formatDate(match.match?.date)}</span>
+              </div>
+              <div className="mt-2 text-sm font-semibold text-neutral-900 dark:text-white">
+                {match.for_team ? `${match.for_team} vs ${match.opponent}` : `vs ${match.opponent}`}
+              </div>
+              <div className="mt-2 text-xl font-number text-neutral-900 dark:text-white">
+                {Math.round(match.points || 0)}
+              </div>
+              <div className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                points
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Enhanced broadcast-style MatchCard component
 const MatchCard = ({ match }) => {
@@ -221,12 +447,12 @@ const MatchCard = ({ match }) => {
               <div className="flex flex-wrap gap-2 text-xs text-neutral-600 dark:text-neutral-400">
                 {match.batting.fours > 0 && (
                   <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
-                    <span>{match.batting.fours}×4</span>
+                    <span>{match.batting.fours}x4</span>
                   </div>
                 )}
                 {match.batting.sixes > 0 && (
                   <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
-                    <span>{match.batting.sixes}×6</span>
+                    <span>{match.batting.sixes}x6</span>
                   </div>
                 )}
                 <div className="flex items-center bg-neutral-100 dark:bg-neutral-600/50 px-1.5 py-0.5 rounded">
@@ -428,8 +654,8 @@ const MatchHistory = ({ matches, currentSeason, onSeasonChange, seasons }) => {
                     <div className="flex flex-col">
                       <span className="font-medium">{match.batting.runs}({match.batting.balls})</span>
                       <span className="text-[9px] sm:text-xs text-neutral-500 dark:text-neutral-400">
-                        {match.batting.fours > 0 && `${match.batting.fours}×4 `}
-                        {match.batting.sixes > 0 && `${match.batting.sixes}×6 `}
+                        {match.batting.fours > 0 && `${match.batting.fours}x4 `}
+                        {match.batting.sixes > 0 && `${match.batting.sixes}x6 `}
                         SR: {match.batting.strike_rate?.toFixed(1)}
                       </span>
                     </div>
@@ -464,7 +690,7 @@ const MatchHistory = ({ matches, currentSeason, onSeasonChange, seasons }) => {
                       match.points < 10 ? 'text-red-600 dark:text-red-400' :
                       'text-yellow-600 dark:text-yellow-400'}
                   `}>
-                    {match.points} {match.points >= 120 && '🔥'}
+                    {match.points} {match.points >= 120 && 'HOT'}
                   </span>
                 </td>
               </tr>
@@ -476,12 +702,13 @@ const MatchHistory = ({ matches, currentSeason, onSeasonChange, seasons }) => {
   );
 };
 
-const FantasyPlayerHistory = ({ player }) => {
+const FantasyPlayerHistory = ({ player, viewMode = 'collector' }) => {
   const [seasonStats, setSeasonStats] = useState([]);
   const [matches, setMatches] = useState([]);
   const [currentSeason, setCurrentSeason] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const legacyMetrics = useMemo(() => buildLegacyMetrics(seasonStats, matches), [seasonStats, matches]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -521,14 +748,20 @@ const FantasyPlayerHistory = ({ player }) => {
 
   return (
     <div className="space-y-6">
-      <SeasonOverview seasonStats={seasonStats} />
-      {currentSeason && (
-        <MatchHistory 
-          matches={matches}
-          currentSeason={currentSeason}
-          onSeasonChange={setCurrentSeason}
-          seasons={seasonStats.map(s => s.year)}
-        />
+      {viewMode === 'collector' ? (
+        <LegacyStory metrics={legacyMetrics} />
+      ) : (
+        <>
+          <SeasonOverview seasonStats={seasonStats} />
+          {currentSeason && (
+            <MatchHistory 
+              matches={matches}
+              currentSeason={currentSeason}
+              onSeasonChange={setCurrentSeason}
+              seasons={seasonStats.map(s => s.year)}
+            />
+          )}
+        </>
       )}
     </div>
   );

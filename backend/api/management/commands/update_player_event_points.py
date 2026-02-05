@@ -1,12 +1,12 @@
 from django.db import models
 from django.core.management.base import BaseCommand
-from api.models import IPLPlayerEvent
+from api.models import PlayerMatchEvent
 
 class Command(BaseCommand):
     help = 'Updates points fields for all existing IPLPlayerEvents'
 
     def handle(self, *args, **options):
-        events = IPLPlayerEvent.objects.all()
+        events = PlayerMatchEvent.objects.all()
         total_events = events.count()
         
         self.stdout.write(f"Updating points for {total_events} events...")
@@ -20,7 +20,7 @@ class Command(BaseCommand):
             total = batting + bowling + fielding + other
 
             # Use update() to bypass the model's save() method and properties
-            IPLPlayerEvent.objects.filter(id=event.id).update(
+            PlayerMatchEvent.objects.filter(id=event.id).update(
                 batting_points_total=batting,
                 bowling_points_total=bowling,
                 fielding_points_total=fielding,

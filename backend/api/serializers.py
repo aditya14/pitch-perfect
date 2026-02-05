@@ -4,15 +4,15 @@ from .models import (
     Season,
     SeasonPhase,
     DraftWindow,
-    IPLTeam,
-    TeamSeason,
-    IPLPlayer,
-    PlayerTeamHistory,
-    IPLMatch,
+    Team,
+    SeasonTeam,
+    Player,
+    PlayerSeasonTeam,
+    Match,
     FantasySquad,
     FantasyLeague,
     FantasyPlayerEvent,
-    IPLPlayerEvent,
+    PlayerMatchEvent,
     FantasyTrade,
     FantasyMatchEvent,
 )
@@ -55,8 +55,7 @@ class CompetitionSerializer(serializers.ModelSerializer):
 class SeasonSerializer(serializers.ModelSerializer):
     competition = serializers.PrimaryKeyRelatedField(
         queryset=Competition.objects.all(),
-        allow_null=True,
-        required=False
+        required=True
     )
     competition_detail = CompetitionSerializer(source='competition', read_only=True)
 
@@ -78,7 +77,7 @@ class DraftWindowSerializer(serializers.ModelSerializer):
 
 class IPLTeamSerializer(serializers.ModelSerializer):
     class Meta:
-        model = IPLTeam
+        model = Team
         fields = [
             'id', 'name', 'short_name', 'home_ground', 'city',
             'primary_color', 'secondary_color', 'logo', 'other_names',
@@ -90,14 +89,14 @@ class TeamSeasonSerializer(serializers.ModelSerializer):
     season = SeasonSerializer(read_only=True)
     
     class Meta:
-        model = TeamSeason
-        fields = ['id', 'team', 'season', 'captain', 'home_ground']
+        model = SeasonTeam
+        fields = ['id', 'team', 'season']
 
 class IPLPlayerSerializer(serializers.ModelSerializer):
     current_team = serializers.SerializerMethodField()
 
     class Meta:
-        model = IPLPlayer
+        model = Player
         fields = [
             'id', 'name', 'nationality', 'dob', 'role',
             'batting_style', 'bowling_style', 'img', 'current_team',
@@ -116,8 +115,8 @@ class PlayerTeamHistorySerializer(serializers.ModelSerializer):
     season = SeasonSerializer(read_only=True)
 
     class Meta:
-        model = PlayerTeamHistory
-        fields = ['id', 'player', 'team', 'season', 'price']
+        model = PlayerSeasonTeam
+        fields = ['id', 'player', 'team', 'season', 'points']
 
 class IPLMatchSerializer(serializers.ModelSerializer):
     team_1 = IPLTeamSerializer()
@@ -128,7 +127,7 @@ class IPLMatchSerializer(serializers.ModelSerializer):
     season_phase = SeasonPhaseSerializer()
 
     class Meta:
-        model = IPLMatch
+        model = Match
         fields = [
             'id', 'season', 'season_phase', 'match_number', 'stage', 'phase',
             'team_1', 'team_2', 'date', 'venue', 'status',
@@ -140,7 +139,7 @@ class IPLMatchSerializer(serializers.ModelSerializer):
 
 class IPLMatchCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = IPLMatch
+        model = Match
         fields = '__all__'
 
 class FantasySquadSerializer(serializers.ModelSerializer):
@@ -296,7 +295,7 @@ class IPLPlayerEventSerializer(serializers.ModelSerializer):
     team_color = serializers.CharField(source='for_team.primary_color')
     
     class Meta:
-        model = IPLPlayerEvent
+        model = PlayerMatchEvent
         fields = [
             'id', 'player_name', 'team_name', 'team_color',
             # Batting
@@ -380,7 +379,7 @@ class FantasyTradeSerializer(serializers.ModelSerializer):
             
         for player_id in obj.players_given:
             try:
-                player = IPLPlayer.objects.get(id=player_id)
+                player = Player.objects.get(id=player_id)
                 players.append({
                     'id': player.id,
                     'name': player.name,
@@ -388,7 +387,7 @@ class FantasyTradeSerializer(serializers.ModelSerializer):
                     'team': player.current_team.team.short_name if player.current_team else None,
                     'img': player.img.url if player.img else None
                 })
-            except IPLPlayer.DoesNotExist:
+            except Player.DoesNotExist:
                 # Include just the ID if player not found
                 players.append({'id': player_id, 'name': f'Unknown Player (ID: {player_id})'})
                 
@@ -403,7 +402,7 @@ class FantasyTradeSerializer(serializers.ModelSerializer):
             
         for player_id in obj.players_received:
             try:
-                player = IPLPlayer.objects.get(id=player_id)
+                player = Player.objects.get(id=player_id)
                 players.append({
                     'id': player.id,
                     'name': player.name,
@@ -411,7 +410,7 @@ class FantasyTradeSerializer(serializers.ModelSerializer):
                     'team': player.current_team.team.short_name if player.current_team else None,
                     'img': player.img.url if player.img else None
                 })
-            except IPLPlayer.DoesNotExist:
+            except Player.DoesNotExist:
                 # Include just the ID if player not found
                 players.append({'id': player_id, 'name': f'Unknown Player (ID: {player_id})'})
                 

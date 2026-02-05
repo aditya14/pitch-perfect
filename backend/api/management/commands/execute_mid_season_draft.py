@@ -1,6 +1,6 @@
 # api/management/commands/execute_mid_season_draft.py
 from django.core.management.base import BaseCommand
-from api.models import DraftWindow, FantasyLeague, FantasySquad, FantasyDraft, IPLPlayer
+from api.models import DraftWindow, FantasyLeague, FantasySquad, FantasyDraft, Player
 from django.db.models import Q, Avg
 from django.utils import timezone
 from api.services.draft_window_service import (
@@ -106,12 +106,12 @@ class Command(BaseCommand):
                     self.stdout.write(f"Squad {squad.name} has {len(preferences)} players in their preference list")
             else:
                 # Create a default order based on points
-                default_order = list(IPLPlayer.objects.filter(
+                default_order = list(Player.objects.filter(
                     id__in=draft_pool
                 ).exclude(
                     id__in=retained_players.get(squad.id, [])
                 ).annotate(
-                    avg_points=Avg('iplplayerevent__total_points_all')
+                    avg_points=Avg('playermatchevent__total_points_all')
                 ).order_by('-avg_points').values_list('id', flat=True))
                 
                 squad_preferences[squad.id] = default_order
@@ -148,7 +148,7 @@ class Command(BaseCommand):
                 
                 if verbose:
                     squad = FantasySquad.objects.get(id=squad_id)
-                    player = IPLPlayer.objects.get(id=selected_player)
+                    player = Player.objects.get(id=selected_player)
                     self.stdout.write(f"Pick {pick_num+1}: {squad.name} selects {player.name}")
             else:
                 if verbose:

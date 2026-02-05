@@ -9,15 +9,16 @@ from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from .models import (
     Competition,
+    CompetitionTeam,
     Season,
     SeasonPhase,
     DraftWindow,
-    IPLTeam,
-    TeamSeason,
-    IPLPlayer,
-    PlayerTeamHistory,
-    IPLMatch,
-    IPLPlayerEvent,
+    Team,
+    SeasonTeam,
+    Player,
+    PlayerSeasonTeam,
+    Match,
+    PlayerMatchEvent,
     FantasyLeague,
     FantasySquad,
     SquadPhaseBoost,
@@ -45,7 +46,7 @@ def update_default_draft_order(modeladmin, request, queryset):
     for season in queryset:
         try:
             # Get all players with a valid team history for this season
-            player_histories = PlayerTeamHistory.objects.filter(
+            player_histories = PlayerSeasonTeam.objects.filter(
                 season=season,
                 is_active=True  # Assuming there's a field to mark active mappings
             ).select_related('player')
@@ -69,7 +70,7 @@ def update_default_draft_order(modeladmin, request, queryset):
             # For each player, calculate their average
             for player_id in player_ids:
                 # Get all events for this player in 2021-2024 seasons
-                events = IPLPlayerEvent.objects.filter(
+                events = PlayerMatchEvent.objects.filter(
                     player_id=player_id,
                     match__season__in=relevant_seasons
                 )
@@ -130,6 +131,13 @@ class CompetitionAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+@admin.register(CompetitionTeam)
+class CompetitionTeamAdmin(admin.ModelAdmin):
+    list_display = ('competition', 'team')
+    list_filter = ('competition',)
+    search_fields = ('competition__name', 'team__name', 'team__short_name')
+
+
 @admin.register(SeasonPhase)
 class SeasonPhaseAdmin(admin.ModelAdmin):
     list_display = ('season', 'phase', 'label', 'open_at', 'lock_at')
@@ -159,13 +167,13 @@ class SeasonAdmin(admin.ModelAdmin):
 
 admin.site.register(Season, SeasonAdmin)
 
-@admin.register(IPLTeam)
+@admin.register(Team)
 class IPLTeamAdmin(admin.ModelAdmin):
     list_display = ('name', 'short_name', 'city', 'is_active')
     list_filter = ('is_active',)
     search_fields = ('name', 'short_name', 'city')
 
-@admin.register(TeamSeason)
+@admin.register(SeasonTeam)
 class TeamSeasonAdmin(admin.ModelAdmin):
     list_display = ('team', 'season')
     list_filter = ('season',)
@@ -173,11 +181,11 @@ class TeamSeasonAdmin(admin.ModelAdmin):
 
 # START IPL Player Admin Definition
 from django.db.models import Count, Sum, F, ExpressionWrapper, IntegerField, Case, When, Value, FloatField, Prefetch
-from .models import Season, PlayerTeamHistory
+from .models import Season, PlayerSeasonTeam
 import logging
 _logger = logging.getLogger(__name__)
 
-@admin.register(IPLPlayer)
+@admin.register(Player)
 class IPLPlayerAdmin(admin.ModelAdmin):
     # Further simplify list_display
     list_display = ('id', 'name', 'role', 'is_active')  # Removed get_current_team
@@ -189,17 +197,17 @@ class IPLPlayerAdmin(admin.ModelAdmin):
 
     # Add save_model override for debugging
     def save_model(self, request, obj, form, change):
-        _logger.info(f"Attempting to save IPLPlayer: {obj.name}, change={change}")
+        _logger.info(f"Attempting to save Player: {obj.name}, change={change}")
         try:
             super().save_model(request, obj, form, change)
-            _logger.info(f"Successfully saved IPLPlayer: {obj.name}")
+            _logger.info(f"Successfully saved Player: {obj.name}")
         except Exception as e:
-            _logger.exception(f"Error saving IPLPlayer {obj.name}: {e}")
+            _logger.exception(f"Error saving Player {obj.name}: {e}")
             raise
 
 # END IPL Player Admin Definition
 
-@admin.register(PlayerTeamHistory)
+@admin.register(PlayerSeasonTeam)
 class PlayerTeamHistoryAdmin(admin.ModelAdmin):
     list_display = ('player', 'team', 'season', 'points')
     list_filter = ('team', 'season')
@@ -212,18 +220,18 @@ class PlayerTeamHistoryAdmin(admin.ModelAdmin):
         player_name = obj.player.name if obj.player else "Unknown Player"
         team_name = obj.team.name if obj.team else "Unknown Team"
         season_name = obj.season.name if obj.season else "Unknown Season"
-        _logger.info(f"Attempting to save PlayerTeamHistory: Player='{player_name}', Team='{team_name}', Season='{season_name}', change={change}")
+        _logger.info(f"Attempting to save PlayerSeasonTeam: Player='{player_name}', Team='{team_name}', Season='{season_name}', change={change}")
         try:
             super().save_model(request, obj, form, change)
-            _logger.info(f"Successfully saved PlayerTeamHistory for Player='{player_name}', Season='{season_name}'")
+            _logger.info(f"Successfully saved PlayerSeasonTeam for Player='{player_name}', Season='{season_name}'")
         except Exception as e:
-            _logger.exception(f"Error saving PlayerTeamHistory for Player='{player_name}', Season='{season_name}': {e}")
+            _logger.exception(f"Error saving PlayerSeasonTeam for Player='{player_name}', Season='{season_name}': {e}")
             # Add a user-facing message as well
             messages.error(request, f"Failed to save history record: {e}")
             # Re-raise the exception for Django's default handling, but we've logged it.
             raise
 
-@admin.register(IPLMatch)
+@admin.register(Match)
 class IPLMatchAdmin(admin.ModelAdmin):
     list_display = ('formatted_match', 'match_number', 'season', 'date', 'status', 'player_of_match')
     list_filter = ('season', 'season_phase', 'status', 'team_1', 'team_2')
@@ -288,14 +296,14 @@ class IPLMatchAdmin(admin.ModelAdmin):
         
         # If player_of_match field was changed, update related events
         if player_of_match_changed:
-            from api.models import IPLPlayerEvent, FantasyPlayerEvent, FantasyMatchEvent, FantasySquad
+            from api.models import PlayerMatchEvent, FantasyPlayerEvent, FantasyMatchEvent, FantasySquad
             from api.services.cricket_data_service import CricketDataService
             
             # Create service instance
             service = CricketDataService()
             
             # Get all player events for this match
-            all_player_events = IPLPlayerEvent.objects.filter(match=obj)
+            all_player_events = PlayerMatchEvent.objects.filter(match=obj)
             
             # First reset player_of_match for all events
             for event in all_player_events:
@@ -346,7 +354,7 @@ class IPLMatchAdmin(admin.ModelAdmin):
                 )
                 
                 # Refresh our local copies from the database to ensure we have the updated values
-                refreshed_ipl_events = list(IPLPlayerEvent.objects.filter(id__in=[e.id for e in affected_ipl_events]))
+                refreshed_ipl_events = list(PlayerMatchEvent.objects.filter(id__in=[e.id for e in affected_ipl_events]))
                 
                 # Update all fantasy player events that use these IPL events
                 affected_fantasy_events = FantasyPlayerEvent.objects.filter(
@@ -444,7 +452,7 @@ class IPLMatchAdmin(admin.ModelAdmin):
                     
                     print(f"Updated FantasySquad {squad.name} total points: {old_total} -> {total_points}")
 
-@admin.register(IPLPlayerEvent)
+@admin.register(PlayerMatchEvent)
 class IPLPlayerEventAdmin(admin.ModelAdmin):
     # Select only the fields you need to display in the list view
     list_display = ('id', 'player_name', 'match_info', 'total_points_all')
@@ -503,7 +511,7 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
         
         # This is optional - disable some fields for better performance
         if obj:  # Only on edit, not on create
-            form.base_fields['player'].queryset = form.base_fields['player'].queryset.select_related('playerteamhistory_set__team')
+            form.base_fields['player'].queryset = form.base_fields['player'].queryset.select_related('playerseasonteam_set__team')
             form.base_fields['match'].queryset = form.base_fields['match'].queryset.select_related('team_1', 'team_2')
             
         return form
@@ -534,7 +542,7 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
             
             messages.success(request, f"Successfully saved player event for {obj.player.name}")
         except Exception as e:
-            logger.error(f"Error saving IPLPlayerEvent: {str(e)}")
+            logger.error(f"Error saving PlayerMatchEvent: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             messages.error(request, f"Error saving player event: {str(e)}")
@@ -668,10 +676,10 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
         try:
             # For player and team fields, continue using the optimized queries
             if db_field.name == "player":
-                kwargs["queryset"] = IPLPlayer.objects.filter(is_active=True)
+                kwargs["queryset"] = Player.objects.filter(is_active=True)
                 
             if db_field.name in ["for_team", "vs_team"]:
-                kwargs["queryset"] = IPLTeam.objects.filter(is_active=True)
+                kwargs["queryset"] = Team.objects.filter(is_active=True)
                 
             # For the match field, do NOT limit the queryset when editing
             # Only limit it for new objects
@@ -682,7 +690,7 @@ class IPLPlayerEventAdmin(admin.ModelAdmin):
                     pass  # Use the default queryset
                 else:
                     # We're adding a new object, so limit to recent matches
-                    kwargs["queryset"] = IPLMatch.objects.order_by('-date')[:100]
+                    kwargs["queryset"] = Match.objects.order_by('-date')[:100]
         except Exception as e:
             logger.error(f"Error in formfield_for_foreignkey: {str(e)}")
             
@@ -867,14 +875,14 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
             
             for player_id in player_ids:
                 try:
-                    player = IPLPlayer.objects.get(id=player_id)
+                    player = Player.objects.get(id=player_id)
                     players.append({
                         'id': player.id,
                         'name': player.name,
                         'role': player.get_role_display(),
                         'team': player.current_team.team.name if player.current_team else 'Unknown'
                     })
-                except IPLPlayer.DoesNotExist:
+                except Player.DoesNotExist:
                     players.append({
                         'id': player_id,
                         'name': f'Unknown Player (ID: {player_id})',
@@ -990,8 +998,8 @@ class FantasySquadAdmin(admin.ModelAdmin):
 
 @admin.register(FantasyDraft)
 class FantasyDraftAdmin(admin.ModelAdmin):
-    list_display = ('league', 'squad', 'type')
-    list_filter = ('league', 'type')
+    list_display = ('league', 'squad', 'type', 'role')
+    list_filter = ('league', 'type', 'role')
     search_fields = ('league__name', 'squad__name')
 
 @admin.register(FantasyBoostRole)
@@ -1149,17 +1157,17 @@ class FantasyTradeAdmin(admin.ModelAdmin):
             initiator_players = []
             for player_id in obj.players_given:
                 try:
-                    player = IPLPlayer.objects.get(id=player_id)
+                    player = Player.objects.get(id=player_id)
                     initiator_players.append(player.name)
-                except IPLPlayer.DoesNotExist:
+                except Player.DoesNotExist:
                     initiator_players.append(f"Unknown ({player_id})")
                     
             receiver_players = []
             for player_id in obj.players_received:
                 try:
-                    player = IPLPlayer.objects.get(id=player_id)
+                    player = Player.objects.get(id=player_id)
                     receiver_players.append(player.name)
-                except IPLPlayer.DoesNotExist:
+                except Player.DoesNotExist:
                     receiver_players.append(f"Unknown ({player_id})")
             
             # Format as initiator's players → receiver's players
@@ -1298,7 +1306,7 @@ class FantasyTradeAdmin(admin.ModelAdmin):
                 # Check if we received a player that can take this role
                 for new_player_id in players_added:
                     try:
-                        player = IPLPlayer.objects.get(id=new_player_id)
+                        player = Player.objects.get(id=new_player_id)
                         role_id = assignment.get('boost_id')
                         
                         from .models import FantasyBoostRole
