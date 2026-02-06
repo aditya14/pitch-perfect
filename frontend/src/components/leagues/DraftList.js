@@ -41,7 +41,18 @@ const getHighlightParts = (value, searchTerm) => {
   };
 };
 
-const SortableRow = ({ player, index, leagueId, canEdit, highlightState, searchTerm, selectedTeam }) => {
+const SortableRow = ({
+  player,
+  index,
+  leagueId,
+  canEdit,
+  highlightState,
+  searchTerm,
+  selectedTeam,
+  isMultiSelectMode,
+  isSelected,
+  onSelectPlayer,
+}) => {
   const {
     attributes,
     listeners,
@@ -68,12 +79,41 @@ const SortableRow = ({ player, index, leagueId, canEdit, highlightState, searchT
       className={`${
         isDragging
           ? 'bg-neutral-50 dark:bg-neutral-700'
+          : isSelected
+            ? 'bg-blue-50 dark:bg-blue-900/20'
           : isHighlighted
             ? 'bg-amber-50 dark:bg-amber-900/20'
             : 'bg-white dark:bg-neutral-800'
       } ${isDimmed ? 'opacity-45' : ''} hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors`}
     >
-      <td className="w-8 pl-4" {...attributes} {...listeners}>
+      <td className="w-8 pl-4">
+        <div className="flex items-center gap-1">
+          {isMultiSelectMode && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onSelectPlayer(player.id);
+              }}
+              className={`h-4 w-4 rounded border ${
+                isSelected
+                  ? 'border-blue-500 bg-blue-500'
+                  : 'border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-700'
+              }`}
+              aria-label={isSelected ? `Deselect ${player.name}` : `Select ${player.name}`}
+            >
+              {isSelected && (
+                <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M16.704 5.29a1 1 0 010 1.42l-7.2 7.2a1 1 0 01-1.42 0l-3.2-3.2a1 1 0 011.42-1.42l2.49 2.49 6.49-6.49a1 1 0 011.42 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+            </button>
+          )}
+          <div {...attributes} {...listeners}>
         <svg
           className={`w-4 h-4 ${canEdit ? 'text-neutral-400' : 'text-neutral-300 dark:text-neutral-600'}`}
           fill="none"
@@ -87,6 +127,8 @@ const SortableRow = ({ player, index, leagueId, canEdit, highlightState, searchT
             d="M4 8h16M4 16h16"
           />
         </svg>
+          </div>
+        </div>
       </td>
       <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
         {index + 1}
@@ -139,6 +181,8 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
   const [breakdownCount, setBreakdownCount] = useState(20);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -152,6 +196,20 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
     return players.find(p => p.id === id);
   };
 
+  const handleSelectPlayer = (playerId) => {
+    if (!isMultiSelectMode) return;
+    setSelectedPlayers((prev) =>
+      prev.includes(playerId) ? prev.filter((id) => id !== playerId) : [...prev, playerId]
+    );
+  };
+
+  const toggleMultiSelect = () => {
+    setIsMultiSelectMode((prev) => {
+      if (prev) setSelectedPlayers([]);
+      return !prev;
+    });
+  };
+
   const handleDragEnd = async (event) => {
     if (!canEdit) return;
 
@@ -161,20 +219,39 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
       return;
     }
 
-    const oldIndex = draftOrder.order.indexOf(active.id);
-    const newIndex = draftOrder.order.indexOf(over.id);
-    
-    if (oldIndex === -1 || newIndex === -1) {
-      return;
-    }
+    const normalizeId = (id) => (typeof id === 'string' ? Number(id) : id);
+    const activeId = normalizeId(active.id);
+    const overId = normalizeId(over.id);
+    const currentOrder = (draftOrder.order || []).map(normalizeId);
+    const selectedSet = new Set(selectedPlayers.map(normalizeId));
+    const isGroupedMove = selectedSet.size > 0 && selectedSet.has(activeId);
 
-    const newOrder = arrayMove(draftOrder.order, oldIndex, newIndex);
+    let newOrder = currentOrder;
+    if (isGroupedMove) {
+      const movingIds = currentOrder.filter((id) => selectedSet.has(id));
+      const orderWithoutMoving = currentOrder.filter((id) => !selectedSet.has(id));
+      const insertIndex = orderWithoutMoving.indexOf(overId);
+      if (!movingIds.length || insertIndex === -1) return;
+      newOrder = [
+        ...orderWithoutMoving.slice(0, insertIndex + 1),
+        ...movingIds,
+        ...orderWithoutMoving.slice(insertIndex + 1),
+      ];
+    } else {
+      const oldIndex = currentOrder.indexOf(activeId);
+      const newIndex = currentOrder.indexOf(overId);
+      if (oldIndex === -1 || newIndex === -1) return;
+      newOrder = arrayMove(currentOrder, oldIndex, newIndex);
+    }
     
     setSaving(true);
     setSaveError(null);
 
     try {
       await onSaveOrder(newOrder);
+      if (isGroupedMove) {
+        setSelectedPlayers([]);
+      }
     } catch (err) {
       setSaveError('Failed to save draft order. Changes will be lost if you leave the page.');
     } finally {
@@ -259,6 +336,27 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
               <span className="text-sm text-neutral-700 dark:text-neutral-300">Players</span>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleMultiSelect}
+                disabled={!canEdit}
+                className={`h-10 px-3 text-xs font-medium rounded-md border ${
+                  isMultiSelectMode
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200'
+                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600'
+                } ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+              >
+                Multi-select
+              </button>
+              {isMultiSelectMode && selectedPlayers.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlayers([])}
+                  className="h-10 px-3 text-xs font-medium rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600"
+                >
+                  Clear ({selectedPlayers.length})
+                </button>
+              )}
               <input
                 type="text"
                 value={searchTerm}
@@ -332,6 +430,11 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
               {normalizedSearch ? ` | Search: "${searchTerm}"` : ''}
             </p>
           )}
+          {isMultiSelectMode && canEdit && (
+            <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+              Select multiple players, then drag one selected row to move the group together.
+            </p>
+          )}
         </div>
 
         {!canEdit && (
@@ -397,6 +500,9 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
                       canEdit={canEdit}
                       searchTerm={normalizedSearch}
                       selectedTeam={selectedTeam}
+                      isMultiSelectMode={isMultiSelectMode}
+                      isSelected={selectedPlayers.includes(player.id)}
+                      onSelectPlayer={handleSelectPlayer}
                       highlightState={
                         hasHighlightFilters
                           ? (highlightedPlayerIds.has(player.id) ? 'highlighted' : 'dimmed')
