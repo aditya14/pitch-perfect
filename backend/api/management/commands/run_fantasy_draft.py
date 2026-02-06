@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 ROLE_DRAFT_CONFIG = (
     (FantasyDraft.Role.BAT, False),
     (FantasyDraft.Role.WK, True),
-    (FantasyDraft.Role.ALL, True),
-    (FantasyDraft.Role.BOWL, False),
+    (FantasyDraft.Role.ALL, False),
+    (FantasyDraft.Role.BOWL, True),
 )
 
 class Command(BaseCommand):
@@ -175,7 +175,7 @@ class Command(BaseCommand):
                     squad=squad,
                     type='Pre-Season',
                     role=role,
-                ).first()
+                ).order_by('-id').first()
 
                 if not draft_order:
                     self.stdout.write(f'Creating {role} draft order for {squad.name}')
@@ -230,7 +230,7 @@ class Command(BaseCommand):
                     squad=squad,
                     type='Pre-Season',
                     role=role,
-                ).first()
+                ).order_by('-id').first()
                 if not draft_obj:
                     draft_obj = FantasyDraft.objects.create(
                         league=league,

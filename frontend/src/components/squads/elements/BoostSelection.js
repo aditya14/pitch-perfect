@@ -1,127 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, User } from 'lucide-react';
-import { usePlayerModal } from '../../../context/PlayerModalContext';
-import { Anchor, Bomb, Crown, Shield, Handshake, Sparkles, Swords, Zap, ArrowLeft } from 'lucide-react';
+import React, { useMemo, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Check, Info, Lock, Search, X } from 'lucide-react';
+import { getRoleIcon } from '../../../utils/roleUtils';
 
-// Helper function to get role icon
-const getRoleIcon = (roleName, size = 16, squadColor) => {
-    switch(roleName) {
-      case 'Captain':
-        return <Crown size={size} style={{color: squadColor}} />;
-      case 'Vice-Captain':
-        return <Swords size={size} style={{color: squadColor}} />;
-      case 'Slogger':
-        return <Zap size={size} style={{color: squadColor}} />;
-      case 'Accumulator':
-        return <Anchor size={size} style={{color: squadColor}} />;
-      case 'Safe Hands':
-        return <Handshake size={size} style={{color: squadColor}} />;
-      case 'Rattler':
-        return <Bomb size={size} style={{color: squadColor}} />;
-      case 'Guardian':
-        return <Shield size={size} style={{color: squadColor}} />;
-      default: // Virtuoso
-        return <Sparkles size={size} style={{color: squadColor}} />;
-    }
-  };
-  
-  // Countdown Timer Component
-  const CountdownTimer = ({ lockAt, onExpire }) => {
-    const [timeLeft, setTimeLeft] = useState({});
-    const lockDate = lockAt ? new Date(lockAt) : null;
-  
-    useEffect(() => {
-      if (!lockDate) {
-        setTimeLeft({ expired: true });
-        return undefined;
-      }
-
-      const calculateTimeLeft = () => {
-        const difference = lockDate - new Date();
-        
-        if (difference <= 0) {
-          if (onExpire) onExpire();
-          return {
-            days: 0,
-            hours: 0,
-            minutes: 0,
-            seconds: 0,
-            expired: true
-          };
-        }
-  
-        return {
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-          expired: false
-        };
-      };
-  
-      setTimeLeft(calculateTimeLeft());
-      
-      const timer = setInterval(() => {
-        const newTimeLeft = calculateTimeLeft();
-        setTimeLeft(newTimeLeft);
-      }, 1000);
-  
-      return () => clearInterval(timer);
-    }, [lockDate, onExpire]);
-  
-    if (!lockDate) {
-      return (
-        <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 px-4 py-2 text-center w-full">
-          <div className="text-sm text-neutral-600 dark:text-neutral-300">No lock time set</div>
-        </div>
-      );
-    }
-
-    if (timeLeft.expired) {
-      return (
-        <div className="rounded-lg bg-red-100 dark:bg-red-900 px-4 py-2 text-center w-full">
-          <div className="text-sm font-bold text-red-700 dark:text-red-300">Lineup Locked</div>
-        </div>
-      );
-    }
-  
-    return (
-      <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 px-4 py-3 w-full">
-        <div className="text-xs text-neutral-600 dark:text-neutral-300 mb-1">Boost picks lock in:</div>
-        <div className="flex space-x-2 text-center justify-center md:justify-start">
-          <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.days}</div>
-            <div className="text-xs text-neutral-500 dark:text-neutral-400">days</div>
-          </div>
-          <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.hours}</div>
-            <div className="text-xs text-neutral-500 dark:text-neutral-400">hrs</div>
-          </div>
-          <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.minutes}</div>
-            <div className="text-xs text-neutral-500 dark:text-neutral-400">min</div>
-          </div>
-          <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
-            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.seconds}</div>
-            <div className="text-xs text-neutral-500 dark:text-neutral-400">sec</div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+const formatLockTime = (lockAt) => {
+  if (!lockAt) return null;
+  const lockDate = new Date(lockAt);
+  if (Number.isNaN(lockDate.getTime())) return null;
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(lockDate);
+};
 
 const BoostSelection = ({
   players,
   boostRoles,
   phaseAssignments,
-  selectedPlayer,
-  setSelectedPlayer,
   handleRoleAssignment,
   getPlayerById,
-  getRoleById,
   canAssignPlayerToRole,
-  isPlayerAssigned,
-  getPlayerRole,
   error,
   squadColor,
   phaseLabel,
@@ -129,542 +29,428 @@ const BoostSelection = ({
   lockAt,
   isEditable
 }) => {
-  const { openPlayerModal } = usePlayerModal();
+  const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
-  const [filterTeam, setFilterTeam] = useState('all');
-  const [filterAssigned, setFilterAssigned] = useState('all');
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [isMobileView, setIsMobileView] = useState(false);
-  const playerListRef = useRef(null);
-  
-  // Check if we're in mobile view
+  const [teamFilter, setTeamFilter] = useState('all');
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+  const currentPlayers = useMemo(
+    () => (players || []).filter(player => !player.status || player.status === 'current'),
+    [players]
+  );
+
+  const assignmentMap = useMemo(() => {
+    const map = new Map();
+    (phaseAssignments || []).forEach(assignment => {
+      map.set(assignment.boost_id, assignment.player_id);
+    });
+    return map;
+  }, [phaseAssignments]);
+
+  const playerRoleMap = useMemo(() => {
+    const map = new Map();
+    (phaseAssignments || []).forEach(assignment => {
+      map.set(assignment.player_id, assignment.boost_id);
+    });
+    return map;
+  }, [phaseAssignments]);
+
+  const roles = boostRoles || [];
+
   useEffect(() => {
-    const checkMobileView = () => {
-      setIsMobileView(window.innerWidth < 768);
-    };
-    
-    checkMobileView();
-    window.addEventListener('resize', checkMobileView);
-    return () => window.removeEventListener('resize', checkMobileView);
-  }, []);
-
-  // Get all teams for filtering
-  const teams = [...new Set(players.map(p => p.current_team?.name).filter(Boolean))].sort();
-  
-  // Filter and sort players
-  // First show players with boosts, then sort alphabetically
-  const filteredPlayers = players
-  .filter(player => {
-    // Check if the player is in the current squad
-    const isCurrentPlayer = player.status === 'current'; // Assuming `status` indicates 'current' or 'traded'
-
-    // Combine with existing filters
-    const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = filterRole === 'all' || player.role === filterRole;
-    const matchesTeam = filterTeam === 'all' || player.current_team?.name === filterTeam;
-    const isAssigned = isPlayerAssigned(player.id);
-    const matchesAssigned = 
-      filterAssigned === 'all' || 
-      (filterAssigned === 'assigned' && isAssigned) ||
-      (filterAssigned === 'unassigned' && !isAssigned);
-
-    return isCurrentPlayer && matchesSearch && matchesRole && matchesTeam && matchesAssigned;
-  })
-  .sort((a, b) => {
-    const aHasBoost = isPlayerAssigned(a.id);
-    const bHasBoost = isPlayerAssigned(b.id);
-
-    if (aHasBoost && !bHasBoost) return -1;
-    if (!aHasBoost && bHasBoost) return 1;
-
-    return a.name.localeCompare(b.name);
-  });
-
-  // Get eligible roles for a player
-  const getEligibleRolesForPlayer = (player) => {
-    if (!player) return [];
-    return boostRoles.filter(role => canAssignPlayerToRole(player, role.id));
-  };
-
-  // Handle player selection and save scroll position
-  const handlePlayerSelect = (player) => {
-    if (playerListRef.current) {
-      setScrollPosition(playerListRef.current.scrollTop);
+    if (!selectedRoleId && roles.length) {
+      const firstUnassigned = roles.find(role => !assignmentMap.has(role.id));
+      setSelectedRoleId((firstUnassigned || roles[0]).id);
     }
-    setSelectedPlayer(player);
+  }, [selectedRoleId, roles, assignmentMap]);
+
+  const selectedRole = roles.find(role => role.id === selectedRoleId);
+  const assignedCount = roles.filter(role => assignmentMap.has(role.id)).length;
+  const lockTime = formatLockTime(lockAt);
+
+  const teams = useMemo(() => {
+    return [...new Set(currentPlayers.map(player => player.current_team?.name).filter(Boolean))].sort();
+  }, [currentPlayers]);
+
+  const filteredPlayers = useMemo(() => {
+    if (!selectedRole) return [];
+    return currentPlayers
+      .filter(player => {
+        if (teamFilter !== 'all' && player.current_team?.name !== teamFilter) return false;
+        if (searchQuery && !player.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+        return canAssignPlayerToRole(player, selectedRole.id);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [currentPlayers, teamFilter, searchQuery, selectedRole, canAssignPlayerToRole]);
+
+  useEffect(() => {
+    if (!isGuideOpen) return undefined;
+
+    const scrollY = window.scrollY;
+    const original = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+
+    return () => {
+      document.body.style.overflow = original.overflow;
+      document.body.style.position = original.position;
+      document.body.style.top = original.top;
+      document.body.style.width = original.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isGuideOpen]);
+
+  const formatMultipliers = (multipliers) => {
+    if (!multipliers) return {};
+
+    if (Object.values(multipliers).every(val => val === 2)) {
+      return { simplified: '2x All', multiplier: 2 };
+    }
+    if (Object.values(multipliers).every(val => val === 1.5)) {
+      return { simplified: '1.5x All', multiplier: 1.5 };
+    }
+
+    const grouped = { '1.5': [], '2': [] };
+    Object.entries(multipliers).forEach(([key, value]) => {
+      if (value === 1.5) {
+        grouped['1.5'].push(key);
+      } else if (value === 2) {
+        grouped['2'].push(key);
+      }
+    });
+
+    return grouped;
   };
 
-  // Handle back button - restore scroll position
-  const handleBackToPlayerList = () => {
-    setSelectedPlayer(null);
-    // Use setTimeout to ensure the player list is rendered before scrolling
-    setTimeout(() => {
-      if (playerListRef.current) {
-        playerListRef.current.scrollTop = scrollPosition;
-      }
-    }, 0);
+  const formatStatName = (stat) => {
+    return stat
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="p-4 md:p-6 border-b border-neutral-200 dark:border-neutral-700">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4">
-          {phaseLabel || 'Upcoming Phase'}
-        </h2>
-        {phaseWindow && (
-          <div className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-            {phaseWindow}
+    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg overflow-hidden">
+      <div className="p-4 md:p-6 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+              Let's set your boosts for {phaseLabel || 'the upcoming phase'}
+            </h2>
+            {phaseWindow && (
+              <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                {phaseWindow}
+              </div>
+            )}
+            <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
+              Changes save automatically.
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsGuideOpen(true)}
+              className="mt-2 inline-flex items-center gap-2 text-xs font-medium text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200"
+            >
+              <Info className="h-4 w-4" />
+              Learn how boosts work
+            </button>
           </div>
-        )}
-        
-        {/* Countdown and retention info */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="lg:w-1/2">
-            <CountdownTimer lockAt={lockAt} onExpire={() => {}} />
+          <div className="flex flex-col gap-2 min-w-[220px]">
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">
+              {assignedCount} of {roles.length} boosts assigned
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              {isEditable ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200 px-2 py-1">
+                  <Check className="h-3 w-3" />
+                  Open for edits
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 px-2 py-1">
+                  <Lock className="h-3 w-3" />
+                  Locked
+                </span>
+              )}
+              {lockTime && (
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Locks {lockTime}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-
-        {!isEditable && (
-          <div className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
-            This phase is locked. You can review assignments but can’t edit them.
-          </div>
-        )}
-        
         {error && (
-          <div className="mt-4 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
+          <div className="mt-4 bg-red-100 border border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-900 dark:text-red-200 px-4 py-3 rounded">
             {error}
           </div>
         )}
-      </div>
-
-      {/* Summary of next week's assignments */}
-      <div className="bg-neutral-50 dark:bg-neutral-700 p-4 border-b border-neutral-200 dark:border-neutral-700">
-        <h3 className="font-medium text-neutral-900 dark:text-white mb-3">Boost assignments</h3>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {boostRoles.map(role => {
-            const assignment = phaseAssignments?.find(a => a.boost_id === role.id);
-            const player = assignment ? getPlayerById(assignment.player_id) : null;
-            
-            return (
-              <div key={role.id} className="flex items-center p-2 bg-white dark:bg-black rounded border border-neutral-200 dark:border-neutral-600">
-                <div className="h-6 w-6 flex-shrink-0 mr-2">
-                  {getRoleIcon(role.name, 16, squadColor)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400">{role.name}</div>
-                  {player ? (
-                    <div className="text-sm font-medium text-neutral-900 dark:text-white truncate">
-                      {player.name}
-                    </div>
-                  ) : (
-                    <div className="text-xs italic text-neutral-400 dark:text-neutral-500">Empty</div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Conditional rendering based on screen size */}
-      {isMobileView && selectedPlayer ? (
-        /* Mobile Player Detail View */
-        <div className="p-4">
-          {/* Back button */}
-          <button 
-            onClick={handleBackToPlayerList}
-            className="flex items-center text-neutral-600 dark:text-neutral-400 mb-4"
-          >
-            <ArrowLeft size={16} className="mr-1" />
-            <span>Back to Players</span>
-          </button>
-
-          {/* Selected Player Header */}
-          <div className="mb-5 pb-4 border-b border-neutral-200 dark:border-neutral-700">
-            <h3 className="text-lg font-medium text-neutral-900 dark:text-white flex items-center">
-              {selectedPlayer.name}
-            </h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {selectedPlayer.role} • {selectedPlayer.current_team?.name || 'No team'}
-            </p>
+        {!isEditable && (
+          <div className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+            Boosts are locked for this phase. You can review assignments but cannot edit them.
           </div>
+        )}
+      </div>
 
-          {/* Eligible Roles */}
-          <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
-            Eligible Boosts
-          </h4>
-          <div className="space-y-3">
-            {getEligibleRolesForPlayer(selectedPlayer).map(role => {
-              const currentAssignment = phaseAssignments?.find(a => a.boost_id === role.id);
-              const isCurrentlyAssigned = currentAssignment?.player_id === selectedPlayer.id;
-              const hasOtherPlayerAssigned = currentAssignment && !isCurrentlyAssigned;
-              
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 p-4 md:p-6">
+        <div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Boost roles</h3>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {assignedCount}/{roles.length}
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2">
+            {roles.map(role => {
+              const assignedPlayerId = assignmentMap.get(role.id);
+              const assignedPlayer = assignedPlayerId ? getPlayerById(assignedPlayerId) : null;
+              const isSelected = role.id === selectedRoleId;
+              const isAssigned = Boolean(assignedPlayer);
+
               return (
-                <div key={role.id} className="group relative">
-                  <button
-                    onClick={() => isEditable && handleRoleAssignment(role.id, selectedPlayer.id)}
-                    disabled={!isEditable}
-                    className={`
-                      w-full flex items-start p-3 rounded-lg text-left transition-all
-                      ${isCurrentlyAssigned 
-                        ? 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800' 
-                        : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/30'}
-                      ${!isEditable ? 'opacity-75 cursor-not-allowed' : ''}
-                    `}
-                  >
-                    <div className="h-10 w-10 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700 mr-3 flex-shrink-0">
-                      {getRoleIcon(role.name, 20, squadColor)}
+                <button
+                  key={role.id}
+                  type="button"
+                  onClick={() => setSelectedRoleId(role.id)}
+                  className={`text-left rounded-lg border px-3 py-3 transition-all ${
+                    isSelected
+                      ? 'border-primary-500 bg-primary-50/60 dark:bg-primary-500/10'
+                      : isAssigned
+                        ? 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900'
+                        : 'border-amber-200 bg-amber-50/30 dark:border-amber-500/30 dark:bg-amber-500/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-white dark:bg-black ring-1 ring-neutral-200 dark:ring-neutral-800 flex items-center justify-center">
+                      {getRoleIcon(role.name, 18, squadColor)}
                     </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="text-lg font-medium text-neutral-900 dark:text-white">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
                         {role.name}
                       </div>
-                      
-                      {isCurrentlyAssigned ? (
-                        <div className="text-sm text-green-600 dark:text-green-400 mt-1">
-                          Currently Assigned
-                        </div>
-                      ) : hasOtherPlayerAssigned ? (
-                        <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                          Currently: {getPlayerById(currentAssignment.player_id)?.name}
-                        </div>
-                      ) : (
-                        <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                          Available
-                        </div>
-                      )}
                     </div>
-                  </button>
-                </div>
+                    <span
+                      className={`ml-auto h-2.5 w-2.5 rounded-full ${
+                        isAssigned
+                          ? 'bg-emerald-500'
+                          : 'bg-amber-400'
+                      }`}
+                      title={isAssigned ? 'Assigned' : 'Needs assignment'}
+                    />
+                  </div>
+                  <div className="mt-2">
+                    {assignedPlayer ? (
+                      <div className="text-md font-semibold text-neutral-800 dark:text-neutral-200 truncate">
+                        {assignedPlayer.name}
+                      </div>
+                    ) : (
+                      <div className="h-2 w-24 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+                    )}
+                  </div>
+                </button>
               );
             })}
-
-            {getEligibleRolesForPlayer(selectedPlayer).length === 0 && (
-              <div className="text-center py-4 text-neutral-500 dark:text-neutral-400">
-                This player is not eligible for any boost roles
-              </div>
-            )}
           </div>
         </div>
-      ) : isMobileView ? (
-        /* Mobile Player List View */
+
         <div>
-          {/* Search and Filters */}
-          <div className="p-4 bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-700">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-neutral-400" />
-              </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search players..."
-                className="block w-full pl-10 pr-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-600 text-neutral-900 dark:text-white"
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search players"
+                className="w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 py-2 pl-9 pr-3 text-sm text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500/60"
               />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-500 dark:text-neutral-300"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
             </div>
-
-            {/* Mobile Filters - Simplified for mobile */}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="flex gap-2 flex-wrap">
               <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="flex-1 rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
+                value={teamFilter}
+                onChange={(event) => setTeamFilter(event.target.value)}
+                className="rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-700 dark:text-neutral-200"
               >
-                <option value="all">All Roles</option>
-                <option value="BAT">Batters</option>
-                <option value="BOWL">Bowlers</option>
-                <option value="ALL">All-Rounders</option>
-                <option value="WK">Wicket Keepers</option>
+                <option value="all">All teams</option>
+                {teams.map(team => (
+                  <option key={team} value={team}>
+                    {team}
+                  </option>
+                ))}
               </select>
-              
-              <select
-                value={filterAssigned}
-                onChange={(e) => setFilterAssigned(e.target.value)}
-                className="flex-1 rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
-              >
-                <option value="all">All Players</option>
-                <option value="assigned">Assigned</option>
-                <option value="unassigned">Unassigned</option>
-              </select>
-            </div>
-            
-            <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-              {filteredPlayers.length} players found
             </div>
           </div>
 
-          {/* Players List - Full height scrollable on mobile */}
-          <div
-            ref={playerListRef}
-            className="p-4 overflow-y-auto"
-            style={{ maxHeight: '60vh' }}
-          >
-            <div className="space-y-2">
-              {filteredPlayers.map(player => {
-                const isAssigned = isPlayerAssigned(player.id);
-                const assignedRole = isAssigned ? getRoleById(getPlayerRole(player.id)) : null;
-                return (
-                  <div 
-                    key={player.id}
-                    onClick={() => isEditable && handlePlayerSelect(player)}
-                    className={`
-                      rounded-lg p-3 cursor-pointer border transition-all
-                      border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700
-                      ${!isEditable ? 'opacity-75 cursor-not-allowed' : ''}
-                    `}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium text-neutral-900 dark:text-white flex items-center">
-                          {player.name}
-                        </div>
-                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                          {player.role} • {player.current_team?.name || 'No team'}
-                        </div>
-                      </div>
-                      {/* Current assignment indicator - just the icon */}
-                      {isAssigned && assignedRole && (
-                        <div className="h-6 w-6 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700">
-                          {getRoleIcon(assignedRole.name, 16, squadColor)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          {!selectedRole && (
+            <div className="mt-6 text-sm text-neutral-500 dark:text-neutral-400">
+              Select a boost role to start assigning players.
+            </div>
+          )}
 
-              {filteredPlayers.length === 0 && (
-                <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
-                  No players match your filters
+          {selectedRole && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-neutral-900 dark:text-white">
+                  Selecting for {selectedRole.name}
+                  {selectedRole.allowed_player_types?.length ? (
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400 ml-2">
+                      ({selectedRole.allowed_player_types.join(', ')})
+                    </span>
+                  ) : null}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Desktop Two-panel View (Original UI) */
-        <div className="flex flex-col lg:flex-row">
-          {/* Left Panel - Player Selection */}
-          <div className="lg:w-3/5 border-r border-neutral-200 dark:border-neutral-700">
-            {/* Search and Filters */}
-            <div className="p-4 bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-700">
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-neutral-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search players..."
-                    className="block w-full pl-10 pr-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-600 text-neutral-900 dark:text-white"
-                  />
-                  {searchQuery && (
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-500 dark:text-neutral-300"
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {filteredPlayers.length} players
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                {filteredPlayers.map(player => {
+                  const assignedRoleId = playerRoleMap.get(player.id);
+                  const assignedRole = roles.find(role => role.id === assignedRoleId);
+                  const assignedHere = assignedRoleId === selectedRole.id;
+                  const assignedElsewhere = assignedRoleId && assignedRoleId !== selectedRole.id;
+                  const isActionDisabled = !isEditable || assignedElsewhere;
+
+                  return (
+                    <button
+                      type="button"
+                      disabled={isActionDisabled || assignedHere}
+                      onClick={() => {
+                        if (!isActionDisabled) {
+                          handleRoleAssignment(selectedRole.id, player.id);
+                        }
+                      }}
+                      key={player.id}
+                      className={`relative min-w-0 rounded-lg border px-2.5 py-2.5 text-left transition-all ${
+                        assignedHere
+                          ? 'border-primary-400 bg-primary-50/60 dark:bg-primary-500/10'
+                          : 'border-neutral-200 dark:border-neutral-800 hover:border-primary-300 hover:bg-primary-50/40 dark:hover:bg-primary-500/10'
+                      } ${isActionDisabled ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Filters */}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <select
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value)}
-                  className="rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
-                >
-                  <option value="all">All Roles</option>
-                  <option value="BAT">Batters</option>
-                  <option value="BOWL">Bowlers</option>
-                  <option value="ALL">All-Rounders</option>
-                  <option value="WK">Wicket Keepers</option>
-                </select>
-                
-                <select
-                  value={filterTeam}
-                  onChange={(e) => setFilterTeam(e.target.value)}
-                  className="rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
-                >
-                  <option value="all">All Teams</option>
-                  {teams.map(team => (
-                    <option key={team} value={team}>{team}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={filterAssigned}
-                  onChange={(e) => setFilterAssigned(e.target.value)}
-                  className="rounded-md border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-600 text-neutral-700 dark:text-white text-sm p-2"
-                >
-                  <option value="all">All Players</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="unassigned">Unassigned</option>
-                </select>
-              </div>
-              
-              <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                {filteredPlayers.length} players found
-              </div>
-            </div>
-
-            {/* Players Grid */}
-            <div 
-              className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto"
-              ref={playerListRef}
-            >
-              {filteredPlayers.map(player => {
-                const isAssigned = isPlayerAssigned(player.id);
-                const isSelected = selectedPlayer?.id === player.id;
-                const assignedRole = isAssigned ? getRoleById(getPlayerRole(player.id)) : null;
-                return (
-                  <div 
-                    key={player.id}
-                    onClick={() => isEditable && setSelectedPlayer(player)}
-                    className={`
-                      rounded-lg p-3 cursor-pointer border transition-all
-                      ${isSelected 
-                        ? 'border-neutral-500 bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700' 
-                        : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700'}
-                      ${!isEditable ? 'opacity-75 cursor-not-allowed' : ''}
-                    `}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium text-neutral-900 dark:text-white flex items-center">
-                          {player.name}
-                        </div>
-                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                          {player.role} • {player.current_team?.name || 'No team'}
-                        </div>
-                      </div>
-                      {/* Current assignment indicator - just the icon */}
-                      {isAssigned && assignedRole && (
-                        <div className="h-6 w-6 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700">
-                          {getRoleIcon(assignedRole.name, 16, squadColor)}
+                      {assignedRole && (
+                        <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-white/90 dark:bg-black/70 ring-1 ring-neutral-200/80 dark:ring-neutral-800/80 shadow-sm flex items-center justify-center">
+                          {getRoleIcon(assignedRole.name, 14, squadColor)}
                         </div>
                       )}
-                    </div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+                            {player.name}
+                          </div>
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                            {player.role} - {player.current_team?.name || 'No team'}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+                {filteredPlayers.length === 0 && (
+                  <div className="py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                    No players match these filters.
                   </div>
-                );
-              })}
-
-              {filteredPlayers.length === 0 && (
-                <div className="col-span-full text-center py-8 text-neutral-500 dark:text-neutral-400">
-                  No players match your filters
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          {/* Right Panel - Role Assignment */}
-          <div className="lg:w-2/5">
-            {/* Player Details or No Selection State */}
-            {!selectedPlayer ? (
-              <div className="p-6 text-center">
-                <div className="mx-auto w-16 h-16 bg-neutral-100 dark:bg-neutral-700 rounded-full flex items-center justify-center mb-4">
-                  <User className="h-8 w-8 text-neutral-400 dark:text-neutral-500" />
-                </div>
-                <h3 className="text-lg font-medium text-neutral-900 dark:text-white mb-2">
-                  Select a player
+      {isGuideOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6" role="dialog" aria-modal="true">
+          <button
+            type="button"
+            className="absolute inset-0 lg-modal-backdrop"
+            onClick={() => setIsGuideOpen(false)}
+            aria-label="Close boost guide"
+          />
+          <div className="relative w-full max-w-4xl lg-modal bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white p-6 md:p-8 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
+                  How boosts work
                 </h3>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Choose a player from the list to assign boost roles
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                  Each boost multiplies specific stats for the selected player.
                 </p>
               </div>
-            ) : (
-              <div className="p-5">
-                {/* Selected Player Header */}
-                <div className="mb-5 pb-4 border-b border-neutral-200 dark:border-neutral-700">
-                  <div>
-                    <h3 className="text-lg font-medium text-neutral-900 dark:text-white flex items-center">
-                      {selectedPlayer.name}
-                    </h3>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {selectedPlayer.role} • {selectedPlayer.current_team?.name || 'No team'}
-                    </p>
-                  </div>
-                </div>
+              <button
+                type="button"
+                onClick={() => setIsGuideOpen(false)}
+                className="rounded-full p-2 text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-                {/* Eligible Roles */}
-                <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
-                  Eligible Boosts
-                </h4>
-                
-                <div className="space-y-3">
-                  {getEligibleRolesForPlayer(selectedPlayer).map(role => {
-                    const currentAssignment = phaseAssignments?.find(a => a.boost_id === role.id);
-                    const isCurrentlyAssigned = currentAssignment?.player_id === selectedPlayer.id;
-                    const hasOtherPlayerAssigned = currentAssignment && !isCurrentlyAssigned;
-                    
-                    return (
-                      <div key={role.id} className="group relative">
-                        <button
-                          onClick={() => isEditable && handleRoleAssignment(role.id, selectedPlayer.id)}
-                          disabled={!isEditable}
-                          className={`
-                            w-full flex items-start p-3 rounded-lg text-left transition-all
-                            ${isCurrentlyAssigned 
-                              ? 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800' 
-                              : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/30'}
-                            ${!isEditable ? 'opacity-75 cursor-not-allowed' : ''}
-                          `}
-                        >
-                          <div className="h-10 w-10 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700 mr-3 flex-shrink-0">
-                            {getRoleIcon(role.name, 20, squadColor)}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="text-lg font-medium text-neutral-900 dark:text-white">
-                              {role.name}
-                            </div>
-                            
-                            {isCurrentlyAssigned ? (
-                              <div className="text-sm text-green-600 dark:text-green-400 mt-1">
-                                Currently Assigned
-                              </div>
-                            ) : hasOtherPlayerAssigned ? (
-                              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                                Currently: {getPlayerById(currentAssignment.player_id)?.name}
-                              </div>
-                            ) : (
-                              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                                Available
-                              </div>
-                            )}
-                          </div>
-                        </button>
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {roles.map(role => {
+                const formattedMultipliers = formatMultipliers(role.multipliers);
+                return (
+                  <div
+                    key={role.id}
+                    className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 shadow-sm"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-9 w-9 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-800">
+                        {getRoleIcon(role.name, 18, squadColor)}
                       </div>
-                    );
-                  })}
-
-                  {getEligibleRolesForPlayer(selectedPlayer).length === 0 && (
-                    <div className="text-center py-4 text-neutral-500 dark:text-neutral-400">
-                      This player is not eligible for any boost roles
+                      <div>
+                        <div className="font-medium text-sm text-neutral-800 dark:text-neutral-200">
+                          {role.name}
+                        </div>
+                        <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                          {role.allowed_player_types.join(', ')}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
+
+                    {formattedMultipliers.simplified ? (
+                      <div className="text-xs font-medium">
+                        <span
+                          className={
+                            formattedMultipliers.multiplier === 2
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-blue-600 dark:text-blue-400'
+                          }
+                        >
+                          {formattedMultipliers.simplified}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {formattedMultipliers['2'] && formattedMultipliers['2'].length > 0 && (
+                          <div className="text-xs">
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium inline-block w-8">2x:</span>
+                            <span className="text-neutral-700 dark:text-neutral-300">
+                              {formattedMultipliers['2'].map(stat => formatStatName(stat)).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                        {formattedMultipliers['1.5'] && formattedMultipliers['1.5'].length > 0 && (
+                          <div className="text-xs">
+                            <span className="text-blue-600 dark:text-blue-400 font-medium inline-block w-8">1.5x:</span>
+                            <span className="text-neutral-700 dark:text-neutral-300">
+                              {formattedMultipliers['1.5'].map(stat => formatStatName(stat)).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

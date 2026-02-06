@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import BoostGuide from './elements/BoostGuide';
 import CurrentBoosts from './elements/CurrentBoosts';
 import BoostSelection from './elements/BoostSelection';
 import { User } from 'lucide-react';
@@ -16,9 +15,7 @@ const BoostTab = ({
   squadColor
 }) => {
   const [error, setError] = useState(null);
-  const [showGuide, setShowGuide] = useState(true);
   const [showCurrent, setShowCurrent] = useState(true);
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [phases, setPhases] = useState([]);
   const [phaseAssignments, setPhaseAssignments] = useState({});
   const [phaseLoading, setPhaseLoading] = useState(false);
@@ -105,10 +102,6 @@ const BoostTab = ({
     }
   }, [defaultPhase, selectedPhaseId]);
 
-  useEffect(() => {
-    setSelectedPlayer(null);
-  }, [selectedPhaseId]);
-
   const selectedPhase = phaseMeta.find(p => p.id === selectedPhaseId) || defaultPhase;
   const selectedAssignments = selectedPhase?.id
     ? (phaseAssignments[selectedPhase.id] || [])
@@ -128,16 +121,7 @@ const BoostTab = ({
   const statusLabel = selectedPhase?.status
     ? selectedPhase.status.charAt(0).toUpperCase() + selectedPhase.status.slice(1)
     : null;
-  const phaseSubtitle = [phaseWindow, statusLabel].filter(Boolean).join(' • ');
-
-  const isPlayerAssigned = (playerId) => {
-    return selectedAssignments?.some(assignment => assignment.player_id === playerId);
-  };
-
-  const getPlayerRole = (playerId) => {
-    const assignment = selectedAssignments?.find(a => a.player_id === playerId);
-    return assignment ? assignment.boost_id : null;
-  };
+  const phaseSubtitle = [phaseWindow].filter(Boolean);
 
   const handleRoleAssignment = async (roleId, playerId) => {
     if (!selectedPhase?.id || !isEditable) return;
@@ -164,7 +148,6 @@ const BoostTab = ({
           return updated;
         });
       }
-      setSelectedPlayer(null);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -183,18 +166,9 @@ const BoostTab = ({
 
   return (
     <div className="space-y-6">
-      {/* Boost Guide Section */}
-      <BoostGuide 
-        boostRoles={boostRoles}
-        showGuide={showGuide}
-        setShowGuide={setShowGuide}
-        squadColor={squadColor}
-      />
-
-      <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-5">
+      {/* <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="text-sm text-neutral-500 dark:text-neutral-400">Phase</div>
             <div className="text-lg font-semibold text-neutral-900 dark:text-white">
               {selectedPhase?.label || 'Boost assignments'}
             </div>
@@ -238,10 +212,28 @@ const BoostTab = ({
             Editing is closed for this phase.
           </div>
         )}
-      </div>
+      </div> */}
       
-      {/* Phase Boosts */}
-      <CurrentBoosts 
+      {/* Boost Assignment */}
+      {isOwnSquad && !isSquadEmpty && selectedPhase && (
+        <BoostSelection
+          players={players}
+          boostRoles={boostRoles}
+          phaseAssignments={selectedAssignments}
+          handleRoleAssignment={handleRoleAssignment}
+          getPlayerById={getPlayerById}
+          canAssignPlayerToRole={canAssignPlayerToRole}
+          error={error}
+          squadColor={squadColor}
+          phaseLabel={selectedPhase?.label}
+          phaseWindow={phaseWindow}
+          lockAt={selectedPhase?.lockAt || selectedPhase?.lock_at}
+          isEditable={isEditable}
+        />
+      )}
+
+      {/* Active Boosts */}
+      {/* <CurrentBoosts 
         phaseAssignments={selectedAssignments}
         boostRoles={boostRoles}
         getRoleById={getRoleById}
@@ -252,30 +244,7 @@ const BoostTab = ({
         squadColor={squadColor}
         title={selectedPhase?.label ? `${selectedPhase.label} boosts` : 'Boost assignments'}
         subtitle={phaseSubtitle}
-      />
-
-      {/* Boost Planning */}
-      {isOwnSquad && !isSquadEmpty && selectedPhase && isEditable && (
-        <BoostSelection
-          players={players}
-          boostRoles={boostRoles}
-          phaseAssignments={selectedAssignments}
-          selectedPlayer={selectedPlayer}
-          setSelectedPlayer={setSelectedPlayer}
-          handleRoleAssignment={handleRoleAssignment}
-          getPlayerById={getPlayerById}
-          getRoleById={getRoleById}
-          canAssignPlayerToRole={canAssignPlayerToRole}
-          isPlayerAssigned={isPlayerAssigned}
-          getPlayerRole={getPlayerRole}
-          error={error}
-          squadColor={squadColor}
-          phaseLabel={selectedPhase?.label}
-          phaseWindow={phaseWindow}
-          lockAt={selectedPhase?.lockAt || selectedPhase?.lock_at}
-          isEditable={isEditable}
-        />
-      )}
+      /> */}
       
       {/* Show message if squad is empty */}
       {isOwnSquad && isSquadEmpty && (

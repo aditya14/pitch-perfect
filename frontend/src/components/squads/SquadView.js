@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../../utils/axios';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import PlayerListTab from './PlayerListTab';
@@ -12,6 +12,7 @@ import LoadingScreen from '../elements/LoadingScreen';
 const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
   const { squadId: paramSquadId, leagueId: paramLeagueId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   
   // Use squadId from props (league context) or from params (direct access)
@@ -98,6 +99,16 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
       fetchSquadData();
     }
   }, [squadId, user]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = (searchParams.get('tab') || '').toLowerCase();
+    if (tabParam === 'boosts' || tabParam === 'core') {
+      setActiveTab('core');
+    } else if (tabParam === 'players') {
+      setActiveTab('players');
+    }
+  }, [location.search]);
 
   const updateFutureCoreSquad = async (boost_id, player_id, phase_id) => {
     if (!isOwnSquad) return; // Prevent updates for other users' squads

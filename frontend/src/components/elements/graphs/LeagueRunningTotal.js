@@ -20,6 +20,12 @@ const LeagueRunningTotal = ({ league }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  const Wrapper = ({ children }) => (
+    <div className="lg-glass lg-rounded-xl p-4 relative z-0">
+      {children}
+    </div>
+  );
+
   useEffect(() => {
     if (league?.id) {
       // Initialize all squads as visible
@@ -67,6 +73,7 @@ const LeagueRunningTotal = ({ league }) => {
       
       if (!runningTotalData || runningTotalData.length === 0) {
         setChartData([]);
+        setError(null);
         setLoading(false);
         return;
       }
@@ -76,7 +83,17 @@ const LeagueRunningTotal = ({ league }) => {
       
     } catch (err) {
       console.error('Failed to fetch running total data:', err);
-      setError('Failed to load running total data');
+      const errorMessage = err?.response?.data?.error || '';
+      const isMissingStats = err?.response?.status === 404
+        || errorMessage.toLowerCase().includes('fantasystats')
+        || errorMessage.toLowerCase().includes('does not exist');
+
+      if (isMissingStats) {
+        setChartData([]);
+        setError(null);
+      } else {
+        setError('Failed to load running total data');
+      }
     } finally {
       setLoading(false);
     }
@@ -214,31 +231,25 @@ const LeagueRunningTotal = ({ league }) => {
 
   if (loading) {
     return (
-      <div className="lg-card">
+      <Wrapper>
         <div className="space-y-4">
           <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/4"></div>
           <div className="h-64 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse"></div>
         </div>
-      </div>
+      </Wrapper>
     );
   }
 
   if (error) {
     return (
-      <div className="lg-card">
+      <Wrapper>
         <p className="text-red-500 dark:text-red-400">{error}</p>
-      </div>
+      </Wrapper>
     );
   }
 
   if (chartData.length === 0) {
-    return (
-      <div className="lg-card">
-        <p className="text-neutral-500 dark:text-neutral-400 text-center">
-          No match data available to display running totals.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   // Custom tooltip to show squad point details
@@ -318,7 +329,8 @@ const LeagueRunningTotal = ({ league }) => {
   };
 
   return (
-    <div className="p-0"> {/* No glass class here, parent provides glass */}
+    <Wrapper>
+      <div className="p-0">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
           Running Total
@@ -464,7 +476,8 @@ const LeagueRunningTotal = ({ league }) => {
           Hide All
         </button>
       </div>
-    </div>
+      </div>
+    </Wrapper>
   );
 };
 
