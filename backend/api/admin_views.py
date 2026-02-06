@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 ROLE_DRAFT_CONFIG = (
     (FantasyDraft.Role.BAT, False),
     (FantasyDraft.Role.WK, True),
-    (FantasyDraft.Role.ALL, True),
-    (FantasyDraft.Role.BOWL, False),
+    (FantasyDraft.Role.ALL, False),
+    (FantasyDraft.Role.BOWL, True),
 )
 
 
@@ -127,7 +127,7 @@ def run_fantasy_draft(request):
             'error': str(e)
         }, status=500)
 
-def run_draft_process(league_id, dry_run=False):
+def run_draft_process(league_id, dry_run=False, force_new_snake_order=False):
     """
     Core function to run the draft process - assigns ALL players
     """
@@ -148,8 +148,8 @@ def run_draft_process(league_id, dry_run=False):
     # Ensure all squads have a draft order object
     ensure_draft_orders(league, squads)
     
-    # Generate snake draft order if it doesn't exist
-    if not league.snake_draft_order:
+    # Generate a fresh snake draft order when requested, otherwise reuse if present.
+    if force_new_snake_order or not league.snake_draft_order:
         league.snake_draft_order = generate_draft_order(squads)
         if not dry_run:
             league.save()
@@ -205,7 +205,7 @@ def run_complete_draft(league, squads):
                 squad=squad,
                 type='Pre-Season',
                 role=role,
-            ).first()
+            ).order_by('-id').first()
             if not draft_obj:
                 draft_obj = FantasyDraft.objects.create(
                     league=league,
@@ -270,7 +270,7 @@ def ensure_draft_orders(league, squads):
                 squad=squad,
                 type='Pre-Season',
                 role=role,
-            ).first()
+            ).order_by('-id').first()
 
             if not draft_order:
                 FantasyDraft.objects.create(

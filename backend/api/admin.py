@@ -720,10 +720,30 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(FantasyLeague)
 class FantasyLeagueAdmin(admin.ModelAdmin):
+    actions = ['run_snake_draft']
     list_display = ('name', 'season', 'admin', 'draft_completed', 'stats_last_updated')
     list_filter = ('season', 'draft_completed')
     search_fields = ('name', 'admin__username')
     raw_id_fields = ('admin',)
+
+    @admin.action(description="Run snake draft")
+    def run_snake_draft(self, request, queryset):
+        from .admin_views import run_draft_process
+
+        if not queryset:
+            messages.error(request, "Please select a league to run the snake draft.")
+            return
+
+        for league in queryset:
+            try:
+                results = run_draft_process(league.id, dry_run=False, force_new_snake_order=True)
+                messages.success(
+                    request,
+                    f"Snake draft completed for {league.name}: "
+                    f"{results['squads']} squads, {results['total_players_drafted']} total players drafted.",
+                )
+            except Exception as exc:
+                messages.error(request, f"Error running snake draft for {league.name}: {exc}")
 
     def draft_status(self, obj):
         pre_season = "Completed" if obj.draft_completed else "Not Started"
@@ -979,7 +999,7 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
     update_stats.short_description = "Update fantasy stats"
 
     # And add this to your list of actions
-    actions = ['update_stats']  # Add to your existing actions list
+    actions = ['run_snake_draft', 'update_stats']  # Add to your existing actions list
 
     # Add this to display the last update time
     def stats_last_updated(self, obj):

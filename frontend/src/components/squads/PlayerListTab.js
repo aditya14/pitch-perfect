@@ -147,7 +147,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
       sortedPlayers.forEach(player => {
         let groupKey;
         
-        if (filterType === 'By IPL Team') {
+        if (filterType === 'By Team') {
           groupKey = player.current_team?.name || 'Unknown Team';
         } else if (filterType === 'By Role') {
           groupKey = player.role || 'Unknown Role';
@@ -204,7 +204,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
   };
 
   // Determine if columns should be hidden based on filter type
-  const showTeamColumn = filterType !== 'By IPL Team';
+  const showTeamColumn = filterType !== 'By Team';
   const showRoleColumn = filterType !== 'By Role';
 
   return (
@@ -227,14 +227,14 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               All
             </button>
             <button
-              onClick={() => setFilterType('By IPL Team')}
+              onClick={() => setFilterType('By Team')}
               className={`px-2 py-1 text-xs rounded-md ${
-                filterType === 'By IPL Team' 
+                filterType === 'By Team' 
                   ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 font-medium' 
                   : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200'
               }`}
             >
-              By IPL Team
+              By Team
             </button>
             <button
               onClick={() => setFilterType('By Role')}
@@ -384,7 +384,7 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
               {Object.entries(groupedPlayers).map(([groupName, groupPlayers]) => (
                 <React.Fragment key={groupName}>
                   {/* Group header row when grouping is applied */}
-                  {(filterType === 'By IPL Team' || filterType === 'By Role') && (
+                  {(filterType === 'By Team' || filterType === 'By Role') && (
                     <tr className="bg-neutral-100 dark:bg-neutral-900">
                       <td 
                         colSpan={showTeamColumn && showRoleColumn ? 7 : showTeamColumn || showRoleColumn ? 6 : 5} 

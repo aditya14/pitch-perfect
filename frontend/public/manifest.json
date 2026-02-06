@@ -33,7 +33,7 @@
   "background_color": "#ffffff",
   "orientation": "portrait",
   "categories": ["sports", "entertainment", "games"],
-  "description": "Draft-based fantasy cricket app designed for IPL enthusiasts",
+  "description": "Draft-based fantasy cricket app designed for enthusiasts",
   "shortcuts": [
     {
       "name": "Dashboard",

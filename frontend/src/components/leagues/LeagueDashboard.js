@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/axios';
 import MatchCard from '../matches/MatchCard';
 import LeagueRunningTotal from '../elements/graphs/LeagueRunningTotal';
+import { ArrowRight, Zap } from 'lucide-react';
 
 // Simple Fireworks component using canvas
 const Fireworks = ({ color }) => {
@@ -115,12 +116,67 @@ const LeagueDashboard = ({ league }) => {
   const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [matchTab, setMatchTab] = useState('recent');
+  const [boostPhase, setBoostPhase] = useState(null);
+
+  const parsePhaseDate = (dateValue) => {
+    if (!dateValue) return null;
+    const parsed = new Date(dateValue);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
 
   useEffect(() => {
     if (league?.season?.id) {
       fetchMatches();
     }
   }, [league?.season?.id]);
+
+  useEffect(() => {
+    if (league?.my_squad?.id) {
+      fetchBoostPhase();
+    } else {
+      setBoostPhase(null);
+    }
+  }, [league?.my_squad?.id]);
+
+  const fetchBoostPhase = async () => {
+    try {
+      const response = await api.get(`/squads/${league.my_squad.id}/phase-boosts/`);
+      const phases = response.data?.phases || [];
+      const now = new Date();
+      const phaseMeta = phases
+        .map(phase => {
+          const startAt = parsePhaseDate(phase.start);
+          const endAt = parsePhaseDate(phase.end);
+          const openAt = parsePhaseDate(phase.open_at);
+          const lockAt = parsePhaseDate(phase.lock_at);
+          const isCurrent = startAt && endAt ? now >= startAt && now <= endAt : false;
+          const isUpcoming = startAt ? now < startAt : false;
+          const status = isCurrent ? 'current' : isUpcoming ? 'upcoming' : 'completed';
+          return {
+            ...phase,
+            startAt,
+            endAt,
+            openAt,
+            lockAt,
+            status,
+          };
+        })
+        .filter(phase => phase.openAt && now >= phase.openAt)
+        .filter(phase => !phase.lockAt || now < phase.lockAt)
+        .sort((a, b) => (a.phase || 0) - (b.phase || 0));
+
+      const activePhase =
+        phaseMeta.find(phase => phase.status === 'upcoming') ||
+        phaseMeta.find(phase => phase.status === 'current') ||
+        phaseMeta[0] ||
+        null;
+
+      setBoostPhase(activePhase);
+    } catch (err) {
+      console.warn('Non-critical: Failed to load boost phases:', err);
+      setBoostPhase(null);
+    }
+  };
 
   const fetchMatches = async () => {
     if (!league?.season?.id) return;
@@ -136,8 +192,12 @@ const LeagueDashboard = ({ league }) => {
     }
 
     try {
-      const upcomingResponse = await api.get(`/seasons/${league.season.id}/matches/upcoming/`);
-      setUpcomingMatches(upcomingResponse.data?.slice(0, 3) || []);
+      const upcomingResponse = await api.get(`/seasons/${league.season.id}/matches/`);
+      const upcoming = (upcomingResponse.data || [])
+        .filter(match => match.status === 'SCHEDULED')
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(0, 3);
+      setUpcomingMatches(upcoming);
     } catch (err) {
       console.error('Error fetching upcoming matches:', err);
       setUpcomingMatches([]);
@@ -185,6 +245,33 @@ const LeagueDashboard = ({ league }) => {
       {/* Fireworks overlay if season is completed and there is a winner */}
       {isSeasonCompleted && firstSquad && (
         <Fireworks color={firstSquad.color || '#FFD700'} />
+      )}
+
+      {boostPhase && league?.my_squad && (
+        <div className="lg-glass lg-rounded-xl px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 h-9 w-9 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-200 flex items-center justify-center">
+              <Zap className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">Boosts are open</div>
+              <div className="text-lg font-semibold text-neutral-900 dark:text-white font-caption">
+                Set your boosts for {boostPhase.label || `Phase ${boostPhase.phase || ''}`.trim()}
+              </div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                Assign your power-ups before this phase locks in.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/leagues/${league.id}/my_squad?tab=boosts`)}
+            className="lg-button lg-rounded-md px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+          >
+            Go to Boosts
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       )}
 
       {/* Main Content Grid - ADD ISOLATION AND Z-INDEX */}
@@ -353,9 +440,7 @@ const LeagueDashboard = ({ league }) => {
       </div>
 
       {/* Running Total Graph - ADD RELATIVE AND Z-INDEX */}
-      <div className="lg-glass lg-rounded-xl p-4 relative z-0">
-        <LeagueRunningTotal league={league} />
-      </div>
+      <LeagueRunningTotal league={league} />
     </div>
   );
 };

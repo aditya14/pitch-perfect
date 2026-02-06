@@ -4,7 +4,7 @@ import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import TimelineComponent from './TimelineComponent';
-import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle, Plus, Zap, BarChart3, Star } from 'lucide-react';
+import { Trophy, Users, ChevronRight, Calendar, AlertCircle, Check, Clock, AlertTriangle, Plus, Zap, BarChart3, Star, DoorOpen } from 'lucide-react';
 import LoadingScreen from './elements/LoadingScreen';
 
 const parseSeasonDate = (dateValue) => {
@@ -115,7 +115,7 @@ const LeagueCard = ({ league }) => {
               </div>
               
               {/* Season Status */}
-              <div className="lg-glass-tertiary lg-rounded-md p-4">
+              {/* <div className="lg-glass-tertiary lg-rounded-md p-4">
                 <div className="flex items-start">
                   <Calendar className="h-5 w-5 text-primary-600 dark:text-primary-400 mr-3 mt-0.5 flex-shrink-0" />
                   <div>
@@ -133,7 +133,7 @@ const LeagueCard = ({ league }) => {
                     )}
                   </div>
                 </div>
-              </div>
+              </div> */}
               
               {/* Draft Status */}
               <div className={`lg-glass-tertiary lg-rounded-md p-4 ${
@@ -143,7 +143,7 @@ const LeagueCard = ({ league }) => {
                   {league.draft_completed ? (
                     <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                   ) : (
-                    <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                    <DoorOpen className="h-5 w-5 text-green-500 dark:text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                   )}
                   <div>
                     <p className={`text-sm font-medium ${
@@ -153,7 +153,7 @@ const LeagueCard = ({ league }) => {
                     </p>
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                       {league.draft_completed ? 
-                        "Finalize your team before the season starts" : 
+                        "Set your boosts before the season starts" : 
                         "Make sure to rank your players before the draft closes"}
                     </p>
                   </div>
