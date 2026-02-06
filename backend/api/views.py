@@ -1057,24 +1057,55 @@ class LeagueViewSet(viewsets.ModelViewSet):
             pre_season_drafts = FantasyDraft.objects.filter(
                 league=league,
                 type='Pre-Season',
-            ).filter(
-                Q(role=FantasyDraft.Role.BAT) | Q(role__isnull=True)
             ).select_related('squad').values('squad_id', 'order', 'role')
             
             mid_season_drafts = FantasyDraft.objects.filter(
                 league=league,
                 type='Mid-Season'
-            ).select_related('squad').values('squad_id', 'order')
+            ).select_related('squad').values('squad_id', 'order', 'role')
             
             # Convert to dicts for faster lookups
+            role_keys = [
+                FantasyDraft.Role.BAT,
+                FantasyDraft.Role.WK,
+                FantasyDraft.Role.ALL,
+                FantasyDraft.Role.BOWL,
+            ]
+
             pre_season_rankings = {}
+            pre_season_rankings_by_role = {}
             for draft_data in pre_season_drafts:
                 squad_id = draft_data['squad_id']
                 role = draft_data.get('role')
+                if squad_id not in pre_season_rankings_by_role:
+                    pre_season_rankings_by_role[squad_id] = {key: [] for key in role_keys}
+
+                if role in role_keys:
+                    pre_season_rankings_by_role[squad_id][role] = draft_data['order']
+
                 # Prefer explicit BAT rankings when both legacy (null role) and role-based rows exist.
                 if role == FantasyDraft.Role.BAT or squad_id not in pre_season_rankings:
                     pre_season_rankings[squad_id] = draft_data['order']
-            mid_season_rankings = {d['squad_id']: d['order'] for d in mid_season_drafts}
+
+            for squad_id, ranking in pre_season_rankings.items():
+                if squad_id not in pre_season_rankings_by_role:
+                    pre_season_rankings_by_role[squad_id] = {key: [] for key in role_keys}
+                if not pre_season_rankings_by_role[squad_id][FantasyDraft.Role.BAT]:
+                    pre_season_rankings_by_role[squad_id][FantasyDraft.Role.BAT] = ranking
+
+            mid_season_rankings = {}
+            mid_season_rankings_by_role = {}
+            for draft_data in mid_season_drafts:
+                squad_id = draft_data['squad_id']
+                role = draft_data.get('role')
+
+                if squad_id not in mid_season_rankings:
+                    mid_season_rankings[squad_id] = draft_data['order']
+
+                if squad_id not in mid_season_rankings_by_role:
+                    mid_season_rankings_by_role[squad_id] = {key: [] for key in role_keys}
+                if role in role_keys:
+                    mid_season_rankings_by_role[squad_id][role] = draft_data['order']
             
             print(f"Found pre-season draft data for {len(pre_season_rankings)} squads")
             print(f"Found mid-season draft data for {len(mid_season_rankings)} squads")
@@ -1093,12 +1124,20 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     'user_id': squad.user.id,
                     'user_name': squad.user.username,
                     'total_points': float(squad.total_points),
-                    'current_core_squad': squad.current_core_squad or {},
-                    'draft_ranking': pre_season_rankings.get(squad.id, []),
-                    'mid_season_draft_ranking': mid_season_rankings.get(squad.id, []),
-                    'current_player_ids': set(squad.current_squad or []),
-                    'all_player_ids': set(squad.current_squad or [])
-                }
+                      'current_core_squad': squad.current_core_squad or {},
+                      'draft_ranking': pre_season_rankings.get(squad.id, []),
+                      'pre_season_rankings_by_role': pre_season_rankings_by_role.get(
+                          squad.id,
+                          {key: [] for key in role_keys}
+                      ),
+                      'mid_season_draft_ranking': mid_season_rankings.get(squad.id, []),
+                      'mid_season_rankings_by_role': mid_season_rankings_by_role.get(
+                          squad.id,
+                          {key: [] for key in role_keys}
+                      ),
+                      'current_player_ids': set(squad.current_squad or []),
+                      'all_player_ids': set(squad.current_squad or [])
+                  }
                 
                 # Add current squad player IDs to the set
                 all_squad_player_ids.update(squad.current_squad or [])

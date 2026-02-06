@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../../utils/axios';
-import { Users, Zap, Trophy, Globe, Crown, Swords, Anchor, Handshake, Bomb, Shield, Sparkles, BarChartHorizontal, ShieldHalf, Volleyball } from 'lucide-react';
+import { Users, Zap, Crown, Swords, Anchor, Handshake, Bomb, Shield, Sparkles, BarChartHorizontal, ShieldHalf, Volleyball } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
 
 // Helper function to get role icon
@@ -32,11 +32,12 @@ const LeagueSquads = ({ league }) => {
   const [squads, setSquads] = useState([]);
   const [playersData, setPlayersData] = useState([]);
   const [squadPlayers, setSquadPlayers] = useState({});
-  const [draftData, setDraftData] = useState({});
+  const [draftTabs, setDraftTabs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeView, setActiveView] = useState('names'); // 'names', 'draft', 'mid_season_draft', 'roles', 'teams', 'boosts'
-  const [avgMidSeasonDraftRanks, setAvgMidSeasonDraftRanks] = useState({});
+  const [activeView, setActiveView] = useState('names');
+  const [activeDraftId, setActiveDraftId] = useState(null);
+  const [activeDraftRole, setActiveDraftRole] = useState('BAT');
 
   useEffect(() => {
     const fetchSquadsData = async () => {
@@ -45,9 +46,19 @@ const LeagueSquads = ({ league }) => {
       try {
         setLoading(true);
         
-        // Fetch all league squads data using the new endpoint
+        // Fetch league squads and draft windows in parallel.
         const squadsResponse = await api.get(`/leagues/${league.id}/squads/`);
-        const { squads: squadsData, avg_draft_ranks, avg_mid_season_draft_ranks } = squadsResponse.data;
+        const { squads: squadsData } = squadsResponse.data;
+        let windows = [];
+        if (league.season?.id) {
+          try {
+            const draftWindowsResponse = await api.get(`/draft-windows/?season=${league.season.id}`);
+            windows = draftWindowsResponse.data || [];
+          } catch (draftWindowError) {
+            // Non-critical fallback: keep default draft labels if draft windows fail to load.
+            console.warn('Unable to load draft windows for squad tabs:', draftWindowError);
+          }
+        }
         
         // Sort squads by snake_draft_order if available
         let sortedSquads = [...squadsData];
@@ -82,19 +93,30 @@ const LeagueSquads = ({ league }) => {
         });
         setSquadPlayers(squadPlayersData);
         
-        // Process draft data
-        const draftInfo = {
-          user_rankings: sortedSquads.reduce((acc, squad) => {
-            if (squad.draft_ranking && squad.draft_ranking.length > 0) {
-              acc[squad.id] = squad.draft_ranking;
-            }
-            return acc;
-          }, {})
-        };
-        setDraftData(draftInfo);
-        
-        // Store mid-season average ranks
-        setAvgMidSeasonDraftRanks(avg_mid_season_draft_ranks || {});
+        const preWindow = windows
+          .filter(window => window.kind === 'PRE_SEASON')
+          .sort((a, b) => (a.sequence || 0) - (b.sequence || 0))[0];
+        const midWindow = windows
+          .filter(window => window.kind === 'MID_SEASON')
+          .sort((a, b) => (a.sequence || 0) - (b.sequence || 0))[0];
+
+        const hasPreDraft = sortedSquads.some(squad => (squad.draft_ranking || []).length > 0);
+        const hasMidDraft = sortedSquads.some(squad => (squad.mid_season_draft_ranking || []).length > 0);
+
+        const nextDraftTabs = [];
+        if (hasPreDraft) {
+          nextDraftTabs.push({
+            id: 'draft_pre',
+            label: preWindow?.label || 'Pre-Season Draft',
+          });
+        }
+        if (hasMidDraft) {
+          nextDraftTabs.push({
+            id: 'draft_mid',
+            label: midWindow?.label || 'Mid-Season Draft',
+          });
+        }
+        setDraftTabs(nextDraftTabs);
         
         setLoading(false);
       } catch (err) {
@@ -106,6 +128,17 @@ const LeagueSquads = ({ league }) => {
     
     fetchSquadsData();
   }, [league]);
+
+  useEffect(() => {
+    if (!draftTabs.length) {
+      setActiveDraftId(null);
+      return;
+    }
+    if (activeDraftId && !draftTabs.some(tab => tab.id === activeDraftId)) {
+      setActiveDraftId(null);
+      setActiveDraftRole('BAT');
+    }
+  }, [draftTabs, activeDraftId]);
   
   // Group players by role
   const playersByRole = useMemo(() => {
@@ -138,6 +171,19 @@ const LeagueSquads = ({ league }) => {
         });
     });
     return result;
+  }, [squadPlayers]);
+
+  const currentPlayerIdSets = useMemo(() => {
+    const map = {};
+    Object.entries(squadPlayers).forEach(([squadId, players]) => {
+      map[squadId] = new Set(
+        (players || [])
+          .filter(player => player.status === 'current')
+          .map(player => Number(player.id))
+          .filter(Number.isFinite)
+      );
+    });
+    return map;
   }, [squadPlayers]);
 
   // Calculate ordered squads for draft views outside the return statement
@@ -197,20 +243,44 @@ const LeagueSquads = ({ league }) => {
   }
 
   // Determine which squad list to use based on activeView
+  const isDraftView = Boolean(activeDraftId);
   const squadsToDisplay = 
-    activeView === 'draft' ? orderedPreSeasonSquads :
-    // Reverse the order for mid-season draft view
-    activeView === 'mid_season_draft' ? [...orderedMidSeasonSquads].reverse() : 
-    squads; // Default to original order for other views
+    activeDraftId === 'draft_pre' ? orderedPreSeasonSquads :
+    activeDraftId === 'draft_mid' ? [...orderedMidSeasonSquads].reverse() :
+    squads;
+
+  const ROLE_OPTIONS = ['BAT', 'WK', 'ALL', 'BOWL'];
+
+  const handleStandardViewChange = (view) => {
+    setActiveView(view);
+    setActiveDraftId(null);
+  };
+
+  const getDraftRankingForSquad = (squad) => {
+    if (!squad) return [];
+    if (activeDraftId === 'draft_pre') {
+      const roleOrder = squad.pre_season_rankings_by_role?.[activeDraftRole] || [];
+      if (roleOrder.length) return roleOrder;
+      if (activeDraftRole === 'BAT') return squad.draft_ranking || [];
+      return [];
+    }
+    if (activeDraftId === 'draft_mid') {
+      const roleOrder = squad.mid_season_rankings_by_role?.[activeDraftRole] || [];
+      if (roleOrder.length) return roleOrder;
+      return squad.mid_season_draft_ranking || [];
+    }
+    return [];
+  };
 
   return (
     <div className="space-y-4">
       {/* View Selection Tabs */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div className="flex flex-wrap gap-2">
         <button
-          onClick={() => setActiveView('names')}
+          onClick={() => handleStandardViewChange('names')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
-            activeView === 'names'
+            !isDraftView && activeView === 'names'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
@@ -219,34 +289,10 @@ const LeagueSquads = ({ league }) => {
           All Players
         </button>
         
-        {/* <button
-          onClick={() => setActiveView('draft')}
-          className={`flex items-center px-3 py-2 text-xs rounded-md ${
-            activeView === 'draft'
-              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-          }`}
-        >
-          <BarChartHorizontal className="h-3 w-3 mr-1" /> 
-          Pre-Season Draft
-        </button> */}
-
         <button
-          onClick={() => setActiveView('mid_season_draft')}
+          onClick={() => handleStandardViewChange('roles')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
-            activeView === 'mid_season_draft'
-              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-          }`}
-        >
-          <BarChartHorizontal className="h-3 w-3 mr-1" />
-          Mid-Season Draft
-        </button>
-        
-        <button
-          onClick={() => setActiveView('roles')}
-          className={`flex items-center px-3 py-2 text-xs rounded-md ${
-            activeView === 'roles'
+            !isDraftView && activeView === 'roles'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
@@ -256,9 +302,9 @@ const LeagueSquads = ({ league }) => {
         </button>
         
         <button
-          onClick={() => setActiveView('teams')}
+          onClick={() => handleStandardViewChange('teams')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
-            activeView === 'teams'
+            !isDraftView && activeView === 'teams'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
@@ -268,9 +314,9 @@ const LeagueSquads = ({ league }) => {
         </button>
         
         <button
-          onClick={() => setActiveView('boosts')}
+          onClick={() => handleStandardViewChange('boosts')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
-            activeView === 'boosts'
+            !isDraftView && activeView === 'boosts'
               ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
               : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
           }`}
@@ -278,15 +324,60 @@ const LeagueSquads = ({ league }) => {
           <Zap className="h-3 w-3 mr-1" />
           Boosts
         </button>
+        </div>
+        <div className="flex flex-col items-start sm:items-end gap-2">
+          {!!draftTabs.length && (
+            <div className="flex flex-wrap gap-2">
+              {draftTabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (activeDraftId === tab.id) {
+                      setActiveDraftId(null);
+                      return;
+                    }
+                    setActiveDraftId(tab.id);
+                    setActiveDraftRole('BAT');
+                  }}
+                  className={`flex items-center px-3 py-2 text-xs rounded-md ${
+                    activeDraftId === tab.id
+                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
+                      : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                  }`}
+                >
+                  <BarChartHorizontal className="h-3 w-3 mr-1" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {activeDraftId && (
+            <div className="flex flex-wrap items-center gap-2 bg-neutral-100 dark:bg-neutral-800 rounded-md px-2 py-2">
+              {ROLE_OPTIONS.map(role => (
+                <button
+                  key={role}
+                  onClick={() => setActiveDraftRole(role)}
+                  className={`px-3 py-1.5 text-xs rounded-md ${
+                    activeDraftRole === role
+                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
+                      : 'bg-white text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-600'
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       
       <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-x-auto">
-        <table className="w-full border-collapse text-xs">
+        <table className="w-full border-collapse text-xs" key={`${activeDraftId || activeView}-${activeDraftRole}`}>
           <thead className="sticky top-0 z-20"> 
             <tr className="bg-neutral-50 dark:bg-neutral-700">
-              {activeView !== 'names' && (
+              {(isDraftView || activeView !== 'names') && (
                 <th className="sticky left-0 bg-neutral-50 dark:bg-neutral-700 z-30 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600">
-                  {activeView === 'teams' ? 'Team' : (activeView === 'draft' || activeView === 'mid_season_draft' ? 'Rank' : activeView === 'roles' ? 'Role' : 'Boost')}
+                  {isDraftView ? 'Rank' : (activeView === 'teams' ? 'Team' : activeView === 'roles' ? 'Role' : 'Boost')}
                 </th>
               )}
               
@@ -312,7 +403,7 @@ const LeagueSquads = ({ league }) => {
           </thead>
           
           <tbody>
-            {activeView === 'names' && (
+            {!isDraftView && activeView === 'names' && (
               <tr>
                 {squadsToDisplay.map(squad => (
                   <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400 align-top border border-neutral-200 dark:border-neutral-600">
@@ -331,31 +422,45 @@ const LeagueSquads = ({ league }) => {
               </tr>
             )}
             
-            {activeView === 'draft' && (
+            {isDraftView && (
               (() => {
-                const maxRankings = Math.max(...orderedPreSeasonSquads.map(s => (s.draft_ranking || []).length), 0);
+                const maxRankings = Math.max(...squadsToDisplay.map(s => getDraftRankingForSquad(s).length), 0);
+                if (maxRankings === 0) {
+                  return (
+                    <tr>
+                      <td
+                        colSpan={(squadsToDisplay.length || 0) + 1}
+                        className="px-3 py-4 text-center text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600"
+                      >
+                        No rankings available for {activeDraftRole}.
+                      </td>
+                    </tr>
+                  );
+                }
                 return Array.from({ length: maxRankings }).map((_, rankIndex) => (
-                  <tr key={`rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
+                  <tr key={`${activeDraftId}-${activeDraftRole}-rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
                     <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
                         style={{ backgroundColor: rankIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
                     >
                       {rankIndex + 1}
                     </td>
-                    {orderedPreSeasonSquads.map(squad => {
-                      const playerId = squad.draft_ranking?.[rankIndex];
+                    {squadsToDisplay.map(squad => {
+                      const playerId = getDraftRankingForSquad(squad)?.[rankIndex];
                       if (!playerId) return (
-                        <td key={`${squad.id}-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-neutral-400 dark:text-neutral-500 border border-neutral-200 dark:border-neutral-600">
+                        <td key={`${activeDraftId}-${activeDraftRole}-${squad.id}-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-neutral-400 dark:text-neutral-500 border border-neutral-200 dark:border-neutral-600">
                           -
                         </td>
                       );
-                      const playerIdInt = typeof playerId === 'string' ? parseInt(playerId) : playerId;
-                      const player = playersData.find(p => p.id === playerIdInt);
-                      const isInSquad = squad.players?.some(p => p.id === playerIdInt && p.status === 'current');
+                      const playerIdInt = Number(playerId);
+                      const player = playersData.find(p => Number(p.id) === playerIdInt);
+                      const isInSquad = Boolean(currentPlayerIdSets[squad.id]?.has(playerIdInt));
                       return (
                         <td 
-                          key={`${squad.id}-rank-${rankIndex}`} 
+                          key={`${activeDraftId}-${activeDraftRole}-${squad.id}-rank-${rankIndex}`} 
                           className={`px-2 py-1 whitespace-nowrap text-xs truncate border border-neutral-200 dark:border-neutral-600 ${
-                            isInSquad ? 'bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300' : 'text-neutral-500 dark:text-neutral-400'
+                            isInSquad
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                              : 'text-neutral-500 dark:text-neutral-400'
                           }`}
                         >
                           {player ? player.name : `ID: ${playerId}`}
@@ -366,52 +471,8 @@ const LeagueSquads = ({ league }) => {
                 ));
               })()
             )}
-
-            {activeView === 'mid_season_draft' && (
-              (() => {
-                const maxRankings = Math.max(...orderedMidSeasonSquads.map(s => (s.mid_season_draft_ranking || []).length), 0);
-                // Use the same reversed array as the header
-                const reversedOrderedSquads = [...orderedMidSeasonSquads].reverse(); 
-                return Array.from({ length: maxRankings }).map((_, rankIndex) => (
-                  <tr key={`mid-rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
-                    <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
-                        style={{ backgroundColor: rankIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
-                    >
-                      {rankIndex + 1}
-                    </td>
-                    {/* Map over the reversed array */}
-                    {reversedOrderedSquads.map(squad => { 
-                      const playerId = squad.mid_season_draft_ranking?.[rankIndex];
-                      if (!playerId) return (
-                        <td key={`${squad.id}-mid-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-neutral-400 dark:text-neutral-500 border border-neutral-200 dark:border-neutral-600">
-                          -
-                        </td>
-                      );
-                      const playerIdInt = typeof playerId === 'string' ? parseInt(playerId) : playerId;
-                      const player = playersData.find(p => p.id === playerIdInt);
-                      const isRetained = squad.current_core_squad?.some(core => core.player_id === playerIdInt);
-                      const isInSquad = squad.players?.some(p => p.id === playerIdInt && p.status === 'current');
-                      let cellClass = `px-2 py-1 whitespace-nowrap text-xs truncate border border-neutral-200 dark:border-neutral-600`;
-                      if (isRetained) {
-                        cellClass += ' text-neutral-400 dark:text-neutral-500 italic';
-                      } else if (isInSquad) {
-                        cellClass += ' bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300';
-                      } else {
-                        cellClass += ' text-neutral-500 dark:text-neutral-400';
-                      }
-                      return (
-                        <td key={`${squad.id}-mid-rank-${rankIndex}`} className={cellClass}>
-                          {player ? player.name : `ID: ${playerId}`}
-                          {isRetained && ' (R)'}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ));
-              })()
-            )}
             
-            {activeView === 'roles' && (
+            {!isDraftView && activeView === 'roles' && (
               Object.entries({
                 BAT: 'BAT',
                 BOWL: 'BOWL',
@@ -442,7 +503,7 @@ const LeagueSquads = ({ league }) => {
               ))
             )}
             
-            {activeView === 'teams' && (
+            {!isDraftView && activeView === 'teams' && (
               [...new Set(
                 Object.values(playersByTeam)
                   .flatMap(teamMap => Object.keys(teamMap))
@@ -471,7 +532,7 @@ const LeagueSquads = ({ league }) => {
               ))
             )}
             
-            {activeView === 'boosts' && (
+            {!isDraftView && activeView === 'boosts' && (
               squads.length > 0 && (
                 Object.entries({
                   captain: 'Captain',
