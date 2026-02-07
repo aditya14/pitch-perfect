@@ -90,11 +90,14 @@ const BoostTab = ({
     const hasUpcoming = Boolean(upcoming);
     const hasCurrent = Boolean(current);
     const isComplete = !hasUpcoming && !hasCurrent && latest?.endAt && new Date() > latest.endAt;
+    const preferredPhase = isOwnSquad && current && upcoming
+      ? upcoming
+      : (current || upcoming || latest);
     return {
-      defaultPhase: current || upcoming || latest,
+      defaultPhase: preferredPhase,
       seasonComplete: isComplete
     };
-  }, [phaseMeta]);
+  }, [phaseMeta, isOwnSquad]);
 
   useEffect(() => {
     if (!selectedPhaseId && defaultPhase?.id) {

@@ -137,10 +137,41 @@ class CricketDataService:
         
         for match in live_matches:
             if match.cricdata_id:
-                print("Updating match points for ", match.team_1.short_name, " vs ", match.team_2.short_name)
+                team_1_name = match.team_1.short_name if match.team_1 else "TBD"
+                team_2_name = match.team_2.short_name if match.team_2 else "TBD"
+                print("Updating match points for ", team_1_name, " vs ", team_2_name)
                 result = self.update_match_points(match.cricdata_id)
                 results.append(result)
         
+        return results
+
+    def get_bulk_update_queryset(self):
+        """
+        Matches eligible for admin bulk updates.
+        Live matches with a CricData ID.
+        """
+        return Match.objects.filter(
+            status=Match.Status.LIVE
+        ).exclude(
+            cricdata_id__isnull=True
+        ).exclude(
+            cricdata_id=''
+        ).order_by('date')
+
+    def update_all_eligible_matches(self, matches=None) -> List[Dict]:
+        """
+        Update all eligible matches (typically all started matches with CricData IDs).
+        """
+        matches_to_update = matches if matches is not None else self.get_bulk_update_queryset()
+        results = []
+
+        for match in matches_to_update:
+            team_1_name = match.team_1.short_name if match.team_1 else "TBD"
+            team_2_name = match.team_2.short_name if match.team_2 else "TBD"
+            print("Updating match points for ", team_1_name, " vs ", team_2_name)
+            result = self.update_match_points(match.cricdata_id)
+            results.append(result)
+
         return results
     
     def _update_match_details(self, match: Match, match_data: Dict) -> None:

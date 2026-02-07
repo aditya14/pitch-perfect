@@ -617,6 +617,8 @@ def get_user_details(request):
         'email': request.user.email,
         'first_name': request.user.first_name,
         'last_name': request.user.last_name,
+        'is_staff': request.user.is_staff,
+        'is_superuser': request.user.is_superuser,
         'profile': {
             'theme': profile.theme
         }
@@ -1574,6 +1576,40 @@ def squad_phase_boosts(request, squad_id):
 
     phases = SeasonPhase.objects.filter(season=season).order_by('phase')
     phase_ids = list(phases.values_list('id', flat=True))
+    # For a squad owner, when a phase is ongoing, pre-create the next phase
+    # assignments by carrying over the current phase assignments.
+    if squad.user_id == request.user.id and phases.exists():
+        now = timezone.now()
+        current_phase = None
+        for phase in phases:
+            if phase.start <= now <= phase.end:
+                current_phase = phase
+                break
+
+        if current_phase:
+            next_phase = phases.filter(phase__gt=current_phase.phase).order_by('phase').first()
+            if next_phase:
+                next_boost, created = SquadPhaseBoost.objects.get_or_create(
+                    fantasy_squad=squad,
+                    phase=next_phase,
+                    defaults={'assignments': []}
+                )
+                if created:
+                    current_boost = SquadPhaseBoost.objects.filter(
+                        fantasy_squad=squad,
+                        phase=current_phase
+                    ).first()
+                    source_assignments = current_boost.assignments if current_boost else (squad.current_core_squad or [])
+                    copied_assignments = []
+                    for assignment in source_assignments or []:
+                        if isinstance(assignment, dict) and 'boost_id' in assignment and 'player_id' in assignment:
+                            copied_assignments.append({
+                                'boost_id': assignment['boost_id'],
+                                'player_id': assignment['player_id'],
+                            })
+                    next_boost.assignments = copied_assignments
+                    next_boost.save()
+
     boosts = SquadPhaseBoost.objects.filter(
         fantasy_squad=squad,
         phase_id__in=phase_ids
@@ -2031,16 +2067,16 @@ def update_match_points(request):
         )
         
     elif update_all:
-        # Update all live matches
-        live_matches = Match.objects.filter(status='LIVE')
-        if not live_matches:
+        # Update all live matches with CricData IDs
+        matches_to_update = service.get_bulk_update_queryset()
+        if not matches_to_update.exists():
             return Response(
                 {"message": "No live matches found"},
                 status=status.HTTP_200_OK
             )
             
-        print(f"Updating {live_matches.count()} live matches")
-        results = service.update_all_live_matches()
+        print(f"Updating {matches_to_update.count()} live matches")
+        results = service.update_all_eligible_matches(matches_to_update)
         
         successful = [r for r in results if 'error' not in r]
         failed = [r for r in results if 'error' in r]
@@ -2052,6 +2088,7 @@ def update_match_points(request):
         return Response(
             {
                 "success": True,
+                "matches_considered": matches_to_update.count(),
                 "matches_updated": len(successful),
                 "matches_failed": len(failed),
                 "player_events_updated": total_player_events,
