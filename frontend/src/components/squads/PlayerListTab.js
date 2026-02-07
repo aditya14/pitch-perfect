@@ -4,7 +4,16 @@ import { getTextColorForBackground } from '../../utils/colorUtils';
 import { ArrowRightCircle, Users, Trophy, Award } from 'lucide-react';
 import BoostInlineElement from '../elements/BoostInlineElement';
 
-const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, leagueId, squadColor }) => {
+const PlayerListTab = ({
+  players,
+  playerEvents,
+  currentCoreSquad,
+  activePhaseAssignments = [],
+  hasActivePhase = false,
+  boostRoles,
+  leagueId,
+  squadColor
+}) => {
   const [sortConfig, setSortConfig] = useState({
     key: 'total_points',  // Default to sorting by total points
     direction: 'desc'
@@ -29,7 +38,8 @@ const PlayerListTab = ({ players, playerEvents, currentCoreSquad, boostRoles, le
   };
 
   const getCurrentBoostRole = (playerId) => {
-    const assignment = currentCoreSquad?.find(role => role.player_id === playerId);
+    const assignmentSource = hasActivePhase ? activePhaseAssignments : currentCoreSquad;
+    const assignment = assignmentSource?.find(role => role.player_id === playerId);
     if (!assignment) return null;
     
     const boostRole = boostRoles.find(role => role.id === assignment.boost_id);

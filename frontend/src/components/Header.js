@@ -299,7 +299,7 @@ const Header = ({ theme, onThemeChange }) => {
   };
 
   const canShowLeagueSwitcher = isLeagueView && userLeagues.length > 1;
-  const isAdmin = user && user.id === 1;
+  const isAdmin = !!(user?.is_staff || user?.is_superuser || user?.id === 1);
 
   return (
     <>
@@ -414,6 +414,9 @@ const Header = ({ theme, onThemeChange }) => {
                     <ChevronRight className="h-4 w-4 flex-shrink-0" />
                   </button>
                 )}
+
+                {/* Admin points updater */}
+                {isAdmin && <UpdatePointsButton />}
     
                 {/* User menu */}
                 <div className="relative" ref={dropdownRef}>

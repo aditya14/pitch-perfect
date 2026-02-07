@@ -28,6 +28,8 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
   const [playerEvents, setPlayerEvents] = useState({});
   const [isOwnSquad, setIsOwnSquad] = useState(false);
   const [rankInfo, setRankInfo] = useState({ rank: null, totalSquads: null });
+  const [activePhaseAssignments, setActivePhaseAssignments] = useState([]);
+  const [hasActivePhase, setHasActivePhase] = useState(false);
   
   // Set document title based on squad name and active tab
   const getPageTitle = () => {
@@ -43,6 +45,12 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
 
   useEffect(() => {
     const fetchSquadData = async () => {
+      const parsePhaseDate = (dateValue) => {
+        if (!dateValue) return null;
+        const parsed = new Date(dateValue);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      };
+
       try {
         setLoading(true);
         
@@ -84,6 +92,32 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
         } catch (eventErr) {
           console.warn('Non-critical: Failed to load player events:', eventErr);
           setPlayerEvents({});
+        }
+
+        try {
+          const phaseBoostResponse = await api.get(`/squads/${squadId}/phase-boosts/`);
+          const phases = phaseBoostResponse.data?.phases || [];
+          const assignmentsByPhase = phaseBoostResponse.data?.assignments || {};
+          const now = new Date();
+
+          const currentPhase = phases.find((phase) => {
+            const startAt = parsePhaseDate(phase.start);
+            const endAt = parsePhaseDate(phase.end);
+            return startAt && endAt ? now >= startAt && now <= endAt : false;
+          });
+
+          if (currentPhase?.id) {
+            const phaseAssignments = assignmentsByPhase[currentPhase.id] || assignmentsByPhase[String(currentPhase.id)] || [];
+            setActivePhaseAssignments(Array.isArray(phaseAssignments) ? phaseAssignments : []);
+            setHasActivePhase(true);
+          } else {
+            setActivePhaseAssignments([]);
+            setHasActivePhase(false);
+          }
+        } catch (phaseErr) {
+          console.warn('Non-critical: Failed to load active phase assignments:', phaseErr);
+          setActivePhaseAssignments([]);
+          setHasActivePhase(false);
         }
   
         setLoading(false);
@@ -150,6 +184,8 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
     }
     return squadData?.league_name || 'Back';
   };
+
+  const showBoostTab = isOwnSquad;
 
   if (loading) {
     return <LoadingScreen message="Loading Squad" description='One moment please' />;
@@ -224,39 +260,43 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6">
-        <nav className="flex space-x-4 border-b border-neutral-200 dark:border-neutral-700">
-          <button
-            onClick={() => setActiveTab('players')}
-            className={`py-2 px-4 text-sm font-medium ${
-              activeTab === 'players'
-                ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'
-            }`}
-          >
-            Player List
-          </button>
-          <button
-            onClick={() => setActiveTab('core')}
-            className={`py-2 px-4 text-sm font-medium ${
-              activeTab === 'core'
-                ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'
-            }`}
-          >
-            Boosts
-          </button>
-        </nav>
-      </div>
+      {/* Tabs (owner only) */}
+      {showBoostTab && (
+        <div className="mb-6">
+          <nav className="flex space-x-4 border-b border-neutral-200 dark:border-neutral-700">
+            <button
+              onClick={() => setActiveTab('players')}
+              className={`py-2 px-4 text-sm font-medium ${
+                activeTab === 'players'
+                  ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'
+              }`}
+            >
+              Player List
+            </button>
+            <button
+              onClick={() => setActiveTab('core')}
+              className={`py-2 px-4 text-sm font-medium ${
+                activeTab === 'core'
+                  ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'
+              }`}
+            >
+              Boosts
+            </button>
+          </nav>
+        </div>
+      )}
 
       {/* Tab Content */}
       <div className="mt-6">
-        {activeTab === 'players' ? (
+        {(!showBoostTab || activeTab === 'players') ? (
           <PlayerListTab
             players={players}
             playerEvents={playerEvents}
             currentCoreSquad={squadData.current_core_squad}
+            activePhaseAssignments={activePhaseAssignments}
+            hasActivePhase={hasActivePhase}
             boostRoles={boostRoles}
             leagueId={squadData.league_id}
             squadColor={squadData.color}
