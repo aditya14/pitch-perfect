@@ -26,6 +26,17 @@ const LeagueRunningTotal = ({ league }) => {
     </div>
   );
 
+  const hasSeasonStarted = (() => {
+    const status = (league?.season?.status || '').toUpperCase();
+    const startDateRaw = league?.season?.start_date;
+    const startDate = startDateRaw ? new Date(startDateRaw) : null;
+    const now = new Date();
+    if (startDate && !Number.isNaN(startDate.getTime())) {
+      return now >= startDate;
+    }
+    return status !== 'UPCOMING';
+  })();
+
   useEffect(() => {
     if (league?.id) {
       // Initialize all squads as visible
@@ -248,8 +259,18 @@ const LeagueRunningTotal = ({ league }) => {
     );
   }
 
-  if (chartData.length === 0) {
+  if (!hasSeasonStarted) {
     return null;
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <Wrapper>
+        <p className="text-neutral-500 dark:text-neutral-400">
+          Running total will appear once points are on the board.
+        </p>
+      </Wrapper>
+    );
   }
 
   // Custom tooltip to show squad point details

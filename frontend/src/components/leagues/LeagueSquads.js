@@ -38,10 +38,17 @@ const LeagueSquads = ({ league }) => {
   const [activeView, setActiveView] = useState('names');
   const [activeDraftId, setActiveDraftId] = useState(null);
   const [activeDraftRole, setActiveDraftRole] = useState('BAT');
+  const [squadActiveBoostAssignments, setSquadActiveBoostAssignments] = useState({});
 
   useEffect(() => {
     const fetchSquadsData = async () => {
       if (!league?.id) return;
+
+      const parsePhaseDate = (dateValue) => {
+        if (!dateValue) return null;
+        const parsed = new Date(dateValue);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      };
       
       try {
         setLoading(true);
@@ -92,6 +99,52 @@ const LeagueSquads = ({ league }) => {
           squadPlayersData[squad.id] = squad.players;
         });
         setSquadPlayers(squadPlayersData);
+
+        // Resolve active phase boost assignments per squad.
+        // Falls back to current_core_squad if no active phase assignment exists.
+        try {
+          const now = new Date();
+          const assignmentResults = await Promise.allSettled(
+            sortedSquads.map(async (squad) => {
+              const response = await api.get(`/squads/${squad.id}/phase-boosts/`);
+              const phases = response.data?.phases || [];
+              const assignmentsByPhase = response.data?.assignments || {};
+
+              const currentPhase = phases.find((phase) => {
+                const startAt = parsePhaseDate(phase.start);
+                const endAt = parsePhaseDate(phase.end);
+                return startAt && endAt ? now >= startAt && now <= endAt : false;
+              });
+
+              if (currentPhase?.id) {
+                const phaseAssignments = assignmentsByPhase[currentPhase.id] || assignmentsByPhase[String(currentPhase.id)] || [];
+                return { squadId: squad.id, assignments: Array.isArray(phaseAssignments) ? phaseAssignments : [] };
+              }
+
+              return { squadId: squad.id, assignments: Array.isArray(squad.current_core_squad) ? squad.current_core_squad : [] };
+            })
+          );
+
+          const nextMap = {};
+          assignmentResults.forEach((result, index) => {
+            const squadId = sortedSquads[index]?.id;
+            if (!squadId) return;
+            if (result.status === 'fulfilled') {
+              nextMap[squadId] = result.value.assignments || [];
+            } else {
+              const fallback = sortedSquads[index]?.current_core_squad;
+              nextMap[squadId] = Array.isArray(fallback) ? fallback : [];
+            }
+          });
+          setSquadActiveBoostAssignments(nextMap);
+        } catch (phaseErr) {
+          console.warn('Non-critical: Failed to resolve active squad phase boosts:', phaseErr);
+          const fallbackMap = {};
+          sortedSquads.forEach((squad) => {
+            fallbackMap[squad.id] = Array.isArray(squad.current_core_squad) ? squad.current_core_squad : [];
+          });
+          setSquadActiveBoostAssignments(fallbackMap);
+        }
         
         const preWindow = windows
           .filter(window => window.kind === 'PRE_SEASON')
@@ -554,7 +607,7 @@ const LeagueSquads = ({ league }) => {
                       </div>
                     </td>
                     {squadsToDisplay.map(squad => {
-                      const coreSquad = squad.current_core_squad || {};
+                      const coreSquad = squadActiveBoostAssignments[squad.id] || squad.current_core_squad || {};
                       let boostPlayerId = null;
                       if (Array.isArray(coreSquad)) {
                         const roleKeyToId = {

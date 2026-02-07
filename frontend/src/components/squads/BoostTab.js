@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import CurrentBoosts from './elements/CurrentBoosts';
 import BoostSelection from './elements/BoostSelection';
 import { User } from 'lucide-react';
 import api from '../../utils/axios';
@@ -15,7 +14,6 @@ const BoostTab = ({
   squadColor
 }) => {
   const [error, setError] = useState(null);
-  const [showCurrent, setShowCurrent] = useState(true);
   const [phases, setPhases] = useState([]);
   const [phaseAssignments, setPhaseAssignments] = useState({});
   const [phaseLoading, setPhaseLoading] = useState(false);
@@ -120,9 +118,6 @@ const BoostTab = ({
 
   const phaseWindow = selectedPhase?.startAt && selectedPhase?.endAt
     ? `${selectedPhase.startAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${selectedPhase.endAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
-    : null;
-  const statusLabel = selectedPhase?.status
-    ? selectedPhase.status.charAt(0).toUpperCase() + selectedPhase.status.slice(1)
     : null;
   const phaseSubtitle = [phaseWindow].filter(Boolean);
 

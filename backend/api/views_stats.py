@@ -55,9 +55,82 @@ def _get_match_info(match_id):
     except Match.DoesNotExist:
         return {"id": match_id, "number": None, "name": "Unknown Match"}
 
+
+def _build_running_total_fallback(league, squad_ids=None, phase_key="overall"):
+    """
+    Build running total data directly from FantasyMatchEvent when FantasyStats
+    is unavailable or stale.
+    """
+    season = league.season
+    if not season:
+        return []
+
+    squads_qs = FantasySquad.objects.filter(league=league).order_by('id')
+    if squad_ids:
+        squads_qs = squads_qs.filter(id__in=squad_ids)
+    squads = list(squads_qs)
+    if not squads:
+        return []
+
+    matches_qs = Match.objects.filter(season=season)
+    if phase_key != "overall" and str(phase_key).isdigit():
+        matches_qs = matches_qs.filter(season_phase__phase=int(phase_key))
+    matches = list(matches_qs.order_by('date', 'match_number'))
+    if not matches:
+        return []
+
+    match_ids = [m.id for m in matches]
+    events_qs = FantasyMatchEvent.objects.filter(
+        match_id__in=match_ids,
+        fantasy_squad__league=league,
+    )
+    if squad_ids:
+        events_qs = events_qs.filter(fantasy_squad_id__in=squad_ids)
+
+    events_map = {
+        (event.match_id, event.fantasy_squad_id): float(event.total_points or 0)
+        for event in events_qs
+    }
+
+    running_totals = {s.id: 0.0 for s in squads}
+    running_total_data = []
+
+    for idx, match in enumerate(matches, 1):
+        match_label = f"M{match.match_number}" if match.match_number else f"M{idx}"
+        team_1_name = match.team_1.short_name if match.team_1 else "TBD"
+        team_2_name = match.team_2.short_name if match.team_2 else "TBD"
+
+        data_point = {
+            "name": match_label,
+            "match_id": match.id,
+            "match_name": f"{team_1_name} vs {team_2_name} - Match {match.match_number}",
+            "date": match.date.isoformat() if match.date else None,
+            "matchData": {},
+        }
+
+        for squad in squads:
+            match_points = events_map.get((match.id, squad.id), 0.0)
+            running_totals[squad.id] += match_points
+            running_total = running_totals[squad.id]
+
+            data_point[f"squad_{squad.id}"] = running_total
+            data_point["matchData"][str(squad.id)] = {
+                "matchPoints": match_points,
+                "runningTotal": running_total,
+                "squad": {
+                    "id": squad.id,
+                    "name": squad.name,
+                    "color": squad.color,
+                },
+            }
+
+        running_total_data.append(data_point)
+
+    return running_total_data
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-@cache_page_with_bypass(60 * 60 * 24 * 7)  # Cache for 1 week (season is over)
+@cache_page_with_bypass(60 * 10)  # Keep fresh during active seasons
 def league_stats_running_total(request, league_id):
     """
     Get running total data for league (from FantasyStats, by phase if requested)
@@ -68,15 +141,25 @@ def league_stats_running_total(request, league_id):
         time_frame = request.query_params.get('timeFrame', 'overall')
         phase_key = _get_phase_key(time_frame)
         squad_ids = [int(id) for id in squads_param.split(',') if id]
+        league = FantasyLeague.objects.get(id=league_id)
 
-        stats = FantasyStats.objects.get(league_id=league_id)
-        running_total_data = stats.match_details.get("running_total", {}).get(phase_key, [])
+        running_total_data = []
+        stats = FantasyStats.objects.filter(league_id=league_id).first()
+        if stats:
+            running_total_data = stats.match_details.get("running_total", {}).get(phase_key, [])
+        if not running_total_data:
+            running_total_data = _build_running_total_fallback(
+                league=league,
+                squad_ids=squad_ids,
+                phase_key=phase_key,
+            )
 
         # Optionally filter squads
-        if squad_ids:
+        if squad_ids and stats and stats.match_details.get("running_total", {}).get(phase_key, []):
+            squad_id_set = {str(sid) for sid in squad_ids}
             for data_point in running_total_data:
                 # Remove squads not in squad_ids from matchData and squad_* keys
-                data_point["matchData"] = {k: v for k, v in data_point["matchData"].items() if k in squad_ids}
+                data_point["matchData"] = {k: v for k, v in data_point["matchData"].items() if str(k) in squad_id_set}
                 for key in list(data_point.keys()):
                     if key.startswith("squad_"):
                         squad_id = int(key.split("_")[1])
