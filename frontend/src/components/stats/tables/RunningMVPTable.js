@@ -45,36 +45,7 @@ const RunningMVPTable = ({
     } catch (err) {
       console.error('Failed to fetch season MVP data:', err);
       setError('Failed to load season MVP data');
-      
-      // Simulate data for development
-      const simulatedData = Array.from({ length: 10 }, (_, i) => {
-        const randomSquadId = selectedSquadIds[Math.floor(Math.random() * selectedSquadIds.length)];
-        const randomSquad = league.squads.find(s => s.id === randomSquadId);
-        
-        return {
-          id: i + 1,
-          player: {
-            id: 100 + i,
-            name: `Player ${i + 1}`
-          },
-          matches: Math.floor(Math.random() * 14) + 1,
-          squad: {
-            id: randomSquadId,
-            name: randomSquad?.name || 'Unknown Squad',
-            color: randomSquad?.color || '#808080'
-          },
-          base: Math.floor(Math.random() * 500) + 100,
-          boost: Math.floor(Math.random() * 300) + 50,
-          total: 0  // Will be calculated below
-        };
-      });
-      
-      // Calculate totals
-      simulatedData.forEach(player => {
-        player.total = player.base + player.boost;
-      });
-      
-      setData(simulatedData);
+      setData([]);
     } finally {
       setLoading(false);
     }

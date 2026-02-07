@@ -112,12 +112,15 @@ const LeagueRunningTotal = ({ league }) => {
 
   // Get filtered data based on view mode
   const getFilteredData = () => {
-    if (viewMode === 'all' || chartData.length <= 10) {
-      return chartData;
-    }
-    
-    // For zoomed view, show only the last 10 matches
-    return chartData.slice(-10);
+    const filtered = (viewMode === 'all' || chartData.length <= 10)
+      ? chartData
+      : chartData.slice(-10);
+
+    // Always render the X-axis as 1..N for the currently displayed window.
+    return filtered.map((point, idx) => ({
+      ...point,
+      x_index: idx + 1,
+    }));
   };
 
   // Get squad color with fallback to predefined colors
@@ -274,11 +277,28 @@ const LeagueRunningTotal = ({ league }) => {
   }
 
   // Custom tooltip to show squad point details
+  const formatTooltipDate = (dateValue) => {
+    if (!dateValue) return '';
+
+    const dateObj = new Date(dateValue);
+    if (!Number.isNaN(dateObj.getTime())) {
+      return dateObj.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    }
+
+    // Handle pre-formatted backend values such as "Mon, Apr 07"
+    const match = String(dateValue).match(/([A-Za-z]{3})\s+(\d{1,2})/);
+    if (match) {
+      return `${match[1]} ${String(match[2]).padStart(2, '0')}`;
+    }
+
+    return String(dateValue);
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       // Get match name and date for this data point
       const matchName = payload[0]?.payload?.match_name || `Match ${label}`;
-      const matchDate = payload[0]?.payload?.date || '';
+      const matchDate = formatTooltipDate(payload[0]?.payload?.date);
       const matchData = payload[0]?.payload?.matchData || {};
       
       // Filter for visible squads and sort by running total in descending order
@@ -409,7 +429,7 @@ const LeagueRunningTotal = ({ league }) => {
             ))}
             
             <XAxis 
-              dataKey="name" 
+              dataKey="x_index" 
               label={{ 
                 value: 'Match', 
                 position: 'insideBottom',

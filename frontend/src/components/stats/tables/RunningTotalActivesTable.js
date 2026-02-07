@@ -36,27 +36,7 @@ const RunningTotalActivesTable = ({
     } catch (err) {
       console.error('Failed to fetch season total actives data:', err);
       setError('Failed to load season total actives data');
-      
-      // Simulate data for development
-      const simulatedData = selectedSquadIds.map(squadId => {
-        const squad = league.squads.find(s => s.id === squadId);
-        
-        return {
-          id: squadId,
-          squad: {
-            id: squadId,
-            name: squad?.name || 'Unknown Squad',
-            color: squad?.color || '#808080'
-          },
-          count: Math.floor(Math.random() * 100) + 50 // Random count between 50-150
-        };
-      });
-      
-      // Sort by count descending
-      simulatedData.sort((a, b) => b.count - a.count);
-      
-      // Limit to top 10
-      setData(simulatedData.slice(0, 10));
+      setData([]);
     } finally {
       setLoading(false);
     }

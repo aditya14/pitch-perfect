@@ -42,37 +42,7 @@ const MostPointsInMatchTable = ({
     } catch (err) {
       console.error('Failed to fetch most points in match data:', err);
       setError('Failed to load most points in match data');
-      
-      // Simulate data for development
-      const simulatedData = [];
-      
-      // Create 10 entries
-      for (let i = 0; i < 10; i++) {
-        const randomSquadId = selectedSquadIds[Math.floor(Math.random() * selectedSquadIds.length)];
-        const randomSquad = league.squads.find(s => s.id === randomSquadId);
-        
-        const basePoints = Math.floor(Math.random() * 300) + 200;
-        const boostPoints = Math.floor(Math.random() * 150) + 50;
-        
-        simulatedData.push({
-          id: i + 1,
-          squad: {
-            id: randomSquadId,
-            name: randomSquad?.name || 'Unknown Squad',
-            color: randomSquad?.color || '#808080'
-          },
-          match: {
-            id: 200 + i,
-            number: i + 1,
-            name: `MI vs CSK - Match ${i + 1}`
-          },
-          base: basePoints,
-          boost: boostPoints,
-          total: basePoints + boostPoints
-        });
-      }
-      
-      setData(simulatedData);
+      setData([]);
     } finally {
       setLoading(false);
     }

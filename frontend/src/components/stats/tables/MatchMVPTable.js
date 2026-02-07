@@ -44,40 +44,7 @@ const MatchMVPTable = ({
     } catch (err) {
       console.error('Failed to fetch match MVP data:', err);
       setError('Failed to load match MVP data');
-      
-      // Simulate data for development
-      const simulatedData = Array.from({ length: 10 }, (_, i) => {
-        const randomSquadId = selectedSquadIds[Math.floor(Math.random() * selectedSquadIds.length)];
-        const randomSquad = league.squads.find(s => s.id === randomSquadId);
-        
-        return {
-          id: i + 1,
-          player: {
-            id: 100 + i,
-            name: `Player ${i + 1}`
-          },
-          match: {
-            id: 200 + i,
-            number: i + 1,
-            name: `MI vs CSK - Match ${i + 1}`
-          },
-          squad: {
-            id: randomSquadId,
-            name: randomSquad?.name || 'Unknown Squad',
-            color: randomSquad?.color || '#808080'
-          },
-          base: Math.floor(Math.random() * 100) + 50,
-          boost: Math.floor(Math.random() * 70) + 20,
-          total: 0  // Will be calculated below
-        };
-      });
-      
-      // Calculate totals
-      simulatedData.forEach(player => {
-        player.total = player.base + player.boost;
-      });
-      
-      setData(simulatedData.slice(0, 10));
+      setData([]);
     } finally {
       setLoading(false);
     }

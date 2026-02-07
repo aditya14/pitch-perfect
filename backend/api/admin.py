@@ -452,6 +452,18 @@ class IPLMatchAdmin(admin.ModelAdmin):
                     
                     print(f"Updated FantasySquad {squad.name} total points: {old_total} -> {total_points}")
 
+                # Recalculate cached league stats after POTM-driven point changes.
+                from api.models import FantasyLeague
+                from api.services.stats_service import update_fantasy_stats
+                league_ids = FantasyLeague.objects.filter(
+                    season_id=obj.season_id
+                ).values_list('id', flat=True)
+                for league_id in league_ids:
+                    try:
+                        update_fantasy_stats(league_id)
+                    except Exception as e:
+                        print(f"Failed to update fantasy stats for league {league_id}: {e}")
+
 @admin.register(PlayerMatchEvent)
 class IPLPlayerEventAdmin(admin.ModelAdmin):
     # Select only the fields you need to display in the list view

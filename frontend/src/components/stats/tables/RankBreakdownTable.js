@@ -41,43 +41,7 @@ const RankBreakdownTable = ({
     } catch (err) {
       console.error('Failed to fetch rank breakdown data:', err);
       setError('Failed to load rank breakdown data');
-      
-      // Simulate data for development
-      const simulatedData = selectedSquadIds.map(squadId => {
-        const squad = league.squads.find(s => s.id === squadId);
-        
-        // Random ranks between 1 and squad count
-        const highestRank = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
-        const lowestRank = Math.floor(Math.random() * 3) + (league.squads.length - 3); // One of the bottom 3
-        const medianRank = Math.random() * (league.squads.length - 1) + 1; // Decimal value between 1 and squad count
-        const modeRank = Math.floor(Math.random() * league.squads.length) + 1;
-        const gamesAtHighestRank = Math.floor(Math.random() * 5) + 1; // Between 1 and 5 games
-        
-        return {
-          id: squadId,
-          squad: {
-            id: squadId,
-            name: squad?.name || 'Unknown Squad',
-            color: squad?.color || '#808080'
-          },
-          highestRank: highestRank,
-          gamesAtHighestRank: gamesAtHighestRank,
-          lowestRank: lowestRank,
-          medianRank: medianRank,
-          modeRank: modeRank
-        };
-      });
-      
-      // Sort: primary by highestRank (asc), secondary by gamesAtHighestRank (desc)
-      simulatedData.sort((a, b) => {
-        if (a.highestRank !== b.highestRank) {
-          return a.highestRank - b.highestRank;
-        }
-        return (b.gamesAtHighestRank || 0) - (a.gamesAtHighestRank || 0);
-      });
-      
-      // Limit to top 10
-      setData(simulatedData.slice(0, 10));
+      setData([]);
     } finally {
       setLoading(false);
     }

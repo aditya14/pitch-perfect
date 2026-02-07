@@ -39,35 +39,7 @@ const DominationTable = ({
     } catch (err) {
       console.error('Failed to fetch domination data:', err);
       setError('Failed to load domination data');
-      
-      // Simulate data for development
-      const simulatedData = [];
-      
-      // Create 10 entries
-      for (let i = 0; i < 10; i++) {
-        const randomSquadId = selectedSquadIds[Math.floor(Math.random() * selectedSquadIds.length)];
-        const randomSquad = league.squads.find(s => s.id === randomSquadId);
-        
-        simulatedData.push({
-          id: i + 1,
-          squad: {
-            id: randomSquadId,
-            name: randomSquad?.name || 'Unknown Squad',
-            color: randomSquad?.color || '#808080'
-          },
-          match: {
-            id: 200 + i,
-            number: i + 1,
-            name: `MI vs CSK - Match ${i + 1}`
-          },
-          percentage: Math.floor(Math.random() * 35) + 15 // Random percentage between 15-50%
-        });
-      }
-      
-      // Sort by percentage descending
-      simulatedData.sort((a, b) => b.percentage - a.percentage);
-      
-      setData(simulatedData);
+      setData([]);
     } finally {
       setLoading(false);
     }

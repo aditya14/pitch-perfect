@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from functools import wraps
@@ -13,6 +13,15 @@ from .models import (
     Match,
     FantasyStats,
     FantasyPlayerEvent  # <-- add this import
+)
+from .services.stats_service import (
+    calculate_domination_for_matches,
+    calculate_match_mvp_for_matches,
+    calculate_most_players_in_match_for_matches,
+    calculate_most_points_in_match_for_matches,
+    calculate_rank_breakdown_for_matches,
+    calculate_season_mvp_for_matches,
+    calculate_season_total_actives_for_matches,
 )
 
 def cache_page_with_bypass(timeout):
@@ -33,7 +42,33 @@ def _get_phase_key(time_frame):
         return str(int(time_frame))
     return "overall"
 
+def _coerce_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+def _get_phase_matches(league, phase_key):
+    season = getattr(league, "season", None)
+    if not season:
+        return Match.objects.none()
+
+    qs = Match.objects.filter(
+        season=season,
+        status__in=[Match.Status.LIVE, Match.Status.COMPLETED, Match.Status.NO_RESULT, Match.Status.ABANDONED],
+    )
+    if phase_key != "overall" and str(phase_key).isdigit():
+        phase = int(phase_key)
+        qs = qs.filter(
+            (Q(season_phase__phase=phase)) |
+            (Q(season_phase__isnull=True, phase=phase))
+        )
+    return qs.order_by('date', 'match_number')
+
 def _get_squad_info(squad_id, league):
+    squad_id = _coerce_int(squad_id)
+    if squad_id is None:
+        return {"id": None, "name": "Unknown", "color": "#808080"}
     try:
         squad = FantasySquad.objects.get(id=squad_id, league=league)
         return {
@@ -45,6 +80,9 @@ def _get_squad_info(squad_id, league):
         return {"id": squad_id, "name": "Unknown", "color": "#808080"}
 
 def _get_match_info(match_id):
+    match_id = _coerce_int(match_id)
+    if match_id is None:
+        return {"id": None, "number": None, "name": "Unknown Match"}
     try:
         match = Match.objects.get(id=match_id)
         return {
@@ -72,7 +110,10 @@ def _build_running_total_fallback(league, squad_ids=None, phase_key="overall"):
     if not squads:
         return []
 
-    matches_qs = Match.objects.filter(season=season)
+    matches_qs = Match.objects.filter(
+        season=season,
+        status__in=[Match.Status.LIVE, Match.Status.COMPLETED],
+    )
     if phase_key != "overall" and str(phase_key).isdigit():
         matches_qs = matches_qs.filter(season_phase__phase=int(phase_key))
     matches = list(matches_qs.order_by('date', 'match_number'))
@@ -154,6 +195,27 @@ def league_stats_running_total(request, league_id):
                 phase_key=phase_key,
             )
 
+        # Enforce live/completed matches only in the response, even when using cached FantasyStats.
+        allowed_matches_qs = Match.objects.filter(
+            season=league.season,
+            status__in=[Match.Status.LIVE, Match.Status.COMPLETED],
+        )
+        if phase_key != "overall" and str(phase_key).isdigit():
+            allowed_matches_qs = allowed_matches_qs.filter(season_phase__phase=int(phase_key))
+        allowed_match_ids = set(allowed_matches_qs.values_list("id", flat=True))
+        running_total_data = [
+            data_point for data_point in running_total_data
+            if data_point.get("match_id") in allowed_match_ids
+        ]
+
+        # If cached stats are stale/missing live points, rebuild from match events.
+        if allowed_match_ids and len(running_total_data) < len(allowed_match_ids):
+            running_total_data = _build_running_total_fallback(
+                league=league,
+                squad_ids=squad_ids,
+                phase_key=phase_key,
+            )
+
         # Optionally filter squads
         if squad_ids and stats and stats.match_details.get("running_total", {}).get(phase_key, []):
             squad_id_set = {str(sid) for sid in squad_ids}
@@ -186,9 +248,16 @@ def league_stats_domination(request, league_id):
         phase_key = _get_phase_key(time_frame)
         squad_ids = [int(id) for id in squads_param.split(',') if id]
 
-        stats = FantasyStats.objects.get(league_id=league_id)
-        domination_data = stats.match_details.get("domination", {}).get(phase_key, [])
         league = FantasyLeague.objects.get(id=league_id)
+        stats = FantasyStats.objects.filter(league_id=league_id).first()
+        domination_data = []
+        if stats:
+            domination_data = stats.match_details.get("domination", {}).get(phase_key, [])
+        if not domination_data:
+            domination_data = calculate_domination_for_matches(
+                league_id=league_id,
+                matches=_get_phase_matches(league, phase_key),
+            )
 
         # Transform to nested structure for frontend
         domination_data = [
@@ -219,9 +288,16 @@ def league_stats_match_mvp(request, league_id):
         phase_key = _get_phase_key(time_frame)
         squad_ids = [int(id) for id in squads_param.split(',') if id]
 
-        stats = FantasyStats.objects.get(league_id=league_id)
-        mvp_data = stats.player_details.get("match_mvp", {}).get(phase_key, [])
         league = FantasyLeague.objects.get(id=league_id)
+        stats = FantasyStats.objects.filter(league_id=league_id).first()
+        mvp_data = []
+        if stats:
+            mvp_data = stats.player_details.get("match_mvp", {}).get(phase_key, [])
+        if not mvp_data:
+            mvp_data = calculate_match_mvp_for_matches(
+                league_id=league_id,
+                matches=_get_phase_matches(league, phase_key),
+            )
 
         # Transform to nested structure for frontend
         mvp_data = [
@@ -256,9 +332,16 @@ def league_stats_season_mvp(request, league_id):
         phase_key = _get_phase_key(time_frame)
         squad_ids = [int(id) for id in squads_param.split(',') if id]
 
-        stats = FantasyStats.objects.get(league_id=league_id)
-        mvp_data = stats.player_details.get("season_mvp", {}).get(phase_key, [])
         league = FantasyLeague.objects.get(id=league_id)
+        stats = FantasyStats.objects.filter(league_id=league_id).first()
+        mvp_data = []
+        if stats:
+            mvp_data = stats.player_details.get("season_mvp", {}).get(phase_key, [])
+        if not mvp_data:
+            mvp_data = calculate_season_mvp_for_matches(
+                league_id=league_id,
+                matches=_get_phase_matches(league, phase_key),
+            )
 
         # Transform to nested structure for frontend
         mvp_data = [
@@ -293,9 +376,16 @@ def league_stats_most_points_in_match(request, league_id):
         phase_key = _get_phase_key(time_frame)
         squad_ids = [int(id) for id in squads_param.split(',') if id]
 
-        stats = FantasyStats.objects.get(league_id=league_id)
-        most_points_data = stats.match_details.get("most_points_in_match", {}).get(phase_key, [])
         league = FantasyLeague.objects.get(id=league_id)
+        stats = FantasyStats.objects.filter(league_id=league_id).first()
+        most_points_data = []
+        if stats:
+            most_points_data = stats.match_details.get("most_points_in_match", {}).get(phase_key, [])
+        if not most_points_data:
+            most_points_data = calculate_most_points_in_match_for_matches(
+                league_id=league_id,
+                matches=_get_phase_matches(league, phase_key),
+            )
 
         # Transform to nested structure for frontend
         most_points_data = [
@@ -329,9 +419,16 @@ def league_stats_most_players_in_match(request, league_id):
         phase_key = _get_phase_key(time_frame)
         squad_ids = [int(id) for id in squads_param.split(',') if id]
 
-        stats = FantasyStats.objects.get(league_id=league_id)
-        most_active_data = stats.match_details.get("most_players_in_match", {}).get(phase_key, [])
         league = FantasyLeague.objects.get(id=league_id)
+        stats = FantasyStats.objects.filter(league_id=league_id).first()
+        most_active_data = []
+        if stats:
+            most_active_data = stats.match_details.get("most_players_in_match", {}).get(phase_key, [])
+        if not most_active_data:
+            most_active_data = calculate_most_players_in_match_for_matches(
+                league_id=league_id,
+                matches=_get_phase_matches(league, phase_key),
+            )
 
         # Transform to nested structure for frontend
         most_active_data = [
@@ -362,26 +459,49 @@ def league_stats_rank_breakdown(request, league_id):
         phase_key = _get_phase_key(time_frame)
         squad_ids = [int(id) for id in squads_param.split(',') if id]
 
-        stats = FantasyStats.objects.get(league_id=league_id)
-        # FIXED: Access squad_stats inside match_details
-        squad_stats_data = stats.match_details.get("squad_stats", {}).get(phase_key, [])
         league = FantasyLeague.objects.get(id=league_id)
+        stats = FantasyStats.objects.filter(league_id=league_id).first()
+        # Access squad_stats inside match_details
+        squad_stats_data = []
+        if stats:
+            squad_stats_data = stats.match_details.get("squad_stats", {}).get(phase_key, [])
+        if not squad_stats_data:
+            squad_stats_data = calculate_rank_breakdown_for_matches(
+                league_id=league_id,
+                matches=_get_phase_matches(league, phase_key),
+            )
 
         # Transform to nested structure for frontend
         rank_breakdown_data = []
         
         for squad_data in squad_stats_data:
-            if not squad_ids or squad_data.get("squad_id") in squad_ids:
-                rank_stats = squad_data.get("rank_stats", {})
-                if rank_stats:
-                    rank_breakdown_data.append({
-                        "squad": _get_squad_info(squad_data["squad_id"], league),
-                        "highestRank": rank_stats.get("highest"),
-                        "gamesAtHighestRank": rank_stats.get("games_at_highest"),
-                        "lowestRank": rank_stats.get("lowest"), 
-                        "medianRank": rank_stats.get("median"),
-                        "modeRank": rank_stats.get("mode")
-                    })
+            squad_id = _coerce_int(squad_data.get("squad_id"))
+            if squad_id is None:
+                continue
+            if squad_ids and squad_id not in squad_ids:
+                continue
+
+            rank_stats = squad_data.get("rank_stats")
+            if rank_stats:
+                rank_breakdown_data.append({
+                    "squad": _get_squad_info(squad_id, league),
+                    "highestRank": rank_stats.get("highest"),
+                    "gamesAtHighestRank": rank_stats.get("games_at_highest"),
+                    "lowestRank": rank_stats.get("lowest"),
+                    "medianRank": rank_stats.get("median"),
+                    "modeRank": rank_stats.get("mode")
+                })
+                continue
+
+            # Fallback shape from calculate_rank_breakdown_for_matches
+            rank_breakdown_data.append({
+                "squad": _get_squad_info(squad_id, league),
+                "highestRank": squad_data.get("highest"),
+                "gamesAtHighestRank": None,
+                "lowestRank": squad_data.get("lowest"),
+                "medianRank": squad_data.get("median"),
+                "modeRank": squad_data.get("mode")
+            })
 
         return Response(rank_breakdown_data)
     except Exception as e:
@@ -510,20 +630,46 @@ def league_stats_season_total_actives(request, league_id):
         phase_key = _get_phase_key(time_frame)
         squad_ids = [int(id) for id in squads_param.split(',') if id]
 
-        stats = FantasyStats.objects.get(league_id=league_id)
-        # FIXED: Access squad_stats inside match_details
-        squad_stats_data = stats.match_details.get("squad_stats", {}).get(phase_key, [])
         league = FantasyLeague.objects.get(id=league_id)
+        stats = FantasyStats.objects.filter(league_id=league_id).first()
+        # Access squad_stats inside match_details
+        squad_stats_data = []
+        if stats:
+            squad_stats_data = stats.match_details.get("squad_stats", {}).get(phase_key, [])
+        if not squad_stats_data:
+            squad_stats_data = calculate_season_total_actives_for_matches(
+                league_id=league_id,
+                matches=_get_phase_matches(league, phase_key),
+            )
 
         # Transform to nested structure for frontend
         actives_data = []
         
         for squad_data in squad_stats_data:
-            if not squad_ids or squad_data.get("squad_id") in squad_ids:
+            # Shape from cached squad_stats
+            if "squad_id" in squad_data:
+                squad_id = _coerce_int(squad_data.get("squad_id"))
+                if squad_id is None:
+                    continue
+                if squad_ids and squad_id not in squad_ids:
+                    continue
                 actives_data.append({
-                    "squad": _get_squad_info(squad_data["squad_id"], league),
+                    "squad": _get_squad_info(squad_id, league),
                     "count": squad_data.get("total_actives", 0)
                 })
+                continue
+
+            # Shape from calculate_season_total_actives_for_matches
+            squad_obj = squad_data.get("squad", {})
+            squad_id = _coerce_int(squad_obj.get("id"))
+            if squad_id is None:
+                continue
+            if squad_ids and squad_id not in squad_ids:
+                continue
+            actives_data.append({
+                "squad": _get_squad_info(squad_id, league),
+                "count": squad_data.get("count", 0)
+            })
 
         print(f"DEBUG: Returning {len(actives_data)} actives_data entries")
         return Response(actives_data)

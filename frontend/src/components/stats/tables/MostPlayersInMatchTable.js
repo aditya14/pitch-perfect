@@ -37,28 +37,9 @@ const MostPlayersInMatchTable = ({
         }))
       );
     } catch (err) {
+      console.error('Failed to fetch most players in match data:', err);
       setError('Failed to load data');
-      // Simulate data for development
-      const simulatedData = [];
-      for (let i = 0; i < 8; i++) {
-        const randomSquadId = selectedSquadIds[Math.floor(Math.random() * selectedSquadIds.length)];
-        const randomSquad = league.squads.find(s => s.id === randomSquadId);
-        simulatedData.push({
-          id: i + 1,
-          squad: {
-            id: randomSquadId,
-            name: randomSquad?.name || 'Unknown Squad',
-            color: randomSquad?.color || '#808080'
-          },
-          match: {
-            id: 200 + i,
-            number: i + 1,
-            name: `MI vs CSK - Match ${i + 1}`
-          },
-          count: Math.floor(Math.random() * 11) + 1 // use 'count' to match backend
-        });
-      }
-      setData(simulatedData);
+      setData([]);
     } finally {
       setLoading(false);
     }
