@@ -297,10 +297,21 @@ const LeagueSquads = ({ league }) => {
 
   // Determine which squad list to use based on activeView
   const isDraftView = Boolean(activeDraftId);
-  const squadsToDisplay = 
-    activeDraftId === 'draft_pre' ? orderedPreSeasonSquads :
-    activeDraftId === 'draft_mid' ? [...orderedMidSeasonSquads].reverse() :
-    squads;
+  const baseDraftSquads =
+    activeDraftId === 'draft_pre'
+      ? orderedPreSeasonSquads
+      : activeDraftId === 'draft_mid'
+        ? [...orderedMidSeasonSquads].reverse()
+        : squads;
+
+  // For snake draft readability:
+  // BAT/ALL keep base order, WK/BOWL use reversed order.
+  const shouldReverseDraftColumns =
+    isDraftView && (activeDraftRole === 'WK' || activeDraftRole === 'BOWL');
+
+  const squadsToDisplay = shouldReverseDraftColumns
+    ? [...baseDraftSquads].reverse()
+    : baseDraftSquads;
 
   const ROLE_OPTIONS = ['BAT', 'WK', 'ALL', 'BOWL'];
 
