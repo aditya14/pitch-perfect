@@ -7,7 +7,8 @@ from django.db import transaction, models
 from django.utils import timezone
 
 from api.models import (
-    Match, Player, Team, PlayerMatchEvent, FantasySquad, FantasyPlayerEvent, FantasyBoostRole, FantasyMatchEvent, FantasyLeague
+    Match, Player, Team, PlayerMatchEvent, FantasySquad, FantasyPlayerEvent, FantasyBoostRole, FantasyMatchEvent, FantasyLeague,
+    SquadPhaseBoost
 )
 
 logger = logging.getLogger(__name__)
@@ -402,6 +403,21 @@ class CricketDataService:
         
         # Get all fantasy squads for this season
         squads = FantasySquad.objects.filter(league__season=match.season)
+
+        # Boost assignments are phase-based only: SquadPhaseBoost for match.season_phase
+        assignments_by_squad = {}
+        if match.season_phase_id:
+            phase_boosts = SquadPhaseBoost.objects.filter(
+                fantasy_squad__in=squads,
+                phase_id=match.season_phase_id
+            ).only("fantasy_squad_id", "assignments")
+            assignments_by_squad = {
+                item.fantasy_squad_id: (item.assignments or [])
+                for item in phase_boosts
+            }
+
+        boost_roles = FantasyBoostRole.objects.all()
+        boost_roles_by_id = {role.id: role for role in boost_roles}
         
         for event in player_events:
             player = event.player
@@ -414,13 +430,13 @@ class CricketDataService:
                 if player.id not in current_squad:
                     continue
                 
-                # Determine if the player has a boost role in the core squad
+                # Determine if the player has a boost role in this match phase assignment
                 boost_id = None
-                core_squad = squad.current_core_squad or []
-                
-                for core_player in core_squad:
-                    if core_player.get("player_id") == player.id:
-                        boost_id = core_player.get("boost_id")
+                phase_assignments = assignments_by_squad.get(squad.id, [])
+
+                for assignment in phase_assignments:
+                    if assignment.get("player_id") == player.id:
+                        boost_id = assignment.get("boost_id")
                         break
                 
                 # If no boost found, leave boost as None
@@ -428,9 +444,18 @@ class CricketDataService:
                     boost = None
                     boost_points = 0
                 else:
-                    boost = FantasyBoostRole.objects.get(id=boost_id)
-                    # Calculate boost points based on role
-                    boost_points = self._calculate_boost_points(event, boost)
+                    boost = boost_roles_by_id.get(boost_id)
+                    if boost is None:
+                        logger.warning(
+                            "Invalid boost role id %s for squad %s in phase %s",
+                            boost_id,
+                            squad.id,
+                            match.season_phase_id
+                        )
+                        boost_points = 0
+                    else:
+                        # Calculate boost points based on role
+                        boost_points = self._calculate_boost_points(event, boost)
                 
                 # Create or update fantasy player event
                 fantasy_event, created = FantasyPlayerEvent.objects.get_or_create(
