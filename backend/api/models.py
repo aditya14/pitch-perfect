@@ -109,6 +109,7 @@ class Team(SoftDeleteModel, TimeStampedModel):
     secondary_color = models.CharField(max_length=7)  # hex color
     logo = models.ImageField(upload_to='ipl_teams/', null=True, blank=True)
     other_names = models.JSONField(default=list)  # historical names
+    sportmonk_id = models.CharField(max_length=60, blank=True, null=True)
 
     # A team can participate in many competition families (IPL, ODI WC, bilateral series, etc.).
     competitions = models.ManyToManyField(
@@ -217,6 +218,7 @@ class Player(SoftDeleteModel, TimeStampedModel):
     )
     img = models.ImageField(upload_to='players/', null=True, blank=True)
     cricdata_id = models.CharField(max_length=60, blank=True, null=True)
+    sportmonk_id = models.CharField(max_length=60, blank=True, null=True)
 
     # Current team relationship handled through PlayerSeasonTeam
     teams = models.ManyToManyField(
@@ -370,6 +372,7 @@ class Match(TimeStampedModel):
     inns_2_overs = models.FloatField(null=True, blank=True)
 
     cricdata_id = models.CharField(max_length=60, blank=True, null=True)
+    sportmonk_id = models.CharField(max_length=60, blank=True, null=True)
 
 
     class Meta:

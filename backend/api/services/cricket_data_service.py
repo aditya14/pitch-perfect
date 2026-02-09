@@ -867,6 +867,10 @@ class CricketDataService:
         parts = inning_name.split(' Inning')
         if parts:
             team_name = parts[0].strip()
+            # CricAPI sometimes returns malformed inning names like "England,Nepal Inning 1".
+            # In those cases, prefer the team name after the comma.
+            if ',' in team_name:
+                team_name = team_name.split(',')[-1].strip()
             return self._find_team_by_name(team_name)
         
         return None
