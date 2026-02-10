@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import { 
   ChevronRight, Moon, Sun, Home, LogOut, User, 
-  ChevronsUpDown, Check, Menu, Shield
+  ChevronsUpDown, Check, Menu, Shield, Calendar, UsersRound, Trophy, BarChart3
 } from 'lucide-react';
 import MidSeasonDraftModal from './leagues/modals/MidSeasonDraftModal';
 import UpdatePointsButton from './UpdatePointsButton';
@@ -233,6 +233,15 @@ const Header = ({ theme, onThemeChange }) => {
 
   const activeTab = getActiveTab();
 
+  const tabIconMap = {
+    dashboard: Home,
+    matches: Calendar,
+    my_squad: Shield,
+    squads: UsersRound,
+    table: Trophy,
+    stats: BarChart3,
+  };
+
   const getIsPreDraftPhase = () => {
     if (!leagueInfo?.season) return false;
     if (leagueInfo?.draft_completed) return false;
@@ -251,14 +260,12 @@ const Header = ({ theme, onThemeChange }) => {
     ? [
         { id: 'dashboard', label: 'Draft' },
         { id: 'matches', label: 'Matches' },
-        { id: 'table', label: 'Standings' },
       ]
     : [
         { id: 'dashboard', label: 'Dashboard' },
-        { id: 'matches', label: 'Matches' },
         ...(leagueInfo?.my_squad ? [{ id: 'my_squad', label: 'My Squad' }] : []),
+        { id: 'matches', label: 'Matches' },
         { id: 'squads', label: 'Squads' },
-        { id: 'table', label: 'Standings' },
         { id: 'stats', label: 'Stats' },
         // { id: 'trades', label: 'Trades' },
       ];
@@ -350,12 +357,12 @@ const Header = ({ theme, onThemeChange }) => {
                     </button>
                   ) : isLeagueView && leagueInfo ? (
                     // Static League Info
-                    <div className="lg-glass-tertiary lg-rounded-md p-3 min-w-0 max-w-[60vw] sm:max-w-xs overflow-x-auto" style={{whiteSpace: 'nowrap'}}>
+                    <div className="p-1 min-w-0 max-w-[60vw] sm:max-w-xs overflow-x-auto" style={{whiteSpace: 'nowrap'}}>
                       <div className="text-slate-900 dark:text-white font-bold font-caption text-sm leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                         {leagueInfo.name}
                       </div>
                       {leagueInfo.season && (
-                        <div className="text-xs text-slate-600 dark:text-primary-300 leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
+                        <div className="text-xs text-slate-500 dark:text-slate-300 leading-tight truncate max-w-[40vw] sm:max-w-[10rem]">
                           {leagueInfo.season.name}
                         </div>
                       )}
@@ -398,6 +405,36 @@ const Header = ({ theme, onThemeChange }) => {
                     </>
                   )}
                 </div>
+
+                {/* League Navigation Tabs - Desktop only */ }
+                {isLeagueView && (
+                  <nav className="hidden md:flex items-center gap-1 ml-4 pl-4 border-l border-white/10 overflow-x-auto scrollbar-hide">
+                    {leagueTabs.map(tab => {
+                      const Icon = tabIconMap[tab.id];
+                      const isAlwaysIconOnly = tab.id === 'dashboard';
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => handleTabChange(tab.id)}
+                          aria-label={tab.label}
+                          className={`
+                            group relative inline-flex items-center gap-0 xl:gap-2 px-2 xl:px-3 py-2 lg-rounded-md text-sm font-medium whitespace-nowrap transition-all duration-200
+                            ${activeTab === tab.id
+                              ? 'lg-glass-secondary text-primary-600 dark:text-primary-300'
+                              : 'text-slate-700 dark:text-slate-300 hover:lg-glass-tertiary hover:text-primary-600 dark:hover:text-primary-300'
+                            }
+                          `}
+                        >
+                          {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+                          <span className={isAlwaysIconOnly ? 'hidden' : 'hidden xl:inline'}>{tab.label}</span>
+                          <span className={`${isAlwaysIconOnly ? '' : 'xl:hidden '}pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-xs rounded-md bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20 whitespace-nowrap`}>
+                            {tab.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </nav>
+                )}
               </div>
     
               {/* Right side - Action buttons and User Menu */}
@@ -501,28 +538,6 @@ const Header = ({ theme, onThemeChange }) => {
             </div>
           </div>
           
-          {/* League Navigation Tabs - Desktop only (hidden on mobile) */}
-          {isLeagueView && (
-            <div className="border-t border-white/10 hidden md:block">
-              <div className="container mx-auto px-2 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide" style={{WebkitOverflowScrolling: 'touch'}}>
-                <nav className="flex space-x-1 min-w-max">
-                  {leagueTabs.map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`
-                        lg-tab whitespace-nowrap font-medium text-sm
-                        touch-manipulation flex-shrink-0
-                        ${activeTab === tab.id ? 'lg-tab-active' : ''}
-                      `}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-            </div>
-          )}
         </div>
       </header>
       

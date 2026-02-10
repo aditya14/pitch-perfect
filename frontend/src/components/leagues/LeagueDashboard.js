@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/axios';
 import MatchCard from '../matches/MatchCard';
 import LeagueRunningTotal from '../elements/graphs/LeagueRunningTotal';
-import { ArrowRight, Zap } from 'lucide-react';
+import { ArrowRight, Maximize2, Zap } from 'lucide-react';
 
 // Simple Fireworks component using canvas
 const Fireworks = ({ color }) => {
@@ -278,10 +278,19 @@ const LeagueDashboard = ({ league }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 isolate">
         {/* League Table - ADD RELATIVE POSITIONING AND Z-INDEX */}
         <div className="lg-glass lg-rounded-xl overflow-hidden lg-shine relative z-10">
-          <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
             <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
               Table
             </h2>
+            <button
+              type="button"
+              onClick={() => navigate(`/leagues/${league.id}/table`)}
+              className="relative z-20 shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-md bg-transparent text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-primary-600 dark:hover:text-primary-300 transition-colors"
+              aria-label="Open full standings"
+              title="Open full standings"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </button>
           </div>
           <div className="p-1 relative">
             <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
