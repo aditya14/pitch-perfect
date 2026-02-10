@@ -187,6 +187,14 @@ const AppContent = () => {
     }
   };
 
+  const getMainTopPadding = () => {
+    if (!user) return 'min-h-screen';
+    if (isLeagueView) {
+      return 'pt-20 md:pt-24';
+    }
+    return 'pt-16';
+  };
+
   return (
     <>
       {/* Fixed Header */}
@@ -204,7 +212,7 @@ const AppContent = () => {
             theme-transition 
             bg-white dark:bg-neutral-900 
             text-neutral-900 dark:text-white
-            ${user ? `pt-16 ${isLeagueView ? 'md:mt-10' : ''}` : 'min-h-screen'}
+            ${getMainTopPadding()}
             ${getBottomPadding()}
           `}
           style={{

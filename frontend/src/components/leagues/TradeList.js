@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../utils/axios';
 import TradeBanner from '../elements/TradeBanner';
 import TradeForm from '../elements/TradeForm';
-import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const TradeList = ({ league }) => {
   const [trades, setTrades] = useState([]);
@@ -128,15 +128,15 @@ const TradeList = ({ league }) => {
   };
   
   return (
-    <div className="bg-white dark:bg-neutral-800 shadow rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
-      <div className="px-6 py-3 border-b border-neutral-00 dark:border-neutral-700">
+    <div className="lg-glass lg-rounded-xl overflow-hidden border border-white/40 dark:border-white/10">
+      <div className="px-6 py-3 border-b border-neutral-200/70 dark:border-neutral-700/70">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
             Trades
           </h2>
           <button
             onClick={() => setShowTradeForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-neutral-600 hover:bg-neutral-700"
+            className="lg-button lg-rounded-md inline-flex items-center px-4 py-2 text-sm font-medium text-white"
           >
             Propose Trade
           </button>
@@ -165,14 +165,14 @@ const TradeList = ({ league }) => {
       )}
       
       {/* Filter Controls */}
-      <div className="px-6 py-2 bg-neutral-50 dark:bg-neutral-700">
+      <div className="px-6 py-2 lg-glass-tertiary">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'all' 
-                ? 'bg-neutral-200 text-neutral-800 dark:bg-neutral-600 dark:text-neutral-100' 
-                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
+                ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+                : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
             }`}
           >
             All
@@ -181,8 +181,8 @@ const TradeList = ({ league }) => {
             onClick={() => setStatusFilter('Pending')}
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'Pending' 
-                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' 
-                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
+                ? 'lg-glass-warning text-amber-800 dark:text-amber-300' 
+                : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
             }`}
           >
             Pending
@@ -191,8 +191,8 @@ const TradeList = ({ league }) => {
             onClick={() => setStatusFilter('Accepted')}
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'Accepted' 
-                ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' 
-                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
+                ? 'lg-glass-primary text-blue-800 dark:text-blue-300' 
+                : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
             }`}
           >
             Accepted
@@ -201,8 +201,8 @@ const TradeList = ({ league }) => {
             onClick={() => setStatusFilter('Rejected')}
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'Rejected' 
-                ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' 
-                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
+                ? 'lg-glass-danger text-red-800 dark:text-red-300' 
+                : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
             }`}
           >
             Rejected
@@ -211,8 +211,8 @@ const TradeList = ({ league }) => {
             onClick={() => setStatusFilter('Closed')}
             className={`px-3 py-1.5 text-sm rounded-md ${
               statusFilter === 'Closed' 
-                ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' 
-                : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
+                ? 'lg-glass-success text-green-800 dark:text-green-300' 
+                : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
             }`}
           >
             Closed
@@ -235,7 +235,7 @@ const TradeList = ({ league }) => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {currentTrades.map((trade) => (
-                <div key={trade.id} className="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-900 rounded-lg shadow-sm overflow-hidden">
+                <div key={trade.id} className="lg-glass-secondary lg-rounded-lg border border-white/40 dark:border-white/10 overflow-hidden">
                   {/* Trade Header */}
                   <div className="p-3 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
                     <div className="flex items-center">

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Medal, Award } from 'lucide-react';
 import api from '../../../utils/axios';
 import CapIcon from '../../elements/icons/CapIcon';
 
@@ -53,7 +52,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   const getRankStyle = (rank) => {
     switch (rank) {
       default:
-        return "bg-white dark:bg-neutral-800";
+        return 'lg-glass-tertiary';
     }
   };
 
@@ -75,7 +74,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
 
   if (loading) {
     return (
-      <div className="lg-card p-4 h-full">
+      <div className="lg-glass lg-rounded-xl p-4 h-full">
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3"></div>
           <div className="space-y-3">
@@ -90,7 +89,7 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
 
   if (error) {
     return (
-      <div className="lg-card p-4 h-full">
+      <div className="lg-glass lg-rounded-xl p-4 h-full">
         <div className="text-red-500 dark:text-red-400">
           {error}
         </div>
@@ -101,8 +100,8 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   // If there are no squads to display
   if (squadData.length === 0) {
     return (
-      <div className="lg-card overflow-hidden h-full">
-        <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-700">
+      <div className="lg-glass lg-rounded-xl overflow-hidden h-full">
+        <div className="px-4 py-4 border-b border-neutral-200/70 dark:border-neutral-700/70">
           <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
             Squad Points
           </h2>
@@ -118,8 +117,8 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
   const useGridLayout = squadData.length >= 4;
   
   return (
-    <div className=" overflow-hidden h-full">
-      <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-700">
+    <div className="lg-glass lg-rounded-xl overflow-hidden h-full">
+      <div className="px-4 py-3 border-b border-neutral-200/70 dark:border-neutral-700/70">
         <h2 className="text-lg font-caption font-semibold text-neutral-900 dark:text-white">
           Squad Points
         </h2>
@@ -128,9 +127,9 @@ const SquadPerformance = ({ matchId, leagueId, activeSquadId }) => {
       <div className="p-1">
         <div className={`grid ${useGridLayout ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-1`}>
         {squadData.map((squad) => (
-          <div 
+          <div
             key={`squad-${squad.id}`}
-            className={`transition-all py-2 px-3 lg-glass-tertiary ${squad.id === activeSquadId ? 'bg-blue-50 dark:bg-blue-900/20 rounded-md' : 'rounded-md'}`}
+            className={`transition-all py-2 px-3 lg-glass-tertiary rounded-md ${squad.id === activeSquadId ? 'ring-1 ring-primary-400/40 lg-glass-primary' : ''}`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">

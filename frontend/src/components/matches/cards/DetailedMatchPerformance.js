@@ -24,8 +24,7 @@ const DetailedMatchPerformance = ({
   sortConfig, 
   hasFantasyData, 
   leagueId, 
-  activeSquadId,
-  isMobile
+  activeSquadId
 }) => {
   const { openPlayerModal } = usePlayerModal();
 
@@ -219,7 +218,7 @@ const DetailedMatchPerformance = ({
     <div className="relative">
       {/* Scroll indicator for mobile */}
       <div className="md:hidden mb-2 flex items-center justify-center text-xs text-neutral-500 dark:text-neutral-400">
-        <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-full px-3 py-1">
+        <div className="flex items-center lg-glass-tertiary rounded-full px-3 py-1">
           <span className="mr-2">Scroll horizontally for more data</span>
           <div className="flex space-x-1">
             <div className="w-1 h-1 bg-neutral-400 rounded-full animate-bounce"></div>
@@ -230,14 +229,14 @@ const DetailedMatchPerformance = ({
       </div>
       
       <div className="overflow-x-auto max-h-[calc(100vh-12rem)] scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600 scrollbar-track-transparent lg-glass-tertiary rounded-lg">
-        <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
+        <table className="min-w-full divide-y divide-neutral-200/70 dark:divide-neutral-800/70">
           <thead className="lg-glass-tertiary sticky top-0 z-20">
             {/* Main header groups */}
             <tr>
-              <th scope="col" className="sticky left-0 z-10 bg-neutral-50 dark:bg-neutral-950 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider w-20">
+              <th scope="col" className="sticky left-0 z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider w-20">
                 Team
               </th>
-              <th scope="col" className="sticky left-[60px] z-10 bg-neutral-50 dark:bg-neutral-950 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider w-32">
+              <th scope="col" className="sticky left-[60px] z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider w-32">
                 Player/Squad
               </th>
               
@@ -263,14 +262,14 @@ const DetailedMatchPerformance = ({
             </tr>
             
             {/* Sub-headers */}
-            <tr className="bg-neutral-50 dark:bg-neutral-950">
+            <tr className="bg-white/30 dark:bg-black/30">
               {/* Team column */}
-              <th scope="col" className="sticky left-0 z-10 bg-neutral-50 dark:bg-black px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-20">
+              <th scope="col" className="sticky left-0 z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-20">
                 <SortableHeader label="Team" sortKey="team_name" />
               </th>
               
               {/* Player/Squad column */}
-              <th scope="col" className="sticky left-[60px] z-10 bg-neutral-50 dark:bg-black px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-32">
+              <th scope="col" className="sticky left-[60px] z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-32">
                 <div className="flex flex-col">
                   <SortableHeader label="Player" sortKey="player_name" />
                   <SortableHeader label="Squad" sortKey="squad_name" />
@@ -351,7 +350,7 @@ const DetailedMatchPerformance = ({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-neutral-950 divide-y divide-neutral-200 dark:divide-neutral-900">
+          <tbody className="bg-white/20 dark:bg-black/20 divide-y divide-neutral-200/70 dark:divide-neutral-900/70">
             {processedEvents.length === 0 ? (
               <tr>
                 <td 
@@ -369,18 +368,18 @@ const DetailedMatchPerformance = ({
                 return (
                   <tr 
                     key={rowId} 
-                    className="hover:bg-neutral-50 dark:hover:bg-black"
+                    className="hover:bg-white/30 dark:hover:bg-white/5"
                     style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
                   >
                     {/* Team info */}
-                    <td className="sticky left-0 z-10 bg-white dark:bg-black px-2 py-2 whitespace-nowrap text-xs text-neutral-900 dark:text-white font-medium"
+                    <td className="sticky left-0 z-10 bg-white/20 dark:bg-black/20 px-2 py-2 whitespace-nowrap text-xs text-neutral-900 dark:text-white font-medium"
                         style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
                     >
                       {data.team_name}
                     </td>
                     
                     {/* Player/Squad info */}
-                    <td className="sticky left-[60px] z-10 bg-white dark:bg-black px-2 py-2 whitespace-nowrap"
+                    <td className="sticky left-[60px] z-10 bg-white/20 dark:bg-black/20 px-2 py-2 whitespace-nowrap"
                         style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
                     >
                       <div 

@@ -110,17 +110,78 @@ const LeagueRunningTotal = ({ league }) => {
     }
   };
 
+  const getMatchNumber = (point, fallback) => {
+    if (Number.isFinite(point?.match_number)) {
+      return point.match_number;
+    }
+
+    if (Number.isFinite(point?.name)) {
+      return point.name;
+    }
+
+    if (typeof point?.name === 'string') {
+      const matchFromName = point.name.match(/(\d+)/);
+      if (matchFromName) {
+        return Number(matchFromName[1]);
+      }
+    }
+
+    if (typeof point?.match_name === 'string') {
+      const matchFromTitle = point.match_name.match(/match\s+#?(\d+)/i);
+      if (matchFromTitle) {
+        return Number(matchFromTitle[1]);
+      }
+    }
+
+    return fallback;
+  };
+
+  const getMatchTimestamp = (point) => {
+    if (!point?.date) return null;
+    const timestamp = new Date(point.date).getTime();
+    return Number.isNaN(timestamp) ? null : timestamp;
+  };
+
+  const getSortedChartData = () => {
+    const normalized = (chartData || []).map((point, idx) => ({
+      ...point,
+      _rawIndex: idx,
+      _matchNumber: getMatchNumber(point, NaN),
+      _timestamp: getMatchTimestamp(point),
+    }));
+
+    normalized.sort((a, b) => {
+      const aHasMatchNumber = Number.isFinite(a._matchNumber);
+      const bHasMatchNumber = Number.isFinite(b._matchNumber);
+      if (aHasMatchNumber && bHasMatchNumber && a._matchNumber !== b._matchNumber) {
+        return a._matchNumber - b._matchNumber;
+      }
+
+      const aHasTimestamp = Number.isFinite(a._timestamp);
+      const bHasTimestamp = Number.isFinite(b._timestamp);
+      if (aHasTimestamp && bHasTimestamp && a._timestamp !== b._timestamp) {
+        return a._timestamp - b._timestamp;
+      }
+
+      if (a.match_id && b.match_id && a.match_id !== b.match_id) {
+        return a.match_id - b.match_id;
+      }
+
+      return a._rawIndex - b._rawIndex;
+    });
+
+    return normalized.map((point, idx) => ({
+      ...point,
+      x_match_number: Number.isFinite(point._matchNumber) ? point._matchNumber : idx + 1,
+    }));
+  };
+
   // Get filtered data based on view mode
   const getFilteredData = () => {
-    const filtered = (viewMode === 'all' || chartData.length <= 10)
-      ? chartData
-      : chartData.slice(-10);
-
-    // Always render the X-axis as 1..N for the currently displayed window.
-    return filtered.map((point, idx) => ({
-      ...point,
-      x_index: idx + 1,
-    }));
+    const sortedData = getSortedChartData();
+    return (viewMode === 'all' || sortedData.length <= 10)
+      ? sortedData
+      : sortedData.slice(-10);
   };
 
   // Get squad color with fallback to predefined colors
@@ -429,7 +490,7 @@ const LeagueRunningTotal = ({ league }) => {
             ))}
             
             <XAxis 
-              dataKey="x_index" 
+              dataKey="x_match_number" 
               label={{ 
                 value: 'Match', 
                 position: 'insideBottom',

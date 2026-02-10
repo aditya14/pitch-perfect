@@ -141,22 +141,6 @@ const LeagueView = () => {
     fetchLeagueData();
   }, [fetchLeagueData]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
-        {error}
-      </div>
-    );
-  }
-  
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
   const seasonStartDate = league?.season?.start_date ? new Date(league.season.start_date) : null;
   const isSeasonUpcoming =
@@ -175,13 +159,49 @@ const LeagueView = () => {
     return ActiveComponent && <ActiveComponent league={league} />;
   };
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="lg-alert lg-glass-danger">
+          <span className="text-sm font-medium">{error}</span>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {renderActiveComponent()}
+        <Outlet />
+      </>
+    );
+  };
+
   return (
-    <div className="container mx-auto px-4 py-4">
-      {/* Tab Content */}
-      {renderActiveComponent()}
-      
-      {/* This is where nested routes would render */}
-      <Outlet />
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-gradient-to-br from-primary-400/8 to-primary-600/8 dark:from-primary-400/15 dark:to-primary-600/15 lg-float"></div>
+        <div className="absolute bottom-1/3 right-1/5 w-48 h-48 rounded-full bg-gradient-to-tr from-blue-400/5 to-primary-500/5 dark:from-blue-400/10 dark:to-primary-500/10 lg-float" style={{ animationDelay: '3s' }}></div>
+        <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-gradient-to-bl from-primary-300/4 to-primary-700/4 dark:from-primary-300/8 dark:to-primary-700/8 lg-float" style={{ animationDelay: '6s' }}></div>
+        <div
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(31,190,221,0.2) 1px, transparent 0)',
+            backgroundSize: '60px 60px'
+          }}
+        ></div>
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-4">
+        {renderContent()}
+      </div>
     </div>
   );
 };

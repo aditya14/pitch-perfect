@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/axios';
-import MatchCard from '../matches/MatchCard';
 import MatchCardMin from '../matches/MatchCardMin';
-import MatchPreview from '../matches/MatchPreview';
 import MatchRow from '../matches/MatchRow';
 
 const MatchList = ({ league }) => {
@@ -105,7 +103,7 @@ const MatchList = ({ league }) => {
           </h2>
         </div>
         <div className="p-6">
-          <div className="p-4 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-md">
+          <div className="lg-alert lg-glass-danger">
             {error}
           </div>
         </div>
@@ -167,7 +165,7 @@ const MatchList = ({ league }) => {
             <div className="space-y-6">
               {groupedMatches.map((group) => (
                 <div key={`phase-${group.key}`} className="space-y-2">
-                  <div className="sticky top-0 z-10 bg-neutral-100 dark:bg-neutral-900 px-4 py-2 rounded-md font-medium font-caption text-neutral-800 dark:text-neutral-200 border-l-2 border-primary-500">
+                  <div className="sticky top-0 z-10 lg-glass-tertiary px-4 py-2 rounded-md font-medium font-caption text-neutral-800 dark:text-neutral-200 border-l-2 border-primary-500">
                     {group.label}
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-2">
@@ -196,13 +194,13 @@ const MatchList = ({ league }) => {
             <div className="space-y-10">
               {groupedMatches.map((group) => (
                 <div key={`phase-table-${group.key}`}>
-                  <div className="sticky top-0 z-10 bg-neutral-100 dark:bg-neutral-900 px-4 py-2 rounded-md font-medium font-caption text-neutral-800 dark:text-neutral-200 border-l-2 border-primary-500 mb-2">
+                  <div className="sticky top-0 z-10 lg-glass-tertiary px-4 py-2 rounded-md font-medium font-caption text-neutral-800 dark:text-neutral-200 border-l-2 border-primary-500 mb-2">
                     {group.label}
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
+                    <table className="min-w-full divide-y divide-neutral-200/70 dark:divide-neutral-700/70">
                       <thead>
-                        <tr className="bg-neutral-50 dark:bg-neutral-900 text-xs text-neutral-700 dark:text-neutral-300 font-semibold font-caption">
+                        <tr className="lg-glass-tertiary text-xs text-neutral-700 dark:text-neutral-300 font-semibold font-caption">
                           <th className="px-3 py-2 text-left w-32 min-w-[7rem]"></th>
                           <th className="px-3 py-2 text-left w-32 min-w-[7rem]"></th>
                           <th className="px-3 py-2 text-left w-44 min-w-[11rem]"></th>
@@ -211,7 +209,7 @@ const MatchList = ({ league }) => {
                           <th className="px-3 py-2 text-left w-20 min-w-[4rem]"></th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white dark:bg-neutral-800 divide-y divide-neutral-200 dark:divide-neutral-700">
+                      <tbody className="bg-white/20 dark:bg-black/20 divide-y divide-neutral-200/70 dark:divide-neutral-700/70">
                         {group.matches.map((match) => (
                           <MatchRow
                             key={match.id}

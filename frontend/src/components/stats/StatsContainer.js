@@ -17,13 +17,6 @@ import MostPointsInMatchTable from './tables/MostPointsInMatchTable';
 import RankBreakdownTable from './tables/RankBreakdownTable';
 import DominationTable from './tables/DominationTable';
 
-// Simple section header component
-const SectionHeader = ({ title }) => (
-  <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-4 mt-8 font-caption">
-    {title}
-  </h3>
-);
-
 const StatsContainer = ({ league }) => {
   // Filter states
   const [selectedTimeFrame, setSelectedTimeFrame] = useState('overall');
@@ -39,7 +32,7 @@ const StatsContainer = ({ league }) => {
 
   if (!league) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+      <div className="lg-glass lg-rounded-xl p-6 border border-white/40 dark:border-white/10">
         <p className="text-neutral-500 dark:text-neutral-400 text-center">
           Loading league data...
         </p>
@@ -48,7 +41,7 @@ const StatsContainer = ({ league }) => {
   }
 
   return (
-    <div className="bg-white dark:bg-stone-900 shadow rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
+    <div className="lg-glass lg-rounded-xl border border-white/40 dark:border-white/10 p-4 md:p-6">
       {/* Header and Filters */}
       <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-4 font-caption">
         League Statistics

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 
 const BaseStatsTable = ({ 
   data, 
@@ -10,7 +10,7 @@ const BaseStatsTable = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+      <div className="lg-glass-secondary lg-rounded-lg p-4 border border-white/40 dark:border-white/10">
         <p className="text-neutral-500 dark:text-neutral-400 text-center">
           {emptyMessage}
         </p>
@@ -21,7 +21,7 @@ const BaseStatsTable = ({
   return (
     <div className="overflow-x-auto rounded-b-lg">
       <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 text-sm md:text-base rounded-b-lg">
-        <thead className="bg-neutral-50 dark:bg-black">
+        <thead className="bg-white/40 dark:bg-black/30">
           <tr>
             {visibleColumns.map((column) => (
               <th 
@@ -39,9 +39,9 @@ const BaseStatsTable = ({
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-neutral-950 divide-y divide-neutral-200 dark:divide-neutral-900">
+        <tbody className="bg-white/20 dark:bg-black/20 divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className="hover:bg-neutral-50 dark:hover:bg-black">
+            <tr key={rowIndex} className="hover:bg-white/30 dark:hover:bg-white/5">
               {visibleColumns.map((column, colIndex) => {
                 // Safely get value or provide a default
                 const value = row ? row[column.key] : undefined;

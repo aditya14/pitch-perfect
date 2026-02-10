@@ -289,7 +289,7 @@ const LeagueSquads = ({ league }) => {
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
+      <div className="lg-alert lg-glass-danger">
         {error}
       </div>
     );
@@ -345,8 +345,8 @@ const LeagueSquads = ({ league }) => {
           onClick={() => handleStandardViewChange('names')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             !isDraftView && activeView === 'names'
-              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+              ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+              : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
           }`}
         >
           <Users className="h-3 w-3 mr-1" />
@@ -357,8 +357,8 @@ const LeagueSquads = ({ league }) => {
           onClick={() => handleStandardViewChange('roles')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             !isDraftView && activeView === 'roles'
-              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+              ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+              : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
           }`}
         >
           <Volleyball className="h-3 w-3 mr-1" />
@@ -369,8 +369,8 @@ const LeagueSquads = ({ league }) => {
           onClick={() => handleStandardViewChange('teams')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             !isDraftView && activeView === 'teams'
-              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+              ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+              : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
           }`}
         >
           <ShieldHalf className="h-3 w-3 mr-1" />
@@ -381,8 +381,8 @@ const LeagueSquads = ({ league }) => {
           onClick={() => handleStandardViewChange('boosts')}
           className={`flex items-center px-3 py-2 text-xs rounded-md ${
             !isDraftView && activeView === 'boosts'
-              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+              ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+              : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
           }`}
         >
           <Zap className="h-3 w-3 mr-1" />
@@ -405,8 +405,8 @@ const LeagueSquads = ({ league }) => {
                   }}
                   className={`flex items-center px-3 py-2 text-xs rounded-md ${
                     activeDraftId === tab.id
-                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-                      : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                      ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+                      : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
                   }`}
                 >
                   <BarChartHorizontal className="h-3 w-3 mr-1" />
@@ -416,15 +416,15 @@ const LeagueSquads = ({ league }) => {
             </div>
           )}
           {activeDraftId && (
-            <div className="flex flex-wrap items-center gap-2 bg-neutral-100 dark:bg-neutral-800 rounded-md px-2 py-2">
+            <div className="flex flex-wrap items-center gap-2 lg-glass-tertiary lg-rounded-md px-2 py-2">
               {ROLE_OPTIONS.map(role => (
                 <button
                   key={role}
                   onClick={() => setActiveDraftRole(role)}
                   className={`px-3 py-1.5 text-xs rounded-md ${
                     activeDraftRole === role
-                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-                      : 'bg-white text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-600'
+                      ? 'lg-glass-primary text-primary-700 dark:text-primary-300'
+                      : 'lg-glass-secondary text-neutral-700 dark:text-neutral-200 hover:bg-white/60 dark:hover:bg-white/10'
                   }`}
                 >
                   {role}
@@ -435,12 +435,12 @@ const LeagueSquads = ({ league }) => {
         </div>
       </div>
       
-      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-x-auto">
+      <div className="lg-glass lg-rounded-xl overflow-x-auto">
         <table className="w-full border-collapse text-xs" key={`${activeDraftId || activeView}-${activeDraftRole}`}>
           <thead className="sticky top-0 z-20"> 
-            <tr className="bg-neutral-50 dark:bg-neutral-700">
+            <tr className="lg-glass-tertiary">
               {(isDraftView || activeView !== 'names') && (
-                <th className="sticky left-0 bg-neutral-50 dark:bg-neutral-700 z-30 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600">
+                <th className="sticky left-0 lg-glass-tertiary z-30 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200/60 dark:border-neutral-700/70">
                   {isDraftView ? 'Rank' : (activeView === 'teams' ? 'Team' : activeView === 'roles' ? 'Role' : 'Boost')}
                 </th>
               )}
@@ -448,7 +448,7 @@ const LeagueSquads = ({ league }) => {
               {squadsToDisplay.map(squad => (
                 <th 
                   key={squad.id}
-                  className="px-2 py-2 text-center text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600"
+                  className="px-2 py-2 text-center text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200/60 dark:border-neutral-700/70"
                   style={{ minWidth: '120px' }}
                 >
                   <Link 
@@ -470,13 +470,13 @@ const LeagueSquads = ({ league }) => {
             {!isDraftView && activeView === 'names' && (
               <tr>
                 {squadsToDisplay.map(squad => (
-                  <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400 align-top border border-neutral-200 dark:border-neutral-600">
+                    <td key={squad.id} className="p-0 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400 align-top border border-neutral-200/60 dark:border-neutral-700/70">
                     {squadPlayers[squad.id]
                       ?.filter(player => player.status === 'current')
                       .map(player => (
                         <div 
                           key={player.id} 
-                          className={`px-1 py-1 truncate border-b border-neutral-100 dark:border-neutral-700`}
+                          className="px-1 py-1 truncate border-b border-neutral-100/70 dark:border-neutral-700/60"
                         >
                           {player.name}
                         </div>
@@ -494,7 +494,7 @@ const LeagueSquads = ({ league }) => {
                     <tr>
                       <td
                         colSpan={(squadsToDisplay.length || 0) + 1}
-                        className="px-3 py-4 text-center text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600"
+                        className="px-3 py-4 text-center text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200/60 dark:border-neutral-700/70"
                       >
                         No rankings available for {activeDraftRole}.
                       </td>
@@ -502,16 +502,16 @@ const LeagueSquads = ({ league }) => {
                   );
                 }
                 return Array.from({ length: maxRankings }).map((_, rankIndex) => (
-                  <tr key={`${activeDraftId}-${activeDraftRole}-rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
-                    <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
-                        style={{ backgroundColor: rankIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                  <tr key={`${activeDraftId}-${activeDraftRole}-rank-${rankIndex}`} className={rankIndex % 2 === 0 ? 'bg-white/30 dark:bg-black/30' : 'bg-white/10 dark:bg-black/15'}>
+                    <td className={`sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200/60 dark:border-neutral-700/70 ${rankIndex % 2 === 0 ? 'bg-white/30 dark:bg-black/30' : 'bg-white/10 dark:bg-black/15'}`}
+                        style={{ zIndex: 10 }}
                     >
                       {rankIndex + 1}
                     </td>
                     {squadsToDisplay.map(squad => {
                       const playerId = getDraftRankingForSquad(squad)?.[rankIndex];
                       if (!playerId) return (
-                        <td key={`${activeDraftId}-${activeDraftRole}-${squad.id}-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-neutral-400 dark:text-neutral-500 border border-neutral-200 dark:border-neutral-600">
+                        <td key={`${activeDraftId}-${activeDraftRole}-${squad.id}-rank-${rankIndex}`} className="px-2 py-1 whitespace-nowrap text-xs text-neutral-400 dark:text-neutral-500 border border-neutral-200/60 dark:border-neutral-700/70">
                           -
                         </td>
                       );
@@ -521,7 +521,7 @@ const LeagueSquads = ({ league }) => {
                       return (
                         <td 
                           key={`${activeDraftId}-${activeDraftRole}-${squad.id}-rank-${rankIndex}`} 
-                          className={`px-2 py-1 whitespace-nowrap text-xs truncate border border-neutral-200 dark:border-neutral-600 ${
+                          className={`px-2 py-1 whitespace-nowrap text-xs truncate border border-neutral-200/60 dark:border-neutral-700/70 ${
                             isInSquad
                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
                               : 'text-neutral-500 dark:text-neutral-400'
@@ -543,14 +543,14 @@ const LeagueSquads = ({ league }) => {
                 ALL: 'ALL',
                 WK: 'WK'
               }).map(([role, label], roleIndex) => (
-                <tr key={role} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
-                  <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
-                      style={{ backgroundColor: roleIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                <tr key={role} className={roleIndex % 2 === 0 ? 'bg-white/30 dark:bg-black/30' : 'bg-white/10 dark:bg-black/15'}>
+                  <td className={`sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200/60 dark:border-neutral-700/70 ${roleIndex % 2 === 0 ? 'bg-white/30 dark:bg-black/30' : 'bg-white/10 dark:bg-black/15'}`}
+                      style={{ zIndex: 10 }}
                   >
                     {label}
                   </td>
                   {squadsToDisplay.map(squad => (
-                    <td key={`${squad.id}-${role}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600">
+                    <td key={`${squad.id}-${role}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200/60 dark:border-neutral-700/70">
                       {playersByRole[squad.id]?.[role]
                         ?.filter(player => player.status === 'current')
                         ?.map(player => (
@@ -572,14 +572,14 @@ const LeagueSquads = ({ league }) => {
                 Object.values(playersByTeam)
                   .flatMap(teamMap => Object.keys(teamMap))
               )].sort().map((teamCode, teamIndex) => (
-                <tr key={teamCode} className={teamIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
-                  <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
-                      style={{ backgroundColor: teamIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                <tr key={teamCode} className={teamIndex % 2 === 0 ? 'bg-white/30 dark:bg-black/30' : 'bg-white/10 dark:bg-black/15'}>
+                  <td className={`sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-neutral-900 dark:text-white border border-neutral-200/60 dark:border-neutral-700/70 ${teamIndex % 2 === 0 ? 'bg-white/30 dark:bg-black/30' : 'bg-white/10 dark:bg-black/15'}`}
+                      style={{ zIndex: 10 }}
                   >
                     {teamCode}
                   </td>
                   {squadsToDisplay.map(squad => (
-                    <td key={`${squad.id}-${teamCode}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-600">
+                    <td key={`${squad.id}-${teamCode}`} className="p-1 text-xs text-neutral-500 dark:text-neutral-400 border border-neutral-200/60 dark:border-neutral-700/70">
                       {playersByTeam[squad.id]?.[teamCode]
                         ?.filter(player => player.status === 'current')
                         ?.map(player => (
@@ -608,9 +608,9 @@ const LeagueSquads = ({ league }) => {
                   rattler: 'Rattler',
                   guardian: 'Guardian',
                 }).map(([roleKey, roleLabel], roleIndex) => (
-                  <tr key={roleKey} className={roleIndex % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-700' : 'bg-white dark:bg-neutral-800'}>
-                    <td className="sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-xs text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-600"
-                        style={{ backgroundColor: roleIndex % 2 === 0 ? 'var(--color-neutral-50)' : 'var(--color-white)', zIndex: 10 }}
+                  <tr key={roleKey} className={roleIndex % 2 === 0 ? 'bg-white/30 dark:bg-black/30' : 'bg-white/10 dark:bg-black/15'}>
+                    <td className={`sticky left-0 z-10 px-2 py-1 whitespace-nowrap font-medium text-xs text-neutral-900 dark:text-white border border-neutral-200/60 dark:border-neutral-700/70 ${roleIndex % 2 === 0 ? 'bg-white/30 dark:bg-black/30' : 'bg-white/10 dark:bg-black/15'}`}
+                        style={{ zIndex: 10 }}
                     >
                       <div className="flex items-center gap-1">
                         {getRoleIcon(roleLabel, 14)}
@@ -640,7 +640,7 @@ const LeagueSquads = ({ league }) => {
                         ? squadPlayers[squad.id].find(p => p.id === boostPlayerId)
                         : null;
                       return (
-                        <td key={`${squad.id}-${roleKey}`} className="p-0 whitespace-nowrap text-xs border border-neutral-200 dark:border-neutral-600">
+                        <td key={`${squad.id}-${roleKey}`} className="p-0 whitespace-nowrap text-xs border border-neutral-200/60 dark:border-neutral-700/70">
                           {boostPlayer ? (
                             <div 
                               className={`w-full h-full px-2 py-1 truncate`} 

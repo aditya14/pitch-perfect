@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowUpDown } from 'lucide-react';
-import TeamBadge from '../../elements/TeamBadge';
 import BoostInlineElement from '../../elements/BoostInlineElement';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
 import { getPointsColorClass } from '../../../utils/matchUtils';
@@ -11,8 +10,7 @@ const SimpleMatchPerformance = ({
   sortConfig, 
   hasFantasyData, 
   leagueId, 
-  activeSquadId,
-  isMobile
+  activeSquadId
 }) => {
   const { openPlayerModal } = usePlayerModal();
   const [localSortedEvents, setLocalSortedEvents] = useState([]);
@@ -109,8 +107,8 @@ const SimpleMatchPerformance = ({
 
   return (
     <div className="overflow-x-auto lg-glass-tertiary rounded-lg">
-      <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 mb-4">
-        <thead className="bg-neutral-50 dark:bg-neutral-950 sticky top-0 z-20">
+      <table className="min-w-full divide-y divide-neutral-200/70 dark:divide-neutral-800/70 mb-4">
+        <thead className="lg-glass-tertiary sticky top-0 z-20">
           <tr>
             <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
               <SortableHeader label="Team" sortKey="team_name" />
@@ -133,7 +131,7 @@ const SimpleMatchPerformance = ({
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-black divide-y divide-neutral-200 dark:divide-neutral-900">
+        <tbody className="bg-white/20 dark:bg-black/20 divide-y divide-neutral-200/70 dark:divide-neutral-900/70">
           {localSortedEvents.length === 0 ? (
             <tr>
               <td colSpan={4} className="px-4 py-4 text-center text-neutral-500 dark:text-neutral-400">
@@ -147,7 +145,7 @@ const SimpleMatchPerformance = ({
               return (
                 <tr 
                   key={`simple-row-${data.id || data.player_id || index}`}
-                  className="hover:bg-neutral-50 dark:hover:bg-black"
+                  className="hover:bg-white/30 dark:hover:bg-white/5"
                   style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
                 >
                   {/* Team column */}

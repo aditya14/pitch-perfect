@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../utils/axios';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import PlayerListTab from './PlayerListTab';
 import BoostTab from './BoostTab';
 import { useAuth } from '../../context/AuthContext';
-import { getTextColorForBackground } from '../../utils/colorUtils';
 import { ArrowLeft } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
 
@@ -193,7 +192,7 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-100 px-4 py-3 rounded">
+      <div className="lg-alert lg-glass-danger">
         {error}
       </div>
     );
@@ -201,14 +200,14 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
 
   if (!squadData) {
     return (
-      <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 dark:bg-yellow-900 dark:border-yellow-600 dark:text-yellow-100 px-4 py-3 rounded">
+      <div className="lg-alert lg-glass-warning text-amber-700 dark:text-amber-300">
         Squad not found or you don't have access to this squad.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className={leagueContext ? 'px-1 sm:px-2 py-2' : 'container mx-auto px-4 py-8'}>
       <div className="flex justify-between items-start mb-6">
         <div>
           {/* Back Navigation - only show if not in league context */}
@@ -231,7 +230,7 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
         {/* Total Points and Rank Display as side-by-side cards */}
         <div className="flex space-x-3">
           {/* Points Card */}
-          <div className="bg-white dark:bg-neutral-950 rounded-lg shadow px-4 py-3 min-w-[100px] text-center">
+          <div className="lg-glass-secondary lg-rounded-lg border border-white/40 dark:border-white/10 px-4 py-3 min-w-[100px] text-center">
             <div className="text-sm text-neutral-500 dark:text-neutral-400 mb-1">Total Points</div>
             <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
               {Number.isInteger(squadData.total_points) 
@@ -244,8 +243,8 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
           {rankInfo.rank && (
             <div className={`rounded-lg shadow px-4 py-3 min-w-[100px] text-center ${
               rankInfo.rank === 1 
-                ? 'bg-amber-50 dark:bg-amber-900 border border-amber-200 dark:border-amber-800' 
-                : 'bg-white dark:bg-neutral-800'
+                ? 'lg-glass-warning border border-amber-200/60 dark:border-amber-700/40' 
+                : 'lg-glass-secondary border border-white/40 dark:border-white/10'
             }`}>
               <div className="text-sm text-neutral-500 dark:text-neutral-400 mb-1">Rank</div>
               <div className={`text-xl font-bold ${
@@ -263,7 +262,7 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
       {/* Tabs (owner only) */}
       {showBoostTab && (
         <div className="mb-6">
-          <nav className="flex space-x-4 border-b border-neutral-200 dark:border-neutral-700">
+          <nav className="flex space-x-4 border-b border-neutral-200/70 dark:border-neutral-700/70">
             <button
               onClick={() => setActiveTab('players')}
               className={`py-2 px-4 text-sm font-medium ${

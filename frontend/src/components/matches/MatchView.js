@@ -176,35 +176,50 @@ const MatchView = () => {
   };
 
   return (
-    <div className="container mx-auto px-2 py-4 max-w-7xl">
-      {/* Overview cards section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <MatchOverview matchData={matchOverview} />
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-gradient-to-br from-primary-400/8 to-primary-600/8 dark:from-primary-400/15 dark:to-primary-600/15 lg-float"></div>
+        <div className="absolute bottom-1/3 right-1/5 w-48 h-48 rounded-full bg-gradient-to-tr from-blue-400/5 to-primary-500/5 dark:from-blue-400/10 dark:to-primary-500/10 lg-float" style={{ animationDelay: '3s' }}></div>
+        <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-gradient-to-bl from-primary-300/4 to-primary-700/4 dark:from-primary-300/8 dark:to-primary-700/8 lg-float" style={{ animationDelay: '6s' }}></div>
+        <div
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(31,190,221,0.2) 1px, transparent 0)',
+            backgroundSize: '60px 60px'
+          }}
+        ></div>
+      </div>
+
+      <div className="relative z-10 container mx-auto px-2 py-4 max-w-7xl">
+        {/* Overview cards section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <MatchOverview matchData={matchOverview} />
+          </div>
+          
+          {leagueId && (
+            <div>
+              <SquadPerformance 
+                matchId={matchId}
+                leagueId={leagueId}
+                activeSquadId={activeSquadId}
+              />
+            </div>
+          )}
         </div>
         
-        {leagueId && (
-          <div>
-            <SquadPerformance 
-              matchId={matchId}
-              leagueId={leagueId}
-              activeSquadId={activeSquadId}
-            />
-          </div>
-        )}
+        {/* Match Performance Container */}
+        <MatchPerformanceContainer 
+          playerEvents={playerEvents}
+          loading={loading}
+          error={error}
+          sortConfig={sortConfig}
+          handleSort={handleSort}
+          activeSquadId={activeSquadId}
+          leagueId={leagueId}
+          isMobile={isMobile}
+        />
       </div>
-      
-      {/* Match Performance Container */}
-      <MatchPerformanceContainer 
-        playerEvents={playerEvents}
-        loading={loading}
-        error={error}
-        sortConfig={sortConfig}
-        handleSort={handleSort}
-        activeSquadId={activeSquadId}
-        leagueId={leagueId}
-        isMobile={isMobile}
-      />
     </div>
   );
 };

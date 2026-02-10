@@ -253,7 +253,7 @@ const RunningTotalChart = ({
         })
         .sort((a, b) => b.value - a.value);
       return (
-        <div className="bg-white dark:bg-black p-3 border border-neutral-200 dark:border-neutral-700 shadow-lg rounded">
+        <div className="lg-glass-frosted lg-rounded-md p-3 border border-white/50 dark:border-white/10 shadow-lg">
           <p className="font-medium text-neutral-900 dark:text-white">{matchName}</p>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
             {matchDate}
@@ -295,7 +295,7 @@ const RunningTotalChart = ({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+      <div className="lg-glass-secondary lg-rounded-lg p-6 border border-white/40 dark:border-white/10">
         <div className="space-y-4">
           <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/4"></div>
           <div className="h-64 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse"></div>
@@ -306,7 +306,7 @@ const RunningTotalChart = ({
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+      <div className="lg-glass-secondary lg-rounded-lg p-6 border border-white/40 dark:border-white/10">
         <p className="text-red-500 dark:text-red-400">{error}</p>
       </div>
     );
@@ -314,7 +314,7 @@ const RunningTotalChart = ({
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-white dark:bg-neutral-800 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
+      <div className="lg-glass-secondary lg-rounded-lg p-6 border border-white/40 dark:border-white/10">
         <p className="text-neutral-500 dark:text-neutral-400 text-center">
           No match data available to display running totals.
         </p>
@@ -325,7 +325,7 @@ const RunningTotalChart = ({
   const minorTickValues = getMinorYAxisTicks();
 
   return (
-    <div className="bg-white dark:bg-neutral-950 shadow rounded-lg p-6 border border-neutral-200 dark:border-neutral-800 space-y-4">
+    <div className="lg-glass-secondary lg-rounded-lg p-6 border border-white/40 dark:border-white/10 space-y-4">
       {leadingSquad && (
         <div className="flex flex-wrap justify-between items-center mb-2">
           <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
@@ -351,7 +351,7 @@ const RunningTotalChart = ({
 
       {showInsights && leadingSquad && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white dark:bg-neutral-950 rounded-lg border border-neutral-200 dark:border-neutral-800 p-4">
+          <div className="lg-glass-tertiary lg-rounded-lg border border-white/40 dark:border-white/10 p-4">
             <div className="flex items-center">
               <div
                 className="w-4 h-10 rounded-full mr-3"
@@ -367,7 +367,7 @@ const RunningTotalChart = ({
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-neutral-950 rounded-lg border border-neutral-200 dark:border-neutral-800 p-4">
+          <div className="lg-glass-tertiary lg-rounded-lg border border-white/40 dark:border-white/10 p-4">
             <div className="flex items-center">
               <div
                 className="w-4 h-10 rounded-full mr-3"

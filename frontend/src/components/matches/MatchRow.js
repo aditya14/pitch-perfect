@@ -1,22 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Info, Hourglass, Calendar, Clock } from 'lucide-react';
+import { Hourglass } from 'lucide-react';
 import api from '../../utils/axios';
 import BoostInlineElement from '../elements/BoostInlineElement';
 import CapIcon from '../elements/icons/CapIcon';
 import { getTextColorForBackground } from '../../utils/colorUtils';
-
-// Utility: hex to rgba
-const hexToRgba = (hex, opacity) => {
-  if (!hex || typeof hex !== 'string') return `rgba(107, 114, 128, ${opacity})`; // fallback to gray
-  hex = hex.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-};
-
-const capitalizeFirst = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
 const getTeamPillProps = (team) => {
   const hasColor = Boolean(team?.primary_color);
@@ -166,7 +154,7 @@ const MatchRow = ({ match, leagueId }) => {
 
   // Table row
   return (
-    <tr className="hover:bg-neutral-50 dark:hover:bg-neutral-900 transition align-middle">
+    <tr className="hover:bg-white/30 dark:hover:bg-white/5 transition align-middle">
       {/* Match number + Stage (stacked, both text-xs) */}
       <td className="px-3 py-2 align-middle font-caption font-semibold text-neutral-900 dark:text-white text-xs w-32 min-w-[7rem]">
         <div className="flex flex-col">
@@ -175,7 +163,7 @@ const MatchRow = ({ match, leagueId }) => {
             {capitalizeFirst(match.stage) || "League"}
           </span> */}
           {match.status === 'SCHEDULED' && timeRemaining && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-neutral-100 dark:bg-neutral-900 text-neutral-500 ml-0 mt-1 w-fit">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs lg-glass-tertiary text-neutral-500 ml-0 mt-1 w-fit">
               <Hourglass className="h-2.5 w-2.5 mr-1 text-neutral-400 dark:text-neutral-600" />
               {formatCountdown()}
             </span>

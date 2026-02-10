@@ -676,7 +676,7 @@ const MatchCardMin = ({ match, leagueId }) => {
         </div>
         {/* Countdown for upcoming matches - Properly positioned at the bottom of the card */}
         {match.status === 'SCHEDULED' && timeRemaining && (
-          <div className="flex items-center justify-center bg-white/30 dark:bg-black/30 py-1 rounded-md mt-auto">
+          <div className="flex items-center justify-center lg-glass-inset py-1 rounded-md mt-auto">
             <span className="text-xs text-neutral-500 dark:text-neutral-500 flex items-center">
               <Hourglass className="h-3 w-3 inline mr-1 text-neutral-400 dark:text-neutral-600" />
               {formattedCountdown}

@@ -112,7 +112,7 @@ def _build_running_total_fallback(league, squad_ids=None, phase_key="overall"):
 
     matches_qs = Match.objects.filter(
         season=season,
-        status__in=[Match.Status.LIVE, Match.Status.COMPLETED],
+        status__in=[Match.Status.LIVE, Match.Status.COMPLETED, Match.Status.NO_RESULT],
     )
     if phase_key != "overall" and str(phase_key).isdigit():
         matches_qs = matches_qs.filter(season_phase__phase=int(phase_key))
@@ -198,7 +198,7 @@ def league_stats_running_total(request, league_id):
         # Enforce live/completed matches only in the response, even when using cached FantasyStats.
         allowed_matches_qs = Match.objects.filter(
             season=league.season,
-            status__in=[Match.Status.LIVE, Match.Status.COMPLETED],
+            status__in=[Match.Status.LIVE, Match.Status.COMPLETED, Match.Status.NO_RESULT],
         )
         if phase_key != "overall" and str(phase_key).isdigit():
             allowed_matches_qs = allowed_matches_qs.filter(season_phase__phase=int(phase_key))

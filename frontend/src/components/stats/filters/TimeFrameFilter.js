@@ -22,7 +22,7 @@ const TimeFrameFilter = ({ selectedTimeFrame, onChange }) => {
         id="time-frame"
         value={selectedTimeFrame}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+        className="lg-glass-tertiary border border-white/50 dark:border-white/10 text-neutral-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
       >
         {timeFrameOptions.map(option => (
           <option key={option.value} value={option.value}>

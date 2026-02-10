@@ -31,7 +31,7 @@ const SquadFilter = ({ squads, selectedSquadIds, onChange }) => {
       <button
         id="squad-filter"
         onClick={toggleDropdown}
-        className="bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 text-left flex justify-between items-center"
+        className="lg-glass-tertiary border border-white/50 dark:border-white/10 text-neutral-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 text-left flex justify-between items-center"
       >
         <span>
           {selectedSquadIds.length === 0
@@ -46,8 +46,8 @@ const SquadFilter = ({ squads, selectedSquadIds, onChange }) => {
       </button>
 
       {isDropdownOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-lg">
-          <div className="p-2 border-b border-neutral-200 dark:border-neutral-700 flex justify-between">
+        <div className="absolute z-10 w-full mt-1 lg-glass lg-rounded-lg border border-white/50 dark:border-white/10 shadow-lg">
+          <div className="p-2 border-b border-neutral-200/70 dark:border-neutral-700/70 flex justify-between">
             <button
               onClick={handleSelectAll}
               className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
@@ -65,7 +65,7 @@ const SquadFilter = ({ squads, selectedSquadIds, onChange }) => {
             {squads.map(squad => (
               <div
                 key={squad.id}
-                className="flex items-center p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer"
+                className="flex items-center p-2 hover:bg-white/40 dark:hover:bg-white/10 cursor-pointer"
                 onClick={() => handleSquadToggle(squad.id)}
               >
                 <input
