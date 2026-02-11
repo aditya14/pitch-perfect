@@ -276,6 +276,7 @@ class Match(TimeStampedModel):
         LEAGUE = 'LEAGUE', _('League')
         GROUP = 'GROUP', _('Group')
         SUPER_SIXES = 'SUPER_SIXES', _('Super Sixes')
+        SUPER_EIGHTS = 'SUPER_EIGHTS', _('Super Eights')
         QUALIFIER = 'QUALIFIER', _('Qualifier')
         ELIMINATOR = 'ELIMINATOR', _('Eliminator')
         SEMI_FINAL = 'SEMI_FINAL', _('Semi Final')
