@@ -65,8 +65,8 @@ const JoinLeague = () => {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-8 px-4 sm:py-12">
-      <div className="absolute inset-0">
+    <div className="min-h-screen relative overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-8 px-4 sm:py-12">
+      <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/6 w-56 h-56 rounded-full bg-gradient-to-br from-primary-400/10 to-primary-600/10 dark:from-primary-400/15 dark:to-primary-600/15 lg-float"></div>
         <div className="absolute bottom-1/4 right-1/6 w-40 h-40 rounded-full bg-gradient-to-br from-blue-400/10 to-primary-500/10 dark:from-blue-400/15 dark:to-primary-500/15 lg-float" style={{ animationDelay: '2s' }}></div>
       </div>

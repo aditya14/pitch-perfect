@@ -304,12 +304,12 @@ const LeagueDashboard = ({ league }) => {
               </div>
               {boostPhase?.lockAt && boostLockTimeRemaining && (
                 <div className="mt-2">
-                  <div className="text-sm flex flex-wrap items-center gap-2 font-semibold">
-                    <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></span>
+                  <div className="text-sm flex flex-wrap items-center gap-2">
+                    {/* <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></span> */}
                     <span className="text-neutral-700 dark:text-neutral-300">
-                      Locks in:
+                      Locks in
                     </span>
-                    <div className="flex gap-2 text-neutral-900 dark:text-white">
+                    <div className="flex gap-2 text-neutral-900 dark:text-white font-semibold">
                       <div className="w-11 text-center">
                         <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.days)}</span>
                         <span className="text-neutral-500 text-xs ml-1">d</span>
@@ -328,8 +328,8 @@ const LeagueDashboard = ({ league }) => {
                       </div>
                     </div>
                   </div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 ml-4">
-                    <span className='font-bold'>{formatBoostLockDateTime(boostPhase.lockAt)}</span>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                    <span>{formatBoostLockDateTime(boostPhase.lockAt)}</span>
                   </div>
                 </div>
               )}

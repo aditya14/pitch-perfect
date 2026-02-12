@@ -384,7 +384,6 @@ const Header = ({ theme, onThemeChange }) => {
                   {/* League Switcher Dropdown Menu */}
                   {canShowLeagueSwitcher && isLeagueDropdownOpen && (
                     <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsLeagueDropdownOpen(false)}></div>
                       <div className="absolute left-0 mt-2 w-64 py-2 lg-dropdown max-h-60 overflow-y-auto z-50">
                         {userLeagues.map((league) => (
                           <button
@@ -480,7 +479,6 @@ const Header = ({ theme, onThemeChange }) => {
                   {/* Dropdown Menu */}
                   {isDropdownOpen && (
                     <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
                       <div className="absolute right-0 mt-2 w-48 py-2 lg-dropdown z-50">
                         <Link
                           to="/profile"

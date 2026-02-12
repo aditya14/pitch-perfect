@@ -366,7 +366,7 @@ const App = () => {
     <Router>
       <AuthProvider>
         <PlayerModalProvider>
-          <div className="relative w-full h-full overflow-hidden">
+          <div className="relative w-full h-full overflow-x-hidden">
             <AppContent />
           </div>
         </PlayerModalProvider>

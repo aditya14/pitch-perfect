@@ -432,9 +432,9 @@ const LeagueRunningTotal = ({ league }) => {
 
   return (
     <Wrapper>
-      <div className="p-0">
+      <div className="py-2">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
+        <h3 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white ml-2">
           Running Total
         </h3>
         <div className="flex space-x-2">
@@ -522,6 +522,7 @@ const LeagueRunningTotal = ({ league }) => {
                   activeDot={{ r: 3 }}
                   strokeWidth={2}
                   dot={{ r: getDotSize() }}
+                  isAnimationActive={false}
                 />
               )
             ))}

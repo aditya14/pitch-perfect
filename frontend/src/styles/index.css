@@ -42,8 +42,6 @@ body {
   min-height: 100vh;
   min-height: -webkit-fill-available;
   min-height: var(--app-height);
-  /* Prevent overscroll bounce effect */
-  overscroll-behavior-y: none;
   /* Improve touch behavior */
   -webkit-tap-highlight-color: transparent;
   /* Android edge-to-edge support */
@@ -54,6 +52,13 @@ body {
   /* Add smooth transition */
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   @apply font-sans; /* Apply the default sans font globally */
+}
+
+/* Prevent pull/bounce navigation only on touch-first devices */
+@media (pointer: coarse) {
+  body {
+    overscroll-behavior-y: none;
+  }
 }
 
 /* Dark mode body styling */

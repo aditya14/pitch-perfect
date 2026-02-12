@@ -94,31 +94,35 @@ const PullToRefresh = ({ onRefresh, children, threshold = 80, maxPull = 120 }) =
     };
   }, [onRefresh, pullDistance, threshold, maxPull, shouldEnablePullToRefresh]);
 
+  if (!shouldEnablePullToRefresh) {
+    return <>{children}</>;
+  }
+
   return (
     <div ref={containerRef} className="min-h-screen relative w-full bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white">
       {/* Pull to refresh indicator */}
-      {shouldEnablePullToRefresh && isPulling && (
-        <div 
+      {isPulling && (
+        <div
           className="fixed top-0 left-0 w-full z-50 flex justify-center transition-transform duration-200 pointer-events-none"
-          style={{ 
+          style={{
             transform: `translateY(${pullDistance - 60}px)`,
             opacity: Math.min(pullDistance / threshold, 1)
           }}
         >
           <div className="flex items-center justify-center p-3 bg-primary-600 dark:bg-primary-500 text-white rounded-full shadow-lg">
-            <RefreshCw 
+            <RefreshCw
               className={`h-6 w-6 ${isRefreshing ? 'animate-spin' : pullDistance >= threshold ? 'rotate-180' : `rotate-${Math.min(Math.floor((pullDistance / threshold) * 180), 180)}`}`}
             />
           </div>
         </div>
       )}
-      
+
       {/* Main content */}
-      <div 
+      <div
         className="theme-transition"
-        style={{ 
-          transform: isPulling ? `translateY(${pullDistance}px)` : 'translateY(0)',
-          transition: isPulling ? 'none' : 'transform 0.2s ease-out'
+        style={{
+          transform: isPulling ? `translateY(${pullDistance}px)` : undefined,
+          transition: isPulling ? 'none' : undefined
         }}
       >
         {children}
