@@ -337,7 +337,7 @@ const LeagueSquads = ({ league }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-6 md:pt-0">
       {/* View Selection Tabs */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div className="flex flex-wrap gap-2">

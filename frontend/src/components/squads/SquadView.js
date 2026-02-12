@@ -296,7 +296,7 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
   }
 
   return (
-    <div className={leagueContext ? 'px-1 sm:px-2 py-2' : 'container mx-auto px-4 py-8'}>
+    <div className={leagueContext ? 'px-1 sm:px-2 pt-6 md:pt-2 pb-2' : 'container mx-auto px-4 py-8'}>
       <div className="mb-6">
         <div
           className="lg-glass lg-rounded-xl lg-shine p-4 sm:p-6 border border-white/40 dark:border-white/10"

@@ -114,7 +114,7 @@ const MatchList = ({ league }) => {
   const groupedMatches = getGroupedMatches();
 
   return (
-    <div className="lg-glass lg-rounded-xl overflow-hidden">
+    <div className="mt-6 md:mt-0 lg-glass lg-rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-white/10 flex flex-wrap justify-between items-center">
         <h2 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white">
           Matches

@@ -302,7 +302,7 @@ const BottomNavigation = () => {
                 : 'calc(env(safe-area-inset-bottom, 0px) + 72px)'
             }}
           >
-            <div className="lg-sheet lg-rounded-t-2xl overflow-hidden" style={{ borderRadius: '24px 24px 0 0' }}>
+            <div className="lg-sheet bg-white/95 dark:bg-neutral-900/95 lg-rounded-t-2xl overflow-hidden" style={{ borderRadius: '24px 24px 0 0' }}>
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-2">
                 <div className="w-10 h-1 bg-gray-300/60 dark:bg-gray-600/60 lg-rounded-full" />

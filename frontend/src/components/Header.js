@@ -452,9 +452,6 @@ const Header = ({ theme, onThemeChange }) => {
                   </button>
                 )}
 
-                {/* Admin points updater */}
-                {isAdmin && <UpdatePointsButton />}
-    
                 {/* User menu */}
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -510,6 +507,13 @@ const Header = ({ theme, onThemeChange }) => {
                             </>
                           )}
                         </button>
+
+                        {isAdmin && (
+                          <UpdatePointsButton
+                            variant="menu"
+                            onBeforeUpdate={() => setIsDropdownOpen(false)}
+                          />
+                        )}
                         
                         {/* {isMobile && !isStandalone && (
                           <button

@@ -222,9 +222,6 @@ const PlayerListTab = ({
       <div className="mb-3">
         {/* Filter controls */}
         <div className="flex flex-wrap items-center mb-3 gap-1.5">
-          <div className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mr-1.5">
-            Group:
-          </div>
           <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setFilterType('All')}
