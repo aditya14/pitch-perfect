@@ -423,13 +423,13 @@ const UserDashboard = () => {
       <div className="relative z-10 container mx-auto px-6 py-8">
         
         {/* Header Section */}
-        <div className="mb-12 relative z-20">
+        <div className="mb-8 relative z-20">
           <div className="lg-glass lg-rounded-lg relative overflow-visible lg-glow">
             <div className="lg-shine absolute inset-0 lg-rounded-lg"></div>
             
             <div className="relative z-10 p-4">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
-                <div className="flex-1">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-3">
+                <div className="flex-1 text-center sm:text-left">
                   {user?.first_name ? 
                   <h1 className="text-3xl md:text-3xl font-bold text-slate-900 dark:text-white font-caption">
                     Welcome, <span className="text-primary-600 dark:text-primary-400">{user?.first_name}</span>
@@ -445,7 +445,7 @@ const UserDashboard = () => {
                 {/* Mobile: inline, Desktop: spaced */}
                 <div className="relative z-30">
                   {/* Mobile inline */}
-                  <div className="flex flex-row gap-2 sm:hidden">
+                  <div className="flex flex-row gap-2 justify-center sm:hidden">
                     <button
                       onClick={() => navigate('/leagues/join')}
                       className="lg-button lg-rounded-md px-6 py-3 font-semibold text-white transition-all duration-300"

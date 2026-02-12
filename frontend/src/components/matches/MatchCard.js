@@ -190,13 +190,6 @@ const MatchCard = ({ match, leagueId }) => {
 
   return (
     <div className="lg-glass lg-rounded-lg overflow-hidden transition-all duration-300 hover:transform-gpu lg-shine">
-
-      {/* Accent Line */}
-      <div 
-        className="h-1 w-full" 
-        style={{ background: `linear-gradient(to right, ${firstColorHex}, ${secondColorHex})` }} 
-      />
-
       {/* Header: compact, single line, smaller */}
       <div className="flex items-center justify-between p-2 px-4 border-b border-neutral-200/50 dark:border-neutral-800/50 text-xs backdrop-blur-sm">
         <div className="flex items-center space-x-2">
@@ -217,11 +210,16 @@ const MatchCard = ({ match, leagueId }) => {
           </div>
         )}
       </div>
+      {/* Accent Line */}
+      <div 
+        className="h-1 w-full" 
+        style={{ background: `linear-gradient(to right, ${firstColorHex}, ${secondColorHex})` }} 
+      />
 
       {/* Main content area */}
       <div className="p-3 px-4">
-        {/* CHANGE 1: Teams and scores combined on one line */}
-        <div className="flex items-center justify-between mb-3">
+        {/* Teams and scores */}
+        <div className="flex items-center justify-between my-0.5">
           <div className="flex items-center space-x-2">
             {battingFirstTeam ? (
               <span
