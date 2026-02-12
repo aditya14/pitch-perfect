@@ -117,6 +117,7 @@ const LeagueDashboard = ({ league }) => {
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [matchTab, setMatchTab] = useState('recent');
   const [boostPhase, setBoostPhase] = useState(null);
+  const [boostLockTimeRemaining, setBoostLockTimeRemaining] = useState(null);
 
   const parsePhaseDate = (dateValue) => {
     if (!dateValue) return null;
@@ -137,6 +138,50 @@ const LeagueDashboard = ({ league }) => {
       setBoostPhase(null);
     }
   }, [league?.my_squad?.id]);
+
+  useEffect(() => {
+    if (!boostPhase?.lockAt) {
+      setBoostLockTimeRemaining(null);
+      return undefined;
+    }
+
+    const calculateTimeRemaining = () => {
+      const now = new Date();
+      const difference = boostPhase.lockAt - now;
+
+      if (difference <= 0) return null;
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      return { days, hours, minutes, seconds };
+    };
+
+    setBoostLockTimeRemaining(calculateTimeRemaining());
+
+    const timer = setInterval(() => {
+      const remaining = calculateTimeRemaining();
+      setBoostLockTimeRemaining(remaining);
+
+      if (!remaining) clearInterval(timer);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [boostPhase?.lockAt]);
+
+  const formatBoostLockUnit = value => (value < 10 ? `0${value}` : `${value}`);
+  const formatBoostLockDateTime = lockAt => {
+    if (!lockAt) return '';
+    return lockAt.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const fetchBoostPhase = async () => {
     try {
@@ -254,22 +299,49 @@ const LeagueDashboard = ({ league }) => {
               <Zap className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400">Boosts are open</div>
-              <div className="text-lg font-semibold text-neutral-900 dark:text-white font-caption">
-                Set your boosts for {boostPhase.label || `Phase ${boostPhase.phase || ''}`.trim()}
+              <div className="text-md font-semibold text-neutral-900 dark:text-white font-caption">
+                {boostPhase.phase === 1 ? 'Set' : 'Update'} boosts for {boostPhase.label || `Phase ${boostPhase.phase || ''}`.trim()}
               </div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                Assign your power-ups before this phase locks in.
-              </div>
+              {boostPhase?.lockAt && boostLockTimeRemaining && (
+                <div className="mt-2">
+                  <div className="text-sm flex flex-wrap items-center gap-2 font-semibold">
+                    <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></span>
+                    <span className="text-neutral-700 dark:text-neutral-300">
+                      Locks in:
+                    </span>
+                    <div className="flex gap-2 text-neutral-900 dark:text-white">
+                      <div className="w-11 text-center">
+                        <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.days)}</span>
+                        <span className="text-neutral-500 text-xs ml-1">d</span>
+                      </div>
+                      <div className="w-11 text-center">
+                        <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.hours)}</span>
+                        <span className="text-neutral-500 text-xs ml-1">h</span>
+                      </div>
+                      <div className="w-11 text-center">
+                        <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.minutes)}</span>
+                        <span className="text-neutral-500 text-xs ml-1">m</span>
+                      </div>
+                      <div className="w-11 text-center">
+                        <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.seconds)}</span>
+                        <span className="text-neutral-500 text-xs ml-1">s</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 ml-4">
+                    <span className='font-bold'>{formatBoostLockDateTime(boostPhase.lockAt)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <button
             type="button"
             onClick={() => navigate(`/leagues/${league.id}/my_squad?tab=boosts`)}
-            className="lg-button lg-rounded-md px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+            className="w-full sm:w-auto py-2 px-4 lg-button text-white text-xs font-medium lg-rounded-md transition-all duration-200 inline-flex items-center justify-center"
           >
-            Go to Boosts
-            <ArrowRight className="h-4 w-4" />
+            <span className="font-caption font-bold">{boostPhase.phase === 1 ? 'Set' : 'Update'} Boosts</span>
+            <ArrowRight className="h-4 w-4 ml-2" />
           </button>
         </div>
       )}
