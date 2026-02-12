@@ -101,27 +101,36 @@ const CountdownTimer = ({ deadline }) => {
     return num < 10 ? `0${num}` : `${num}`;
   };
 
+  const getDisplayUnits = () => {
+    if (timeLeft.days > 0) {
+      return [
+        { label: 'd', value: timeLeft.days },
+        { label: 'h', value: timeLeft.hours },
+      ];
+    }
+    if (timeLeft.hours > 0) {
+      return [
+        { label: 'h', value: timeLeft.hours },
+        { label: 'm', value: timeLeft.minutes },
+      ];
+    }
+    return [
+      { label: 'm', value: timeLeft.minutes },
+      { label: 's', value: timeLeft.seconds },
+    ];
+  };
+
   return (
     <div className="text-sm flex items-center gap-2 font-semibold whitespace-nowrap">
       <span className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></span>
       <span className="whitespace-nowrap">Draft order locks in:</span>
       <div className="flex gap-2">
-        <div className="w-11 text-center">
-          <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(timeLeft.days)}</span>
-          <span className="text-neutral-500 text-xs ml-1">d</span>
-        </div>
-        <div className="w-11 text-center">
-          <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(timeLeft.hours)}</span>
-          <span className="text-neutral-500 text-xs ml-1">h</span>
-        </div>
-        <div className="w-11 text-center">
-          <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(timeLeft.minutes)}</span>
-          <span className="text-neutral-500 text-xs ml-1">m</span>
-        </div>
-        <div className="w-11 text-center">
-          <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(timeLeft.seconds)}</span>
-          <span className="text-neutral-500 text-xs ml-1">s</span>
-        </div>
+        {getDisplayUnits().map((unit) => (
+          <div key={unit.label} className="w-11 text-center">
+            <span className="font-mono font-bold w-6 inline-block text-right">{formatNumber(unit.value)}</span>
+            <span className="text-neutral-500 text-xs ml-1">{unit.label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -190,13 +199,31 @@ const CompactCountdownTimer = ({ deadline }) => {
     );
   }
 
-  // Format time as days:hours:minutes:seconds safely
+  const getDisplayUnits = () => {
+    if (timeLeft.days > 0) {
+      return [
+        { label: 'd', value: timeLeft.days },
+        { label: 'h', value: timeLeft.hours },
+      ];
+    }
+    if (timeLeft.hours > 0) {
+      return [
+        { label: 'h', value: timeLeft.hours },
+        { label: 'm', value: timeLeft.minutes },
+      ];
+    }
+    return [
+      { label: 'm', value: timeLeft.minutes },
+      { label: 's', value: timeLeft.seconds },
+    ];
+  };
+
   const formatTime = () => {
     const pad = (num) => {
       if (num === undefined || num === null) return "00";
       return num < 10 ? `0${num}` : `${num}`;
     };
-    return `${pad(timeLeft.days)}:${pad(timeLeft.hours)}:${pad(timeLeft.minutes)}:${pad(timeLeft.seconds)}`;
+    return getDisplayUnits().map((unit) => `${pad(unit.value)}${unit.label}`).join(' ');
   };
 
   return (

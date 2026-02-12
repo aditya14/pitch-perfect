@@ -660,6 +660,25 @@ const MidSeasonDraftOrderModal = ({
     return num < 10 ? `0${num}` : `${num}`;
   };
 
+  const getDisplayUnits = () => {
+    if (timeLeft.days > 0) {
+      return [
+        { label: 'd', value: timeLeft.days },
+        { label: 'h', value: timeLeft.hours },
+      ];
+    }
+    if (timeLeft.hours > 0) {
+      return [
+        { label: 'h', value: timeLeft.hours },
+        { label: 'm', value: timeLeft.minutes },
+      ];
+    }
+    return [
+      { label: 'm', value: timeLeft.minutes },
+      { label: 's', value: timeLeft.seconds },
+    ];
+  };
+
   // Determine color based on time remaining
   const getProgressColor = () => {
     if (timeLeft.days >= 3) return "bg-emerald-500 dark:bg-emerald-600";
@@ -696,7 +715,9 @@ const MidSeasonDraftOrderModal = ({
                   Draft closes in:
                 </div>
                 <div className="flex items-center text-sm font-semibold text-neutral-900 dark:text-white">
-                  <span className="font-mono">{formatNumber(timeLeft.days)}d {formatNumber(timeLeft.hours)}h {formatNumber(timeLeft.minutes)}m</span>
+                  <span className="font-mono">
+                    {getDisplayUnits().map((unit) => `${formatNumber(unit.value)}${unit.label}`).join(' ')}
+                  </span>
                 </div>
               </div>
             )}

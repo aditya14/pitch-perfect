@@ -172,6 +172,25 @@ const LeagueDashboard = ({ league }) => {
   }, [boostPhase?.lockAt]);
 
   const formatBoostLockUnit = value => (value < 10 ? `0${value}` : `${value}`);
+  const getBoostLockUnits = (remaining) => {
+    if (!remaining) return [];
+    if (remaining.days > 0) {
+      return [
+        { label: `${remaining.days > 1 ? 'days' : 'day'}`, value: remaining.days },
+        { label: `${remaining.hours > 1 ? 'hours' : 'hour'}`, value: remaining.hours },
+      ];
+    }
+    if (remaining.hours > 0) {
+      return [
+        { label: `${remaining.hours > 1 ? 'hours' : 'hour'}`, value: remaining.hours },
+        { label: `${remaining.minutes > 1 ? 'minutes' : 'minute'}`, value: remaining.minutes },
+      ];
+    }
+    return [
+      { label: `${remaining.minutes > 1 ? 'minutes' : 'minute'}`, value: remaining.minutes },
+      { label: `${remaining.seconds > 1 ? 'seconds' : 'second'}`, value: remaining.seconds },
+    ];
+  };
   const formatBoostLockDateTime = lockAt => {
     if (!lockAt) return '';
     return lockAt.toLocaleString(undefined, {
@@ -310,22 +329,12 @@ const LeagueDashboard = ({ league }) => {
                       Locks in
                     </span>
                     <div className="flex gap-2 text-neutral-900 dark:text-white font-semibold">
-                      <div className="w-11 text-center">
-                        <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.days)}</span>
-                        <span className="text-neutral-500 text-xs ml-1">d</span>
-                      </div>
-                      <div className="w-11 text-center">
-                        <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.hours)}</span>
-                        <span className="text-neutral-500 text-xs ml-1">h</span>
-                      </div>
-                      <div className="w-11 text-center">
-                        <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.minutes)}</span>
-                        <span className="text-neutral-500 text-xs ml-1">m</span>
-                      </div>
-                      <div className="w-11 text-center">
-                        <span className="font-mono font-bold w-6 inline-block text-right">{formatBoostLockUnit(boostLockTimeRemaining.seconds)}</span>
-                        <span className="text-neutral-500 text-xs ml-1">s</span>
-                      </div>
+                      {getBoostLockUnits(boostLockTimeRemaining).map((unit) => (
+                        <div key={unit.label} className="text-center">
+                          <span className="font-mono font-bold inline-block text-right">{formatBoostLockUnit(unit.value)}</span>
+                          <span className="text-neutral-500 text-xs ml-1">{unit.label}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">

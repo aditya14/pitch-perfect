@@ -16,11 +16,11 @@ const formatTimeRemaining = (seconds) => {
   const days = Math.floor(seconds / (24 * 60 * 60));
   const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
   const minutes = Math.floor((seconds % (60 * 60)) / 60);
+  const secs = Math.floor(seconds % 60);
 
   if (days > 0) return `${days}d ${hours}h remaining`;
   if (hours > 0) return `${hours}h ${minutes}m remaining`;
-  if (minutes > 0) return `${minutes}m remaining`;
-  return 'Locking soon';
+  return `${minutes}m ${secs}s remaining`;
 };
 
 const PreSeasonDraftPanel = ({ league, leagueId }) => {

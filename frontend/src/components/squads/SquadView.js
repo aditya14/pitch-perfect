@@ -200,6 +200,7 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
       };
     };
 
@@ -208,7 +209,7 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
       const remaining = calculateTimeRemaining();
       setBoostLockTimeRemaining(remaining);
       if (!remaining) clearInterval(timer);
-    }, 60000);
+    }, 1000);
 
     return () => clearInterval(timer);
   }, [phaseStatus?.lockAt, phaseStatus?.state]);
@@ -275,6 +276,25 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
     ? squadData?.total_points
     : parseFloat(squadData?.total_points || 0).toFixed(1);
   const formatCountdownUnit = (value) => (value < 10 ? `0${value}` : `${value}`);
+  const getCountdownUnits = (remaining) => {
+    if (!remaining) return [];
+    if (remaining.days > 0) {
+      return [
+        { label: 'd', value: remaining.days },
+        { label: 'h', value: remaining.hours },
+      ];
+    }
+    if (remaining.hours > 0) {
+      return [
+        { label: 'h', value: remaining.hours },
+        { label: 'm', value: remaining.minutes },
+      ];
+    }
+    return [
+      { label: 'm', value: remaining.minutes },
+      { label: 's', value: remaining.seconds },
+    ];
+  };
   if (loading) {
     return <LoadingScreen message="Loading Squad" description='One moment please' />;
   }
@@ -366,9 +386,9 @@ const SquadView = ({ squadId: propSquadId, leagueContext = false }) => {
                     </span>
                     <div className="text-sm flex items-center gap-2 font-semibold">
                       <div className="flex gap-2 text-neutral-900 dark:text-white">
-                        <span className="font-mono">{formatCountdownUnit(boostLockTimeRemaining.days)}d</span>
-                        <span className="font-mono">{formatCountdownUnit(boostLockTimeRemaining.hours)}h</span>
-                        <span className="font-mono">{formatCountdownUnit(boostLockTimeRemaining.minutes)}m</span>
+                        {getCountdownUnits(boostLockTimeRemaining).map((unit) => (
+                          <span key={unit.label} className="font-mono">{formatCountdownUnit(unit.value)}{unit.label}</span>
+                        ))}
                       </div>
                     </div>
                   </div>

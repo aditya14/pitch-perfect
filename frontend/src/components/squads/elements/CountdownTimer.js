@@ -49,26 +49,35 @@ const CountdownTimer = ({ onExpire }) => {
     );
   }
 
+  const getDisplayUnits = () => {
+    if (timeLeft.days > 0) {
+      return [
+        { label: 'days', value: timeLeft.days },
+        { label: 'hrs', value: timeLeft.hours },
+      ];
+    }
+    if (timeLeft.hours > 0) {
+      return [
+        { label: 'hrs', value: timeLeft.hours },
+        { label: 'min', value: timeLeft.minutes },
+      ];
+    }
+    return [
+      { label: 'min', value: timeLeft.minutes },
+      { label: 'sec', value: timeLeft.seconds },
+    ];
+  };
+
   return (
     <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 px-4 py-3 w-full">
       <div className="text-xs text-neutral-600 dark:text-neutral-300 mb-1">Boost Picks Lock In:</div>
       <div className="flex space-x-2 text-center justify-center md:justify-start">
-        <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
-          <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.days}</div>
-          <div className="text-xs text-neutral-500 dark:text-neutral-400">days</div>
-        </div>
-        <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
-          <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.hours}</div>
-          <div className="text-xs text-neutral-500 dark:text-neutral-400">hrs</div>
-        </div>
-        <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
-          <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.minutes}</div>
-          <div className="text-xs text-neutral-500 dark:text-neutral-400">min</div>
-        </div>
-        <div className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
-          <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{timeLeft.seconds}</div>
-          <div className="text-xs text-neutral-500 dark:text-neutral-400">sec</div>
-        </div>
+        {getDisplayUnits().map((unit) => (
+          <div key={unit.label} className="bg-white dark:bg-neutral-800 rounded px-2 py-1 w-14">
+            <div className="text-lg font-bold text-neutral-600 dark:text-neutral-400">{unit.value}</div>
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">{unit.label}</div>
+          </div>
+        ))}
       </div>
     </div>
   );

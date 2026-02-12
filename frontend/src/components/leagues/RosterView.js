@@ -155,11 +155,11 @@ const formatTimeRemaining = (seconds) => {
   const days = Math.floor(seconds / (24 * 60 * 60));
   const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
   const minutes = Math.floor((seconds % (60 * 60)) / 60);
+  const secs = Math.floor(seconds % 60);
   
   if (days > 0) return `${days}d ${hours}h until draft closes`;
   if (hours > 0) return `${hours}h ${minutes}m until draft closes`;
-  if (minutes > 0) return `${minutes}m until draft closes`;
-  return 'Draft closing soon';
+  return `${minutes}m ${secs}s until draft closes`;
 };
 
 export default RosterView;

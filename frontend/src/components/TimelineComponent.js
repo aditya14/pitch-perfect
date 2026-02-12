@@ -61,18 +61,19 @@ const TimelineComponent = () => {
       const days = Math.floor(totalSeconds / 86400);
       const hours = Math.floor((totalSeconds % 86400) / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
       
       if (days > 0) {
         setTimeRemaining(`${days}d ${hours}h left`);
       } else if (hours > 0) {
         setTimeRemaining(`${hours}h ${minutes}m left`);
       } else {
-        setTimeRemaining(`${minutes}m left`);
+        setTimeRemaining(`${minutes}m ${seconds}s left`);
       }
     };
     
     updateTimeRemaining();
-    const interval = setInterval(updateTimeRemaining, 60000); // Update every minute
+    const interval = setInterval(updateTimeRemaining, 1000); // Update every second
     
     return () => clearInterval(interval);
   }, []);

@@ -142,6 +142,25 @@ const MidSeasonDraftPanel = ({ leagueId }) => {
     return num < 10 ? `0${num}` : `${num}`;
   };
 
+  const getDisplayUnits = () => {
+    if (timeLeft.days > 0) {
+      return [
+        { label: 'Days', value: timeLeft.days },
+        { label: 'Hours', value: timeLeft.hours },
+      ];
+    }
+    if (timeLeft.hours > 0) {
+      return [
+        { label: 'Hours', value: timeLeft.hours },
+        { label: 'Mins', value: timeLeft.minutes },
+      ];
+    }
+    return [
+      { label: 'Mins', value: timeLeft.minutes },
+      { label: 'Secs', value: timeLeft.seconds },
+    ];
+  };
+
   // Determine color based on time remaining
   const getProgressColor = () => {
     if (timeLeft.days >= 3) return "bg-emerald-500 dark:bg-emerald-600";
@@ -184,42 +203,17 @@ const MidSeasonDraftPanel = ({ leagueId }) => {
               </div>
               
               {/* Timer containers */}
-              <div className="grid grid-cols-4 gap-2">
-                <div className="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-2 text-center">
-                  <div className="font-mono font-bold text-xl sm:text-2xl text-neutral-900 dark:text-white">
-                    {formatNumber(timeLeft.days)}
+              <div className="grid grid-cols-2 gap-2">
+                {getDisplayUnits().map((unit) => (
+                  <div key={unit.label} className="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-2 text-center">
+                    <div className="font-mono font-bold text-xl sm:text-2xl text-neutral-900 dark:text-white">
+                      {formatNumber(unit.value)}
+                    </div>
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400 uppercase">
+                      {unit.label}
+                    </div>
                   </div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400 uppercase">
-                    Days
-                  </div>
-                </div>
-                
-                <div className="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-2 text-center">
-                  <div className="font-mono font-bold text-xl sm:text-2xl text-neutral-900 dark:text-white">
-                    {formatNumber(timeLeft.hours)}
-                  </div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400 uppercase">
-                    Hours
-                  </div>
-                </div>
-                
-                <div className="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-2 text-center">
-                  <div className="font-mono font-bold text-xl sm:text-2xl text-neutral-900 dark:text-white">
-                    {formatNumber(timeLeft.minutes)}
-                  </div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400 uppercase">
-                    Mins
-                  </div>
-                </div>
-                
-                <div className="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-2 text-center">
-                  <div className="font-mono font-bold text-xl sm:text-2xl text-neutral-900 dark:text-white">
-                    {formatNumber(timeLeft.seconds)}
-                  </div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400 uppercase">
-                    Secs
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
             
