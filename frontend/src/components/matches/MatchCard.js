@@ -189,7 +189,7 @@ const MatchCard = ({ match, leagueId }) => {
   };
 
   return (
-    <div className="lg-glass lg-rounded-lg overflow-hidden transition-all duration-300 hover:transform-gpu hover:-translate-y-1 lg-shine">
+    <div className="lg-glass lg-rounded-lg overflow-hidden transition-all duration-300 hover:transform-gpu lg-shine">
 
       {/* Accent Line */}
       <div 

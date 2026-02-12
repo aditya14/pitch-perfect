@@ -772,22 +772,41 @@ html.dark .lg-dropdown {
   background: linear-gradient(
     135deg,
     transparent 30%,
-    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.2) 50%,
     transparent 70%
   );
-  transform: rotate(45deg);
-  transition: all var(--lg-duration-slower) ease;
+  transform: translateX(-120%) translateY(-120%) rotate(45deg);
   opacity: 0;
 }
 
+html.dark .lg-shine::before {
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(55, 55, 55, 0.08) 50%,
+    transparent 70%
+  );
+}
+
 .lg-shine:hover::before {
-  opacity: 1;
   animation: lg-shine-sweep 0.8s ease-out;
 }
 
 @keyframes lg-shine-sweep {
-  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+  0% {
+    transform: translateX(-120%) translateY(-120%) rotate(45deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(120%) translateY(120%) rotate(45deg);
+    opacity: 0;
+  }
 }
 
 /* Glow effects */
