@@ -79,7 +79,7 @@ const MatchOverview = ({ matchData }) => {
         </div>
         
         {/* Teams and Score */}
-        <div className="mb-6 overflow-hidden lg-glass-secondary border border-white/40 dark:border-white/10 rounded-lg">
+        <div className="mb-2 overflow-hidden lg-glass-secondary border border-white/40 dark:border-white/10 rounded-lg">
           {/* First innings */}
           <div className="p-3 flex items-center justify-between">
             <div className="flex items-center">
@@ -224,7 +224,7 @@ const MatchOverview = ({ matchData }) => {
                           <span className="ml-1">no result</span>
                         )}
                         
-                        <Trophy className="h-4 w-4 text-yellow-500 ml-2" />
+                        {/* <Trophy className="h-4 w-4 text-yellow-500 ml-2" /> */}
                       </div>
                     ) : (
                       <div className="flex items-center">
@@ -262,7 +262,7 @@ const MatchOverview = ({ matchData }) => {
                   <td className="py-1.5 text-neutral-900 dark:text-white">
                     <div className="flex items-center">
                       <span>{matchData.player_of_match.name}</span>
-                      <Award className="h-4 w-4 text-yellow-500 ml-2" />
+                      {/* <Award className="h-4 w-4 text-yellow-500 ml-2" /> */}
                     </div>
                   </td>
                 </tr>
