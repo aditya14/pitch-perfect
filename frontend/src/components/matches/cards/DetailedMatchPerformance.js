@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import BoostInlineElement from '../../elements/BoostInlineElement';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
@@ -24,9 +25,118 @@ const DetailedMatchPerformance = ({
   sortConfig, 
   hasFantasyData, 
   leagueId, 
-  activeSquadId
+  activeSquadId,
+  tableStickyTop = 0
 }) => {
   const { openPlayerModal } = usePlayerModal();
+  const showFantasyPoints = hasFantasyData && leagueId;
+  const TEAM_COL_WIDTH = 60;
+  const PLAYER_COL_WIDTH = 128;
+  const POINT_COL_WIDTHS = showFantasyPoints ? [68, 64, 64] : [72];
+  const BATTING_COL_WIDTHS = [52, 44, 44, 44, 64, 56];
+  const BOWLING_COL_WIDTHS = [44, 44, 52, 44, 64, 56];
+  const FIELDING_COL_WIDTHS = [44, 44, 44, 56];
+  const tableShellRef = useRef(null);
+  const headerScrollRef = useRef(null);
+  const bodyScrollRef = useRef(null);
+  const floatingHeaderScrollRef = useRef(null);
+  const isSyncingScrollRef = useRef(false);
+  const [floatingHeaderStyle, setFloatingHeaderStyle] = useState(null);
+
+  const columnWidths = [
+    TEAM_COL_WIDTH, // Team
+    PLAYER_COL_WIDTH, // Player/Squad
+    ...POINT_COL_WIDTHS, // Points
+    ...BATTING_COL_WIDTHS,
+    ...BOWLING_COL_WIDTHS,
+    ...FIELDING_COL_WIDTHS,
+  ];
+  const totalColumns = columnWidths.length;
+  const minTableWidth = `${columnWidths.reduce((sum, width) => sum + width, 0)}px`;
+
+  const syncHorizontalScroll = (sourceRef, targetRefs = []) => {
+    const source = sourceRef.current;
+    if (!source) return;
+    if (isSyncingScrollRef.current) return;
+
+    isSyncingScrollRef.current = true;
+    targetRefs.forEach((targetRef) => {
+      const target = targetRef.current;
+      if (!target || target === source) return;
+      target.scrollLeft = source.scrollLeft;
+    });
+
+    requestAnimationFrame(() => {
+      isSyncingScrollRef.current = false;
+    });
+  };
+
+  useEffect(() => {
+    const updateFloatingHeader = () => {
+      const shellEl = tableShellRef.current;
+      const inlineHeaderEl = headerScrollRef.current;
+      if (!shellEl || !inlineHeaderEl) return;
+
+      const shellRect = shellEl.getBoundingClientRect();
+      const headerHeight = Math.ceil(inlineHeaderEl.getBoundingClientRect().height);
+      const stickyTop = Math.max(0, Math.round(tableStickyTop));
+      const shouldPin =
+        shellRect.top <= stickyTop &&
+        shellRect.bottom - headerHeight > stickyTop;
+
+      if (shouldPin) {
+        const nextStyle = {
+          top: stickyTop,
+          left: Math.round(shellRect.left),
+          width: Math.round(shellRect.width),
+          zIndex: 48
+        };
+
+        setFloatingHeaderStyle((previousStyle) => (
+          previousStyle &&
+          previousStyle.top === nextStyle.top &&
+          previousStyle.left === nextStyle.left &&
+          previousStyle.width === nextStyle.width
+            ? previousStyle
+            : nextStyle
+        ));
+      } else {
+        setFloatingHeaderStyle((previousStyle) => (previousStyle ? null : previousStyle));
+      }
+    };
+
+    const onScrollOrResize = () => {
+      requestAnimationFrame(updateFloatingHeader);
+    };
+
+    updateFloatingHeader();
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, [tableStickyTop]);
+
+  useEffect(() => {
+    if (!floatingHeaderStyle) return;
+    const bodyScroller = bodyScrollRef.current;
+    const floatingScroller = floatingHeaderScrollRef.current;
+    if (!bodyScroller || !floatingScroller) return;
+    floatingScroller.scrollLeft = bodyScroller.scrollLeft;
+  }, [floatingHeaderStyle]);
+
+  const renderColGroup = () => (
+    <colgroup>
+      {columnWidths.map((width, index) => (
+        <col
+          key={`col-${index}`}
+          style={{ width: `${width}px`, minWidth: `${width}px` }}
+        />
+      ))}
+    </colgroup>
+  );
 
   const SortableHeader = ({ label, sortKey, tooltip }) => (
     <HeaderTooltip tooltip={tooltip}>
@@ -214,6 +324,137 @@ const DetailedMatchPerformance = ({
     return null;
   };
 
+  const renderHeader = () => (
+    <thead className="lg-glass-tertiary">
+      {/* Main header groups */}
+      <tr>
+        <th scope="col" className="sticky left-0 z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
+          Team
+        </th>
+        <th
+          scope="col"
+          className="sticky z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider"
+          style={{ left: `${TEAM_COL_WIDTH}px` }}
+        >
+          Player/Squad
+        </th>
+        
+        {showFantasyPoints ? (
+          <th scope="col" colSpan="3" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
+            Points
+          </th>
+        ) : (
+          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
+            Points
+          </th>
+        )}
+        
+        <th scope="col" colSpan="6" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
+          Batting
+        </th>
+        <th scope="col" colSpan="6" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
+          Bowling
+        </th>
+        <th scope="col" colSpan="4" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
+          Fielding
+        </th>
+      </tr>
+      
+      {/* Sub-headers */}
+      <tr className="bg-white/30 dark:bg-black/30">
+        {/* Team column */}
+        <th scope="col" className="sticky left-0 z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="Team" sortKey="team_name" />
+        </th>
+        
+        {/* Player/Squad column */}
+        <th
+          scope="col"
+          className="sticky z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider"
+          style={{ left: `${TEAM_COL_WIDTH}px` }}
+        >
+          <div className="flex flex-col">
+            <SortableHeader label="Player" sortKey="player_name" />
+            <SortableHeader label="Squad" sortKey="squad_name" />
+          </div>
+        </th>
+        
+        {/* Points columns - different based on fantasy/non-fantasy */}
+        {showFantasyPoints ? (
+          <>
+            <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider font-bold border-l dark:border-neutral-600">
+              <SortableHeader label="Total" sortKey="fantasy_points" />
+            </th>
+            <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+              <SortableHeader label="Base" sortKey="base_points" />
+            </th>
+            <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+              <SortableHeader label="Boost" sortKey="boost_points" />
+            </th>
+          </>
+        ) : (
+          <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider font-bold border-l dark:border-neutral-600">
+            <SortableHeader label="Total" sortKey="total_points_all" />
+          </th>
+        )}
+        
+        {/* Batting subheaders */}
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider border-l dark:border-neutral-600">
+          <SortableHeader label="R" sortKey="bat_runs" tooltip="1 pt per run" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="B" sortKey="bat_balls" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="4s" sortKey="bat_fours" tooltip="1 pt per four" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="6s" sortKey="bat_sixes" tooltip="2 pts per six" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="SR" sortKey="bat_strike_rate" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="Pts" sortKey="batting_points_total" />
+        </th>
+        
+        {/* Bowling subheaders */}
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider border-l dark:border-neutral-600">
+          <SortableHeader label="O" sortKey="bowl_balls" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="M" sortKey="bowl_maidens" tooltip="8 pts per maiden" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="R" sortKey="bowl_runs" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="W" sortKey="bowl_wickets" tooltip="25 pts per wicket" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="Econ" sortKey="bowl_economy" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="Pts" sortKey="bowling_points_total" />
+        </th>
+        
+        {/* Fielding subheaders */}
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider border-l dark:border-neutral-600">
+          <SortableHeader label="Ct" sortKey="field_catch" tooltip="8 pts per catch" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="RO" sortKey="run_out_solo" tooltip="8 pts per run out" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="St" sortKey="wk_stumping" tooltip="12 pts per stumping" />
+        </th>
+        <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider">
+          <SortableHeader label="Pts" sortKey="fielding_points_total" />
+        </th>
+      </tr>
+    </thead>
+  );
+
   return (
     <div className="relative">
       {/* Scroll indicator for mobile */}
@@ -228,133 +469,40 @@ const DetailedMatchPerformance = ({
         </div>
       </div>
       
-      <div className="overflow-x-auto max-h-[calc(100vh-12rem)] scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600 scrollbar-track-transparent lg-glass-tertiary rounded-lg">
-        <table className="min-w-full divide-y divide-neutral-200/70 dark:divide-neutral-800/70">
-          <thead className="lg-glass-tertiary sticky top-0 z-20">
-            {/* Main header groups */}
-            <tr>
-              <th scope="col" className="sticky left-0 z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider w-20">
-                Team
-              </th>
-              <th scope="col" className="sticky left-[60px] z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider w-32">
-                Player/Squad
-              </th>
-              
-              {hasFantasyData && leagueId ? (
-                <th scope="col" colSpan="3" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
-                  Points
-                </th>
-              ) : (
-                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
-                  Points
-                </th>
-              )}
-              
-              <th scope="col" colSpan="6" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
-                Batting
-              </th>
-              <th scope="col" colSpan="6" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
-                Bowling
-              </th>
-              <th scope="col" colSpan="4" className="px-3 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider border-l dark:border-neutral-600">
-                Fielding
-              </th>
-            </tr>
-            
-            {/* Sub-headers */}
-            <tr className="bg-white/30 dark:bg-black/30">
-              {/* Team column */}
-              <th scope="col" className="sticky left-0 z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-20">
-                <SortableHeader label="Team" sortKey="team_name" />
-              </th>
-              
-              {/* Player/Squad column */}
-              <th scope="col" className="sticky left-[60px] z-10 lg-glass-tertiary px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-32">
-                <div className="flex flex-col">
-                  <SortableHeader label="Player" sortKey="player_name" />
-                  <SortableHeader label="Squad" sortKey="squad_name" />
-                </div>
-              </th>
-              
-              {/* Points columns - different based on fantasy/non-fantasy */}
-              {hasFantasyData && leagueId ? (
-                <>
-                  <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider font-bold w-16 border-l dark:border-neutral-600">
-                    <SortableHeader label="Total" sortKey="fantasy_points" />
-                  </th>
-                  <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-16">
-                    <SortableHeader label="Base" sortKey="base_points" />
-                  </th>
-                  <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-16">
-                    <SortableHeader label="Boost" sortKey="boost_points" />
-                  </th>
-                </>
-              ) : (
-                <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider font-bold w-16 border-l dark:border-neutral-600">
-                  <SortableHeader label="Total" sortKey="total_points_all" />
-                </th>
-              )}
-              
-              {/* Batting subheaders */}
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12 border-l dark:border-neutral-600">
-                <SortableHeader label="R" sortKey="bat_runs" tooltip="1 pt per run" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="B" sortKey="bat_balls" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="4s" sortKey="bat_fours" tooltip="1 pt per four" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="6s" sortKey="bat_sixes" tooltip="2 pts per six" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="SR" sortKey="bat_strike_rate" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="Pts" sortKey="batting_points_total" />
-              </th>
-              
-              {/* Bowling subheaders */}
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12 border-l dark:border-neutral-600">
-                <SortableHeader label="O" sortKey="bowl_balls" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="M" sortKey="bowl_maidens" tooltip="8 pts per maiden" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="R" sortKey="bowl_runs" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="W" sortKey="bowl_wickets" tooltip="25 pts per wicket" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="Econ" sortKey="bowl_economy" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="Pts" sortKey="bowling_points_total" />
-              </th>
-              
-              {/* Fielding subheaders */}
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12 border-l dark:border-neutral-600">
-                <SortableHeader label="Ct" sortKey="field_catch" tooltip="8 pts per catch" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="RO" sortKey="run_out_solo" tooltip="8 pts per run out" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="St" sortKey="wk_stumping" tooltip="12 pts per stumping" />
-              </th>
-              <th scope="col" className="px-1 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 tracking-wider w-12">
-                <SortableHeader label="Pts" sortKey="fielding_points_total" />
-              </th>
-            </tr>
-          </thead>
+      <div ref={tableShellRef} className="relative rounded-lg overflow-visible">
+        <div className="z-30">
+          <div
+            ref={headerScrollRef}
+            onScroll={() => syncHorizontalScroll(headerScrollRef, [bodyScrollRef, floatingHeaderScrollRef])}
+            className={`overflow-x-auto scrollbar-hide lg-glass-tertiary rounded-t-lg border-b border-neutral-200/70 dark:border-neutral-800/70 ${
+              floatingHeaderStyle ? 'invisible pointer-events-none' : ''
+            }`}
+          >
+            <table
+              className="table-fixed divide-y divide-neutral-200/70 dark:divide-neutral-800/70"
+              style={{ minWidth: minTableWidth }}
+            >
+              {renderColGroup()}
+              {renderHeader()}
+            </table>
+          </div>
+        </div>
+
+        <div
+          ref={bodyScrollRef}
+          onScroll={() => syncHorizontalScroll(bodyScrollRef, [headerScrollRef, floatingHeaderScrollRef])}
+          className="overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600 scrollbar-track-transparent lg-glass-tertiary rounded-b-lg"
+        >
+          <table
+            className="table-fixed divide-y divide-neutral-200/70 dark:divide-neutral-800/70"
+            style={{ minWidth: minTableWidth }}
+          >
+            {renderColGroup()}
           <tbody className="bg-white/20 dark:bg-black/20 divide-y divide-neutral-200/70 dark:divide-neutral-900/70">
             {processedEvents.length === 0 ? (
               <tr>
                 <td 
-                  colSpan={hasFantasyData && leagueId ? 20 : 18} 
+                  colSpan={totalColumns} 
                   className="px-3 py-2 text-center text-xs text-neutral-500 dark:text-neutral-400"
                 >
                   No player data available for this match
@@ -379,8 +527,9 @@ const DetailedMatchPerformance = ({
                     </td>
                     
                     {/* Player/Squad info */}
-                    <td className="sticky left-[60px] z-10 bg-white/20 dark:bg-black/20 px-2 py-2 whitespace-nowrap"
-                        style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
+                    <td
+                        className="sticky z-10 bg-white/20 dark:bg-black/20 px-2 py-2 whitespace-nowrap"
+                        style={{ left: `${TEAM_COL_WIDTH}px`, ...(isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}) }}
                     >
                       <div 
                         className="text-xs text-neutral-900 dark:text-white cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
@@ -534,6 +683,26 @@ const DetailedMatchPerformance = ({
             )}
           </tbody>
         </table>
+        </div>
+
+        {floatingHeaderStyle && createPortal(
+          <div style={{ position: 'fixed', ...floatingHeaderStyle }}>
+            <div
+              ref={floatingHeaderScrollRef}
+              onScroll={() => syncHorizontalScroll(floatingHeaderScrollRef, [bodyScrollRef, headerScrollRef])}
+              className="overflow-x-auto scrollbar-hide lg-glass-tertiary rounded-t-lg border-b border-neutral-200/70 dark:border-neutral-700/70 shadow-sm"
+            >
+              <table
+                className="table-fixed divide-y divide-neutral-200/70 dark:divide-neutral-800/70"
+                style={{ minWidth: minTableWidth }}
+              >
+                {renderColGroup()}
+                {renderHeader()}
+              </table>
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     </div>
   );

@@ -12,6 +12,8 @@
   --sar: env(safe-area-inset-right, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
+  --app-header-height: 4rem;
+  --app-header-offset: calc(var(--app-header-height) + env(safe-area-inset-top, 0px));
   
   /* For Android and iOS app-like experience */
   --app-height: 100vh;
@@ -86,7 +88,7 @@ html.dark body {
 
 /* Prevent content from flowing under fixed header */
 .header-offset {
-  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+  padding-top: var(--app-header-offset);
 }
 
 /* Adjust viewport height for iOS and Android */

@@ -190,7 +190,7 @@ const MatchView = () => {
         ></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-2 py-4 max-w-7xl">
+      <div className="relative z-10 container mx-auto px-2 pt-8 pb-4 sm:pt-4 max-w-7xl">
         {/* Overview cards section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>

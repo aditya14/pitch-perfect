@@ -198,7 +198,7 @@ const AppContent = () => {
           `}
           style={{
             minHeight: user ? 'calc(100vh - 40px)' : '100vh',
-            paddingTop: user ? 'calc(4rem + env(safe-area-inset-top, 0px))' : undefined
+            paddingTop: user ? 'var(--app-header-offset)' : undefined
           }}
         >
           <Routes>

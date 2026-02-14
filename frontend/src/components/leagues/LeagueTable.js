@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import api from '../../utils/axios';
 import CapIcon from '../elements/icons/CapIcon';
+import StickyTableShell from '../elements/StickyTableShell';
 
 const LeagueTable = ({ league }) => {
   const navigate = useNavigate();
@@ -203,7 +204,7 @@ const LeagueTable = ({ league }) => {
           League Standings
         </h2>
       </div>
-      <div className="overflow-x-auto relative">
+      <StickyTableShell className="overflow-x-auto relative">
         <table className="min-w-full divide-y divide-white/10">
           <thead className="lg-glass-tertiary">
             <tr>
@@ -425,7 +426,7 @@ const LeagueTable = ({ league }) => {
             )}
           </tbody>
         </table>
-      </div>
+      </StickyTableShell>
     </div>
   );
 };

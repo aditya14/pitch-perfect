@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import api from '../../utils/axios';
 import { Users, Zap, Crown, Swords, Anchor, Handshake, Bomb, Shield, Sparkles, BarChartHorizontal, ShieldHalf, Volleyball } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
+import StickyTableShell from '../elements/StickyTableShell';
 
 // Helper function to get role icon
 const getRoleIcon = (roleName, size = 16, squadColor) => {
@@ -435,9 +436,9 @@ const LeagueSquads = ({ league }) => {
         </div>
       </div>
       
-      <div className="lg-glass lg-rounded-xl overflow-x-auto">
+      <StickyTableShell className="lg-glass lg-rounded-xl overflow-x-auto">
         <table className="w-full border-collapse text-xs" key={`${activeDraftId || activeView}-${activeDraftRole}`}>
-          <thead className="sticky top-0 z-20"> 
+          <thead> 
             <tr className="lg-glass-tertiary">
               {(isDraftView || activeView !== 'names') && (
                 <th className="sticky left-0 lg-glass-tertiary z-30 px-2 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 border border-neutral-200/60 dark:border-neutral-700/70">
@@ -659,7 +660,7 @@ const LeagueSquads = ({ league }) => {
             )}
           </tbody>
         </table>
-      </div>
+      </StickyTableShell>
     </div>
   );
 };

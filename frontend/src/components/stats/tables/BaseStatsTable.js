@@ -1,4 +1,5 @@
 import React from 'react';
+import StickyTableShell from '../../elements/StickyTableShell';
 
 const BaseStatsTable = ({ 
   data, 
@@ -19,7 +20,7 @@ const BaseStatsTable = ({
   }
 
   return (
-    <div className="overflow-x-auto rounded-b-lg">
+    <StickyTableShell className="overflow-x-auto rounded-b-lg">
       <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800 text-sm md:text-base rounded-b-lg">
         <thead className="bg-white/40 dark:bg-black/30">
           <tr>
@@ -79,7 +80,7 @@ const BaseStatsTable = ({
           ))}
         </tbody>
       </table>
-    </div>
+    </StickyTableShell>
   );
 };
 
