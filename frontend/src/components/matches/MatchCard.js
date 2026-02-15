@@ -310,10 +310,10 @@ const MatchCard = ({ match, leagueId }) => {
               {match.status === 'LIVE' ? 'LEADING' : 'TOP'} SQUADS
             </div>
             
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-y-2">
               {/* Squad 1 */}
               {topSquads[0] && (
-                <div className="flex items-center">
+                <div className="flex items-center shrink-0">
                   <CapIcon
                     size={24}
                     strokeWidth={30}
@@ -331,7 +331,7 @@ const MatchCard = ({ match, leagueId }) => {
               
               {/* Squad 2 */}
               {topSquads[1] && (
-                <div className="flex items-center">
+                <div className="flex items-center shrink-0">
                   <div 
                     className="h-4 w-1 mr-1.5 rounded-sm"
                     style={{ backgroundColor: topSquads[1].color || '#6B7280' }}
