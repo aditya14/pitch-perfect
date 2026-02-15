@@ -190,23 +190,22 @@ const MatchView = () => {
         ></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-2 pt-8 pb-4 sm:pt-4 max-w-7xl">
+      <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-6 pt-6 pb-6 sm:pt-4 max-w-7xl">
         {/* Overview cards section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div>
+        {leagueId ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <MatchOverview matchData={matchOverview} />
+            <SquadPerformance
+              matchId={matchId}
+              leagueId={leagueId}
+              activeSquadId={activeSquadId}
+            />
+          </div>
+        ) : (
+          <div className="mb-6">
             <MatchOverview matchData={matchOverview} />
           </div>
-          
-          {leagueId && (
-            <div>
-              <SquadPerformance 
-                matchId={matchId}
-                leagueId={leagueId}
-                activeSquadId={activeSquadId}
-              />
-            </div>
-          )}
-        </div>
+        )}
         
         {/* Match Performance Container */}
         <MatchPerformanceContainer 

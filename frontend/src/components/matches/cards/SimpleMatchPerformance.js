@@ -5,12 +5,12 @@ import BoostInlineElement from '../../elements/BoostInlineElement';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
 import { getPointsColorClass } from '../../../utils/matchUtils';
 
-const SimpleMatchPerformance = ({ 
-  processedEvents, 
-  handleSort, 
-  sortConfig, 
-  hasFantasyData, 
-  leagueId, 
+const SimpleMatchPerformance = ({
+  processedEvents,
+  handleSort,
+  sortConfig,
+  hasFantasyData,
+  leagueId,
   activeSquadId,
   tableStickyTop = 0
 }) => {
@@ -23,8 +23,9 @@ const SimpleMatchPerformance = ({
   const isSyncingScrollRef = useRef(false);
   const [floatingHeaderStyle, setFloatingHeaderStyle] = useState(null);
 
-  const columnWidths = [88, 220, 180, 100];
-  const minTableWidth = `${columnWidths.reduce((sum, width) => sum + width, 0)}px`;
+  // Order: Team, Player, Points, Performance
+  // Percent widths help keep mobile inside viewport without forced horizontal scroll.
+  const columnWidths = ['14%', '38%', '18%', '30%'];
 
   // Initially sort by total points
   useEffect(() => {
@@ -62,9 +63,7 @@ const SimpleMatchPerformance = ({
       const shellRect = shellEl.getBoundingClientRect();
       const headerHeight = Math.ceil(inlineHeaderEl.getBoundingClientRect().height);
       const stickyTop = Math.max(0, Math.round(tableStickyTop));
-      const shouldPin =
-        shellRect.top <= stickyTop &&
-        shellRect.bottom - headerHeight > stickyTop;
+      const shouldPin = shellRect.top <= stickyTop && shellRect.bottom - headerHeight > stickyTop;
 
       if (shouldPin) {
         const nextStyle = {
@@ -113,11 +112,8 @@ const SimpleMatchPerformance = ({
     <div
       onClick={() => {
         handleSort(sortKey);
-        setLocalSortedEvents(prev => {
-          const newDirection = 
-            sortConfig.key === sortKey && sortConfig.direction === 'desc'
-              ? 'asc'
-              : 'desc';
+        setLocalSortedEvents((prev) => {
+          const newDirection = sortConfig.key === sortKey && sortConfig.direction === 'desc' ? 'asc' : 'desc';
 
           return [...prev].sort((a, b) => {
             let aValue = a[sortKey];
@@ -143,10 +139,7 @@ const SimpleMatchPerformance = ({
   const renderColGroup = () => (
     <colgroup>
       {columnWidths.map((width, index) => (
-        <col
-          key={`simple-col-${index}`}
-          style={{ width: `${width}px`, minWidth: `${width}px` }}
-        />
+        <col key={`simple-col-${index}`} style={{ width }} />
       ))}
     </colgroup>
   );
@@ -164,20 +157,19 @@ const SimpleMatchPerformance = ({
           </div>
         </th>
         <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
-          <span>Performance</span>
-        </th>
-        <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
           {hasFantasyData && leagueId ? (
             <SortableHeader label="Points" sortKey="fantasy_points" />
           ) : (
             <SortableHeader label="Points" sortKey="total_points_all" />
           )}
         </th>
+        <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-300 uppercase tracking-wider">
+          <span>Performance</span>
+        </th>
       </tr>
     </thead>
   );
-  
-  // Format performance data into a readable string
+
   const formatPerformance = (data) => {
     let batting = null;
     let bowling = null;
@@ -228,10 +220,7 @@ const SimpleMatchPerformance = ({
             floatingHeaderStyle ? 'invisible pointer-events-none' : ''
           }`}
         >
-          <table
-            className="table-fixed divide-y divide-neutral-200/70 dark:divide-neutral-800/70"
-            style={{ minWidth: minTableWidth }}
-          >
+          <table className="table-fixed w-full divide-y divide-neutral-200/70 dark:divide-neutral-800/70">
             {renderColGroup()}
             {renderHeader()}
           </table>
@@ -243,10 +232,7 @@ const SimpleMatchPerformance = ({
         onScroll={() => syncHorizontalScroll(bodyScrollRef, [headerScrollRef, floatingHeaderScrollRef])}
         className="overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600 scrollbar-track-transparent lg-glass-tertiary rounded-b-lg"
       >
-        <table
-          className="table-fixed divide-y divide-neutral-200/70 dark:divide-neutral-800/70"
-          style={{ minWidth: minTableWidth }}
-        >
+        <table className="table-fixed w-full divide-y divide-neutral-200/70 dark:divide-neutral-800/70">
           {renderColGroup()}
           <tbody className="bg-white/20 dark:bg-black/20 divide-y divide-neutral-200/70 dark:divide-neutral-900/70">
             {localSortedEvents.length === 0 ? (
@@ -260,39 +246,36 @@ const SimpleMatchPerformance = ({
                 const isActiveSquadPlayer = activeSquadId && data.squad_id === activeSquadId;
 
                 return (
-                  <tr 
+                  <tr
                     key={`simple-row-${data.id || data.player_id || index}`}
                     className="hover:bg-white/30 dark:hover:bg-white/5"
                     style={isActiveSquadPlayer ? { backgroundColor: `${data.squad_color}33` } : {}}
                   >
-                    <td className="px-2 py-3 whitespace-nowrap">
-                      <div className="flex items-center text-xs">
-                        {data.team_name && data.team_name}
-                      </div>
+                    <td className="px-2 py-3">
+                      <div className="text-[11px] leading-4 truncate">{data.team_name && data.team_name}</div>
                     </td>
 
-                    <td className="px-2 py-3 whitespace-nowrap">
-                      <div 
-                        className="text-sm text-neutral-900 dark:text-white cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
+                    <td className="px-2 py-3">
+                      <div
+                        className="text-sm leading-5 text-neutral-900 dark:text-white cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
                         onClick={() => openPlayerModal(data.player_id, leagueId)}
                       >
-                        {data.player_name} {data.player_of_match && '🏅'}
+                        {data.player_name}
+                        {data.player_of_match && ' (POM)'}
                       </div>
+
                       {data.squad_name && (
-                        <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center">
-                          <div 
-                            className="h-3 w-1 mr-1 rounded-sm"
-                            style={{ backgroundColor: data.squad_color }}
-                          />
-                          <span>{data.squad_name}</span>
+                        <div className="text-[11px] leading-4 text-neutral-500 dark:text-neutral-400 flex items-center min-w-0">
+                          <div className="h-3 w-1 mr-1 rounded-sm" style={{ backgroundColor: data.squad_color }} />
+                          <span className="truncate">{data.squad_name}</span>
 
                           {data.boost_label && (
                             <span className="ml-1">
                               <BoostInlineElement
-                                boostName={data.boost_label} 
-                                color={data.squad_color} 
-                                showLabel={false} 
-                                size="S" 
+                                boostName={data.boost_label}
+                                color={data.squad_color}
+                                showLabel={false}
+                                size="S"
                               />
                             </span>
                           )}
@@ -300,28 +283,33 @@ const SimpleMatchPerformance = ({
                       )}
                     </td>
 
-                    <td className="px-2 py-3 text-sm text-neutral-900 dark:text-white">
-                      {formatPerformance(data)}
-                    </td>
-
-                    <td className="px-2 py-3 whitespace-nowrap text-sm font-medium">
+                    <td className="px-2 py-3 text-sm font-medium">
                       {hasFantasyData && leagueId ? (
-                        <div className="flex flex-col">
-                          <span className="font-bold text-neutral-900 dark:text-white text-base font-number">
+                        <div className="flex flex-col leading-4">
+                          <span className="font-bold text-neutral-900 dark:text-white text-sm sm:text-base font-number">
                             {data.fantasy_points}
                           </span>
-                          <div className='flex items-center gap-1'>
-                            <span className={`text-xs ${getPointsColorClass(data.base_points)}`}>
+                          <div className="flex items-center gap-1">
+                            <span className={`text-[11px] ${getPointsColorClass(data.base_points)}`}>
                               {data.base_points}
                             </span>
-                            {data.boost_points !== 0 && <span className='text-xs'> {data.boost_points > 0 && '+'}{data.boost_points}</span>}
+                            {data.boost_points !== 0 && (
+                              <span className="text-[11px]">
+                                {data.boost_points > 0 && '+'}
+                                {data.boost_points}
+                              </span>
+                            )}
                           </div>
                         </div>
                       ) : (
-                        <span className={`font-bold ${getPointsColorClass(data.total_points_all)}`}>
+                        <span className={`font-bold text-sm sm:text-base ${getPointsColorClass(data.total_points_all)}`}>
                           {data.total_points_all}
                         </span>
                       )}
+                    </td>
+
+                    <td className="px-2 py-3 text-xs leading-4 text-neutral-900 dark:text-white">
+                      {formatPerformance(data)}
                     </td>
                   </tr>
                 );
@@ -338,10 +326,7 @@ const SimpleMatchPerformance = ({
             onScroll={() => syncHorizontalScroll(floatingHeaderScrollRef, [bodyScrollRef, headerScrollRef])}
             className="overflow-x-auto scrollbar-hide lg-glass-tertiary rounded-lg border border-neutral-200/70 dark:border-neutral-700/70 shadow-sm"
           >
-            <table
-              className="table-fixed divide-y divide-neutral-200/70 dark:divide-neutral-800/70"
-              style={{ minWidth: minTableWidth }}
-            >
+            <table className="table-fixed w-full divide-y divide-neutral-200/70 dark:divide-neutral-800/70">
               {renderColGroup()}
               {renderHeader()}
             </table>
