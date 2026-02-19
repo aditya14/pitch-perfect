@@ -91,7 +91,7 @@ const Login = () => {
     ],
     batting: [
       { name: 'Slogger', icon: Zap, eligible: 'BAT, WK', boost: '2x SR, Fours and Sixes', description: 'Big hitting power' },
-      { name: 'Accumulator', icon: Anchor, eligible: 'BAT, WK', boost: '2x Runs and Milestones', description: 'Consistent scorer' }
+      { name: 'Anchor', icon: Anchor, eligible: 'BAT, WK', boost: '2x Runs and Milestones', description: 'Consistent scorer' }
     ],
     specialist: [
       { name: 'Safe Hands', icon: Handshake, eligible: 'WK', boost: '2x Fielding', description: 'Keeper excellence' },

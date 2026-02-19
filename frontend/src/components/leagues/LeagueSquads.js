@@ -15,7 +15,7 @@ const getRoleIcon = (roleName, size = 16, squadColor) => {
       return <Swords size={size} style={{color: squadColor}} />;
     case 'Slogger':
       return <Zap size={size} style={{color: squadColor}} />;
-    case 'Accumulator':
+    case 'Anchor':
       return <Anchor size={size} style={{color: squadColor}} />;
     case 'Safe Hands':
       return <Handshake size={size} style={{color: squadColor}} />;
@@ -623,7 +623,7 @@ const LeagueSquads = ({ league }) => {
                   captain: 'Captain',
                   vice_captain: 'Vice-Captain',
                   slogger: 'Slogger',
-                  accumulator: 'Accumulator', 
+                  Anchor: 'Anchor', 
                   safe_hands: 'Safe Hands',
                   virtuoso: 'Virtuoso',
                   rattler: 'Rattler',
@@ -646,7 +646,7 @@ const LeagueSquads = ({ league }) => {
                           'captain': 1,
                           'vice_captain': 2,
                           'slogger': 3,
-                          'accumulator': 4,
+                          'Anchor': 4,
                           'safe_hands': 5,
                           'rattler': 6,
                           'guardian': 7,

@@ -9,7 +9,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
     1: "Captain",
     2: "Vice Captain",
     3: "Slogger",
-    4: "Accumulator", 
+    4: "Anchor", 
     5: "Safe Hands",
     6: "Rattler",
     7: "Guardian",
@@ -21,7 +21,7 @@ const TradeForm = ({ league, onClose, onTradeCreated }) => {
     1: ['BAT', 'BOWL', 'ALL', 'WK'], // Captain - Any role
     2: ['BAT', 'BOWL', 'ALL', 'WK'], // Vice Captain - Any role
     3: ['BAT', 'WK'], // Slogger - BAT or WK only
-    4: ['BAT', 'WK'], // Accumulator - BAT or WK only
+    4: ['BAT', 'WK'], // Anchor - BAT or WK only
     5: ['WK'],       // Safe Hands - WK only
     6: ['BOWL'],     // Rattler - BOWL only
     7: ['BOWL'],     // Guardian - BOWL only

@@ -1676,7 +1676,7 @@ def fantasy_boost_roles(request):
         "Captain",
         "Vice-Captain", 
         "Slogger", 
-        "Accumulator", 
+        "Anchor", 
         "Safe Hands", 
         "Virtuoso", 
         "Rattler", 

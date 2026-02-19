@@ -38,7 +38,7 @@ const getRoleIcon = (roleName, size = 16) => {
       return <Swords size={size} className="text-slate-500" />;
     case 'Slogger':
       return <Zap size={size} className="text-red-500" />;
-    case 'Accumulator':
+    case 'Anchor':
       return <Anchor size={size} className="text-yellow-500" />;
     case 'Safe Hands':
       return <Handshake size={size} className="text-cyan-500" />;

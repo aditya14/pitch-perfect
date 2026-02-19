@@ -62,7 +62,7 @@ const BoostInlineElement = ({ boostName, color, showLabel = false, size = 'M', c
         return <Swords size={size} />;
       case 'Slogger':
         return <Zap size={size} />;
-      case 'Accumulator':
+      case 'Anchor':
         return <Anchor size={size} />;
       case 'Safe Hands':
         return <Handshake size={size} />;

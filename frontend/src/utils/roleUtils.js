@@ -25,7 +25,7 @@ export const getRoleIcon = (roleName, size = 16, squadColor) => {
       return <Swords size={size} style={outlineStyle} className="text-primary-500 dark:text-primary-300" />;
     case 'Slogger':
       return <Zap size={size} style={outlineStyle} className="text-red-500 dark:text-red-400" />;
-    case 'Accumulator':
+    case 'Anchor':
       return <Anchor size={size} style={outlineStyle} className="text-yellow-500 dark:text-yellow-400" />;
     case 'Safe Hands':
       return <Handshake size={size} style={outlineStyle} className="text-cyan-500 dark:text-cyan-400" />;

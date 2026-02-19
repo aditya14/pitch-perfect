@@ -500,11 +500,11 @@ const HowItWorksComponent = () => {
               <p className="text-sm text-neutral-600 dark:text-neutral-400">Perfect for big hitters known for clearing the ropes.</p>
             </div>
             
-            {/* Accumulator */}
+            {/* Anchor */}
             <div className="bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-800 rounded-lg p-4 shadow-sm">
               <div className="flex items-center mb-2">
                 <Anchor className="text-green-600 dark:text-green-400 mr-2" size={20} />
-                <h3 className="font-bold text-lg text-green-700 dark:text-green-300">Accumulator</h3>
+                <h3 className="font-bold text-lg text-green-700 dark:text-green-300">Anchor</h3>
               </div>
               <p className="text-sm mb-2"><strong>Eligible:</strong> BAT, WK</p>
               <p className="text-sm mb-2"><strong>Boost:</strong> 1.5× Strike Rate, 1.5× Fours, 1.5× Sixes, 2× Runs, 2× Batting Milestones</p>
