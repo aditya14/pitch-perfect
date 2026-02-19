@@ -823,16 +823,19 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 } for p in players
             }
             
-            # Get current team for each player in a single efficient query
-            team_mappings = PlayerSeasonTeam.objects.filter(
+            # Get current season mapping for each player in a single query
+            season_mappings = PlayerSeasonTeam.objects.filter(
                 player_id__in=player_ids,
                 season=season
-            ).select_related('team').values(
-                'player_id', 
-                'team__short_name'
+            ).select_related('team', 'replacement').values(
+                'player_id',
+                'team__short_name',
+                'ruled_out',
+                'replacement_id',
+                'replacement__name',
             )
-            
-            team_dict = {tm['player_id']: tm['team__short_name'] for tm in team_mappings}
+
+            season_mapping_dict = {mapping['player_id']: mapping for mapping in season_mappings}
             
             # 6. Calculate average points and prepare final data
             complete_data = []
@@ -845,7 +848,17 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 data.update(player_details.get(player_id, {'name': 'Unknown', 'role': None}))
                 
                 # Add team info
-                data['team'] = team_dict.get(player_id)
+                mapping = season_mapping_dict.get(player_id, {})
+                data['team'] = mapping.get('team__short_name')
+                data['ruled_out'] = bool(mapping.get('ruled_out'))
+                data['replacement'] = (
+                    {
+                        'id': mapping.get('replacement_id'),
+                        'name': mapping.get('replacement__name'),
+                    }
+                    if mapping.get('replacement_id')
+                    else None
+                )
                 
                 complete_data.append(data)
             
@@ -864,6 +877,8 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     'name': player['name'],
                     'role': player['role'],
                     'team': player['team'],
+                    'ruled_out': player['ruled_out'],
+                    'replacement': player['replacement'],
                     'matches': player['total_matches'],
                     'avg_points': round(player['avg_points'], 2) if player['avg_points'] else 0,
                     'rank': idx + 1,
@@ -2398,7 +2413,7 @@ def mid_season_draft_pool(request, league_id):
             # Get current team
             team =player.playerseasonteam_set.filter(
                 season=league.season
-            ).select_related('team').first()
+            ).select_related('team', 'replacement').first()
             
             # Calculate draft position if available
             draft_position = None
@@ -2425,6 +2440,15 @@ def mid_season_draft_pool(request, league_id):
                 'name': player.name,
                 'role': player.role,
                 'team': team.team.short_name if team else None,
+                'ruled_out': bool(team.ruled_out) if team else False,
+                'replacement': (
+                    {
+                        'id': team.replacement_id,
+                        'name': team.replacement.name,
+                    }
+                    if team and team.replacement_id
+                    else None
+                ),
                 'matches': player.matches or 0,
                 'avg_points': player.avg_points or historical_avg or 0,
                 'draft_position': draft_position,

@@ -17,6 +17,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Bandage } from 'lucide-react';
 import { usePlayerModal } from '../../context/PlayerModalContext';
 
 const BREAKDOWN_OPTIONS = [
@@ -71,6 +72,9 @@ const SortableRow = ({
   const highlightedName = getHighlightParts(player.name, searchTerm);
   const isHighlighted = highlightState === 'highlighted';
   const isDimmed = highlightState === 'dimmed';
+  const injuryTooltip = player?.replacement?.name
+    ? `Ruled out. Replacement: ${player.replacement.name}`
+    : 'Ruled out';
 
   return (
     <tr
@@ -150,7 +154,7 @@ const SortableRow = ({
             )}
           </button>
         ) : (
-          <span>
+          <span className="inline-flex items-center">
             {highlightedName ? (
               <>
                 {highlightedName.before}
@@ -159,6 +163,14 @@ const SortableRow = ({
               </>
             ) : (
               player.name
+            )}
+            {player.ruled_out && (
+              <Bandage
+                size={13}
+                className="ml-1 text-rose-500 dark:text-rose-400 flex-shrink-0"
+                title={injuryTooltip}
+                aria-label={injuryTooltip}
+              />
             )}
           </span>
         )}

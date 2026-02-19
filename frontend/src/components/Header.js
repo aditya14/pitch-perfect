@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import { 
   Moon, Sun, Home, LogOut, User, 
-  ChevronsUpDown, Check, Menu, Shield, Calendar, UsersRound, Trophy, BarChart3, Zap
+  ChevronsUpDown, Check, Menu, Shield, Calendar, UsersRound, Trophy, BarChart3
 } from 'lucide-react';
 import UpdatePointsButton from './UpdatePointsButton';
 
@@ -226,7 +226,6 @@ const Header = ({ theme, onThemeChange }) => {
 
   const tabIconMap = {
     dashboard: Home,
-    draft: Zap,
     matches: Calendar,
     my_squad: Shield,
     squads: UsersRound,
@@ -255,7 +254,6 @@ const Header = ({ theme, onThemeChange }) => {
       ]
     : [
         { id: 'dashboard', label: 'Dashboard' },
-        ...(leagueInfo?.my_squad ? [{ id: 'draft', label: 'Draft' }] : []),
         ...(leagueInfo?.my_squad ? [{ id: 'my_squad', label: 'My Squad' }] : []),
         { id: 'matches', label: 'Matches' },
         { id: 'squads', label: 'Squads' },
