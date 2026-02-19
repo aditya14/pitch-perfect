@@ -2,6 +2,6 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "echo 'Define specific start commands for each service'"
+startCommand = "bash start.sh"
 healthcheckPath = "/"
 healthcheckTimeout = 100
