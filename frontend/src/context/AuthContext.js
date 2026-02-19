@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/axios';
 import LoadingScreen from '../components/elements/LoadingScreen';
+import { getAccessToken, setAccessToken, clearAccessToken } from '../utils/authStorage';
 
 const AuthContext = createContext(null);
 
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('accessToken');
+      const token = getAccessToken();
       if (token) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         try {
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true);
         } catch (error) {
           console.error('Auth error:', error);
-          localStorage.removeItem('accessToken');
+          clearAccessToken();
           delete api.defaults.headers.common['Authorization'];
           setUser(null);
           setIsAuthenticated(false);
@@ -69,7 +70,7 @@ export const AuthProvider = ({ children }) => {
       });
       
       const accessToken = response.data.access;
-      localStorage.setItem('accessToken', accessToken);
+      setAccessToken(accessToken);
       api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
       
       const userResponse = await api.get('/user/');
@@ -99,7 +100,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('accessToken');
+    clearAccessToken();
     // Clear theme preferences on logout so next login uses default dark mode
     localStorage.removeItem('theme');
     delete api.defaults.headers.common['Authorization'];

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessToken } from './authStorage';
 
 const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 console.log('API Base URL:', baseURL);
@@ -11,7 +12,7 @@ const api = axios.create({
 // Add a request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     
     // Debug log
     // console.log('Request Config:', {

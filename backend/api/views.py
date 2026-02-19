@@ -1161,29 +1161,36 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     squad_dict[squad_id]['all_player_ids'].add(player_id)
                     all_squad_player_ids.add(player_id)
             
-            # 5. Get all player details in a single query
-            players = Player.objects.filter(
-                id__in=all_squad_player_ids
-            ).prefetch_related(
-                'playerseasonteam_set'
-            )
+            # 5. Get all player details and season mappings in single queries
+            players = Player.objects.filter(id__in=all_squad_player_ids)
+            season_player_mappings = {
+                mapping.player_id: mapping
+                for mapping in PlayerSeasonTeam.objects.filter(
+                    player_id__in=all_squad_player_ids,
+                    season=league.season
+                ).select_related('team', 'replacement')
+            }
             
             # Create a player lookup dictionary
             player_dict = {}
             for player in players:
-                # Find current team for this player
-                current_team = next(
-                    (th for th in player.playerseasonteam_set.all() 
-                    if th.season_id == league.season.id),
-                    None
-                )
+                current_team = season_player_mappings.get(player.id)
                 
                 player_dict[player.id] = {
                     'id': player.id,
                     'name': player.name,
                     'role': player.role,
                     'team_code': current_team.team.short_name if current_team else None,
-                    'team_color': current_team.team.primary_color if current_team else None
+                    'team_color': current_team.team.primary_color if current_team else None,
+                    'ruled_out': bool(current_team.ruled_out) if current_team else False,
+                    'replacement': (
+                        {
+                            'id': current_team.replacement_id,
+                            'name': current_team.replacement.name,
+                        }
+                        if current_team and current_team.replacement_id
+                        else None
+                    ),
                 }
             
             # 6. Calculate average draft ranks for both draft types
@@ -1504,6 +1511,17 @@ def squad_players(request, squad_id):
     
     # Combine both sets to get all players we need to fetch
     all_player_ids = current_players.union(historical_player_ids)
+
+    season = squad.league.season
+    season_player_mappings = {}
+    if season:
+        season_player_mappings = {
+            mapping.player_id: mapping
+            for mapping in PlayerSeasonTeam.objects.filter(
+                season=season,
+                player_id__in=all_player_ids
+            ).select_related('replacement')
+        }
     
     # Get full player data
     players = Player.objects.filter(id__in=all_player_ids)
@@ -1513,7 +1531,17 @@ def squad_players(request, squad_id):
     for player in players:
         is_current = player.id in current_players
         player_data = IPLPlayerSerializer(player).data
+        season_mapping = season_player_mappings.get(player.id)
         player_data['status'] = 'current' if is_current else 'traded'
+        player_data['ruled_out'] = bool(season_mapping.ruled_out) if season_mapping else False
+        player_data['replacement'] = (
+            {
+                'id': season_mapping.replacement_id,
+                'name': season_mapping.replacement.name
+            }
+            if season_mapping and season_mapping.replacement_id
+            else None
+        )
         response_data.append(player_data)
     
     return Response(response_data)

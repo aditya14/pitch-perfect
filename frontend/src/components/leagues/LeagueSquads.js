@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../../utils/axios';
-import { Users, Zap, Crown, Swords, Anchor, Handshake, Bomb, Shield, Sparkles, BarChartHorizontal, ShieldHalf, Volleyball } from 'lucide-react';
+import { Users, Zap, Crown, Swords, Anchor, Handshake, Bomb, Shield, Sparkles, BarChartHorizontal, ShieldHalf, Volleyball, Bandage } from 'lucide-react';
 import LoadingScreen from '../elements/LoadingScreen';
 import StickyTableShell from '../elements/StickyTableShell';
 
@@ -337,6 +337,26 @@ const LeagueSquads = ({ league }) => {
     return [];
   };
 
+  const renderPlayerName = (player) => {
+    const injuryTooltip = player?.replacement?.name
+      ? `Ruled out. Replacement: ${player.replacement.name}`
+      : 'Ruled out';
+
+    return (
+      <span className="inline-flex items-center gap-1 min-w-0">
+        <span className="truncate">{player.name}</span>
+        {player.ruled_out && (
+          <Bandage
+            size={12}
+            className="text-rose-500 dark:text-rose-400 flex-shrink-0"
+            title={injuryTooltip}
+            aria-label={injuryTooltip}
+          />
+        )}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-4 pt-6 md:pt-0">
       {/* View Selection Tabs */}
@@ -479,7 +499,7 @@ const LeagueSquads = ({ league }) => {
                           key={player.id} 
                           className="px-1 py-1 truncate border-b border-neutral-100/70 dark:border-neutral-700/60"
                         >
-                          {player.name}
+                          {renderPlayerName(player)}
                         </div>
                       ))}
                   </td>
@@ -559,7 +579,7 @@ const LeagueSquads = ({ league }) => {
                             key={player.id} 
                             className={`px-1 py-0.5 truncate`}
                           >
-                            {player.name}
+                            {renderPlayerName(player)}
                           </div>
                         ))}
                     </td>
@@ -588,7 +608,7 @@ const LeagueSquads = ({ league }) => {
                             key={player.id} 
                             className={`px-1 py-0.5 truncate`}
                           >
-                            {player.name}
+                            {renderPlayerName(player)}
                           </div>
                         ))}
                     </td>
@@ -646,7 +666,7 @@ const LeagueSquads = ({ league }) => {
                             <div 
                               className={`w-full h-full px-2 py-1 truncate`} 
                             >
-                              {boostPlayer.name}
+                              {renderPlayerName(boostPlayer)}
                             </div>
                           ) : (
                             <span className="px-2 py-1 block text-neutral-400 dark:text-neutral-500">-</span>

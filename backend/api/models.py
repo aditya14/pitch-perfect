@@ -224,6 +224,7 @@ class Player(SoftDeleteModel, TimeStampedModel):
     teams = models.ManyToManyField(
         Team,
         through='PlayerSeasonTeam',
+        through_fields=('player', 'team'),
         related_name='players'
     )
 
@@ -250,6 +251,14 @@ class PlayerSeasonTeam(TimeStampedModel):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     season = models.ForeignKey(Season, on_delete=models.CASCADE)
     points = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    ruled_out = models.BooleanField(default=False)
+    replacement = models.ForeignKey(
+        Player,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='replaced_player_season_teams'
+    )
 
     class Meta:
         db_table = 'api_playerteamhistory'
@@ -263,6 +272,8 @@ class PlayerSeasonTeam(TimeStampedModel):
         if self.team_id and self.season_id:
             if not SeasonTeam.objects.filter(team_id=self.team_id, season_id=self.season_id).exists():
                 raise ValidationError({'team': _('Team is not registered for this season.')})
+        if self.replacement_id and self.replacement_id == self.player_id:
+            raise ValidationError({'replacement': _('Replacement player cannot be the same as the ruled-out player.')})
 
 class Match(TimeStampedModel):
     class Status(models.TextChoices):

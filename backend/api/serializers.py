@@ -113,10 +113,11 @@ class PlayerTeamHistorySerializer(serializers.ModelSerializer):
     player = IPLPlayerSerializer(read_only=True)
     team = IPLTeamSerializer(read_only=True)
     season = SeasonSerializer(read_only=True)
+    replacement = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = PlayerSeasonTeam
-        fields = ['id', 'player', 'team', 'season', 'points']
+        fields = ['id', 'player', 'team', 'season', 'points', 'ruled_out', 'replacement']
 
 class IPLMatchSerializer(serializers.ModelSerializer):
     team_1 = IPLTeamSerializer()

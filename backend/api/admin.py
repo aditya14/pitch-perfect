@@ -37,6 +37,7 @@ from io import TextIOWrapper
 from django.db.models import Q, Avg, F
 from decimal import Decimal, ROUND_HALF_UP
 from .services.stats_service import update_fantasy_stats
+from .services.player_replacement_service import apply_ruled_out_replacement
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -209,11 +210,11 @@ class IPLPlayerAdmin(admin.ModelAdmin):
 
 @admin.register(PlayerSeasonTeam)
 class PlayerTeamHistoryAdmin(admin.ModelAdmin):
-    list_display = ('player', 'team', 'season', 'points')
-    list_filter = ('team', 'season')
-    search_fields = ('player__name', 'team__name')
+    list_display = ('player', 'team', 'season', 'points', 'ruled_out', 'replacement')
+    list_filter = ('team', 'season', 'ruled_out')
+    search_fields = ('player__name', 'team__name', 'replacement__name')
     # Use raw_id_fields for potentially large foreign keys
-    raw_id_fields = ('player', 'team', 'season')
+    raw_id_fields = ('player', 'team', 'season', 'replacement')
 
     # Add save_model override for debugging
     def save_model(self, request, obj, form, change):
@@ -223,6 +224,16 @@ class PlayerTeamHistoryAdmin(admin.ModelAdmin):
         _logger.info(f"Attempting to save PlayerSeasonTeam: Player='{player_name}', Team='{team_name}', Season='{season_name}', change={change}")
         try:
             super().save_model(request, obj, form, change)
+            replacement_result = apply_ruled_out_replacement(obj)
+            if replacement_result["squads_updated"] > 0:
+                messages.info(
+                    request,
+                    (
+                        f"Added replacement player to {replacement_result['squads_updated']} squad(s). "
+                        f"Replacement mapping created={replacement_result['mapping_created']}, "
+                        f"updated={replacement_result['mapping_updated']}."
+                    )
+                )
             _logger.info(f"Successfully saved PlayerSeasonTeam for Player='{player_name}', Season='{season_name}'")
         except Exception as e:
             _logger.exception(f"Error saving PlayerSeasonTeam for Player='{player_name}', Season='{season_name}': {e}")

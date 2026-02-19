@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { usePlayerModal } from '../../context/PlayerModalContext';
-import { getTextColorForBackground } from '../../utils/colorUtils';
-import { ArrowRightCircle, Users, Trophy, Award } from 'lucide-react';
+import { ArrowRightCircle, Bandage } from 'lucide-react';
 import BoostInlineElement from '../elements/BoostInlineElement';
 
 const PlayerListTab = ({
@@ -408,6 +407,9 @@ const PlayerListTab = ({
                     const coreRole = getCurrentBoostRole(player.id);
                     const isTraded = player.status === 'traded';
                     const isEven = idx % 2 === 0;
+                    const injuryTooltip = player.replacement?.name
+                      ? `Ruled out. Replacement: ${player.replacement.name}`
+                      : 'Ruled out';
                     
                     return (
                       <tr 
@@ -429,6 +431,14 @@ const PlayerListTab = ({
                             >
                               {player.name}
                             </span>
+                            {player.ruled_out && (
+                              <Bandage
+                                size={12}
+                                className="ml-1 text-rose-500 dark:text-rose-400 flex-shrink-0"
+                                title={injuryTooltip}
+                                aria-label={injuryTooltip}
+                              />
+                            )}
                             {coreRole && !isTraded && (
                               <BoostInlineElement
                                 boostName={coreRole} 
