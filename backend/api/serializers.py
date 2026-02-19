@@ -17,6 +17,7 @@ from .models import (
     FantasyMatchEvent,
 )
 from django.contrib.auth.models import User
+from django.utils import timezone
 import random
 import string
 
@@ -71,6 +72,12 @@ class SeasonPhaseSerializer(serializers.ModelSerializer):
 
 
 class DraftWindowSerializer(serializers.ModelSerializer):
+    is_open = serializers.SerializerMethodField()
+
+    def get_is_open(self, obj):
+        now = timezone.now()
+        return bool(obj.open_at and obj.lock_at and obj.open_at <= now <= obj.lock_at)
+
     class Meta:
         model = DraftWindow
         fields = [
@@ -86,6 +93,7 @@ class DraftWindowSerializer(serializers.ModelSerializer):
             'draft_pool',
             'pool_compiled_at',
             'executed_at',
+            'is_open',
         ]
 
 class IPLTeamSerializer(serializers.ModelSerializer):

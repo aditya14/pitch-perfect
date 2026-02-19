@@ -242,10 +242,10 @@ const LeagueDashboard = ({ league }) => {
   };
   const getPreferredWindow = (windows) => {
     if (!windows?.length) return null;
-    const now = new Date();
-    const active = windows.find((window) => window.openAt <= now && now <= window.lockAt);
+    const active = windows.find((window) => window.is_open === true);
     if (active) return active;
 
+    const now = new Date();
     const upcoming = windows
       .filter((window) => window.openAt > now)
       .sort((a, b) => a.openAt - b.openAt)[0];
@@ -360,13 +360,7 @@ const LeagueDashboard = ({ league }) => {
   const isSeasonCompleted = league?.season?.status === 'COMPLETED';
   const sortedSquads = league?.squads?.slice().sort((a, b) => b.total_points - a.total_points) || [];
   const firstSquad = sortedSquads[0];
-  const now = new Date();
-  const isDraftWindowOpen = Boolean(
-    activeDraftWindow?.openAt &&
-    activeDraftWindow?.lockAt &&
-    activeDraftWindow.openAt <= now &&
-    now < activeDraftWindow.lockAt
-  );
+  const isDraftWindowOpen = activeDraftWindow?.is_open === true;
   const canShowDraftPanel = Boolean(league?.my_squad && activeDraftWindow && isDraftWindowOpen);
 
   return (
