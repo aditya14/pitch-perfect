@@ -360,7 +360,14 @@ const LeagueDashboard = ({ league }) => {
   const isSeasonCompleted = league?.season?.status === 'COMPLETED';
   const sortedSquads = league?.squads?.slice().sort((a, b) => b.total_points - a.total_points) || [];
   const firstSquad = sortedSquads[0];
-  const canShowDraftPanel = Boolean(league?.my_squad && activeDraftWindow);
+  const now = new Date();
+  const isDraftWindowOpen = Boolean(
+    activeDraftWindow?.openAt &&
+    activeDraftWindow?.lockAt &&
+    activeDraftWindow.openAt <= now &&
+    now < activeDraftWindow.lockAt
+  );
+  const canShowDraftPanel = Boolean(league?.my_squad && activeDraftWindow && isDraftWindowOpen);
 
   return (
     <div className="space-y-8 pt-8">
@@ -440,7 +447,7 @@ const LeagueDashboard = ({ league }) => {
               <div className="text-md font-semibold text-neutral-900 dark:text-white font-caption">
                 Update draft order for {activeDraftWindow.label}
               </div>
-              {draftLockTimeRemaining ? (
+              {draftLockTimeRemaining && (
                 <div className="mt-2">
                   <div className="text-sm flex flex-wrap items-center gap-2">
                     <span className="text-neutral-700 dark:text-neutral-300">
@@ -458,10 +465,6 @@ const LeagueDashboard = ({ league }) => {
                   <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                     <span>{formatBoostLockDateTime(activeDraftWindow.lockAt)}</span>
                   </div>
-                </div>
-              ) : (
-                <div className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-                  Window closed on {formatBoostLockDateTime(activeDraftWindow.lockAt)}
                 </div>
               )}
             </div>
