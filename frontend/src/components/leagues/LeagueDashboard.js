@@ -471,7 +471,7 @@ const LeagueDashboard = ({ league }) => {
             onClick={() => navigate(`/leagues/${league.id}/draft`)}
             className="w-full sm:w-auto py-2 px-4 lg-button text-white text-xs font-medium lg-rounded-md transition-all duration-200 inline-flex items-center justify-center"
           >
-            <span className="font-caption font-bold">Open Draft Workspace</span>
+            <span className="font-caption font-bold">Update Draft Order</span>
             <ArrowRight className="h-4 w-4 ml-2" />
           </button>
         </div>
