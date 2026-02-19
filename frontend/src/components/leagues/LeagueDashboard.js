@@ -118,6 +118,8 @@ const LeagueDashboard = ({ league }) => {
   const [matchTab, setMatchTab] = useState('recent');
   const [boostPhase, setBoostPhase] = useState(null);
   const [boostLockTimeRemaining, setBoostLockTimeRemaining] = useState(null);
+  const [activeDraftWindow, setActiveDraftWindow] = useState(null);
+  const [draftLockTimeRemaining, setDraftLockTimeRemaining] = useState(null);
 
   const parsePhaseDate = (dateValue) => {
     if (!dateValue) return null;
@@ -138,6 +140,14 @@ const LeagueDashboard = ({ league }) => {
       setBoostPhase(null);
     }
   }, [league?.my_squad?.id]);
+
+  useEffect(() => {
+    if (league?.my_squad?.id && league?.season?.id) {
+      fetchDraftWindows();
+    } else {
+      setActiveDraftWindow(null);
+    }
+  }, [league?.my_squad?.id, league?.season?.id]);
 
   useEffect(() => {
     if (!boostPhase?.lockAt) {
@@ -171,6 +181,35 @@ const LeagueDashboard = ({ league }) => {
     return () => clearInterval(timer);
   }, [boostPhase?.lockAt]);
 
+  useEffect(() => {
+    if (!activeDraftWindow?.lockAt) {
+      setDraftLockTimeRemaining(null);
+      return undefined;
+    }
+
+    const calculateTimeRemaining = () => {
+      const now = new Date();
+      const difference = activeDraftWindow.lockAt - now;
+      if (difference <= 0) return null;
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      return { days, hours, minutes, seconds };
+    };
+
+    setDraftLockTimeRemaining(calculateTimeRemaining());
+
+    const timer = setInterval(() => {
+      const remaining = calculateTimeRemaining();
+      setDraftLockTimeRemaining(remaining);
+      if (!remaining) clearInterval(timer);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeDraftWindow?.lockAt]);
+
   const formatBoostLockUnit = value => (value < 10 ? `0${value}` : `${value}`);
   const getBoostLockUnits = (remaining) => {
     if (!remaining) return [];
@@ -200,6 +239,19 @@ const LeagueDashboard = ({ league }) => {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+  const getPreferredWindow = (windows) => {
+    if (!windows?.length) return null;
+    const now = new Date();
+    const active = windows.find((window) => window.openAt <= now && now <= window.lockAt);
+    if (active) return active;
+
+    const upcoming = windows
+      .filter((window) => window.openAt > now)
+      .sort((a, b) => a.openAt - b.openAt)[0];
+    if (upcoming) return upcoming;
+
+    return windows[windows.length - 1];
   };
 
   const fetchBoostPhase = async () => {
@@ -239,6 +291,28 @@ const LeagueDashboard = ({ league }) => {
     } catch (err) {
       console.warn('Non-critical: Failed to load boost phases:', err);
       setBoostPhase(null);
+    }
+  };
+
+  const fetchDraftWindows = async () => {
+    try {
+      const response = await api.get(
+        `/draft-windows/?season=${league.season.id}&kind=MID_SEASON&ordering=sequence`
+      );
+      const windows = Array.isArray(response.data)
+        ? response.data
+            .map((window) => ({
+              ...window,
+              openAt: parsePhaseDate(window.open_at),
+              lockAt: parsePhaseDate(window.lock_at),
+            }))
+            .filter((window) => window.openAt && window.lockAt)
+            .sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
+        : [];
+      setActiveDraftWindow(getPreferredWindow(windows));
+    } catch (err) {
+      console.warn('Non-critical: Failed to load mid-season draft windows:', err);
+      setActiveDraftWindow(null);
     }
   };
 
@@ -286,6 +360,7 @@ const LeagueDashboard = ({ league }) => {
   const isSeasonCompleted = league?.season?.status === 'COMPLETED';
   const sortedSquads = league?.squads?.slice().sort((a, b) => b.total_points - a.total_points) || [];
   const firstSquad = sortedSquads[0];
+  const canShowDraftPanel = Boolean(league?.my_squad && activeDraftWindow);
 
   return (
     <div className="space-y-8 pt-8">
@@ -350,6 +425,53 @@ const LeagueDashboard = ({ league }) => {
             className="w-full sm:w-auto py-2 px-4 lg-button text-white text-xs font-medium lg-rounded-md transition-all duration-200 inline-flex items-center justify-center"
           >
             <span className="font-caption font-bold">{boostPhase.phase === 1 ? 'Set' : 'Update'} Boosts</span>
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </button>
+        </div>
+      )}
+
+      {canShowDraftPanel && (
+        <div className="lg-glass lg-rounded-xl px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 h-9 w-9 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-200 flex items-center justify-center">
+              <Zap className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-md font-semibold text-neutral-900 dark:text-white font-caption">
+                Update draft order for {activeDraftWindow.label}
+              </div>
+              {draftLockTimeRemaining ? (
+                <div className="mt-2">
+                  <div className="text-sm flex flex-wrap items-center gap-2">
+                    <span className="text-neutral-700 dark:text-neutral-300">
+                      Locks in
+                    </span>
+                    <div className="flex gap-2 text-neutral-900 dark:text-white font-semibold">
+                      {getBoostLockUnits(draftLockTimeRemaining).map((unit) => (
+                        <div key={unit.label} className="text-center">
+                          <span className="font-mono font-bold inline-block text-right">{formatBoostLockUnit(unit.value)}</span>
+                          <span className="text-neutral-500 text-xs ml-1">{unit.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                    <span>{formatBoostLockDateTime(activeDraftWindow.lockAt)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                  Window closed on {formatBoostLockDateTime(activeDraftWindow.lockAt)}
+                </div>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/leagues/${league.id}/draft`)}
+            className="w-full sm:w-auto py-2 px-4 lg-button text-white text-xs font-medium lg-rounded-md transition-all duration-200 inline-flex items-center justify-center"
+          >
+            <span className="font-caption font-bold">Open Draft Workspace</span>
             <ArrowRight className="h-4 w-4 ml-2" />
           </button>
         </div>

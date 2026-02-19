@@ -13,6 +13,8 @@ from .models import (
     Season,
     SeasonPhase,
     DraftWindow,
+    DraftWindowTeamEligibility,
+    DraftWindowLeagueRun,
     Team,
     SeasonTeam,
     Player,
@@ -148,9 +150,87 @@ class SeasonPhaseAdmin(admin.ModelAdmin):
 
 @admin.register(DraftWindow)
 class DraftWindowAdmin(admin.ModelAdmin):
-    list_display = ('season', 'label', 'kind', 'sequence', 'open_at', 'lock_at', 'retention_phase')
+    actions = ['compile_draft_pool', 'run_snake_draft']
+    list_display = (
+        'season',
+        'label',
+        'kind',
+        'sequence',
+        'open_at',
+        'lock_at',
+        'retention_mode',
+        'retention_phase',
+        'pool_compiled_at',
+        'executed_at',
+        'executed_leagues_count',
+    )
     list_filter = ('season', 'kind')
     search_fields = ('label', 'season__name')
+    readonly_fields = ('executed_leagues_count',)
+    inlines = []
+
+    @admin.action(description="Compile draft pool for selected draft window(s)")
+    def compile_draft_pool(self, request, queryset):
+        from .services.draft_window_service import compile_draft_window_pool
+
+        for draft_window in queryset:
+            try:
+                pool = compile_draft_window_pool(draft_window)
+                messages.success(
+                    request,
+                    f"Compiled pool for {draft_window}: {len(pool)} eligible players.",
+                )
+            except Exception as exc:
+                messages.error(request, f"Failed to compile pool for {draft_window}: {exc}")
+
+    @admin.action(description="Run snake draft for all leagues in selected draft window(s)")
+    def run_snake_draft(self, request, queryset):
+        from .services.draft_window_service import execute_draft_window
+
+        for draft_window in queryset:
+            leagues = FantasyLeague.objects.filter(season=draft_window.season)
+            if not leagues.exists():
+                messages.warning(request, f"No leagues found for {draft_window.season}.")
+                continue
+
+            for league in leagues:
+                try:
+                    result = execute_draft_window(
+                        league,
+                        draft_window,
+                        dry_run=False,
+                        executed_by=request.user,
+                    )
+                    messages.success(
+                        request,
+                        f"{draft_window.label} -> {league.name}: draft completed for {result['squads']} squads.",
+                    )
+                except Exception as exc:
+                    messages.error(
+                        request,
+                        f"{draft_window.label} -> {league.name}: draft failed ({exc}).",
+                    )
+
+    def executed_leagues_count(self, obj):
+        return obj.league_runs.filter(dry_run=False).count()
+    executed_leagues_count.short_description = 'Executed Leagues'
+
+
+class DraftWindowTeamEligibilityInline(admin.TabularInline):
+    model = DraftWindowTeamEligibility
+    extra = 0
+    raw_id_fields = ('season_team',)
+
+
+DraftWindowAdmin.inlines = [DraftWindowTeamEligibilityInline]
+
+
+@admin.register(DraftWindowLeagueRun)
+class DraftWindowLeagueRunAdmin(admin.ModelAdmin):
+    list_display = ('draft_window', 'league', 'executed_at', 'executed_by', 'dry_run')
+    list_filter = ('draft_window', 'league__season', 'dry_run')
+    search_fields = ('draft_window__label', 'league__name')
+    raw_id_fields = ('draft_window', 'league', 'executed_by')
 
 
 @admin.register(SquadPhaseBoost)
@@ -770,13 +850,20 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
 
     def draft_status(self, obj):
         pre_season = "Completed" if obj.draft_completed else "Not Started"
-        mid_season = "Completed" if getattr(obj, 'mid_season_draft_completed', False) else "Not Started"
+        mid_season_completed = False
+        try:
+            from .services.draft_window_service import resolve_draft_window, has_draft_window_run
+            mid_window = resolve_draft_window(obj, kind=DraftWindow.Kind.MID_SEASON)
+            mid_season_completed = has_draft_window_run(obj, mid_window)
+        except Exception:
+            mid_season_completed = False
+        mid_season = "Completed" if mid_season_completed else "Not Started"
         
         return format_html(
             'Pre-Season: <span style="color: {};">{}</span><br>'
             'Mid-Season: <span style="color: {};">{}</span>',
             'green' if obj.draft_completed else 'blue', pre_season,
-            'green' if getattr(obj, 'mid_season_draft_completed', False) else 'blue', mid_season
+            'green' if mid_season_completed else 'blue', mid_season
         )
     draft_status.short_description = 'Draft Status'
     
@@ -794,7 +881,13 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
             )
         
         # Mid-season draft actions
-        mid_season_completed = getattr(obj, 'mid_season_draft_completed', False)
+        mid_season_completed = False
+        try:
+            from .services.draft_window_service import resolve_draft_window, has_draft_window_run
+            mid_window = resolve_draft_window(obj, kind=DraftWindow.Kind.MID_SEASON)
+            mid_season_completed = has_draft_window_run(obj, mid_window)
+        except Exception:
+            mid_season_completed = False
         if not mid_season_completed:
             mid_season_url = reverse('admin:run_mid_season_draft', args=[obj.pk])
             mid_season_sim_url = reverse('admin:simulate_mid_season_draft', args=[obj.pk])
@@ -953,7 +1046,12 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
             
             # Call the draft function from admin_views
             from .admin_views import run_mid_season_draft_process
-            results = run_mid_season_draft_process(league.id, dry_run, verbose)
+            results = run_mid_season_draft_process(
+                league.id,
+                dry_run,
+                verbose,
+                executed_by=request.user,
+            )
             
             if dry_run:
                 messages.info(request, f"Mid-season draft simulation completed for {league.name}. No changes saved.")
@@ -981,7 +1079,12 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
             
             # Call the draft function with dry_run=True
             from .admin_views import run_mid_season_draft_process
-            results = run_mid_season_draft_process(league.id, dry_run=True, verbose=True)
+            results = run_mid_season_draft_process(
+                league.id,
+                dry_run=True,
+                verbose=True,
+                executed_by=request.user,
+            )
             
             # Render a detailed results page
             context = {

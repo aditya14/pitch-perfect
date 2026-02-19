@@ -10,7 +10,6 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -21,9 +20,6 @@ import {
   X, 
   Info, 
   Calendar,
-  Users,
-  Clock, 
-  AlertTriangle,
   Check,
   RefreshCw,
   Search,
@@ -34,8 +30,6 @@ import {
   Square
 } from 'lucide-react';
 import { usePlayerModal } from '../../../context/PlayerModalContext';
-// Using the correct path to the axios utility
-import api from '../../../utils/axios';
 
 const BREAKDOWN_OPTIONS = [20, 30, 40, 50];
 
@@ -250,12 +244,15 @@ const MidSeasonDraftOrderModal = ({
   onClose, 
   leagueId, 
   players, 
-  fetchDraftOrder, 
   saveDraftOrder,
   draftOrder,
   isLoading,
   saveError,
-  retainedPlayers = []
+  retainedPlayers = [],
+  draftWindow = null,
+  draftWindowOptions = [],
+  selectedDraftWindowId = null,
+  onDraftWindowChange = null,
 }) => {
   const [breakdownCount, setBreakdownCount] = useState(20);
   const [searchQuery, setSearchQuery] = useState('');
@@ -283,8 +280,20 @@ const MidSeasonDraftOrderModal = ({
   
   const tableRef = useRef(null);
   const tableContainerRef = useRef(null);
-  const draftDeadline = new Date('2025-04-22T13:00:00Z'); // April 22, 2025 1:00 PM UTC
+  const draftDeadline = useMemo(
+    () => (draftWindow?.lock_at ? new Date(draftWindow.lock_at) : null),
+    [draftWindow?.lock_at]
+  );
+  const draftWindowLabel = draftWindow?.label || 'Mid-Season Draft';
   const isMobile = useRef(window.innerWidth < 1024);
+  const nowForWindow = new Date();
+  const isWindowOpen = Boolean(
+    draftWindow?.open_at &&
+    draftWindow?.lock_at &&
+    new Date(draftWindow.open_at) <= nowForWindow &&
+    nowForWindow <= new Date(draftWindow.lock_at)
+  );
+  const canEdit = draftOrder?.can_edit ?? isWindowOpen;
 
   // Combine retained players with draft order
   const retainedPlayerIds = useMemo(() => 
@@ -348,6 +357,8 @@ const MidSeasonDraftOrderModal = ({
 
   // Handle drag start - disable scrolling
   const handleDragStart = (event) => {
+    if (!canEdit) return;
+
     // Don't allow dragging retained players
     if (retainedPlayerIds.has(event.active.id)) {
       event.cancel();
@@ -363,6 +374,11 @@ const MidSeasonDraftOrderModal = ({
 
   // Drag end handler
   const handleDragEnd = async (event) => {
+    if (!canEdit) {
+      setIsDragging(false);
+      return;
+    }
+
     setIsDragging(false);
     // Only re-enable scrolling on mobile
     if (isMobile.current && tableContainerRef.current) {
@@ -590,12 +606,23 @@ const MidSeasonDraftOrderModal = ({
 
   // Countdown timer effect
   useEffect(() => {
+    if (!draftDeadline || Number.isNaN(draftDeadline.getTime())) {
+      setTimeLeft({
+        days: 0,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+        expired: false,
+        percentComplete: 0
+      });
+      return undefined;
+    }
+
     // Calculate total seconds between now and deadline for progress calculation
     const calculateTotalInitialSeconds = () => {
       // Start counting 7 days before deadline as 0%
       const startDate = new Date(draftDeadline);
       startDate.setDate(startDate.getDate() - 7);
-      const now = new Date();
       return Math.max(0, Math.floor((draftDeadline - startDate) / 1000));
     };
 
@@ -654,6 +681,19 @@ const MidSeasonDraftOrderModal = ({
     return () => clearInterval(timer);
   }, [draftDeadline]);
 
+  const formatDateTime = (dateValue) => {
+    if (!dateValue) return 'TBD';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return 'TBD';
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   // Function to safely format 2-digit numbers with leading zero
   const formatNumber = (num) => {
     if (num === undefined || num === null) return "00";
@@ -679,13 +719,6 @@ const MidSeasonDraftOrderModal = ({
     ];
   };
 
-  // Determine color based on time remaining
-  const getProgressColor = () => {
-    if (timeLeft.days >= 3) return "bg-emerald-500 dark:bg-emerald-600";
-    if (timeLeft.days >= 1) return "bg-yellow-500 dark:bg-yellow-600";
-    return "bg-red-500 dark:bg-red-600";
-  };
-
   if (!isOpen) return null;
   
   // Format the ordered players
@@ -699,7 +732,7 @@ const MidSeasonDraftOrderModal = ({
         {/* Header */}
         <div className="flex justify-between items-center p-2 sm:p-4 border-b border-neutral-200 dark:border-neutral-700">
           <h2 className="text-lg sm:text-xl font-bold text-neutral-900 dark:text-white">
-            Mid-Season Draft Order
+            {draftWindowLabel} Order
           </h2>
           
           <div className="flex items-center gap-2 sm:gap-4">
@@ -712,11 +745,13 @@ const MidSeasonDraftOrderModal = ({
             ) : (
               <div className="flex flex-col items-end">
                 <div className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Draft closes in:
+                  {draftDeadline ? 'Draft closes in:' : 'Draft schedule unavailable'}
                 </div>
                 <div className="flex items-center text-sm font-semibold text-neutral-900 dark:text-white">
                   <span className="font-mono">
-                    {getDisplayUnits().map((unit) => `${formatNumber(unit.value)}${unit.label}`).join(' ')}
+                    {draftDeadline
+                      ? getDisplayUnits().map((unit) => `${formatNumber(unit.value)}${unit.label}`).join(' ')
+                      : '--'}
                   </span>
                 </div>
               </div>
@@ -737,6 +772,36 @@ const MidSeasonDraftOrderModal = ({
             <LoadingPlaceholder />
           ) : (
             <>
+              {draftWindowOptions.length > 0 && (
+                <div className="my-4 bg-white dark:bg-neutral-800 p-3 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Draft Window
+                    </label>
+                    <select
+                      value={selectedDraftWindowId || ''}
+                      onChange={(e) => onDraftWindowChange && onDraftWindowChange(e.target.value)}
+                      className="rounded-md border-neutral-300 shadow-sm bg-white dark:bg-neutral-700 dark:border-neutral-600 text-neutral-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    >
+                      {draftWindowOptions.map((window) => (
+                        <option key={window.id} value={window.id}>
+                          {window.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                      Opens: {formatDateTime(draftWindow?.open_at)} | Closes: {formatDateTime(draftWindow?.lock_at)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!canEdit && (
+                <div className="my-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                  Draft editing is currently closed for this window.
+                </div>
+              )}
+
               {/* Draft Timeline - Condensed for mid-season */}
               <div className="my-4 bg-white dark:bg-neutral-800 p-3 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
                 <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2 mb-2">
@@ -748,21 +813,23 @@ const MidSeasonDraftOrderModal = ({
                   <div className="mb-4 relative">
                     <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-7 top-0 border-2 border-white dark:border-neutral-800"></div>
                     <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                      <span className="font-medium text-blue-600 dark:text-blue-400">April 19-22:</span> Rank non-retained players for the mid-season draft
+                      <span className="font-medium text-blue-600 dark:text-blue-400">
+                        {formatDateTime(draftWindow?.open_at)} - {formatDateTime(draftWindow?.lock_at)}:
+                      </span> Rank non-retained players for this draft window
                     </p>
                   </div>
                   
                   <div className="mb-4 relative">
                     <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-7 top-0 border-2 border-white dark:border-neutral-800"></div>
                     <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                      <span className="font-medium text-blue-600 dark:text-blue-400">April 22:</span> Draft closes at 6:30 PM IST, selections automatically processed
+                      <span className="font-medium text-blue-600 dark:text-blue-400">{formatDateTime(draftWindow?.lock_at)}:</span> Draft closes, selections are processed automatically
                     </p>
                   </div>
                   
                   <div className="relative">
                     <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-7 top-0 border-2 border-white dark:border-neutral-800"></div>
                     <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                      <span className="font-medium text-blue-600 dark:text-blue-400">April 22-26:</span> Set up your Week 6 boosts with your new squad
+                      <span className="font-medium text-blue-600 dark:text-blue-400">After close:</span> Set up boosts for the next phase using your updated squad
                     </p>
                   </div>
                 </div>

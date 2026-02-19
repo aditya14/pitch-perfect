@@ -258,7 +258,7 @@ const PlayerListTab = ({
           {tradedCount > 0 && (
             <div className="ml-auto flex items-center">
               <span className="mr-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                {showTraded ? 'Show' : 'Hide'} Traded ({tradedCount})
+                {showTraded ? 'Show' : 'Hide'} Inactive ({tradedCount})
               </span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input 

@@ -3,14 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import { 
-  ChevronRight, Moon, Sun, Home, LogOut, User, 
-  ChevronsUpDown, Check, Menu, Shield, Calendar, UsersRound, Trophy, BarChart3
+  Moon, Sun, Home, LogOut, User, 
+  ChevronsUpDown, Check, Menu, Shield, Calendar, UsersRound, Trophy, BarChart3, Zap
 } from 'lucide-react';
-import MidSeasonDraftModal from './leagues/modals/MidSeasonDraftModal';
 import UpdatePointsButton from './UpdatePointsButton';
-
-// Flag to show/hide mid-season draft button
-const SHOW_MID_SEASON_DRAFT = new Date() <= new Date(Date.UTC(2025, 3, 22, 13, 0, 0));
 
 const parseSeasonDate = (dateValue) => {
   if (!dateValue) return null;
@@ -56,7 +52,6 @@ const Header = ({ theme, onThemeChange }) => {
   const [userLeagues, setUserLeagues] = useState([]);
   const [isLeagueDropdownOpen, setIsLeagueDropdownOpen] = useState(false);
   const leagueDropdownRef = useRef(null);
-  const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
 
   // Extract leagueId from URL path pattern
   const getLeagueIdFromPath = () => {
@@ -211,10 +206,6 @@ const Header = ({ theme, onThemeChange }) => {
     setIsDropdownOpen(false);
   };
 
-  const handleOpenDraftModal = () => {
-    setIsDraftModalOpen(true);
-  };
-  
   const showIOSInstallInstructions = () => {
     // Implementation for iOS install instructions
   };
@@ -224,7 +215,7 @@ const Header = ({ theme, onThemeChange }) => {
     if (!isLeagueView) return null;
     const pathSegments = location.pathname.split('/');
     const lastSegment = pathSegments[pathSegments.length - 1];
-    const tabIds = ['dashboard', 'matches', 'squads', 'table', 'stats', 'trades', 'my_squad'];
+    const tabIds = ['dashboard', 'draft', 'matches', 'squads', 'table', 'stats', 'trades', 'my_squad'];
     if (tabIds.includes(lastSegment)) {
       return lastSegment;
     }
@@ -235,6 +226,7 @@ const Header = ({ theme, onThemeChange }) => {
 
   const tabIconMap = {
     dashboard: Home,
+    draft: Zap,
     matches: Calendar,
     my_squad: Shield,
     squads: UsersRound,
@@ -263,6 +255,7 @@ const Header = ({ theme, onThemeChange }) => {
       ]
     : [
         { id: 'dashboard', label: 'Dashboard' },
+        ...(leagueInfo?.my_squad ? [{ id: 'draft', label: 'Draft' }] : []),
         ...(leagueInfo?.my_squad ? [{ id: 'my_squad', label: 'My Squad' }] : []),
         { id: 'matches', label: 'Matches' },
         { id: 'squads', label: 'Squads' },
@@ -438,19 +431,6 @@ const Header = ({ theme, onThemeChange }) => {
     
               {/* Right side - Action buttons and User Menu */}
               <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
-
-                {/* Mid-Season Draft button (for squad views) */}
-                {SHOW_MID_SEASON_DRAFT && (isSquadView || isMySquadView) && (
-                  <button 
-                    onClick={handleOpenDraftModal}
-                    className="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm font-medium lg-rounded-md text-white lg-button lg-gradient-x hover:scale-105 transition-all duration-200 whitespace-nowrap"
-                    style={{minWidth: '0'}}
-                  >
-                    <span className="truncate">Mid-Season Draft</span>
-                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                  </button>
-                )}
-
                 {/* User menu */}
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -542,16 +522,6 @@ const Header = ({ theme, onThemeChange }) => {
           
         </div>
       </header>
-      
-      {/* Render the Modal separately */}
-      {(isSquadView || isMySquadView) && (
-        <MidSeasonDraftModal
-          isOpen={isDraftModalOpen}
-          onClose={() => setIsDraftModalOpen(false)}
-          leagueId={squadInfo?.league_id || leagueId}
-          squadId={squadInfo?.id || leagueInfo?.my_squad?.id}
-        />
-      )}
     </>
   );
 };

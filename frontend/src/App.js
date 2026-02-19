@@ -282,6 +282,7 @@ const AppContent = () => {
             >
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={null} />
+              <Route path="draft" element={null} />
               <Route path="matches" element={null} />
               <Route path="table" element={null} />
               <Route path="trades" element={null} />

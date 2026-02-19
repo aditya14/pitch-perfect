@@ -3,7 +3,13 @@ import logging
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
-from .models import Match, FantasyLeague
+from .models import (
+    DraftWindow,
+    DraftWindowTeamEligibility,
+    FantasyLeague,
+    Match,
+    SeasonTeam,
+)
 from .services.stats_service import update_fantasy_stats
 
 
@@ -59,3 +65,33 @@ def recalculate_stats_on_match_completion(sender, instance, created, **kwargs):
                 instance.id,
                 league_id,
             )
+
+
+@receiver(post_save, sender=DraftWindow)
+def ensure_draft_window_team_eligibility(sender, instance, created, **kwargs):
+    """
+    Ensure each draft window has team eligibility rows for all season teams.
+    """
+    season_team_ids = set(
+        SeasonTeam.objects.filter(season=instance.season).values_list("id", flat=True)
+    )
+    existing_ids = set(
+        DraftWindowTeamEligibility.objects.filter(draft_window=instance).values_list(
+            "season_team_id",
+            flat=True,
+        )
+    )
+    missing_ids = season_team_ids - existing_ids
+    if not missing_ids:
+        return
+
+    DraftWindowTeamEligibility.objects.bulk_create(
+        [
+            DraftWindowTeamEligibility(
+                draft_window=instance,
+                season_team_id=season_team_id,
+                is_remaining=True,
+            )
+            for season_team_id in missing_ids
+        ]
+    )

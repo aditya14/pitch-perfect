@@ -13,6 +13,7 @@ import LeagueStats from './LeagueStats';
 import LeagueSquads from './LeagueSquads';
 import SquadView from '../squads/SquadView'; // Import SquadView for My Squad tab
 import PreSeasonDraftPanel from './PreSeasonDraftPanel';
+import MidSeasonDraftPage from './MidSeasonDraftPage';
 
 const LeagueView = () => {
   const { leagueId } = useParams();
@@ -35,6 +36,10 @@ const LeagueView = () => {
       { id: 'dashboard', label: 'Dashboard', component: LeagueDashboard },
       { id: 'matches', label: 'Matches', component: MatchList },
     ];
+
+    if (mySquadId) {
+      tabs.push({ id: 'draft', label: 'Draft', component: MidSeasonDraftPage });
+    }
 
     if (mySquadId) {
       tabs.push({ id: 'my_squad', label: 'My Squad', component: SquadView });
@@ -155,6 +160,9 @@ const LeagueView = () => {
     }
     if (activeTab === 'dashboard' && isPreDraftPhase) {
       return <PreSeasonDraftPanel league={league} leagueId={leagueId} />;
+    }
+    if (activeTab === 'draft') {
+      return <MidSeasonDraftPage league={league} leagueId={leagueId} />;
     }
     return ActiveComponent && <ActiveComponent league={league} />;
   };

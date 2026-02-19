@@ -68,6 +68,9 @@ from api.services.draft_window_service import (
     get_retained_player_ids_for_squad,
     get_retained_player_map,
     build_draft_pool,
+    compile_draft_window_pool,
+    execute_draft_window,
+    has_draft_window_run,
 )
 from django.core.cache import cache
 from django.db.models import F, Case, When, BooleanField, Value, DecimalField, ExpressionWrapper
@@ -2337,15 +2340,22 @@ def mid_season_draft_pool(request, league_id):
             kind=DraftWindow.Kind.MID_SEASON
         )
         
-        draft_pool = draft_window.draft_pool or build_draft_pool(league, draft_window)
+        requested_role = request.query_params.get('role')
+        if requested_role:
+            requested_role = requested_role.upper()
+            valid_roles = {choice[0] for choice in FantasyDraft.Role.choices}
+            if requested_role not in valid_roles:
+                return Response(
+                    {'error': f"Invalid role '{requested_role}'. Expected one of: {', '.join(sorted(valid_roles))}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        draft_pool = build_draft_pool(league, draft_window)
         if not draft_pool:
             return Response(
                 {'error': 'Draft pool is empty for this draft window'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-        if not draft_window.draft_pool:
-            draft_window.draft_pool = draft_pool
-            draft_window.save(update_fields=['draft_pool'])
         
         # Get player details with season stats
         from django.db.models import Avg, Count, Q
@@ -2354,12 +2364,29 @@ def mid_season_draft_pool(request, league_id):
             matches=Count('playermatchevent', filter=Q(playermatchevent__match__season=league.season)),
             avg_points=Avg('playermatchevent__total_points_all', filter=Q(playermatchevent__match__season=league.season))
         )
+        if requested_role:
+            players = players.filter(role=requested_role)
         
         # Get existing draft order if any
+        draft_filters = {
+            'league': league,
+            'squad': squad,
+            'draft_window': draft_window,
+            'type': 'Mid-Season',
+        }
+        if requested_role:
+            draft_filters['role'] = requested_role
+
         draft = FantasyDraft.objects.filter(
+            **draft_filters
+        ).first()
+        if not draft and requested_role:
+            draft = FantasyDraft.objects.filter(
             league=league,
             squad=squad,
-            draft_window=draft_window
+            draft_window=draft_window,
+            type='Mid-Season',
+            role__isnull=True,
         ).first()
         
         # Get player retention status
@@ -2422,6 +2449,41 @@ def mid_season_draft_pool(request, league_id):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+
+def _build_mid_season_default_order(league, player_ids):
+    if not player_ids:
+        return []
+
+    ranked_players = Player.objects.filter(id__in=player_ids).annotate(
+        avg_points=Avg(
+            'playermatchevent__total_points_all',
+            filter=Q(playermatchevent__match__season=league.season),
+        )
+    ).order_by('-avg_points', 'name')
+
+    ranked_ids = list(ranked_players.values_list('id', flat=True))
+    ranked_set = set(ranked_ids)
+    ranked_ids.extend([player_id for player_id in player_ids if player_id not in ranked_set])
+    return ranked_ids
+
+
+def _normalize_mid_season_order(existing_order, eligible_player_ids, default_order):
+    eligible_set = set(eligible_player_ids)
+    normalized = []
+    seen = set()
+    for raw_player_id in existing_order or []:
+        try:
+            player_id = int(raw_player_id)
+        except (TypeError, ValueError):
+            continue
+        if player_id in eligible_set and player_id not in seen:
+            normalized.append(player_id)
+            seen.add(player_id)
+
+    normalized.extend([player_id for player_id in default_order if player_id not in seen])
+    return normalized
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def mid_season_draft_order(request, league_id):
@@ -2433,124 +2495,141 @@ def mid_season_draft_order(request, league_id):
         draft_window_id = request.query_params.get('draft_window')
         if request.method == 'POST' and not draft_window_id:
             draft_window_id = request.data.get('draft_window')
+
+        requested_role = request.query_params.get('role')
+        if request.method == 'POST' and not requested_role:
+            requested_role = request.data.get('role')
+        requested_role = (requested_role or FantasyDraft.Role.BAT).upper()
+        valid_roles = {choice[0] for choice in FantasyDraft.Role.choices}
+        if requested_role not in valid_roles:
+            return Response(
+                {'error': f"Invalid role '{requested_role}'. Expected one of: {', '.join(sorted(valid_roles))}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         draft_window = resolve_draft_window(
             league,
             draft_window_id=int(draft_window_id) if draft_window_id else None,
             kind=DraftWindow.Kind.MID_SEASON
         )
         
-        # Check if mid-season draft has already been executed
-        if getattr(league, 'mid_season_draft_completed', False):
+        # Check if this draft window has already been executed for the league
+        if has_draft_window_run(league, draft_window):
             return Response(
-                {'error': 'Mid-season draft has already been completed'}, 
+                {'error': 'This draft window has already been completed for this league'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Get retained players (core squad)
-        retained_player_ids = get_retained_player_ids_for_squad(squad, draft_window)
-        
-        # Get or create draft order
-        draft, created = FantasyDraft.objects.get_or_create(
+        role_pool = list(Player.objects.filter(
+            id__in=build_draft_pool(league, draft_window),
+            role=requested_role,
+        ).values_list('id', flat=True))
+
+        role_pool_set = set(role_pool)
+        default_order = _build_mid_season_default_order(league, role_pool)
+
+        # Get role-specific draft order with legacy fallback support
+        draft = FantasyDraft.objects.filter(
             league=league,
             squad=squad,
             draft_window=draft_window,
             type='Mid-Season',
-            defaults={'order': []}
-        )
+            role=requested_role,
+        ).first()
+
+        legacy_draft = FantasyDraft.objects.filter(
+            league=league,
+            squad=squad,
+            draft_window=draft_window,
+            type='Mid-Season',
+            role__isnull=True,
+        ).first()
         
         if request.method == 'GET':
-            # If empty order and we need to create a default
-            if not draft.order:
-                draft_pool = draft_window.draft_pool or build_draft_pool(league, draft_window)
-                if not draft_window.draft_pool:
-                    draft_window.draft_pool = draft_pool
-                    draft_window.save(update_fields=['draft_pool'])
-                
-                # Create default order based on current season points (for players not retained)
-                from django.db.models import Avg
-                
-                # First, get all players with current season match data
-                default_order = list(Player.objects.filter(
-                    id__in=draft_pool
-                ).exclude(
-                    id__in=retained_player_ids
-                ).annotate(
-                    matches=Count('playermatchevent', filter=Q(playermatchevent__match__season=league.season)),
-                    avg_points=Avg('playermatchevent__total_points_all', filter=Q(playermatchevent__match__season=league.season))
-                ).filter(
-                    matches__gt=0
-                ).order_by('-avg_points').values_list('id', flat=True))
-                
-                # For players with no matches this season, append sorted by historical data
-                no_matches_players = list(Player.objects.filter(
-                    id__in=draft_pool
-                ).exclude(
-                    id__in=retained_player_ids + default_order
-                ).annotate(
-                    hist_matches=Count('playermatchevent', filter=Q(playermatchevent__match__season__year__in=range(2021, 2025))),
-                    hist_avg_points=Avg('playermatchevent__total_points_all', filter=Q(playermatchevent__match__season__year__in=range(2021, 2025)))
-                ).order_by('-hist_avg_points').values_list('id', flat=True))
-                
-                # Finally add any remaining players alphabetically
-                remaining_players = list(Player.objects.filter(
-                    id__in=draft_pool
-                ).exclude(
-                    id__in=retained_player_ids + default_order + no_matches_players
-                ).order_by('name').values_list('id', flat=True))
-                
-                # Combine the lists
-                draft_order = retained_player_ids + default_order + no_matches_players + remaining_players
-                
-                # Save the default order
-                draft.order = draft_order
-                draft.save()
-            
-            # Get retained players for the response
-            retained_players = []
-            if retained_player_ids:
-                retained_players = Player.objects.filter(
-                    id__in=retained_player_ids
-                ).values('id', 'name', 'role')
-            
+            base_order = []
+            if draft and isinstance(draft.order, list):
+                base_order = draft.order
+            elif legacy_draft and isinstance(legacy_draft.order, list):
+                base_order = [player_id for player_id in legacy_draft.order if player_id in role_pool_set]
+
+            normalized_order = _normalize_mid_season_order(base_order, role_pool, default_order)
+            if not draft:
+                draft = FantasyDraft.objects.create(
+                    league=league,
+                    squad=squad,
+                    draft_window=draft_window,
+                    type='Mid-Season',
+                    role=requested_role,
+                    order=normalized_order,
+                )
+            elif normalized_order != (draft.order or []):
+                draft.order = normalized_order
+                draft.save(update_fields=['order'])
+
             serializer = FantasyDraftSerializer(draft)
-            response_data = serializer.data
-            response_data['retained_players'] = retained_players
-            return Response(response_data)
+            return Response(serializer.data)
             
         elif request.method == 'POST':
+            now = timezone.now()
+            if not (draft_window.open_at <= now <= draft_window.lock_at):
+                return Response(
+                    {'error': 'Draft window is closed'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             # Update draft order
             order = request.data.get('order')
             
-            if not order:
+            if not isinstance(order, list) or not order:
                 return Response(
                     {'error': 'No order provided'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            if not draft_window.draft_pool:
-                draft_window.draft_pool = build_draft_pool(league, draft_window)
-                draft_window.save(update_fields=['draft_pool'])
-            
-            # Validate all draft pool players are included
-            all_player_ids = retained_player_ids + [
-                player_id for player_id in order 
-                if player_id not in retained_player_ids
-            ]
-            
-            missing_ids = [
-                pid for pid in draft_window.draft_pool 
-                if pid not in all_player_ids
-            ]
-            
+            normalized_input = []
+            seen = set()
+            for raw_player_id in order:
+                try:
+                    player_id = int(raw_player_id)
+                except (TypeError, ValueError):
+                    return Response(
+                        {'error': f'Invalid player ID in order: {raw_player_id}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                if player_id in seen:
+                    return Response(
+                        {'error': f'Duplicate player ID in order: {player_id}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                seen.add(player_id)
+                normalized_input.append(player_id)
+
+            invalid_ids = [player_id for player_id in normalized_input if player_id not in role_pool_set]
+            if invalid_ids:
+                return Response(
+                    {'error': f'Invalid player IDs for role {requested_role}: {invalid_ids}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            missing_ids = [player_id for player_id in role_pool if player_id not in seen]
             if missing_ids:
                 return Response(
                     {'error': f'Missing player IDs in order: {missing_ids}'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Update the order
-            draft.order = all_player_ids
-            draft.save()
+            if not draft:
+                draft = FantasyDraft.objects.create(
+                    league=league,
+                    squad=squad,
+                    draft_window=draft_window,
+                    type='Mid-Season',
+                    role=requested_role,
+                    order=normalized_input,
+                )
+            else:
+                draft.order = normalized_input
+                draft.save(update_fields=['order'])
             
             serializer = FantasyDraftSerializer(draft)
             return Response(serializer.data)
@@ -2627,19 +2706,21 @@ def compile_mid_season_draft_pools(request):
             leagues = FantasyLeague.objects.filter(season__status='ONGOING')
         
         results = []
+        compiled_window_ids = set()
         for league in leagues:
             active_window = draft_window or resolve_draft_window(league, kind=DraftWindow.Kind.MID_SEASON)
+            if active_window.id not in compiled_window_ids:
+                compile_draft_window_pool(active_window)
+                compiled_window_ids.add(active_window.id)
+
             draft_pool = build_draft_pool(league, active_window)
             retained_players = get_retained_player_map(league, active_window)
-
-            active_window.draft_pool = list(set(draft_pool))
-            active_window.save(update_fields=['draft_pool'])
             
             results.append({
                 'league_id': league.id,
                 'league_name': league.name,
                 'draft_window_id': active_window.id,
-                'draft_pool_size': len(active_window.draft_pool),
+                'draft_pool_size': len(draft_pool),
                 'retained_players': retained_players
             })
         
@@ -2673,141 +2754,15 @@ def execute_mid_season_draft_api(request, league_id):
             draft_window_id=int(draft_window_id) if draft_window_id else None,
             kind=DraftWindow.Kind.MID_SEASON
         )
-        
-        # Check if draft has already been completed
-        if getattr(league, 'mid_season_draft_completed', False):
-            return Response(
-                {'error': 'Mid-season draft has already been completed for this league'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        draft_pool = draft_window.draft_pool or build_draft_pool(league, draft_window)
-        if not draft_pool:
-            return Response(
-                {'error': 'Draft pool is empty for this draft window'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if not draft_window.draft_pool:
-            draft_window.draft_pool = draft_pool
-            draft_window.save(update_fields=['draft_pool'])
-
-        # Get squads in order of their standings (lowest to highest for snake draft)
-        squads = FantasySquad.objects.filter(league=league).order_by('total_points')
-        retained_map = get_retained_player_map(league, draft_window)
-        
-        # Create snake draft order
-        draft_rounds = []
-        squad_ids = [squad.id for squad in squads]
-        
-        # Calculate how many rounds we need
-        avg_players_needed = len(draft_pool) // squads.count() if draft_pool else 0
-        num_rounds = max(1, avg_players_needed)
-        
-        # Create snake draft rounds
-        for round_num in range(num_rounds):
-            if round_num % 2 == 0:
-                # Even rounds: worst to best
-                draft_rounds.append(squad_ids.copy())
-            else:
-                # Odd rounds: best to worst
-                draft_rounds.append(list(reversed(squad_ids.copy())))
-        
-        # Flatten the draft order
-        flat_draft_order = []
-        for round_list in draft_rounds:
-            flat_draft_order.extend(round_list)
-        
-        # Get draft preferences for all users
-        squad_preferences = {}
-        for squad in squads:
-            draft = FantasyDraft.objects.filter(
-                league=league,
-                squad=squad,
-                draft_window=draft_window
-            ).first()
-            
-            if draft and draft.order:
-                # Get only non-retained players from draft preferences
-                retained_ids = retained_map.get(squad.id, [])
-                
-                # Filter out retained players from draft preferences
-                squad_preferences[squad.id] = [
-                    pid for pid in draft.order 
-                    if pid not in retained_ids
-                ]
-            else:
-                # Create a default order based on points
-                from django.db.models import Avg
-                
-                default_order = list(Player.objects.filter(
-                    id__in=draft_pool
-                ).annotate(
-                    avg_points=Avg('playermatchevent__total_points_all')
-                ).order_by('-avg_points').values_list('id', flat=True))
-                
-                squad_preferences[squad.id] = default_order
-        
-        # Track available players and assignments
-        available_players = set(draft_pool)
-        squad_assignments = {squad.id: [] for squad in squads}
-        
-        # Execute the draft
-        pick_results = []
-        
-        for pick_num, squad_id in enumerate(flat_draft_order):
-            if not available_players:
-                break
-                
-            # Get the squad's preferences
-            preferences = squad_preferences[squad_id]
-            
-            # Find the highest preferred available player
-            selected_player = None
-            for player_id in preferences:
-                if player_id in available_players:
-                    selected_player = player_id
-                    break
-            
-            if selected_player:
-                # Add to squad's assignments
-                squad_assignments[squad_id].append(selected_player)
-                # Remove from available pool
-                available_players.remove(selected_player)
-                
-                # Get player name for log
-                player = Player.objects.get(id=selected_player)
-                squad = FantasySquad.objects.get(id=squad_id)
-                
-                pick_results.append({
-                    'pick': pick_num + 1,
-                    'squad_id': squad_id,
-                    'squad_name': squad.name,
-                    'player_id': selected_player,
-                    'player_name': player.name
-                })
-        
-        # Update squad rosters
-        for squad in squads:
-            # Get core squad players (retained)
-            retained_players = retained_map.get(squad.id, [])
-            
-            # Add drafted players
-            drafted_players = squad_assignments.get(squad.id, [])
-            
-            # Update squad roster
-            new_squad = retained_players + drafted_players
-            squad.current_squad = new_squad
-            squad.save()
-        
-        # Mark draft as completed
-        league.mid_season_draft_completed = True
-        league.save()
-        
+        result = execute_draft_window(
+            league,
+            draft_window,
+            dry_run=False,
+            executed_by=request.user,
+        )
         return Response({
             'success': True,
-            'league_id': league.id,
-            'league_name': league.name,
-            'picks': pick_results
+            'result': result,
         })
         
     except Exception as e:

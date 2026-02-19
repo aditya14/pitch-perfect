@@ -6,18 +6,19 @@
     <h2>Run Mid-Season Fantasy Draft</h2>
     <div class="description">
         <p>
-            This will execute the mid-season draft for the selected league. The draft will assign players based on:
+            This will execute the selected mid-season draft window for the league. The draft will assign players based on:
             <ul>
-                <li>Team standings (best to worst for first round, then snake order)</li>
-                <li>User draft preferences</li>
-                <li>Core squad players will be automatically retained</li>
+                <li>Current standings snapshot (<code>FantasySquad.total_points</code>) at run time</li>
+                <li>User draft preferences (role-aware if configured)</li>
+                <li>Retained players from the resolved retention phase</li>
+                <li>Role snake direction: BAT/ALL first-to-last, WK/BOWL last-to-first in round 1</li>
             </ul>
             <p>The draft process will:</p>
             <ol>
-                <li>Identify players in each squad's core squad as retained players</li>
-                <li>Create a snake draft order starting with best performers first</li>
-                <li>Skip the first 8 players from each squad's preferences (as these are the retained players)</li>
-                <li>Update each squad's roster with their retained + drafted players</li>
+                <li>Infer target squad size from each squad's current roster at run start</li>
+                <li>Retain eligible boost assignments from the configured/auto retention phase</li>
+                <li>Draft remaining players from teams marked as remaining in the draft window</li>
+                <li>Save one run record per league/window (prevents accidental re-runs)</li>
             </ol>
             <strong>Warning: This action cannot be undone!</strong>
         </p>

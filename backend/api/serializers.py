@@ -73,7 +73,20 @@ class SeasonPhaseSerializer(serializers.ModelSerializer):
 class DraftWindowSerializer(serializers.ModelSerializer):
     class Meta:
         model = DraftWindow
-        fields = ['id', 'season', 'label', 'kind', 'sequence', 'open_at', 'lock_at', 'retention_phase', 'draft_pool']
+        fields = [
+            'id',
+            'season',
+            'label',
+            'kind',
+            'retention_mode',
+            'sequence',
+            'open_at',
+            'lock_at',
+            'retention_phase',
+            'draft_pool',
+            'pool_compiled_at',
+            'executed_at',
+        ]
 
 class IPLTeamSerializer(serializers.ModelSerializer):
     class Meta:

@@ -175,7 +175,7 @@ const SortableRow = ({
   );
 };
 
-const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true }) => {
+const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true, liquidGlass = false }) => {
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [breakdownCount, setBreakdownCount] = useState(20);
@@ -310,8 +310,24 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
     ? Object.entries(breakdownStats.teams).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     : [];
 
+  const containerClasses = liquidGlass
+    ? 'lg-glass lg-rounded-xl border border-white/20 dark:border-neutral-700/40 shadow-lg'
+    : 'bg-white dark:bg-neutral-800 rounded-lg shadow';
+  const optionActiveClasses = liquidGlass
+    ? 'lg-glass-secondary text-primary-600 dark:text-primary-300 border-white/20 dark:border-white/10'
+    : 'bg-primary-600 text-white border-primary-600';
+  const optionInactiveClasses = liquidGlass
+    ? 'lg-glass-tertiary text-slate-700 dark:text-slate-300 border-white/20 dark:border-neutral-600 hover:text-primary-600 dark:hover:text-primary-300'
+    : 'bg-white text-neutral-700 border-slate-300 hover:bg-slate-100 dark:bg-neutral-700 dark:text-neutral-200 dark:border-neutral-600 dark:hover:bg-neutral-600';
+  const utilityButtonClasses = liquidGlass
+    ? 'h-10 px-3 text-xs font-medium lg-rounded-md border border-white/20 dark:border-neutral-600 lg-glass-tertiary text-slate-700 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-300'
+    : 'h-10 px-3 text-xs font-medium rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600';
+  const tableHeaderClasses = liquidGlass
+    ? 'bg-white/35 dark:bg-neutral-700/50 border-b border-white/30 dark:border-neutral-600'
+    : 'bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600';
+
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-lg shadow">
+    <div className={containerClasses}>
       <div className="p-6">
         {/* Breakdown Section */}
         <div className="mb-8">
@@ -326,8 +342,8 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
                   onClick={() => setBreakdownCount(option.value)}
                   className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${
                     breakdownCount === option.value
-                      ? 'bg-primary-600 text-white border-primary-600'
-                      : 'bg-white text-neutral-700 border-slate-300 hover:bg-slate-100 dark:bg-neutral-700 dark:text-neutral-200 dark:border-neutral-600 dark:hover:bg-neutral-600'
+                      ? optionActiveClasses
+                      : optionInactiveClasses
                   }`}
                 >
                   {option.label}
@@ -343,7 +359,9 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
                 className={`h-10 px-3 text-xs font-medium rounded-md border ${
                   isMultiSelectMode
                     ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200'
-                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600'
+                    : liquidGlass
+                      ? 'lg-glass-tertiary text-slate-700 dark:text-slate-200 border-white/20 dark:border-neutral-600 hover:text-primary-600 dark:hover:text-primary-300'
+                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600'
                 } ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 Multi-select
@@ -352,7 +370,7 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
                 <button
                   type="button"
                   onClick={() => setSelectedPlayers([])}
-                  className="h-10 px-3 text-xs font-medium rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600"
+                  className={utilityButtonClasses}
                 >
                   Clear ({selectedPlayers.length})
                 </button>
@@ -362,7 +380,11 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search players or team..."
-                className="h-10 w-full lg:w-64 px-3 rounded-md border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100 dark:placeholder:text-neutral-400"
+                className={`h-10 w-full lg:w-64 px-3 rounded-md border shadow-sm focus:border-primary-500 focus:ring-primary-500 ${
+                  liquidGlass
+                    ? 'border-white/25 dark:border-neutral-600 bg-white/65 dark:bg-neutral-700/70 text-slate-900 dark:text-neutral-100 placeholder:text-slate-500 dark:placeholder:text-neutral-400'
+                    : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100 dark:placeholder:text-neutral-400'
+                }`}
               />
               {(searchTerm || selectedTeam) && (
                 <button
@@ -370,7 +392,7 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
                     setSearchTerm('');
                     setSelectedTeam(null);
                   }}
-                  className="h-10 px-3 text-xs font-medium rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600"
+                  className={utilityButtonClasses}
                 >
                   Clear
                 </button>
@@ -392,7 +414,9 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
                         className={`rounded-md border p-1.5 text-left transition ${
                           selectedTeam === team
                             ? 'border-amber-400 bg-amber-50 dark:border-amber-500 dark:bg-amber-900/20'
-                            : 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600'
+                            : liquidGlass
+                              ? 'border-white/25 bg-white/45 hover:border-white/40 dark:border-neutral-700 dark:bg-neutral-800/70 dark:hover:border-neutral-500'
+                              : 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -462,7 +486,7 @@ const DraftList = ({ players, draftOrder, onSaveOrder, leagueId, canEdit = true 
           >
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-neutral-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+                <tr className={tableHeaderClasses}>
                   <th className="w-8"></th>
                   <th className="px-4 py-3 text-left">
                     <span className="text-sm font-semibold text-neutral-900 dark:text-white">

@@ -52,7 +52,7 @@ class FantasyDraftSerializer(serializers.ModelSerializer):
             id__in=value, 
             playerseasonteam__season=self.instance.league.season
         )
-        if self.instance.type == 'Pre-Season' and self.instance.role:
+        if self.instance.role:
             player_qs = player_qs.filter(role=self.instance.role)
         valid_ids = set(player_qs.values_list('id', flat=True))
         
@@ -170,7 +170,7 @@ class OptimizedFantasyDraftSerializer(serializers.ModelSerializer):
             id__in=value,
             playerseasonteam__season=self.instance.league.season,
         )
-        if self.instance.type == 'Pre-Season' and self.instance.role:
+        if self.instance.role:
             player_qs = player_qs.filter(role=self.instance.role)
         valid_ids = set(player_qs.values_list('id', flat=True))
         if len(valid_ids) != len(value):

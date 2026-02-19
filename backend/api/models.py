@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from multiselectfield import MultiSelectField
 
 class SoftDeleteModel(models.Model):
@@ -725,9 +726,18 @@ class DraftWindow(models.Model):
         PLAYOFF = 'PLAYOFF', _('Playoff')
         CUSTOM = 'CUSTOM', _('Custom')
 
+    class RetentionMode(models.TextChoices):
+        AUTO_NEXT_PHASE_AFTER_LOCK = 'AUTO_NEXT_PHASE_AFTER_LOCK', _('Auto: Next Phase After Lock')
+        MANUAL_PHASE = 'MANUAL_PHASE', _('Manual Phase')
+
     season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='draft_windows')
     label = models.CharField(max_length=100)
     kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.CUSTOM)
+    retention_mode = models.CharField(
+        max_length=40,
+        choices=RetentionMode.choices,
+        default=RetentionMode.AUTO_NEXT_PHASE_AFTER_LOCK,
+    )
     sequence = models.PositiveIntegerField()
     open_at = models.DateTimeField()
     lock_at = models.DateTimeField()
@@ -739,6 +749,8 @@ class DraftWindow(models.Model):
         related_name='draft_windows',
     )
     draft_pool = models.JSONField(default=list, blank=True)
+    pool_compiled_at = models.DateTimeField(null=True, blank=True)
+    executed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('season', 'sequence')
@@ -746,6 +758,74 @@ class DraftWindow(models.Model):
 
     def __str__(self):
         return f"{self.season} - {self.label}"
+
+
+class DraftWindowTeamEligibility(models.Model):
+    draft_window = models.ForeignKey(
+        DraftWindow,
+        on_delete=models.CASCADE,
+        related_name='team_eligibility',
+    )
+    season_team = models.ForeignKey(
+        SeasonTeam,
+        on_delete=models.CASCADE,
+        related_name='draft_window_eligibility',
+    )
+    is_remaining = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('draft_window', 'season_team')
+        ordering = ['draft_window_id', 'season_team_id']
+        indexes = [
+            models.Index(fields=['draft_window', 'is_remaining']),
+            models.Index(fields=['season_team']),
+        ]
+
+    def clean(self):
+        if self.draft_window_id and self.season_team_id:
+            if self.draft_window.season_id != self.season_team.season_id:
+                raise ValidationError({'season_team': _('Season team must belong to the draft window season.')})
+
+    def __str__(self):
+        status = 'Remaining' if self.is_remaining else 'Eliminated'
+        return f"{self.draft_window} - {self.season_team.team.short_name} ({status})"
+
+
+class DraftWindowLeagueRun(models.Model):
+    draft_window = models.ForeignKey(
+        DraftWindow,
+        on_delete=models.CASCADE,
+        related_name='league_runs',
+    )
+    league = models.ForeignKey(
+        'FantasyLeague',
+        on_delete=models.CASCADE,
+        related_name='draft_window_runs',
+    )
+    executed_at = models.DateTimeField(default=timezone.now)
+    executed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='draft_window_executions',
+    )
+    dry_run = models.BooleanField(default=False)
+    standings_snapshot = models.JSONField(default=list, blank=True)
+    snake_order_by_role = models.JSONField(default=dict, blank=True)
+    result_payload = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        unique_together = ('draft_window', 'league')
+        ordering = ['-executed_at']
+        indexes = [
+            models.Index(fields=['draft_window', 'league']),
+            models.Index(fields=['league']),
+        ]
+
+    def __str__(self):
+        return f"{self.draft_window} - {self.league} @ {self.executed_at}"
+
 
 class FantasyLeague(models.Model):
     name = models.CharField(max_length=100)
@@ -832,7 +912,7 @@ class FantasyDraft(models.Model):
             models.Index(fields=['league']),
             models.Index(fields=['squad']),
             models.Index(fields=['type']),
-            models.Index(fields=['league', 'type', 'role']),
+            models.Index(fields=['league', 'type', 'role'], name='api_fantdraft_ltr_idx'),
         ]
 
     def __str__(self):
