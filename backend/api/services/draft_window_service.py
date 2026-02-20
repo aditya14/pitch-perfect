@@ -436,6 +436,7 @@ def execute_draft_window(
         flex_round += 1
 
     squad_results = {}
+    squad_snapshots = {}
     for squad in squads:
         retained_ids = list(dict.fromkeys(retained_map.get(squad.id, [])))
         drafted_ids = [pid for pid in squad_assignments.get(squad.id, []) if pid not in set(retained_ids)]
@@ -448,6 +449,11 @@ def execute_draft_window(
             "total": len(new_squad),
             "target": inferred_target,
             "shortfall": max(0, inferred_target - len(new_squad)),
+        }
+        squad_snapshots[str(squad.id)] = {
+            "post_draft_player_ids": new_squad,
+            "retained_player_ids": retained_ids,
+            "drafted_player_ids": drafted_ids,
         }
 
         if not dry_run:
@@ -462,6 +468,7 @@ def execute_draft_window(
         "standings_snapshot": standings_snapshot,
         "snake_order_by_role": snake_order_by_role,
         "squad_results": squad_results,
+        "squad_snapshots": squad_snapshots,
         "draft_completed": not dry_run,
     }
 

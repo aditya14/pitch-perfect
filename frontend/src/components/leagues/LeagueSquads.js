@@ -227,18 +227,22 @@ const LeagueSquads = ({ league }) => {
     return result;
   }, [squadPlayers]);
 
-  const currentPlayerIdSets = useMemo(() => {
+  const draftSnapshotPlayerIdSets = useMemo(() => {
+    const normalizeIds = (ids) => new Set(
+      (Array.isArray(ids) ? ids : [])
+        .map(id => Number(id))
+        .filter(Number.isFinite)
+    );
+
     const map = {};
-    Object.entries(squadPlayers).forEach(([squadId, players]) => {
-      map[squadId] = new Set(
-        (players || [])
-          .filter(player => player.status === 'current')
-          .map(player => Number(player.id))
-          .filter(Number.isFinite)
-      );
+    (squads || []).forEach((squad) => {
+      map[squad.id] = {
+        draft_pre: normalizeIds(squad.pre_season_post_draft_player_ids),
+        draft_mid: normalizeIds(squad.mid_season_post_draft_player_ids),
+      };
     });
     return map;
-  }, [squadPlayers]);
+  }, [squads]);
 
   // Calculate ordered squads for draft views outside the return statement
   const orderedPreSeasonSquads = useMemo(() => {
@@ -538,7 +542,10 @@ const LeagueSquads = ({ league }) => {
                       );
                       const playerIdInt = Number(playerId);
                       const player = playersData.find(p => Number(p.id) === playerIdInt);
-                      const isInSquad = Boolean(currentPlayerIdSets[squad.id]?.has(playerIdInt));
+                      const snapshotSet = draftSnapshotPlayerIdSets[squad.id]?.[activeDraftId];
+                      const isInSquad = snapshotSet instanceof Set
+                        ? snapshotSet.has(playerIdInt)
+                        : false;
                       return (
                         <td 
                           key={`${activeDraftId}-${activeDraftRole}-${squad.id}-rank-${rankIndex}`} 

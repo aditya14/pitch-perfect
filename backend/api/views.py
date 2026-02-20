@@ -1054,7 +1054,7 @@ class LeagueViewSet(viewsets.ModelViewSet):
             league = self.get_object()
             
             # Check cache first
-            cache_key = f'league_squads_v2_{league.id}'
+            cache_key = f'league_squads_v3_{league.id}'
             use_cache = request.query_params.get('no_cache', '0') != '1'
             
             if use_cache:
@@ -1092,6 +1092,50 @@ class LeagueViewSet(viewsets.ModelViewSet):
                 kind=DraftWindow.Kind.MID_SEASON,
                 id__in=completed_window_ids,
             ).order_by('-sequence').values_list('id', flat=True).first()
+
+            completed_run_by_window_id = {}
+            run_window_ids = [wid for wid in [completed_pre_window_id, completed_mid_window_id] if wid]
+            if run_window_ids:
+                run_rows = DraftWindowLeagueRun.objects.filter(
+                    league=league,
+                    dry_run=False,
+                    draft_window_id__in=run_window_ids,
+                ).values('draft_window_id', 'result_payload')
+                completed_run_by_window_id = {
+                    row['draft_window_id']: row.get('result_payload') or {}
+                    for row in run_rows
+                }
+
+            def _post_draft_player_ids(window_id, squad_id):
+                payload = completed_run_by_window_id.get(window_id) or {}
+                if not isinstance(payload, dict):
+                    return []
+                snapshots = payload.get('squad_snapshots')
+                if not isinstance(snapshots, dict):
+                    return []
+
+                snapshot = snapshots.get(str(squad_id))
+                if snapshot is None:
+                    snapshot = snapshots.get(squad_id)
+                if not isinstance(snapshot, dict):
+                    return []
+
+                raw_ids = snapshot.get('post_draft_player_ids')
+                if not isinstance(raw_ids, list):
+                    return []
+
+                normalized_ids = []
+                seen_ids = set()
+                for raw_id in raw_ids:
+                    try:
+                        player_id = int(raw_id)
+                    except (TypeError, ValueError):
+                        continue
+                    if player_id in seen_ids:
+                        continue
+                    normalized_ids.append(player_id)
+                    seen_ids.add(player_id)
+                return normalized_ids
 
             now_ts = timezone.now()
 
@@ -1199,6 +1243,14 @@ class LeagueViewSet(viewsets.ModelViewSet):
                       'mid_season_rankings_by_role': mid_season_rankings_by_role.get(
                           squad.id,
                           {key: [] for key in role_keys}
+                      ),
+                      'pre_season_post_draft_player_ids': _post_draft_player_ids(
+                          completed_pre_window_id,
+                          squad.id,
+                      ),
+                      'mid_season_post_draft_player_ids': _post_draft_player_ids(
+                          completed_mid_window_id,
+                          squad.id,
                       ),
                       'current_player_ids': set(squad.current_squad or []),
                       'all_player_ids': set(squad.current_squad or [])
