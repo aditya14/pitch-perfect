@@ -31,6 +31,7 @@ from .models import (
     PlayerMatchEvent,
     FantasyTrade,
     FantasyMatchEvent,
+    DraftWindowLeagueRun,
 )
 from .serializers import (
     CompetitionSerializer,
@@ -1053,7 +1054,7 @@ class LeagueViewSet(viewsets.ModelViewSet):
             league = self.get_object()
             
             # Check cache first
-            cache_key = f'league_squads_{league.id}'
+            cache_key = f'league_squads_v2_{league.id}'
             use_cache = request.query_params.get('no_cache', '0') != '1'
             
             if use_cache:
@@ -1073,16 +1074,60 @@ class LeagueViewSet(viewsets.ModelViewSet):
             )
             print(f"Found {squads.count()} squads")
             
-            # 2. Get draft data for all squads in a single query (both Pre-Season and Mid-Season)
-            pre_season_drafts = FantasyDraft.objects.filter(
+            # 2. Only expose completed draft windows in squad views.
+            # Mid-season drafts must come from executed windows; ongoing windows stay hidden.
+            completed_window_ids = set(
+                DraftWindowLeagueRun.objects.filter(
+                    league=league,
+                    dry_run=False,
+                ).values_list('draft_window_id', flat=True)
+            )
+            completed_pre_window_id = DraftWindow.objects.filter(
+                season=league.season,
+                kind=DraftWindow.Kind.PRE_SEASON,
+                id__in=completed_window_ids,
+            ).order_by('-sequence').values_list('id', flat=True).first()
+            completed_mid_window_id = DraftWindow.objects.filter(
+                season=league.season,
+                kind=DraftWindow.Kind.MID_SEASON,
+                id__in=completed_window_ids,
+            ).order_by('-sequence').values_list('id', flat=True).first()
+
+            now_ts = timezone.now()
+
+            pre_season_drafts_qs = FantasyDraft.objects.filter(
                 league=league,
                 type='Pre-Season',
-            ).select_related('squad').values('squad_id', 'order', 'role')
-            
-            mid_season_drafts = FantasyDraft.objects.filter(
+            )
+            if completed_pre_window_id:
+                pre_season_drafts_qs = pre_season_drafts_qs.filter(
+                    draft_window_id=completed_pre_window_id
+                )
+            elif league.draft_completed:
+                # Legacy pre-season fallback for leagues that pre-date DraftWindow runs.
+                pre_season_drafts_qs = pre_season_drafts_qs.filter(
+                    Q(draft_window__isnull=True) |
+                    Q(
+                        draft_window__kind=DraftWindow.Kind.PRE_SEASON,
+                        draft_window__lock_at__lte=now_ts,
+                    )
+                )
+            else:
+                pre_season_drafts_qs = pre_season_drafts_qs.none()
+
+            mid_season_drafts_qs = FantasyDraft.objects.filter(
                 league=league,
-                type='Mid-Season'
-            ).select_related('squad').values('squad_id', 'order', 'role')
+                type='Mid-Season',
+            )
+            if completed_mid_window_id:
+                mid_season_drafts_qs = mid_season_drafts_qs.filter(
+                    draft_window_id=completed_mid_window_id
+                )
+            else:
+                mid_season_drafts_qs = mid_season_drafts_qs.none()
+
+            pre_season_drafts = pre_season_drafts_qs.select_related('squad').values('squad_id', 'order', 'role')
+            mid_season_drafts = mid_season_drafts_qs.select_related('squad').values('squad_id', 'order', 'role')
             
             # Convert to dicts for faster lookups
             role_keys = [
