@@ -143,6 +143,15 @@ const MatchCard = ({ match, leagueId }) => {
     };
   };
 
+  const formatStageLabel = (stage) => {
+    if (!stage) return 'League';
+    return String(stage)
+      .split('_')
+      .filter(Boolean)
+      .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   // Format countdown based on how far away the match is
   const formatCountdown = () => {
     if (!timeRemaining) return '';
@@ -195,7 +204,7 @@ const MatchCard = ({ match, leagueId }) => {
         <div className="flex items-center space-x-2">
           <span className="text-neutral-900 dark:text-white font-medium">Match {match.match_number}</span>
           <span className="text-neutral-500 dark:text-neutral-400">•</span>
-          <span className="text-neutral-500 dark:text-neutral-400 uppercase">{match.stage || "LEAGUE"}</span>
+          <span className="text-neutral-500 dark:text-neutral-400">{formatStageLabel(match.stage)}</span>
           {match.status === 'LIVE' && (
             <span className="px-1 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full animate-pulse">LIVE</span>
           )}

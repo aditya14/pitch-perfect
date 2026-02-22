@@ -146,6 +146,15 @@ const MatchCardMin = ({ match, leagueId }) => {
     };
   };
 
+  const formatStageLabel = (stage) => {
+    if (!stage) return 'League';
+    return String(stage)
+      .split('_')
+      .filter(Boolean)
+      .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   // Format countdown based on how far away the match is
   const formatCountdown = () => {
     if (!timeRemaining) return '';
@@ -190,7 +199,7 @@ const MatchCardMin = ({ match, leagueId }) => {
           <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
             <span>Match {match.match_number}</span>
             <span>•</span>
-            <span className="uppercase">{match.stage || "LEAGUE"}</span>
+            <span>{formatStageLabel(match.stage)}</span>
             {match.date && (
               <>
                 <span>•</span>
@@ -217,8 +226,8 @@ const MatchCardMin = ({ match, leagueId }) => {
           <div className="flex items-center mb-2">
             <span className="text-neutral-900 dark:text-white font-medium text-sm">Match {match.match_number}</span>
             <span className="text-neutral-500 dark:text-neutral-400 mx-2">•</span>
-            <span className="text-neutral-500 dark:text-neutral-400 uppercase text-xs">
-              {match.stage || "LEAGUE"}
+            <span className="text-neutral-500 dark:text-neutral-400 text-xs">
+              {formatStageLabel(match.stage)}
             </span>
             
             {/* Live indicator with improved animation */}
