@@ -1,37 +1,61 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../utils/axios';
 import { usePlayerModal } from '../../context/PlayerModalContext';
-import useDocumentTitle from '../../hooks/useDocumentTitle'; // Add this import
+import useDocumentTitle from '../../hooks/useDocumentTitle';
+import LoadingScreen from '../elements/LoadingScreen';
 
 const GROUP_OPTIONS = [
-    { value: 'squad', label: 'By Squad' },
-    { value: 'team', label: 'By Team' },
-    { value: 'role', label: 'By Role' },
+  { value: 'squad', label: 'By Squad' },
+  { value: 'team', label: 'By Team' },
+  { value: 'role', label: 'By Role' },
 ];
 
 const roleColorClass = (role) => {
   switch (role) {
-    case 'BAT': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 'BOWL': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    case 'ALL': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-    case 'WK': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    case 'BAT':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+    case 'BOWL':
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    case 'ALL':
+      return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
+    case 'WK':
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
   }
 };
 
-const squadColorClass = (color) => ({
-  backgroundColor: color || '#6B7280'
-});
+const squadColorStyle = (color) => {
+  if (!color) return { backgroundColor: '#6B7280' };
+  return { backgroundColor: String(color).startsWith('#') ? color : `#${color}` };
+};
 
-const useIsLargeScreen = () => {
-  const [isLarge, setIsLarge] = useState(window.innerWidth >= 1024);
-  useEffect(() => {
-    const onResize = () => setIsLarge(window.innerWidth >= 1024);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-  return isLarge;
+const formatStageLabel = (stage) => {
+  if (!stage) return 'League';
+  return String(stage)
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const getReadableDate = (dateString) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+const getReadableTime = (dateString) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
 const MatchPreview = ({ leagueContext }) => {
@@ -42,7 +66,6 @@ const MatchPreview = ({ leagueContext }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { openPlayerModal } = usePlayerModal();
-  const isLargeScreen = useIsLargeScreen();
 
   useEffect(() => {
     const fetchPreview = async () => {
@@ -64,273 +87,239 @@ const MatchPreview = ({ leagueContext }) => {
     fetchPreview();
   }, [matchId, leagueId]);
 
-  // --- Set document title logic ---
-  const getPageTitle = () => {
+  const pageTitle = useMemo(() => {
     if (!matchInfo) return 'Match Preview';
-    const date = matchInfo.date ? new Date(matchInfo.date) : null;
-    const formattedDate = date
-      ? date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
-      : '';
-    const matchTitle = matchInfo.team_1 && matchInfo.team_2
-      ? `${matchInfo.team_1.short_name || matchInfo.team_1.name || 'Team 1'} vs ${matchInfo.team_2.short_name || matchInfo.team_2.name || 'Team 2'}, ${formattedDate}`
-      : 'Match Preview';
-    if (leagueContext && matchInfo.league_name) {
-      return `${matchTitle} (${matchInfo.league_name})`;
-    }
-    return matchTitle;
-  };
+    const teamOne = matchInfo.team_1?.short_name || matchInfo.team_1?.name || 'Team 1';
+    const teamTwo = matchInfo.team_2?.short_name || matchInfo.team_2?.name || 'Team 2';
+    return `${teamOne} vs ${teamTwo} Preview`;
+  }, [matchInfo]);
+  useDocumentTitle(pageTitle);
 
-  useDocumentTitle(getPageTitle());
-
-  const grouped = React.useMemo(() => {
+  const grouped = useMemo(() => {
     let initialGrouped = {};
+
     if (groupBy === 'team') {
-      initialGrouped = players.reduce((acc, p) => {
-        const key = p.ipl_team || 'Unknown';
+      initialGrouped = players.reduce((acc, player) => {
+        const key = player.ipl_team || 'Unknown';
         acc[key] = acc[key] || [];
-        acc[key].push(p);
+        acc[key].push(player);
         return acc;
       }, {});
     } else if (groupBy === 'role') {
-      initialGrouped = players.reduce((acc, p) => {
-        const key = p.role || 'Unknown';
+      initialGrouped = players.reduce((acc, player) => {
+        const key = player.role || 'Unknown';
         acc[key] = acc[key] || [];
-        acc[key].push(p);
+        acc[key].push(player);
         return acc;
       }, {});
     } else if (groupBy === 'squad' && leagueContext) {
-      initialGrouped = players.reduce((acc, p) => {
-        const key = p.fantasy_squad || 'Unassigned';
+      initialGrouped = players.reduce((acc, player) => {
+        const key = player.fantasy_squad || 'Unassigned';
         acc[key] = acc[key] || [];
-        acc[key].push(p);
+        acc[key].push(player);
         return acc;
       }, {});
-      // Sort squads by number of players descending
       initialGrouped = Object.fromEntries(
         Object.entries(initialGrouped).sort((a, b) => b[1].length - a[1].length)
       );
     } else {
       initialGrouped = { All: players };
     }
-    Object.keys(initialGrouped).forEach(key => {
+
+    Object.keys(initialGrouped).forEach((key) => {
       initialGrouped[key].sort((a, b) => (b.base_points || 0) - (a.base_points || 0));
     });
+
     return initialGrouped;
   }, [players, groupBy, leagueContext]);
 
-  const squadColors = React.useMemo(() => {
+  const squadColors = useMemo(() => {
     const map = {};
-    players.forEach(p => {
-      if (p.fantasy_squad && p.squad_color) map[p.fantasy_squad] = p.squad_color;
+    players.forEach((player) => {
+      if (player.fantasy_squad && player.squad_color) {
+        map[player.fantasy_squad] = player.squad_color;
+      }
     });
     return map;
   }, [players]);
 
-  if (loading) return <div className="p-8 text-center text-neutral-500 dark:text-neutral-400">Loading preview...</div>;
-  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
+  if (loading) {
+    return <LoadingScreen message="Loading Preview" description="Preparing match groups and player stats" />;
+  }
 
-  const showIPLTeamCol = groupBy !== 'team';
+  if (error) {
+    return <div className="lg-alert lg-glass-danger">{error}</div>;
+  }
 
-  const getReadableDate = (dateString) =>
-    new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  const getReadableTime = (dateString) =>
-    new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const filteredGroups = Object.entries(grouped).filter(([_, groupPlayers]) => groupPlayers.length > 0);
+  const teamOneColor = matchInfo?.team_1?.primary_color ? `#${matchInfo.team_1.primary_color}` : '#6B7280';
+  const teamTwoColor = matchInfo?.team_2?.primary_color ? `#${matchInfo.team_2.primary_color}` : '#6B7280';
 
-  // Card for each group
-  const PlayerGroupCard = ({ title, players, groupColor }) => (
-    <div className="bg-white dark:bg-neutral-900 shadow rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden flex flex-col">
-      <div className="px-2 py-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 flex items-center">
-        {groupColor && (
-          <span
-            className="mr-2 w-1.5 h-5 rounded-md inline-block"
-            style={squadColorClass(groupColor)}
-          />
-        )}
-        <span className="font-bold font-caption text-primary-700 dark:text-primary-300 text-sm uppercase tracking-wider">{title}</span>
+  const PlayerGroupCard = ({ title, groupPlayers, groupColor }) => (
+    <div className="lg-glass lg-rounded-xl lg-shine overflow-hidden flex flex-col min-h-[220px]">
+      <div className="lg-glass-tertiary px-3 py-2 border-b border-neutral-200/60 dark:border-neutral-700/70">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center min-w-0">
+            {groupColor && (
+              <span
+                className="mr-2 w-1.5 h-5 rounded-md inline-block flex-shrink-0"
+                style={squadColorStyle(groupColor)}
+              />
+            )}
+            <span className="font-bold font-caption text-sm uppercase tracking-wider text-neutral-900 dark:text-white truncate">
+              {title}
+            </span>
+          </div>
+          <span className="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">
+            {groupPlayers.length} players
+          </span>
+        </div>
       </div>
+
       <div className="overflow-x-auto flex-grow">
         <table className="min-w-full text-xs sm:text-sm">
-          <thead className="sr-only">
+          <thead className="lg-glass-tertiary border-b border-neutral-200/60 dark:border-neutral-700/70">
             <tr>
-              <th>Player</th>
-              <th>Info</th>
-              <th className="text-right">Stats</th>
+              <th className="px-2 py-1 text-left font-medium text-neutral-500 dark:text-neutral-300">Player</th>
+              <th className="px-2 py-1 text-right font-medium text-neutral-500 dark:text-neutral-300">Stats</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-            {players.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="px-3 py-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
-                  No players
+          <tbody>
+            {groupPlayers.map((player, index) => (
+              <tr
+                key={player.id}
+                className={index % 2 === 0 ? 'bg-white/20 dark:bg-black/20' : 'bg-white/5 dark:bg-black/10'}
+              >
+                <td className="px-2 py-1.5 align-top">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span
+                      className="text-xs font-medium text-primary-700 dark:text-primary-300 hover:underline cursor-pointer truncate"
+                      onClick={() => openPlayerModal(player.id, leagueId)}
+                    >
+                      {player.name}
+                    </span>
+                    {groupBy !== 'role' && (
+                      <span className={`inline-flex items-center px-1 rounded text-[9px] font-medium ${roleColorClass(player.role)}`}>
+                        {player.role}
+                      </span>
+                    )}
+                    {groupBy === 'role' && (
+                      <span className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">
+                        {player.ipl_team || '-'}
+                      </span>
+                    )}
+                  </div>
+
+                  {groupBy === 'squad' && leagueContext ? (
+                    <div className="text-[11px] font-caption text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
+                      {player.ipl_team || '-'}
+                    </div>
+                  ) : player.fantasy_squad ? (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span
+                        className="inline-block w-1 h-3 rounded-sm flex-shrink-0"
+                        style={squadColorStyle(player.squad_color)}
+                        title={player.fantasy_squad}
+                      />
+                      <span className="text-[11px] font-caption text-neutral-500 dark:text-neutral-400 truncate">
+                        {player.fantasy_squad}
+                      </span>
+                    </div>
+                  ) : null}
+                </td>
+                <td className="px-2 py-1.5 text-right align-middle">
+                  <div className="flex flex-col items-end leading-tight">
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+                      {Number(player.base_points || 0).toLocaleString()}
+                      <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400"> pts</span>
+                    </span>
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                      {player.matches} mt{player.matches === 1 ? '' : 's'}
+                    </span>
+                  </div>
                 </td>
               </tr>
-            ) : (
-              players.map((p) => (
-                <tr key={p.id}>
-                  {/* Player Name and Info */}
-                  <td className="px-2 py-1 whitespace-nowrap">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
-                        onClick={() => openPlayerModal(p.id, leagueId)}
-                      >
-                        {p.name}
-                      </span>
-                      {/* Show role chip only if not grouping by role */}
-                      {groupBy !== 'role' && (
-                        <span className={`inline-flex items-center px-1 rounded text-[9px] font-medium ${roleColorClass(p.role)}`}>
-                          {p.role}
-                        </span>
-                      )}
-                      {/* Show IPL team next to name only if grouping by role */}
-                      {groupBy === 'role' && (
-                        <span className="ml-2 text-xs text-neutral-600 dark:text-neutral-300">{p.ipl_team || '-'}</span>
-                      )}
-                    </div>
-                    {/* Info row below name */}
-                    {groupBy === 'squad' && leagueContext ? (
-                      // By Fantasy Squad: show team only (no squad name)
-                      <div className="text-[11px] font-caption text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
-                        {p.ipl_team || '-'}
-                      </div>
-                    ) : groupBy === 'role' ? (
-                      // By Role: show squad name and color (if available)
-                      p.fantasy_squad ? (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <span
-                            className="inline-block w-1 h-3 rounded-sm flex-shrink-0"
-                            style={squadColorClass(p.squad_color)}
-                            title={p.fantasy_squad}
-                          />
-                          <span className="text-[11px] font-caption text-neutral-500 dark:text-neutral-400 truncate">
-                            {p.fantasy_squad}
-                          </span>
-                        </div>
-                      ) : null
-                    ) : (
-                      // By Team: show squad name and color (if available)
-                      p.fantasy_squad ? (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <span
-                            className="inline-block w-1 h-3 rounded-sm flex-shrink-0"
-                            style={squadColorClass(p.squad_color)}
-                            title={p.fantasy_squad}
-                          />
-                          <span className="text-[11px] font-caption text-neutral-500 dark:text-neutral-400 truncate">
-                            {p.fantasy_squad}
-                          </span>
-                        </div>
-                      ) : null
-                    )}
-                  </td>
-                  {/* Info column is always empty (for 2-col layout) */}
-                  <td></td>
-                  {/* Points/matches stacked */}
-                  <td className="px-2 py-1.5 text-right align-middle">
-                    <div className="flex flex-col items-end leading-tight">
-                      <span className="text-base font-semibold text-neutral-900 dark:text-white">
-                        {Number(p.base_points || 0).toLocaleString()} <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400">pts</span>
-                      </span>
-                      <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {p.matches} mt{p.matches === 1 ? '' : 's'}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>
     </div>
   );
 
-  // Responsive dynamic columns for group cards
-  // Use minmax to allow cards to grow but not shrink below 280px
-  // On mobile: 1 col, tablet: 2, desktop: 3+, ultra-wide: 4+
-  const gridColsClass = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4";
-  const filteredGroups = Object.entries(grouped).filter(([_, groupPlayers]) => groupPlayers.length > 0);
-
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 py-4 sm:px-4 lg:px-6">
-      <div className="mb-4 px-2 sm:px-0">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white font-caption">
-          Match Preview
-        </h1>
-        {matchInfo?.team_1?.name && matchInfo?.team_2?.name && (
-          <div className="mt-1 text-neutral-500 dark:text-neutral-400 text-sm font-caption">
-            {matchInfo.team_1.name} vs {matchInfo.team_2.name}
+    <div className="w-full max-w-7xl mx-auto px-2 pt-8 pb-4 sm:px-4 lg:px-6 md:pt-2 space-y-4">
+      <div className="lg-glass lg-rounded-xl lg-shine overflow-hidden">
+        <div
+          className="h-1.5 w-full"
+          style={{ background: `linear-gradient(90deg, ${teamOneColor}, ${teamTwoColor})` }}
+        />
+        <div className="px-4 py-3.5 sm:px-5 sm:py-4">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-white font-caption truncate">
+                Match Preview
+              </h1>
+              <div className="mt-0.5 text-sm font-caption text-neutral-500 dark:text-neutral-400">
+                {(matchInfo?.team_1?.name || '-') + ' vs ' + (matchInfo?.team_2?.name || '-')}
+              </div>
+            </div>
+            <div className="flex flex-wrap lg:flex-nowrap items-center gap-x-2 gap-y-1 text-xs text-neutral-600 dark:text-neutral-300 lg:justify-end">
+              <span className="whitespace-nowrap">{formatStageLabel(matchInfo?.stage)}</span>
+              <span className="text-neutral-400 dark:text-neutral-500">•</span>
+              <span className="whitespace-nowrap">{getReadableDate(matchInfo?.date)}</span>
+              <span className="text-neutral-400 dark:text-neutral-500">•</span>
+              <span className="whitespace-nowrap">{getReadableTime(matchInfo?.date)}</span>
+              {matchInfo?.venue && (
+                <>
+                  <span className="text-neutral-400 dark:text-neutral-500">•</span>
+                  <span className="truncate max-w-[220px]">{matchInfo.venue}</span>
+                </>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-      <div className="bg-white dark:bg-neutral-950 shadow rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden mb-4">
-        <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-gradient-to-r from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <span className="font-caption font-bold text-lg text-neutral-900 dark:text-white">
-              {matchInfo?.team_1?.short_name} vs {matchInfo?.team_2?.short_name}
-            </span>
-            <span className="text-neutral-500 dark:text-neutral-400 font-caption text-sm">
-              {matchInfo?.stage}
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-neutral-600 dark:text-neutral-300 text-xs sm:text-sm">
-            {matchInfo && (
-              <>
-                <span>{getReadableDate(matchInfo.date)}</span>
-                <span>•</span>
-                <span>{getReadableTime(matchInfo.date)}</span>
-                {matchInfo.venue && (
-                  <>
-                    <span>•</span>
-                    <span className="truncate max-w-xs">{matchInfo.venue}</span>
-                  </>
-                )}
-              </>
-            )}
+
+          <div className="mt-3 pt-2 border-t border-neutral-200/50 dark:border-neutral-700/60">
+            <div className="flex flex-wrap gap-2">
+              {GROUP_OPTIONS.map((option) => (
+                (option.value !== 'squad' || leagueContext) && (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`px-3 py-1.5 text-xs lg-rounded-md transition-all duration-200 ${
+                      groupBy === option.value
+                        ? 'lg-glass-primary text-primary-700 dark:text-primary-300 font-medium'
+                        : 'lg-glass-tertiary text-neutral-700 dark:text-neutral-300 hover:bg-white/40 dark:hover:bg-white/10'
+                    }`}
+                    onClick={() => setGroupBy(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                )
+              ))}
+            </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 px-4 py-2 border-b-0 border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
-          {GROUP_OPTIONS.map(opt => (
-            (opt.value !== 'squad' || leagueContext) && (
-              <button
-                key={opt.value}
-                className={`px-3 py-1 rounded-full text-xs font-caption font-semibold border transition-colors
-                  ${groupBy === opt.value
-                    ? 'bg-primary-600 text-white border-primary-700 shadow'
-                    : 'bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 border-neutral-200 dark:border-neutral-700 hover:bg-primary-50 dark:hover:bg-primary-900/30'
-                  }`}
-                onClick={() => setGroupBy(opt.value)}
-              >
-                {opt.label}
-              </button>
-            )
-          ))}
-        </div>
       </div>
-      <div className={gridColsClass}>
-        {filteredGroups.length === 0 ? (
-          <div className="col-span-full text-center text-neutral-500 dark:text-neutral-400 py-8">
-            No players found for this match.
-          </div>
-        ) : (
-          filteredGroups.map(([group, groupPlayers]) => (
+
+      {filteredGroups.length === 0 ? (
+        <div className="lg-glass-secondary lg-rounded-xl p-6 text-center text-neutral-500 dark:text-neutral-400">
+          No players found for this match.
+        </div>
+      ) : (
+        <div
+          className="grid gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
+        >
+          {filteredGroups.map(([group, groupPlayers]) => (
             <PlayerGroupCard
               key={group}
               title={group}
-              players={groupPlayers}
+              groupPlayers={groupPlayers}
               groupColor={groupBy === 'squad' ? squadColors[group] : null}
             />
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
