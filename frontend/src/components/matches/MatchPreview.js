@@ -178,12 +178,6 @@ const MatchPreview = ({ leagueContext }) => {
 
       <div className="overflow-x-auto flex-grow">
         <table className="min-w-full text-xs sm:text-sm">
-          <thead className="lg-glass-tertiary border-b border-neutral-200/60 dark:border-neutral-700/70">
-            <tr>
-              <th className="px-2 py-1 text-left font-medium text-neutral-500 dark:text-neutral-300">Player</th>
-              <th className="px-2 py-1 text-right font-medium text-neutral-500 dark:text-neutral-300">Stats</th>
-            </tr>
-          </thead>
           <tbody>
             {groupPlayers.map((player, index) => (
               <tr
