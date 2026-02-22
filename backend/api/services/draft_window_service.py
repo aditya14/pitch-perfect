@@ -465,8 +465,20 @@ def execute_draft_window(
         "league_id": league.id,
         "draft_window_id": draft_window.id,
         "squads": len(squads),
+        "effective_pool_player_ids": list(dict.fromkeys(effective_pool)),
         "standings_snapshot": standings_snapshot,
         "snake_order_by_role": snake_order_by_role,
+        "role_default_order": {
+            role: list(order or [])
+            for role, order in role_default_order.items()
+        },
+        "role_preferences_by_squad": {
+            str(squad_id): {
+                role: list(order or [])
+                for role, order in (role_pref_map or {}).items()
+            }
+            for squad_id, role_pref_map in role_preferences.items()
+        },
         "squad_results": squad_results,
         "squad_snapshots": squad_snapshots,
         "draft_completed": not dry_run,

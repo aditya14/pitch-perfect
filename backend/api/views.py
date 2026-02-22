@@ -1054,7 +1054,7 @@ class LeagueViewSet(viewsets.ModelViewSet):
             league = self.get_object()
             
             # Check cache first
-            cache_key = f'league_squads_v3_{league.id}'
+            cache_key = f'league_squads_v4_{league.id}'
             use_cache = request.query_params.get('no_cache', '0') != '1'
             
             if use_cache:
@@ -1137,6 +1137,132 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     seen_ids.add(player_id)
                 return normalized_ids
 
+            def _normalize_player_id_list(raw_ids):
+                normalized_ids = []
+                seen_ids = set()
+                if not isinstance(raw_ids, list):
+                    return normalized_ids
+                for raw_id in raw_ids:
+                    try:
+                        player_id = int(raw_id)
+                    except (TypeError, ValueError):
+                        continue
+                    if player_id in seen_ids:
+                        continue
+                    normalized_ids.append(player_id)
+                    seen_ids.add(player_id)
+                return normalized_ids
+
+            def _role_preferences_for_window(window_id):
+                payload = completed_run_by_window_id.get(window_id) or {}
+                if not isinstance(payload, dict):
+                    return {}
+
+                raw_role_pref_map = payload.get('role_preferences_by_squad')
+                if not isinstance(raw_role_pref_map, dict):
+                    raw_role_pref_map = payload.get('role_preferences')
+                if not isinstance(raw_role_pref_map, dict):
+                    return {}
+
+                normalized_map = {}
+                for raw_squad_id, raw_pref_by_role in raw_role_pref_map.items():
+                    try:
+                        squad_id = int(raw_squad_id)
+                    except (TypeError, ValueError):
+                        continue
+                    if not isinstance(raw_pref_by_role, dict):
+                        continue
+
+                    normalized_map[squad_id] = {
+                        role: _normalize_player_id_list(raw_pref_by_role.get(role, []))
+                        for role in role_keys
+                    }
+                return normalized_map
+
+            role_default_orders_cache = {}
+
+            def _role_default_orders_for_window(window_id):
+                if not window_id:
+                    return {role: [] for role in role_keys}
+
+                if window_id in role_default_orders_cache:
+                    return role_default_orders_cache[window_id]
+
+                payload = completed_run_by_window_id.get(window_id) or {}
+                if not isinstance(payload, dict):
+                    payload = {}
+
+                payload_role_defaults = payload.get('role_default_order')
+                if isinstance(payload_role_defaults, dict):
+                    normalized_payload_defaults = {
+                        role: _normalize_player_id_list(payload_role_defaults.get(role, []))
+                        for role in role_keys
+                    }
+                    role_default_orders_cache[window_id] = normalized_payload_defaults
+                    return normalized_payload_defaults
+
+                effective_pool_ids = _normalize_player_id_list(payload.get('effective_pool_player_ids'))
+                if not effective_pool_ids:
+                    draft_window = DraftWindow.objects.filter(id=window_id).first()
+                    base_pool = _normalize_player_id_list(draft_window.draft_pool if draft_window else [])
+
+                    retained_ids = set()
+                    snapshots = payload.get('squad_snapshots')
+                    if isinstance(snapshots, dict):
+                        for snapshot in snapshots.values():
+                            if isinstance(snapshot, dict):
+                                retained_ids.update(
+                                    _normalize_player_id_list(snapshot.get('retained_player_ids', []))
+                                )
+                    effective_pool_ids = [player_id for player_id in base_pool if player_id not in retained_ids]
+
+                if not effective_pool_ids:
+                    empty_defaults = {role: [] for role in role_keys}
+                    role_default_orders_cache[window_id] = empty_defaults
+                    return empty_defaults
+
+                role_defaults = {role: [] for role in role_keys}
+                ranked_players = list(
+                    Player.objects.filter(id__in=effective_pool_ids).annotate(
+                        avg_points=Avg(
+                            'playermatchevent__total_points_all',
+                            filter=Q(playermatchevent__match__season=league.season),
+                        )
+                    ).order_by('-avg_points', 'name').values_list('id', 'role')
+                )
+                ranked_player_ids = []
+                ranked_seen = set()
+                role_seen = {role: set() for role in role_keys}
+
+                for player_id, role in ranked_players:
+                    if player_id in ranked_seen:
+                        continue
+                    ranked_player_ids.append(player_id)
+                    ranked_seen.add(player_id)
+                    if role in role_defaults and player_id not in role_seen[role]:
+                        role_defaults[role].append(player_id)
+                        role_seen[role].add(player_id)
+
+                if len(ranked_player_ids) < len(effective_pool_ids):
+                    player_role_map = {
+                        player_id: role
+                        for player_id, role in Player.objects.filter(
+                            id__in=effective_pool_ids
+                        ).values_list('id', 'role')
+                    }
+                    for player_id in effective_pool_ids:
+                        if player_id in ranked_seen:
+                            continue
+                        ranked_player_ids.append(player_id)
+                        ranked_seen.add(player_id)
+                        role = player_role_map.get(player_id)
+                        if role in role_defaults and player_id not in role_seen[role]:
+                            role_defaults[role].append(player_id)
+                            role_seen[role].add(player_id)
+
+                role_default_orders_cache[window_id] = role_defaults
+                return role_defaults
+
             now_ts = timezone.now()
 
             pre_season_drafts_qs = FantasyDraft.objects.filter(
@@ -1215,6 +1341,40 @@ class LeagueViewSet(viewsets.ModelViewSet):
                     mid_season_rankings_by_role[squad_id] = {key: [] for key in role_keys}
                 if role in role_keys:
                     mid_season_rankings_by_role[squad_id][role] = draft_data['order']
+
+            pre_role_preferences_by_squad = _role_preferences_for_window(completed_pre_window_id)
+            mid_role_preferences_by_squad = _role_preferences_for_window(completed_mid_window_id)
+            pre_role_defaults = _role_default_orders_for_window(completed_pre_window_id)
+            mid_role_defaults = _role_default_orders_for_window(completed_mid_window_id)
+
+            for squad in squads:
+                squad_id = squad.id
+
+                if squad_id not in pre_season_rankings_by_role:
+                    pre_season_rankings_by_role[squad_id] = {key: [] for key in role_keys}
+                pre_role_pref = pre_role_preferences_by_squad.get(squad_id, {})
+                for role in role_keys:
+                    if pre_season_rankings_by_role[squad_id][role]:
+                        continue
+                    fallback_order = pre_role_pref.get(role) or pre_role_defaults.get(role) or []
+                    pre_season_rankings_by_role[squad_id][role] = fallback_order
+                if not pre_season_rankings.get(squad_id):
+                    pre_season_rankings[squad_id] = pre_season_rankings_by_role[squad_id].get(
+                        FantasyDraft.Role.BAT, []
+                    )
+
+                if squad_id not in mid_season_rankings_by_role:
+                    mid_season_rankings_by_role[squad_id] = {key: [] for key in role_keys}
+                mid_role_pref = mid_role_preferences_by_squad.get(squad_id, {})
+                for role in role_keys:
+                    if mid_season_rankings_by_role[squad_id][role]:
+                        continue
+                    fallback_order = mid_role_pref.get(role) or mid_role_defaults.get(role) or []
+                    mid_season_rankings_by_role[squad_id][role] = fallback_order
+                if not mid_season_rankings.get(squad_id):
+                    mid_season_rankings[squad_id] = mid_season_rankings_by_role[squad_id].get(
+                        FantasyDraft.Role.BAT, []
+                    )
             
             print(f"Found pre-season draft data for {len(pre_season_rankings)} squads")
             print(f"Found mid-season draft data for {len(mid_season_rankings)} squads")
