@@ -1823,7 +1823,7 @@ def squad_players(request, squad_id):
 
 @api_view(['GET'])
 def squad_player_events(request, squad_id):
-    """Get aggregated fantasy player events/stats for this squad including traded players"""
+    """Get squad-scoped and season-total player stats for this squad view."""
     squad = get_object_or_404(FantasySquad, id=squad_id)
     
     # Get all unique player IDs that have ever had an event for this squad
@@ -1834,8 +1834,8 @@ def squad_player_events(request, squad_id):
     # Add current squad players to ensure we include everyone
     all_player_ids = set(list(player_ids_with_events) + (squad.current_squad or []))
     
-    # Initialize stats for all players in current and historical squad
-    stats_dict = {
+    # Initialize squad-scoped stats for all players in current and historical squad.
+    squad_stats_dict = {
         player_id: {
             'player_id': player_id,
             'matches_played': 0,
@@ -1845,8 +1845,8 @@ def squad_player_events(request, squad_id):
         for player_id in all_player_ids
     }
     
-    # Get any existing event stats (if they exist)
-    stats = FantasyPlayerEvent.objects.filter(
+    # Aggregate stats for this specific fantasy squad only.
+    squad_stats = FantasyPlayerEvent.objects.filter(
         fantasy_squad_id=squad_id,
         match_event__player_id__in=all_player_ids
     ).values('match_event__player_id').annotate(
@@ -1856,16 +1856,60 @@ def squad_player_events(request, squad_id):
     )
     
     # Update stats for players that have events
-    for stat in stats:
+    for stat in squad_stats:
         player_id = stat['match_event__player_id']
-        if player_id in stats_dict:  # This check is just a safeguard
-            stats_dict[player_id].update({
+        if player_id in squad_stats_dict:  # safeguard
+            squad_stats_dict[player_id].update({
                 'matches_played': stat['matches_played'],
                 'base_points': float(stat['base_points']) if stat['base_points'] else 0,
                 'boost_points': float(stat['boost_points']) if stat['boost_points'] else 0
             })
-    
-    return Response(stats_dict)
+
+    # Season-total stats regardless of which fantasy squad the player belonged to.
+    # Base/matches come from real match events; boost points are league-wide fantasy boosts.
+    total_stats_dict = {
+        player_id: {
+            'player_id': player_id,
+            'matches_played': 0,
+            'base_points': 0,
+            'boost_points': 0
+        }
+        for player_id in all_player_ids
+    }
+
+    season = squad.league.season
+    if season and all_player_ids:
+        total_base_stats = PlayerMatchEvent.objects.filter(
+            player_id__in=all_player_ids,
+            match__season=season,
+        ).values('player_id').annotate(
+            matches_played=Count('match', distinct=True),
+            base_points=Sum('total_points_all'),
+        )
+
+        for stat in total_base_stats:
+            player_id = stat['player_id']
+            if player_id in total_stats_dict:
+                total_stats_dict[player_id]['matches_played'] = stat['matches_played'] or 0
+                total_stats_dict[player_id]['base_points'] = float(stat['base_points']) if stat['base_points'] else 0
+
+        total_boost_stats = FantasyPlayerEvent.objects.filter(
+            fantasy_squad__league=squad.league,
+            match_event__match__season=season,
+            match_event__player_id__in=all_player_ids,
+        ).values('match_event__player_id').annotate(
+            boost_points=Sum('boost_points')
+        )
+
+        for stat in total_boost_stats:
+            player_id = stat['match_event__player_id']
+            if player_id in total_stats_dict:
+                total_stats_dict[player_id]['boost_points'] = float(stat['boost_points']) if stat['boost_points'] else 0
+
+    return Response({
+        'squad_stats': squad_stats_dict,
+        'total_stats': total_stats_dict,
+    })
 
 
 @api_view(['GET'])

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { usePlayerModal } from '../../context/PlayerModalContext';
 import { ArrowRightCircle, Bandage } from 'lucide-react';
 import BoostInlineElement from '../elements/BoostInlineElement';
@@ -19,22 +19,45 @@ const PlayerListTab = ({
   });
   const [showTraded, setShowTraded] = useState(true); 
   const [filterType, setFilterType] = useState('All');
+  const [pointsView, setPointsView] = useState('squad');
   const { openPlayerModal } = usePlayerModal();
 
-  const getPlayerStats = (playerId) => {
-    const events = playerEvents[playerId] || {
+  const squadStatsMap = useMemo(() => {
+    if (playerEvents && typeof playerEvents === 'object' && playerEvents.squad_stats) {
+      return playerEvents.squad_stats || {};
+    }
+    // Backward compatibility with legacy API shape.
+    return playerEvents || {};
+  }, [playerEvents]);
+
+  const totalStatsMap = useMemo(() => {
+    if (playerEvents && typeof playerEvents === 'object' && playerEvents.total_stats) {
+      return playerEvents.total_stats || {};
+    }
+    return {};
+  }, [playerEvents]);
+
+  const activeStatsMap = useMemo(
+    () => (pointsView === 'total' ? totalStatsMap : squadStatsMap),
+    [pointsView, totalStatsMap, squadStatsMap]
+  );
+
+  const getPlayerStats = useCallback((playerId) => {
+    const events = activeStatsMap[playerId] || {
       matches_played: 0,
       base_points: 0,
       boost_points: 0
     };
+    const basePoints = Number(events.base_points || 0);
+    const boostPoints = Number(events.boost_points || 0);
     
     return {
-      matches: events.matches_played,
-      basePoints: events.base_points,
-      boostPoints: events.boost_points,
-      totalPoints: events.base_points + events.boost_points
+      matches: Number(events.matches_played || 0),
+      basePoints,
+      boostPoints,
+      totalPoints: basePoints + boostPoints
     };
-  };
+  }, [activeStatsMap]);
 
   const getCurrentBoostRole = (playerId) => {
     const assignmentSource = hasActivePhase ? activePhaseAssignments : currentCoreSquad;
@@ -140,7 +163,7 @@ const PlayerListTab = ({
       }
       return aValue < bValue ? 1 : -1;
     });
-  }, [filteredPlayers, sortConfig]);
+  }, [filteredPlayers, sortConfig, getPlayerStats]);
 
   // Group players by the selected filter
   const groupedPlayers = useMemo(() => {
@@ -254,23 +277,53 @@ const PlayerListTab = ({
             </button>
           </div>
           
-          {/* Toggle for traded players */}
-          {tradedCount > 0 && (
-            <div className="ml-auto flex items-center">
-              <span className="mr-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                {showTraded ? 'Show' : 'Hide'} Inactive ({tradedCount})
-              </span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={showTraded}
-                  onChange={() => setShowTraded(!showTraded)}
-                  className="sr-only peer" 
-                />
-                <div className="w-8 h-4 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-neutral-700 peer-checked:bg-primary-600"></div>
-              </label>
+          <div className="ml-auto flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-neutral-600 dark:text-neutral-400">Points</span>
+              <div className="inline-flex rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() => setPointsView('squad')}
+                  className={`px-2 py-1 text-xs ${
+                    pointsView === 'squad'
+                      ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 font-medium'
+                      : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300'
+                  }`}
+                >
+                  Squad
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPointsView('total')}
+                  className={`px-2 py-1 text-xs border-l border-neutral-200 dark:border-neutral-800 ${
+                    pointsView === 'total'
+                      ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 font-medium'
+                      : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300'
+                  }`}
+                >
+                  Total
+                </button>
+              </div>
             </div>
-          )}
+
+            {/* Toggle for traded players */}
+            {tradedCount > 0 && (
+              <div className="flex items-center">
+                <span className="mr-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+                  {showTraded ? 'Show' : 'Hide'} Inactive ({tradedCount})
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={showTraded}
+                    onChange={() => setShowTraded(!showTraded)}
+                    className="sr-only peer" 
+                  />
+                  <div className="w-8 h-4 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-neutral-700 peer-checked:bg-primary-600"></div>
+                </label>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
