@@ -297,6 +297,24 @@ const LeagueRunningTotal = ({ league }) => {
     return [yAxisTicks[0], yAxisTicks[yAxisTicks.length - 1]];
   }, [yAxisTicks]);
 
+  const yAxisWidth = useMemo(() => {
+    const longestTickLabel = yAxisTicks.reduce((maxLength, tick) => {
+      const labelLength = String(tick).length;
+      return Math.max(maxLength, labelLength);
+    }, 1);
+    const estimatedWidth = (longestTickLabel * 6) + 8;
+    const minWidth = isMobile ? 24 : 28;
+    const maxWidth = isMobile ? 38 : 52;
+    return Math.max(minWidth, Math.min(maxWidth, estimatedWidth));
+  }, [isMobile, yAxisTicks]);
+
+  const chartMargin = useMemo(() => ({
+    top: 5,
+    right: isMobile ? 8 : 20,
+    left: isMobile ? 0 : 8,
+    bottom: 5,
+  }), [isMobile]);
+
   if (loading) {
     return (
       <div className={wrapperClassName}>
@@ -457,7 +475,7 @@ const LeagueRunningTotal = ({ league }) => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={filteredData}
-            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+            margin={chartMargin}
           >
             {/* Draw major gridlines */}
             <CartesianGrid 
@@ -494,6 +512,8 @@ const LeagueRunningTotal = ({ league }) => {
             <YAxis 
               tick={{ fill: isDarkMode ? '#9ca3af' : '#4B5563', fontSize: 10 }} // Smaller font size for ticks
               tickLine={{ stroke: isDarkMode ? '#6B7280' : '#6B7280' }}
+              width={yAxisWidth}
+              tickMargin={4}
               ticks={yAxisTicks} // Use only major ticks for labels
               domain={yAxisDomainValue} // Set domain based on calculated ticks
               allowDataOverflow={false} // Clip lines outside the domain
