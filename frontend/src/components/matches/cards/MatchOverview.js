@@ -68,6 +68,15 @@ const getResultText = (matchData) => {
   return 'Result pending';
 };
 
+const formatStageLabel = (stage) => {
+  if (!stage) return 'League';
+  return String(stage)
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(' ');
+};
+
 const ScoreBlock = ({ team, inningsLabel, runs, wickets, overs, winnerId }) => {
   const teamColorHex = team?.primary_color ? `#${team.primary_color}` : '#6B7280';
   const isWinner = Boolean(winnerId && team?.id === winnerId);
@@ -193,7 +202,7 @@ const MatchOverview = ({ matchData }) => {
             Match #{matchData.match_number}
           </span>
           <span className="px-2 py-0.5 text-xs rounded-md bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 uppercase">
-            {matchData.stage || 'League'}
+            {formatStageLabel(matchData.stage) || 'League'}
           </span>
           <span className={`px-2 py-0.5 text-xs rounded-md uppercase ${getStatusClasses(matchData.status)}`}>
             {getStatusLabel(matchData.status)}

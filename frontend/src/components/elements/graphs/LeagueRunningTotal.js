@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   LineChart, 
   Line, 
@@ -19,12 +19,7 @@ const LeagueRunningTotal = ({ league }) => {
   const [viewMode, setViewMode] = useState('zoomed'); // 'zoomed' or 'all'
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
-  const Wrapper = ({ children }) => (
-    <div className="lg-glass lg-rounded-xl p-4 relative z-0">
-      {children}
-    </div>
-  );
+  const wrapperClassName = 'lg-glass lg-rounded-xl p-4 relative z-0';
 
   const hasSeasonStarted = (() => {
     const status = (league?.season?.status || '').toUpperCase();
@@ -142,7 +137,7 @@ const LeagueRunningTotal = ({ league }) => {
     return Number.isNaN(timestamp) ? null : timestamp;
   };
 
-  const getSortedChartData = () => {
+  const sortedChartData = useMemo(() => {
     const normalized = (chartData || []).map((point, idx) => ({
       ...point,
       _rawIndex: idx,
@@ -174,15 +169,14 @@ const LeagueRunningTotal = ({ league }) => {
       ...point,
       x_match_number: Number.isFinite(point._matchNumber) ? point._matchNumber : idx + 1,
     }));
-  };
+  }, [chartData]);
 
   // Get filtered data based on view mode
-  const getFilteredData = () => {
-    const sortedData = getSortedChartData();
-    return (viewMode === 'all' || sortedData.length <= 10)
-      ? sortedData
-      : sortedData.slice(-10);
-  };
+  const filteredData = useMemo(() => (
+    (viewMode === 'all' || sortedChartData.length <= 10)
+      ? sortedChartData
+      : sortedChartData.slice(-10)
+  ), [sortedChartData, viewMode]);
 
   // Get squad color with fallback to predefined colors
   const getSquadColor = (squadId) => {
@@ -220,8 +214,8 @@ const LeagueRunningTotal = ({ league }) => {
   };
 
   // Get Y-axis tick values based on view mode
-  const getYAxisTicks = () => {
-    const dataToConsider = getFilteredData();
+  const yAxisTicks = useMemo(() => {
+    const dataToConsider = filteredData;
     if (!dataToConsider || dataToConsider.length === 0) return [0];
 
     let minValue = Infinity;
@@ -264,11 +258,11 @@ const LeagueRunningTotal = ({ league }) => {
      }
      // Remove duplicates and ensure sorted order
      return [...new Set(ticks)].sort((a, b) => a - b);
-  };
+  }, [filteredData, league?.squads, visibleSquads, viewMode]);
   
   // Calculate minor gridlines for the y-axis
-  const getMinorYAxisTicks = () => {
-    const majorTicks = getYAxisTicks();
+  const minorTickValues = useMemo(() => {
+    const majorTicks = yAxisTicks;
     const minorTicks = [];
     if (majorTicks.length < 2) return []; // Need at least two major ticks to draw minors between them
 
@@ -295,31 +289,30 @@ const LeagueRunningTotal = ({ league }) => {
     }
 
     return [...new Set(minorTicks)].sort((a, b) => a - b); // Remove duplicates and sort
-  };
+  }, [yAxisTicks, viewMode]);
 
   // Calculate domain based on ticks to avoid extra space
-  const yAxisDomain = () => {
-    const ticks = getYAxisTicks();
-    if (!ticks || ticks.length === 0) return [0, 1000]; // Default fallback
-    return [ticks[0], ticks[ticks.length - 1]];
-  };
+  const yAxisDomainValue = useMemo(() => {
+    if (!yAxisTicks || yAxisTicks.length === 0) return [0, 1000]; // Default fallback
+    return [yAxisTicks[0], yAxisTicks[yAxisTicks.length - 1]];
+  }, [yAxisTicks]);
 
   if (loading) {
     return (
-      <Wrapper>
+      <div className={wrapperClassName}>
         <div className="space-y-4">
           <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/4"></div>
           <div className="h-64 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse"></div>
         </div>
-      </Wrapper>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Wrapper>
+      <div className={wrapperClassName}>
         <p className="text-red-500 dark:text-red-400">{error}</p>
-      </Wrapper>
+      </div>
     );
   }
 
@@ -329,11 +322,11 @@ const LeagueRunningTotal = ({ league }) => {
 
   if (chartData.length === 0) {
     return (
-      <Wrapper>
+      <div className={wrapperClassName}>
         <p className="text-neutral-500 dark:text-neutral-400">
           Running total will appear once points are on the board.
         </p>
-      </Wrapper>
+      </div>
     );
   }
 
@@ -411,9 +404,6 @@ const LeagueRunningTotal = ({ league }) => {
     return null;
   };
 
-  // Get the calculated minor ticks once for rendering
-  const minorTickValues = getMinorYAxisTicks();
-
   // Define gridline styles based on theme
   const majorGridStyles = {
     stroke: isDarkMode ? '#4b5563' : '#d1d5db', // Dark: gray-600, Light: gray-300
@@ -431,7 +421,7 @@ const LeagueRunningTotal = ({ league }) => {
   };
 
   return (
-    <Wrapper>
+    <div className={wrapperClassName}>
       <div className="py-2">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-caption font-semibold text-neutral-900 dark:text-white ml-2">
@@ -466,7 +456,7 @@ const LeagueRunningTotal = ({ league }) => {
       <div className="h-64 md:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={getFilteredData()}
+            data={filteredData}
             margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
           >
             {/* Draw major gridlines */}
@@ -504,8 +494,8 @@ const LeagueRunningTotal = ({ league }) => {
             <YAxis 
               tick={{ fill: isDarkMode ? '#9ca3af' : '#4B5563', fontSize: 10 }} // Smaller font size for ticks
               tickLine={{ stroke: isDarkMode ? '#6B7280' : '#6B7280' }}
-              ticks={getYAxisTicks()} // Use only major ticks for labels
-              domain={yAxisDomain()} // Set domain based on calculated ticks
+              ticks={yAxisTicks} // Use only major ticks for labels
+              domain={yAxisDomainValue} // Set domain based on calculated ticks
               allowDataOverflow={false} // Clip lines outside the domain
               allowDecimals={false} // Ensure integer labels
               interval={0} // Ensure interval is 0 to prevent skipping
@@ -580,8 +570,8 @@ const LeagueRunningTotal = ({ league }) => {
         </button>
       </div>
       </div>
-    </Wrapper>
+    </div>
   );
 };
 
-export default LeagueRunningTotal;
+export default React.memo(LeagueRunningTotal);
