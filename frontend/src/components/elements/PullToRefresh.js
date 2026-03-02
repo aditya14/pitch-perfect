@@ -56,7 +56,7 @@ const PullToRefresh = ({ onRefresh, children, threshold = 80, maxPull = 120 }) =
       }
     };
 
-    const touchEndHandler = () => {
+    const touchEndHandler = async () => {
       if (!isTouchActiveRef.current) return;
       
       isTouchActiveRef.current = false;
@@ -64,18 +64,25 @@ const PullToRefresh = ({ onRefresh, children, threshold = 80, maxPull = 120 }) =
       // If pulled past threshold, trigger refresh
       if (pullDistance >= threshold) {
         setIsRefreshing(true);
-        
-        // Call the refresh function
+
+        const startedAt = Date.now();
         if (onRefresh) {
-          onRefresh();
+          try {
+            await Promise.resolve(onRefresh());
+          } catch (error) {
+            console.error('Pull-to-refresh handler failed:', error);
+          }
         }
-        
+
+        const elapsed = Date.now() - startedAt;
+        const remainingDelay = Math.max(0, 1000 - elapsed);
+
         // Reset after a short delay to show the refresh animation
         setTimeout(() => {
           setPullDistance(0);
           setIsRefreshing(false);
           setIsPulling(false);
-        }, 1000);
+        }, remainingDelay);
       } else {
         // If not pulled far enough, just reset
         setPullDistance(0);

@@ -42,6 +42,14 @@ const UpdatePointsButton = ({ matchId = null, variant = 'icon', onBeforeUpdate =
         className={
           variant === 'menu'
             ? 'lg-dropdown-item text-slate-800 dark:text-slate-200 flex items-center w-full disabled:opacity-60 disabled:cursor-not-allowed'
+            : variant === 'header'
+            ? `
+              lg-glass-tertiary rounded-full p-2 border border-neutral-200/70 dark:border-white/10
+              text-slate-800 dark:text-slate-200
+              disabled:opacity-60 disabled:cursor-not-allowed
+              transition-all duration-200
+              hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)]
+            `
             : `
               flex items-center justify-center h-8 w-8 rounded-full
               bg-orange-600 hover:bg-orange-700 text-white
@@ -65,6 +73,16 @@ const UpdatePointsButton = ({ matchId = null, variant = 'icon', onBeforeUpdate =
               <RefreshCw className="h-4 w-4 mr-3" />
             )}
             {loading ? 'Updating Points...' : 'Update Points'}
+          </>
+        ) : variant === 'header' ? (
+          <>
+            {loading ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : result && showDetails ? (
+              <Check className="h-4 w-4 text-green-500 dark:text-green-400" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
           </>
         ) : (
           <>

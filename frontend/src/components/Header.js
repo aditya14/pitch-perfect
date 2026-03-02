@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import { 
   Moon, Sun, Home, LogOut, User, 
-  ChevronsUpDown, Check, Menu, Shield, Calendar, UsersRound, Trophy, BarChart3
+  ChevronsUpDown, Check, Shield, Calendar, UsersRound, Trophy, BarChart3
 } from 'lucide-react';
 import UpdatePointsButton from './UpdatePointsButton';
 
@@ -40,13 +40,7 @@ const Header = ({ theme, onThemeChange }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const [isAndroid, setIsAndroid] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [leagueInfo, setLeagueInfo] = useState(null);
   const [squadInfo, setSquadInfo] = useState(null);
   const [userLeagues, setUserLeagues] = useState([]);
@@ -55,7 +49,7 @@ const Header = ({ theme, onThemeChange }) => {
 
   // Extract leagueId from URL path pattern
   const getLeagueIdFromPath = () => {
-    const match = location.pathname.match(/\/leagues\/([^\/]+)/);
+    const match = location.pathname.match(/\/leagues\/([^/]+)/);
     if (!match) return null;
     const candidate = match[1]?.toLowerCase();
     if (candidate === 'join' || candidate === 'create') return null;
@@ -64,7 +58,7 @@ const Header = ({ theme, onThemeChange }) => {
 
   // Extract squadId from URL path pattern (for legacy routes)
   const getSquadIdFromPath = () => {
-    const match = location.pathname.match(/\/squads\/([^\/]+)/);
+    const match = location.pathname.match(/\/squads\/([^/]+)/);
     return match ? match[1] : null;
   };
   
@@ -72,7 +66,7 @@ const Header = ({ theme, onThemeChange }) => {
   const squadId = getSquadIdFromPath();
   const isLeagueView = location.pathname.includes('/leagues/') && leagueId;
   const isSquadView = location.pathname.includes('/squads/') && squadId;
-  const isMySquadView = location.pathname.includes('/my_squad');
+  const hideBrandText = isLeagueView && isMobile;
   
   // Fetch league info when in league view
   useEffect(() => {
@@ -144,41 +138,9 @@ const Header = ({ theme, onThemeChange }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Detect platform and standalone mode
-  useEffect(() => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isAndroidDevice = /android/i.test(userAgent);
-    const isIOSDevice = /iphone|ipad|ipod/i.test(userAgent);
-    
-    const isMobileDevice = isAndroidDevice || isIOSDevice || 
-                           /mobile|tablet|opera mini|blackberry/i.test(userAgent);
-    
-    setIsAndroid(isAndroidDevice);
-    setIsIOS(isIOSDevice);
-    setIsMobile(isMobileDevice);
-    
-    const isRunningStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                               window.navigator.standalone || 
-                               document.referrer.includes('android-app://');
-    
-    setIsStandalone(isRunningStandalone);
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    });
-    
-    return () => {
-      window.removeEventListener('beforeinstallprompt', () => {});
-    };
-  }, []);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
       if (leagueDropdownRef.current && !leagueDropdownRef.current.contains(event.target)) {
         setIsLeagueDropdownOpen(false);
       }
@@ -203,11 +165,6 @@ const Header = ({ theme, onThemeChange }) => {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     onThemeChange(newTheme);
-    setIsDropdownOpen(false);
-  };
-
-  const showIOSInstallInstructions = () => {
-    // Implementation for iOS install instructions
   };
   
   // If we're in a league view, determine the active tab
@@ -276,26 +233,6 @@ const Header = ({ theme, onThemeChange }) => {
     setIsLeagueDropdownOpen(false);
   };
 
-  // Handlers for Add to Home Screen button
-  const handleAddToHomeScreen = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        } else {
-          console.log('User dismissed the install prompt');
-        }
-        setDeferredPrompt(null);
-      });
-    } else if (isIOS) {
-      showIOSInstallInstructions();
-    }
-    
-    setIsDropdownOpen(false);
-  };
-
   const canShowLeagueSwitcher = isLeagueView && userLeagues.length > 1;
   const isAdmin = !!(user?.is_staff || user?.is_superuser || user?.id === 1);
 
@@ -318,7 +255,7 @@ const Header = ({ theme, onThemeChange }) => {
                   <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center">
                     <img src="/icon.png" alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl" />
                   </div>
-                  <div className="ml-3">
+                  <div className={`ml-3 ${hideBrandText ? 'hidden' : 'block'}`}>
                     <h1 className="text-md sm:text-lg font-bold font-caption bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
                       Pitch Perfect
                     </h1>
@@ -429,91 +366,38 @@ const Header = ({ theme, onThemeChange }) => {
     
               {/* Right side - Action buttons and User Menu */}
               <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
-                {/* User menu */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="lg-glass-tertiary lg-rounded-md p-2 transition-all duration-200 group hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)]"
-                  >
-                    <div className="flex items-center">
-                      <div className="h-6 w-6 rounded-full bg-primary-500/20 flex items-center justify-center">
-                        <Menu className="h-4 w-4 text-primary-400" />
-                      </div>
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="ml-2 h-4 w-4 text-slate-400 group-hover:text-[rgb(31,190,221)] dark:group-hover:text-[rgb(51,214,241)] transition-colors" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                      >
-                        <path 
-                          fillRule="evenodd" 
-                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" 
-                          clipRule="evenodd" 
-                        />
-                      </svg>
-                    </div>
-                  </button>
-    
-                  {/* Dropdown Menu */}
-                  {isDropdownOpen && (
-                    <>
-                      <div className="absolute right-0 mt-2 w-48 py-2 lg-dropdown z-50">
-                        <Link
-                          to="/profile"
-                          className="lg-dropdown-item text-slate-800 dark:text-slate-200 flex items-center w-full"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          <User className="h-4 w-4 mr-3" />
-                          Profile
-                        </Link>
-                        
-                        <button
-                          onClick={toggleTheme}
-                          className="lg-dropdown-item text-slate-800 dark:text-slate-200 flex items-center w-full"
-                        >
-                          {theme === 'light' ? (
-                            <>
-                              <Moon className="h-4 w-4 mr-3" />
-                              Dark Mode
-                            </>
-                          ) : (
-                            <>
-                              <Sun className="h-4 w-4 mr-3" />
-                              Light Mode
-                            </>
-                          )}
-                        </button>
+                <button
+                  onClick={toggleTheme}
+                  className="lg-glass-tertiary rounded-full p-2 border border-neutral-200/70 dark:border-white/10 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)]"
+                  aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                  type="button"
+                >
+                  {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                </button>
 
-                        {isAdmin && (
-                          <UpdatePointsButton
-                            variant="menu"
-                            onBeforeUpdate={() => setIsDropdownOpen(false)}
-                          />
-                        )}
-                        
-                        {/* {isMobile && !isStandalone && (
-                          <button
-                            onClick={handleAddToHomeScreen}
-                            className="lg-dropdown-item text-slate-800 dark:text-slate-200 flex items-center w-full"
-                          >
-                            <Home className="h-4 w-4 mr-3" />
-                            Add to Home
-                          </button>
-                        )} */}
-                        
-                        <div className="border-t border-slate-300/30 dark:border-white/10 my-2"></div>
-                        
-                        <button
-                          onClick={logout}
-                          className="lg-dropdown-item text-slate-800 dark:text-slate-200 flex items-center w-full"
-                        >
-                          <LogOut className="h-4 w-4 mr-3" />
-                          Log Out
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <Link
+                  to="/profile"
+                  className="lg-glass-tertiary rounded-full p-2 border border-neutral-200/70 dark:border-white/10 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)]"
+                  aria-label="Profile"
+                  title="Profile"
+                >
+                  <User className="h-4 w-4" />
+                </Link>
+
+                <div className="h-6 w-px bg-neutral-300/80 dark:bg-white/20" aria-hidden="true" />
+
+                <button
+                  onClick={logout}
+                  className="lg-glass-tertiary rounded-full p-2 border border-neutral-200/70 dark:border-white/10 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:bg-[rgba(31,190,221,0.1)] dark:hover:bg-[rgba(31,190,221,0.15)]"
+                  aria-label="Log out"
+                  type="button"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+
+                {isAdmin && !isMobile && (
+                  <UpdatePointsButton variant="header" />
+                )}
               </div>
             </div>
           </div>

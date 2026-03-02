@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import { PlayerModalProvider } from './context/PlayerModalContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/auth/Login';
@@ -62,6 +62,7 @@ const SquadRedirect = () => {
 
 const AppContent = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [theme, setTheme] = useState(() => {
     // Prefer user profile theme if available, else localStorage, else system
     const storedTheme = localStorage.getItem('theme');
@@ -71,6 +72,7 @@ const AppContent = () => {
   });
   
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Set default document title
   useDocumentTitle('Home');
@@ -149,13 +151,34 @@ const AppContent = () => {
     };
   }, []);
 
-  const handleRefresh = () => {
+  // Track mobile viewport for route-specific pull-to-refresh behavior.
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleRefresh = async () => {
     // Add a class to the document during refresh to maintain dark mode
     if (theme === 'dark') {
       document.documentElement.classList.add('force-dark');
     }
-    
-    // Reload the page
+
+    const leagueMatch = location.pathname.match(/^\/leagues\/([^/]+)/);
+    const leaguePathToken = leagueMatch?.[1]?.toLowerCase() || null;
+    const isLeagueRoute = Boolean(
+      leaguePathToken && leaguePathToken !== 'join' && leaguePathToken !== 'create'
+    );
+    const isAdmin = !!(user?.is_staff || user?.is_superuser || user?.id === 1);
+
+    if (isAdmin && isMobile && isLeagueRoute) {
+      try {
+        await api.post('/update-match-points/', { update_all: true });
+      } catch (error) {
+        console.error('Failed to update points during pull-to-refresh:', error);
+      }
+    }
+
     window.location.reload();
   };
 
