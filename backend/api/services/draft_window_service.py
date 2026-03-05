@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Dict, List, Optional, Set
 
 from django.db import transaction
@@ -26,6 +27,148 @@ ROLE_DRAFT_CONFIG = (
     (FantasyDraft.Role.ALL, False),
     (FantasyDraft.Role.BOWL, True),
 )
+
+
+def _normalize_boost_assignments(assignments) -> List[Dict[str, int]]:
+    normalized = []
+    seen_boost_ids = set()
+    seen_player_ids = set()
+    for assignment in assignments or []:
+        if not isinstance(assignment, dict):
+            continue
+        raw_boost_id = assignment.get("boost_id")
+        raw_player_id = assignment.get("player_id")
+        if raw_boost_id is None or raw_player_id is None:
+            continue
+        try:
+            boost_id = int(raw_boost_id)
+            player_id = int(raw_player_id)
+        except (TypeError, ValueError):
+            continue
+
+        # Keep role assignments valid: one boost role and one player per entry.
+        if boost_id in seen_boost_ids or player_id in seen_player_ids:
+            continue
+
+        normalized.append({"boost_id": boost_id, "player_id": player_id})
+        seen_boost_ids.add(boost_id)
+        seen_player_ids.add(player_id)
+    return normalized
+
+
+def _fallback_assignments_for_phase(squad: FantasySquad, phase: SeasonPhase) -> List[Dict[str, int]]:
+    previous_phase_boost = SquadPhaseBoost.objects.filter(
+        fantasy_squad=squad,
+        phase__season=phase.season,
+        phase__phase__lt=phase.phase,
+    ).order_by("-phase__phase").first()
+    if previous_phase_boost and previous_phase_boost.assignments:
+        return _normalize_boost_assignments(previous_phase_boost.assignments)
+    return _normalize_boost_assignments(squad.current_core_squad or [])
+
+
+def ensure_phase_boost_assignments_for_league_phase(
+    league: FantasyLeague,
+    phase: Optional[SeasonPhase],
+) -> Dict[str, int]:
+    summary = {"checked": 0, "created": 0, "filled": 0, "already_set": 0}
+    if not phase or league.season_id != phase.season_id:
+        return summary
+
+    squads = list(FantasySquad.objects.filter(league=league).only("id", "current_core_squad"))
+    if not squads:
+        return summary
+
+    existing_by_squad_id = {
+        boost.fantasy_squad_id: boost
+        for boost in SquadPhaseBoost.objects.filter(
+            fantasy_squad__in=squads,
+            phase=phase,
+        )
+    }
+
+    for squad in squads:
+        summary["checked"] += 1
+        existing_boost = existing_by_squad_id.get(squad.id)
+
+        if existing_boost and existing_boost.assignments:
+            summary["already_set"] += 1
+            continue
+
+        fallback_assignments = _fallback_assignments_for_phase(squad, phase)
+
+        if existing_boost:
+            existing_boost.assignments = fallback_assignments
+            existing_boost.save()
+            summary["filled"] += 1
+        else:
+            SquadPhaseBoost.objects.create(
+                fantasy_squad=squad,
+                phase=phase,
+                assignments=fallback_assignments,
+            )
+            summary["created"] += 1
+
+    return summary
+
+
+def materialize_locked_phase_boosts_for_league(
+    league: FantasyLeague,
+    *,
+    now: Optional[datetime] = None,
+) -> Dict:
+    current_ts = now or timezone.now()
+    phases = list(
+        SeasonPhase.objects.filter(
+            season=league.season,
+            lock_at__lte=current_ts,
+        ).order_by("phase")
+    )
+
+    run_summary = {
+        "league_id": league.id,
+        "season_id": league.season_id,
+        "phases_checked": len(phases),
+        "checked": 0,
+        "created": 0,
+        "filled": 0,
+        "already_set": 0,
+    }
+
+    for phase in phases:
+        phase_summary = ensure_phase_boost_assignments_for_league_phase(league, phase)
+        run_summary["checked"] += phase_summary["checked"]
+        run_summary["created"] += phase_summary["created"]
+        run_summary["filled"] += phase_summary["filled"]
+        run_summary["already_set"] += phase_summary["already_set"]
+
+    return run_summary
+
+
+def materialize_locked_phase_boosts_for_season(
+    season,
+    *,
+    now: Optional[datetime] = None,
+) -> Dict:
+    current_ts = now or timezone.now()
+    leagues = list(FantasyLeague.objects.filter(season=season).only("id", "season_id"))
+    summary = {
+        "season_id": season.id if season else None,
+        "leagues_checked": len(leagues),
+        "checked": 0,
+        "created": 0,
+        "filled": 0,
+        "already_set": 0,
+    }
+
+    for league in leagues:
+        league_summary = materialize_locked_phase_boosts_for_league(league, now=current_ts)
+        summary["checked"] += league_summary["checked"]
+        summary["created"] += league_summary["created"]
+        summary["filled"] += league_summary["filled"]
+        summary["already_set"] += league_summary["already_set"]
+
+    return summary
 
 
 def resolve_draft_window(
@@ -105,6 +248,8 @@ def get_retained_player_map(
 ) -> Dict[int, List[int]]:
     retained = {}
     retention_phase = resolve_retention_phase(draft_window)
+    # Ensure retention-phase assignments exist even if users never opened the boost UI.
+    ensure_phase_boost_assignments_for_league_phase(league, retention_phase)
     squads = FantasySquad.objects.filter(league=league)
     for squad in squads:
         retained[squad.id] = get_retained_player_ids_for_squad(

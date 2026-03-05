@@ -300,7 +300,7 @@ const Login = () => {
             <div className="w-12 h-12 rounded-xl lg-glass-primary flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold mb-4">1</div>
             <h3 className="text-2xl font-bold font-caption text-slate-900 dark:text-white mb-3">Draft Your Squad</h3>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-              Join a snake draft, rank players, and build your core squad before the season starts.
+              Draft your favorite players and build your squad before the season starts.
             </p>
             <div className="w-full mt-4 rounded-lg overflow-hidden border border-white/40 dark:border-white/10 bg-[rgba(248,250,252,0.75)] dark:bg-neutral-900/50 backdrop-blur-sm">
               <video
@@ -318,7 +318,7 @@ const Login = () => {
             <div className="w-12 h-12 rounded-xl lg-glass-primary flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold mb-4">2</div>
             <h3 className="text-2xl font-bold font-caption text-slate-900 dark:text-white mb-3">Set Your Boosts</h3>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-              Assign eight role-based multipliers each phase to optimize your weekly output.
+              Assign eight role-based multipliers for each week to max your gains.
             </p>
             <div className="grid grid-cols-2 gap-2">
               {allBoostRoles.map((role, idx) => (

@@ -12,7 +12,9 @@ import {
   Sparkles,
   Trophy,
   Zap,
-  Shield
+  Shield,
+  Target,
+  Users
 } from 'lucide-react';
 
 const Register = () => {
@@ -164,30 +166,36 @@ const Register = () => {
               <div className="lg-glass lg-rounded-xl p-6 sm:p-8 border border-white/40 dark:border-white/10 lg-shine">
                 <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary-700 dark:text-primary-300 font-semibold">
                   <Sparkles className="w-4 h-4" />
-                  New League Entry
+                  Let's get rolling
                 </p>
                 <h2 className="mt-4 text-4xl sm:text-5xl font-bold font-caption text-slate-900 dark:text-white leading-tight">
-                  Create your account.
-                  <br />
-                  Join your league.
+                  Create your account and join a league.
                 </h2>
-                <p className="mt-4 text-slate-600 dark:text-slate-300 text-lg leading-relaxed max-w-xl">
+                {/* <p className="mt-4 text-slate-600 dark:text-slate-300 text-lg leading-relaxed max-w-xl">
                   Set up your account and get into the draft. Everything else lives in one place once you are in.
-                </p>
+                </p> */}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="lg-glass-secondary lg-rounded-lg p-4 border border-white/40 dark:border-white/10">
                   <Trophy className="w-5 h-5 text-primary-600 dark:text-primary-300" />
-                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Season Table</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Season-Long Play</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">Build a campaign, not one-off match picks.</p>
                 </div>
                 <div className="lg-glass-secondary lg-rounded-lg p-4 border border-white/40 dark:border-white/10">
+                  <Target className="w-5 h-5 text-primary-600 dark:text-primary-300" />
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Deep Strategy</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">Boost top players based on matchups.</p>
+                </div>
+                {/* <div className="lg-glass-secondary lg-rounded-lg p-4 border border-white/40 dark:border-white/10">
                   <Zap className="w-5 h-5 text-primary-600 dark:text-primary-300" />
-                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Live Points</p>
-                </div>
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Real-Time Action</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">See standings move as the match unfolds.</p>
+                </div> */}
                 <div className="lg-glass-secondary lg-rounded-lg p-4 border border-white/40 dark:border-white/10">
-                  <Shield className="w-5 h-5 text-primary-600 dark:text-primary-300" />
-                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Boost Strategy</p>
+                  <Users className="w-5 h-5 text-primary-600 dark:text-primary-300" />
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Bragging Rights</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">Compete with friends in private leagues.</p>
                 </div>
               </div>
             </div>
@@ -293,15 +301,6 @@ const Register = () => {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-        <div className="lg-glass lg-rounded-xl p-6 border border-white/40 dark:border-white/10 text-center">
-          <p className="text-sm text-slate-600 dark:text-slate-300 inline-flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-primary-600 dark:text-primary-300" />
-            You can join or create a league right after registration.
-          </p>
         </div>
       </section>
     </div>

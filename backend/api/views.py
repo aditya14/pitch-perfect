@@ -72,6 +72,7 @@ from api.services.draft_window_service import (
     compile_draft_window_pool,
     execute_draft_window,
     has_draft_window_run,
+    materialize_locked_phase_boosts_for_league,
 )
 from django.core.cache import cache
 from django.db.models import F, Case, When, BooleanField, Value, DecimalField, ExpressionWrapper
@@ -1921,6 +1922,9 @@ def squad_phase_boosts(request, squad_id):
     if not season:
         return Response({'error': 'Squad has no season set'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Opportunistic sync: once a phase window locks, persist assignments for all league squads.
+    materialize_locked_phase_boosts_for_league(squad.league)
+
     phases = SeasonPhase.objects.filter(season=season).order_by('phase')
     phase_ids = list(phases.values_list('id', flat=True))
     # For a squad owner, when a phase is ongoing, pre-create the next phase
@@ -2648,6 +2652,7 @@ def mid_season_draft_pool(request, league_id):
     try:
         league = get_object_or_404(FantasyLeague, id=league_id)
         squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+        materialize_locked_phase_boosts_for_league(league)
 
         draft_window_id = request.query_params.get('draft_window')
         draft_window = resolve_draft_window(
@@ -2816,6 +2821,7 @@ def mid_season_draft_order(request, league_id):
     try:
         league = get_object_or_404(FantasyLeague, id=league_id)
         squad = get_object_or_404(FantasySquad, league=league, user=request.user)
+        materialize_locked_phase_boosts_for_league(league)
 
         draft_window_id = request.query_params.get('draft_window')
         if request.method == 'POST' and not draft_window_id:
